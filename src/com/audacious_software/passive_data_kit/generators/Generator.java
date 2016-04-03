@@ -7,9 +7,30 @@ import android.content.Context;
  */
 public abstract class Generator
 {
-    public abstract void start(Context context);
-    public abstract void stop(Context context);
+    protected Context mContext = null;
 
-    public abstract boolean isEnabled(Context context);
-    public abstract boolean isRunning(Context context);
+    public Generator(Context context)
+    {
+        this.mContext = context.getApplicationContext();
+    }
+
+    public static void start(Context context)
+    {
+        // Do nothing - override in subclasses...
+    }
+
+    public static void stop(Context context)
+    {
+        // Do nothing - override in subclasses.
+    }
+
+    public static boolean isEnabled(Context context)
+    {
+        return false;
+    }
+
+    public static boolean isRunning(Context context)
+    {
+        return false;
+    }
 }

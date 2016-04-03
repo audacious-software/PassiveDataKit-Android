@@ -1,13 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.audacious_software.pdk.passivedatakit">
-
-    <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-
+    <application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="@string/app_name" android:theme="@style/AppTheme">
+        <activity android:name="com.audacious_software.passive_data_kit.activities.generators.MicrosoftBandAuthActivity" android:label="@string/app_name" />
+        <activity android:name="com.audacious_software.passive_data_kit.activities.DiagnosticsActivity" android:label="@string/app_name" />
     </application>
-
 </manifest>

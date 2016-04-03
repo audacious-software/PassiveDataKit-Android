@@ -1,0 +1,4 @@
+<resources>
+    <string name="diagnostic_missing_msft_band_client">Unable to connect to Microsoft Band.</string>
+    <string name="diagnostic_missing_msft_band_auth">Please grant the app sensor access on the Microsoft Band.</string>
+</resources>
