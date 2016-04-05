@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">PassiveDataKit</string>
+    <string name="pdk_name">Passive Data Kit</string>
+    <string name="pdk_version">0.0.1</string>
+    <string name="unknown_version">Unknown Version</string>
+    <string name="generator_microsoft_band">Microsoft Band</string>
 </resources>
+

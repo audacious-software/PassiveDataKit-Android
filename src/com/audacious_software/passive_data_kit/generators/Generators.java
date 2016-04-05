@@ -2,16 +2,25 @@ package com.audacious_software.passive_data_kit.generators;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
+import android.util.SparseArray;
+import android.util.SparseIntArray;
 
 import com.audacious_software.passive_data_kit.Logger;
+import com.audacious_software.passive_data_kit.activities.DataStreamActivity;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
+import com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand;
 import com.audacious_software.pdk.passivedatakit.R;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class Generators {
@@ -20,6 +29,9 @@ public class Generators {
     private ArrayList<String> mGenerators = new ArrayList<>();
     private HashSet<String> mActiveGenerators = new HashSet<>();
     private SharedPreferences mSharedPreferences = null;
+    private HashSet<NewDataPointListener> mNewDataPointListeners = new HashSet<>();
+    private HashMap<String, Class<? extends Generator>> mGeneratorMap = new HashMap<>();
+    private SparseArray<Class<? extends Generator>> mViewTypeMap = new SparseArray<>();
 
     public void start() {
         if (!this.mStarted)
@@ -128,18 +140,93 @@ public class Generators {
         return actions;
     }
 
+    public void transmitData(String identifier, Bundle data) {
+        double now = (double) System.currentTimeMillis();
+        now = now / 1000; // Convert to seconds...
+
+        Bundle metadata = new Bundle();
+        metadata.putString(Generator.IDENTIFIER, identifier);
+        metadata.putDouble(Generator.TIMESTAMP, now);
+        metadata.putString(Generator.GENERATOR, this.getGeneratorFullName(identifier));
+        metadata.putString(Generator.SOURCE, this.getSource());
+        data.putBundle(Generator.PDK_METADATA, metadata);
+
+        for (Generators.NewDataPointListener listener : this.mNewDataPointListeners) {
+            listener.onNewDataPoint(identifier, data);
+        }
+    }
+
+    private String getSource() {
+        return "unknown-user-please-set-me";
+    }
+
+    private String getGeneratorFullName(String identifier) {
+        String pdkName = this.mContext.getString(R.string.pdk_name);
+        String pdkVersion = this.mContext.getString(R.string.pdk_version);
+        String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
+
+        String version = this.mContext.getString(R.string.unknown_version);
+
+        try {
+            PackageInfo pInfo = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0);
+
+            version = pInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            Logger.getInstance(this.mContext).logThrowable(e);
+        }
+
+        return identifier + ": " + appName + "/" + version + " " + pdkName + "/" + pdkVersion;
+    }
+
+    public void removeNewDataPointListener(Generators.NewDataPointListener listener) {
+        this.mNewDataPointListeners.remove(listener);
+    }
+
+    public void registerCustomViewClass(String identifier, Class<? extends Generator> generatorClass) {
+        this.mGeneratorMap.put(identifier, generatorClass);
+        this.mViewTypeMap.put(generatorClass.hashCode(), generatorClass);
+    }
+
+    public Class<? extends Generator> fetchCustomViewClass(String identifier) {
+        Class<? extends Generator> generatorClass = this.mGeneratorMap.get(identifier);
+
+        if (generatorClass == null)
+            generatorClass = Generator.class;
+
+        return generatorClass;
+    }
+
+    public Class<? extends Generator> fetchCustomViewClass(int viewType) {
+        Class<? extends Generator> generatorClass = this.mViewTypeMap.get(viewType);
+
+        if (generatorClass == null)
+            generatorClass = Generator.class;
+
+        return generatorClass;
+    }
+
     private static class GeneratorsHolder {
         public static Generators instance = new Generators();
     }
 
     public static Generators getInstance(Context context)
     {
-        GeneratorsHolder.instance.setContext(context);
+        if (context != null) {
+            GeneratorsHolder.instance.setContext(context);
+        }
 
         return GeneratorsHolder.instance;
     }
 
     private void setContext(Context context) {
         this.mContext = context.getApplicationContext();
+    }
+
+    public void addNewDataPointListener(Generators.NewDataPointListener listener) {
+        this.mNewDataPointListeners.add(listener);
+    }
+
+    public interface NewDataPointListener {
+        void onNewDataPoint(String identifier, Bundle data);
     }
 }

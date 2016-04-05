@@ -3,5 +3,6 @@
     <application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="@string/app_name" android:theme="@style/AppTheme">
         <activity android:name="com.audacious_software.passive_data_kit.activities.generators.MicrosoftBandAuthActivity" android:label="@string/app_name" />
         <activity android:name="com.audacious_software.passive_data_kit.activities.DiagnosticsActivity" android:label="@string/app_name" />
+        <activity android:name="com.audacious_software.passive_data_kit.activities.DataStreamActivity" android:label="@string/app_name" />
     </application>
 </manifest>
