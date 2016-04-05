@@ -1,6 +1,8 @@
 package com.audacious_software.passive_data_kit.activities;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -23,7 +25,9 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setContentView(R.layout.layout_diagnostics_pdk);
+        this.setContentView(R.layout.layout_data_stream_pdk);
+        this.setTitle(R.string.activity_data_stream);
+        this.getSupportActionBar().setSubtitle(this.getResources().getQuantityString(R.plurals.activity_data_stream_subtitle, 0, 0));
 
         this.mAdapter = new DataPointsAdapter();
 
@@ -49,5 +53,18 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
     @Override
     public void onNewDataPoint(String identifier, Bundle data) {
         this.mAdapter.updateDataPoint(identifier, data);
+
+        final int count = this.mAdapter.getItemCount();
+
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+
+        final DataStreamActivity me = this;
+
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                me.getSupportActionBar().setSubtitle(me.getResources().getQuantityString(R.plurals.activity_data_stream_subtitle, count, count));
+            }
+        });
     }
 }

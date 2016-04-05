@@ -30,6 +30,7 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
             return new DataPointViewHolder(view);
         } catch (Exception e) {
+            e.printStackTrace();
             try {
                 generatorClass = Generator.class;
 
@@ -58,6 +59,7 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
             Method bindViewHolder = generatorClass.getDeclaredMethod("bindViewHolder", DataPointViewHolder.class, Bundle.class);
             bindViewHolder.invoke(null, holder, dataPoint);
         } catch (Exception e) {
+            e.printStackTrace();
             try {
                 generatorClass = Generator.class;
 

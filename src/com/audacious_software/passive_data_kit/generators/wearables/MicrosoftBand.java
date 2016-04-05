@@ -65,7 +65,6 @@ import com.microsoft.band.sensors.UVIndexLevel;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 
 @SuppressWarnings("unused")
 public class MicrosoftBand extends Generator
@@ -1289,14 +1288,145 @@ public class MicrosoftBand extends Generator
 
     public static void bindViewHolder(DataPointViewHolder holder, Bundle dataPoint)
     {
+        Context context = holder.itemView.getContext();
+
         String identifier = dataPoint.getBundle(Generator.PDK_METADATA).getString(Generator.IDENTIFIER);
 
         double timestamp = dataPoint.getBundle(Generator.PDK_METADATA).getDouble(Generator.TIMESTAMP);
 
-        Date d = new Date((long) (timestamp * 1000));
-
         TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
 
-        dateLabel.setText(d.toString());
+        dateLabel.setText(Generator.formatTimestamp(context, timestamp));
+
+        // Heart rate...
+        TextView heartRateField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_heart_rate);
+        int[] heartRates = dataPoint.getBundle(HeartRateDataPoint.KEY).getIntArray(MicrosoftBand.HEART_RATE_KEY);
+
+        if (heartRates.length > 0) {
+            heartRateField.setText(context.getString(R.string.generator_microsoft_band_value_heart_rate, heartRates[heartRates.length - 1]));
+        } else {
+            heartRateField.setText(context.getString(R.string.generator_value_not_applicable));
+        }
+
+        // Band contact state...
+        TextView bandStateField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_contact_state);
+        short[] bandStates = dataPoint.getBundle(ContactDataPoint.KEY).getShortArray(MicrosoftBand.CONTACT_STATE_KEY);
+
+        if (bandStates.length > 0) {
+            switch(bandStates[bandStates.length - 1])
+            {
+                case 0:
+                    bandStateField.setText(R.string.generator_microsoft_band_value_band_state_not_worn);
+                    break;
+                case 1:
+                    bandStateField.setText(R.string.generator_microsoft_band_value_band_state_worn);
+                    break;
+                case -1:
+                    bandStateField.setText(R.string.generator_microsoft_band_value_band_state_unknown);
+                    break;
+            }
+        } else {
+            bandStateField.setText(context.getString(R.string.generator_value_not_applicable));
+        }
+
+        // Steps...
+        TextView stepsField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_steps_today);
+        long[] steps = dataPoint.getBundle(PedometerDataPoint.KEY).getLongArray(MicrosoftBand.TODAY_STEPS_KEY);
+
+        if (steps.length > 0) {
+            stepsField.setText(context.getString(R.string.generator_microsoft_band_value_steps_today, steps[steps.length - 1]));
+        } else {
+            stepsField.setText(context.getString(R.string.generator_value_not_applicable));
+        }
+
+        // Motion type...
+        TextView motionsField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_distance_motion_type);
+        String[] motions = dataPoint.getBundle(DistanceDataPoint.KEY).getStringArray(MicrosoftBand.MOTION_TYPE_KEY);
+
+        if (motions.length > 0) {
+            motionsField.setText(motions[motions.length - 1]);
+        } else {
+            motionsField.setText(context.getString(R.string.generator_value_not_applicable));
+        }
+
+        // Speed...
+        TextView speedField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_distance_speed);
+        float[] speeds = dataPoint.getBundle(DistanceDataPoint.KEY).getFloatArray(MicrosoftBand.SPEED_KEY);
+
+        if (speeds.length > 0) {
+            speedField.setText(context.getString(R.string.generator_microsoft_band_value_distance_speed, speeds[speeds.length - 1]));
+        } else {
+            speedField.setText(context.getString(R.string.generator_value_not_applicable));
+        }
+
+        // GSR...
+        TextView gsrField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_galavanic_skin_resistance);
+        int[] gsrs = dataPoint.getBundle(GalvanicSkinResponseDataPoint.KEY).getIntArray(MicrosoftBand.RESISTANCE_KEY);
+
+        if (gsrs.length > 0) {
+            gsrField.setText(context.getString(R.string.generator_microsoft_band_value_galavanic_skin_resistance, gsrs[gsrs.length - 1]));
+        } else {
+            gsrField.setText(context.getString(R.string.generator_value_not_applicable));
+        }
+
+        // Skin temperature...
+        TextView skinTempField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_skin_temperature);
+        float[] skinTemps = dataPoint.getBundle(SkinTemperatureDataPoint.KEY).getFloatArray(MicrosoftBand.TEMPERATURE_KEY);
+
+        if (skinTemps.length > 0) {
+            skinTempField.setText(context.getString(R.string.generator_microsoft_band_value_skin_temperature, skinTemps[skinTemps.length - 1]));
+        } else {
+            skinTempField.setText(context.getString(R.string.generator_value_not_applicable));
+        }
+
+        // Altimiter...
+        TextView flightsAscended = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_altimeter_flights_ascended_today);
+        long[] flights = dataPoint.getBundle(AltimiterDataPoint.KEY).getLongArray(MicrosoftBand.FLIGHTS_ASCENDED_TODAY_KEY);
+
+        if (flights.length > 0) {
+            flightsAscended.setText(context.getString(R.string.generator_microsoft_band_value_altimeter_flights_ascended_today, flights[flights.length - 1]));
+        } else {
+            flightsAscended.setText(context.getString(R.string.generator_value_not_applicable));
+        }
+
+        // Barometric pressure...
+        TextView barometricPressure = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_barometer_pressure);
+        double[] pressures = dataPoint.getBundle(BarometerDataPoint.KEY).getDoubleArray(MicrosoftBand.PRESSURE_KEY);
+
+        if (pressures.length > 0) {
+            barometricPressure.setText(context.getString(R.string.generator_microsoft_band_value_barometer_pressure, pressures[pressures.length - 1]));
+        } else {
+            barometricPressure.setText(context.getString(R.string.generator_value_not_applicable));
+        }
+
+        // Air temperature...
+        TextView airTemperature = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_barometer_temperature);
+        double[] airTemps = dataPoint.getBundle(BarometerDataPoint.KEY).getDoubleArray(MicrosoftBand.TEMPERATURE_KEY);
+
+        if (airTemps.length > 0) {
+            airTemperature.setText(context.getString(R.string.generator_microsoft_band_value_barometer_temperature, airTemps[airTemps.length - 1]));
+        } else {
+            airTemperature.setText(context.getString(R.string.generator_value_not_applicable));
+        }
+
+        // Ambient brightness...
+        TextView brightness = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_ambient_light_brightness);
+        int[] brights = dataPoint.getBundle(AmbientLightDataPoint.KEY).getIntArray(MicrosoftBand.BRIGHTNESS_KEY);
+
+        if (brights.length > 0) {
+            brightness.setText(context.getString(R.string.generator_microsoft_band_value_ambient_light_brightness, brights[brights.length - 1]));
+        } else {
+            brightness.setText(context.getString(R.string.generator_value_not_applicable));
+        }
+
+        // UV level...
+        TextView uvLevel = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_uv_level);
+        String[] uvs = dataPoint.getBundle(UltravioletLightDataPoint.KEY).getStringArray(MicrosoftBand.INDEX_LEVEL_KEY);
+
+        if (uvs.length > 0) {
+            uvLevel.setText(uvs[uvs.length - 1]);
+        } else {
+            uvLevel.setText(context.getString(R.string.generator_value_not_applicable));
+        }
     }
 }

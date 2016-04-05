@@ -3,6 +3,13 @@
     <string name="pdk_name">Passive Data Kit</string>
     <string name="pdk_version">0.0.1</string>
     <string name="unknown_version">Unknown Version</string>
-    <string name="generator_microsoft_band">Microsoft Band</string>
+    <string name="activity_data_stream">Data Stream</string>
+
+    <plurals name="activity_data_stream_subtitle">
+        <item quantity="one">%d generator</item>
+        <item quantity="other">%d generators</item>
+    </plurals>
+
+    <string name="format_full_timestamp_pdk">%1$s &#8226; %2$s</string>
 </resources>
 

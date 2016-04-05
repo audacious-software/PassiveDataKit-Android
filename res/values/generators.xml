@@ -1,6 +1,42 @@
 <resources>
     <string-array name="pdk_available_generators">
+        <item>com.audacious_software.passive_data_kit.generators.device.Location</item>
         <item>com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand</item>
     </string-array>
+
     <string-array name="pdk_app_generators"></string-array>
+
+    <string name="generator_value_not_applicable">n/a</string>
+
+    <!-- Microsoft Band Resources -->
+    <string name="generator_microsoft_band">Microsoft Band</string>
+    <string name="generator_microsoft_band_label_altimeter_flights_ascended_today">Flights Ascended:</string>
+    <string name="generator_microsoft_band_label_ambient_light_brightness">Ambient Brightness:</string>
+    <string name="generator_microsoft_band_label_barometer_pressure">Air Pressure:</string>
+    <string name="generator_microsoft_band_label_barometer_temperature">Air Temperature:</string>
+    <string name="generator_microsoft_band_label_contact_state">Band State:</string>
+    <string name="generator_microsoft_band_label_distance_motion_type">Motion Type:</string>
+    <string name="generator_microsoft_band_label_distance_speed">Speed:</string>
+    <string name="generator_microsoft_band_label_galavanic_skin_resistance">Skin Resistance:</string>
+    <string name="generator_microsoft_band_label_heart_rate">Heart Rate:</string>
+    <string name="generator_microsoft_band_label_pedometer_steps_today">Steps:</string>
+    <string name="generator_microsoft_band_label_skin_temperature">Skin Temperature:</string>
+    <string name="generator_microsoft_band_label_uv_level">UV Light Level:</string>
+
+    <string name="generator_microsoft_band_value_heart_rate">%1$d bpm</string>
+    <string name="generator_microsoft_band_value_band_state_worn">Worn</string>
+    <string name="generator_microsoft_band_value_band_state_not_worn">Not Worn</string>
+    <string name="generator_microsoft_band_value_band_state_unknown">Unknown</string>
+    <string name="generator_microsoft_band_value_steps_today">%1$d</string>
+    <string name="generator_microsoft_band_value_distance_speed">%1$.2f cm/s</string>
+    <string name="generator_microsoft_band_value_galavanic_skin_resistance">%1$d k&#937;</string>
+    <string name="generator_microsoft_band_value_skin_temperature">%1$.2f&#8451;</string>
+    <string name="generator_microsoft_band_value_altimeter_flights_ascended_today">%1$d</string>
+    <string name="generator_microsoft_band_value_barometer_pressure">%1$.2f hPa</string>
+    <string name="generator_microsoft_band_value_barometer_temperature">%1$.2f&#8451;</string>
+    <string name="generator_microsoft_band_value_ambient_light_brightness">%1$d lux</string>
+
+    <!-- Location Resources -->
+    <string name="generator_location">Device Location</string>
+    <string name="generator_location_value">Coordinates: %1$.4f, %2$.4f</string>
 </resources>
