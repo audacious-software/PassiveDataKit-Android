@@ -22,6 +22,9 @@ public abstract class Generator
     public static final String TIMESTAMP = "timestamp";
     public static final String GENERATOR = "generator";
     public static final String SOURCE = "source";
+    public static final String MEDIA_ATTACHMENT_KEY = "attachment";
+    public static final String MEDIA_CONTENT_TYPE_KEY = "attachment-type";
+    public static final String MEDIA_ATTACHMENT_GUID_KEY = "attachment-guid";
 
     protected Context mContext = null;
 
