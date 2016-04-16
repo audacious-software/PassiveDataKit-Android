@@ -5,12 +5,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,6 +63,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     private static Location sInstance = null;
     private GoogleApiClient mGoogleApiClient = null;
+    private android.location.Location mLastLocation = null;
 
     public static Location getInstance(Context context) {
         if (Location.sInstance == null) {
@@ -118,13 +121,13 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         Generators.getInstance(this.mContext).registerCustomViewClass(Location.GENERATOR_IDENTIFIER, Location.class);
     }
 
-    private static boolean useGoogleLocationServices(Context context) {
+    public static boolean useGoogleLocationServices(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(Location.USE_GOOGLE_SERVICES, Location.USE_GOOGLE_SERVICES_DEFAULT);
     }
 
-    private static boolean useKindleLocationServices() {
+    public static boolean useKindleLocationServices() {
         return DeviceInformation.isKindleFire();
     }
 
@@ -234,6 +237,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         bundle.putDouble(Location.FIX_TIMESTAMP_KEY, ((double) location.getTime()) / 1000);
         bundle.putString(Location.PROVIDER_KEY, location.getProvider());
 
+        this.mLastLocation = location;
+
         if (location.hasAccuracy()) {
             bundle.putFloat(Location.ACCURACY_KEY, location.getAccuracy());
         }
@@ -330,5 +335,33 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             // TODO
             throw new RuntimeException("Throw rocks at developer to implement generic location support.");
         }
+    }
+
+    public android.location.Location getLastKnownLocation() {
+        if (this.mLastLocation != null) {
+            return this.mLastLocation;
+        }
+
+        LocationManager locations = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
+
+        android.location.Location last = null;
+
+        if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+            Log.e("FC", "LOCATION PERMISSIONS GRANTED...");
+
+            last = locations.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+            Log.e("FC", "GPS: " + last);
+
+            if (last == null) {
+                last = locations.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+                Log.e("FC", "NETWORK: " + last);
+            }
+        }
+
+        return last;
     }
 }
