@@ -1,0 +1,35 @@
+sudo: true
+language: android
+jdk: oraclejdk8
+
+before_install:
+  - wget http://services.gradle.org/distributions/gradle-2.12-bin.zip
+  - unzip gradle-2.12-bin.zip
+  - export GRADLE_HOME=$PWD/gradle-2.12
+  - export PATH=$GRADLE_HOME/bin:$PATH
+  - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-24.0.0
+
+script:
+  - gradle assembleDebug
+
+android:
+  components:
+    - platform-tools
+    - tools
+
+    # The BuildTools version used by your project
+    - build-tools-24
+
+    # The SDK version used to compile your project
+    - android-24
+
+    # Additional components
+    - extra-google-google_play_services
+    - extra-google-m2repository
+    - extra-android-m2repository
+    - addon-google_apis-google-24
+
+    # Specify at least one system image,
+    # if you need to run emulator(s) during your tests
+    # - sys-img-armeabi-v7a-android-23
+    # - sys-img-x86-android-23
