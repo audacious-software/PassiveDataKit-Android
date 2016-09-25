@@ -3,11 +3,11 @@ language: android
 jdk: oraclejdk8
 
 before_install:
-  - wget http://services.gradle.org/distributions/gradle-2.12-bin.zip
-  - unzip gradle-2.12-bin.zip
-  - export GRADLE_HOME=$PWD/gradle-2.12
+  - wget http://services.gradle.org/distributions/gradle-2.14.1-bin.zip
+  - unzip gradle-2.14.1-bin.zip
+  - export GRADLE_HOME=$PWD/gradle-2.14.1
   - export PATH=$GRADLE_HOME/bin:$PATH
-  - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-24.0.0
+  - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-24.0.2
 
 script:
   - gradle assembleDebug
