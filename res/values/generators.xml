@@ -39,4 +39,9 @@
     <!-- Location Resources -->
     <string name="generator_location">Device Location</string>
     <string name="generator_location_value">Coordinates: %1$.4f, %2$.4f</string>
+
+    <!-- Screen State Resources -->
+    <string name="generator_screen_state">Screen State</string>
+
+
 </resources>

@@ -42,6 +42,8 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
         super.onResume();
 
         Generators.getInstance(this).addNewDataPointListener(this);
+
+        Generators.getInstance(this).broadcastLatestDataPoints();
     }
 
     protected void onPause() {

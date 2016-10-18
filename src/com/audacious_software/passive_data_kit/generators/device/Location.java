@@ -9,6 +9,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
@@ -60,6 +61,14 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final String BEARING_KEY = "bearing";
     private static final String SPEED_KEY = "speed";
     private static final String EXTRAS_KEY = "extras";
+
+    private static final String LAST_KNOWN_LATITUDE = "com.audacious_software.passive_data_kit.generators.device.Location.LAST_KNOWN_LATITUDE";
+    private static final float LAST_KNOWN_LATITUDE_DEFAULT = 0;
+
+    private static final String LAST_KNOWN_LONGITUDE = "com.audacious_software.passive_data_kit.generators.device.Location.LAST_KNOWN_LONGITUDE";
+    private static final float LAST_KNOWN_LONGITUDE_DEFAULT = 0;
+
+    private static final String LAST_KNOWN_TIMESTAMP = "com.audacious_software.passive_data_kit.generators.device.Location.LAST_KNOWN_TIMESTAMP";;
 
     private static Location sInstance = null;
     private GoogleApiClient mGoogleApiClient = null;
@@ -262,21 +271,46 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
 
         Generators.getInstance(this.mContext).transmitData(Location.GENERATOR_IDENTIFIER, bundle);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putFloat(Location.LAST_KNOWN_LATITUDE, (float) location.getLatitude());
+        e.putFloat(Location.LAST_KNOWN_LONGITUDE, (float) location.getLongitude());
+        e.putLong(Location.LAST_KNOWN_TIMESTAMP, System.currentTimeMillis());
+
+        e.apply();
     }
 
     public static void bindViewHolder(DataPointViewHolder holder, final Bundle dataPoint) {
+        Log.e("PDK", "DRAWING LOCATION: " + dataPoint);
+
         final Context context = holder.itemView.getContext();
 
         String identifier = dataPoint.getBundle(Generator.PDK_METADATA).getString(Generator.IDENTIFIER);
 
         double timestamp = dataPoint.getBundle(Generator.PDK_METADATA).getDouble(Generator.TIMESTAMP);
 
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        double latitude = Location.LAST_KNOWN_LATITUDE_DEFAULT;
+        double longitude = Location.LAST_KNOWN_LONGITUDE_DEFAULT;
 
+        if (dataPoint.containsKey(Location.LATITUDE_KEY) && dataPoint.containsKey(Location.LONGITUDE_KEY)) {
+            latitude = dataPoint.getDouble(Location.LATITUDE_KEY);
+            longitude = dataPoint.getDouble(Location.LONGITUDE_KEY);
+        } else { // Empty point - retrieve last known location...
+            Log.e("PDK", "FETCHING LAST KNOWN LOCATION...");
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+            latitude = prefs.getFloat(Location.LAST_KNOWN_LATITUDE, Location.LAST_KNOWN_LATITUDE_DEFAULT);
+            longitude = prefs.getFloat(Location.LAST_KNOWN_LONGITUDE, Location.LAST_KNOWN_LONGITUDE_DEFAULT);
+            timestamp = ((double) prefs.getLong(Location.LAST_KNOWN_TIMESTAMP, System.currentTimeMillis())) / 1000 ;
+        }
+
+        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
         dateLabel.setText(Generator.formatTimestamp(context, timestamp));
 
-        final double latitude = dataPoint.getDouble(Location.LATITUDE_KEY);
-        final double longitude = dataPoint.getDouble(Location.LONGITUDE_KEY);
+        final double finalLatitude = latitude;
+        final double finalLongitude = longitude;
 
         if (Location.useKindleLocationServices())
         {
@@ -294,10 +328,10 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                     googleMap.getUiSettings().setZoomControlsEnabled(false);
                     googleMap.getUiSettings().setMyLocationButtonEnabled(false);
 
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 14));
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(finalLatitude, finalLongitude), 14));
 
                     googleMap.addMarker(new MarkerOptions()
-                            .position(new LatLng(latitude, longitude)));
+                            .position(new LatLng(finalLatitude, finalLongitude)));
 //                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_none)));
 
                     DisplayMetrics metrics = context.getResources().getDisplayMetrics();
@@ -363,5 +397,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
 
         return last;
+    }
+
+    public static void broadcastLatestDataPoint(Context context) {
+        Generators.getInstance(context).transmitData(Location.GENERATOR_IDENTIFIER, new Bundle());
     }
 }

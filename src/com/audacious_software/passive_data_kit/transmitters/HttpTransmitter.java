@@ -419,24 +419,25 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
 
     @Override
     public void onNewDataPoint(String identifier, Bundle data) {
-        if (data.containsKey(Generator.PDK_METADATA)) {
-            data.getBundle(Generator.PDK_METADATA).putString(Generator.SOURCE, this.mUserId);
-        }
-
-        if (this.mJsonGenerator == null)
-        {
-            this.mCurrentFile = new File(this.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
-
-            try {
-                JsonFactory factory = new JsonFactory();
-                this.mJsonGenerator = factory.createGenerator(this.mCurrentFile, JsonEncoding.UTF8);
-                this.mJsonGenerator.writeStartArray();
-            } catch (IOException e) {
-                Logger.getInstance(this.mContext).logThrowable(e);
+        if (data.keySet().size() > 1) {  // Only transmit non-empty bundles...
+            if (data.containsKey(Generator.PDK_METADATA)) {
+                data.getBundle(Generator.PDK_METADATA).putString(Generator.SOURCE, this.mUserId);
             }
-        }
 
-        HttpTransmitter.writeBundle(this.mContext, this.mJsonGenerator, data);
+            if (this.mJsonGenerator == null) {
+                this.mCurrentFile = new File(this.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
+
+                try {
+                    JsonFactory factory = new JsonFactory();
+                    this.mJsonGenerator = factory.createGenerator(this.mCurrentFile, JsonEncoding.UTF8);
+                    this.mJsonGenerator.writeStartArray();
+                } catch (IOException e) {
+                    Logger.getInstance(this.mContext).logThrowable(e);
+                }
+            }
+
+            HttpTransmitter.writeBundle(this.mContext, this.mJsonGenerator, data);
+        }
     }
 
     public static Map<String, Object> getValues(Context context, final Bundle bundle) {

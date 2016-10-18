@@ -8,12 +8,9 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.SparseArray;
-import android.util.SparseIntArray;
 
 import com.audacious_software.passive_data_kit.Logger;
-import com.audacious_software.passive_data_kit.activities.DataStreamActivity;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
-import com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand;
 import com.audacious_software.pdk.passivedatakit.R;
 
 import java.lang.reflect.InvocationTargetException;
@@ -203,6 +200,31 @@ public class Generators {
             generatorClass = Generator.class;
 
         return generatorClass;
+    }
+
+    public void broadcastLatestDataPoints() {
+        for (String className : this.mGenerators)
+        {
+            try {
+                Class<? extends Generator> generatorClass = (Class<Generator>) Class.forName(className);
+
+                Log.e("PDK", "CLASS " + generatorClass);
+
+                if (generatorClass != null) {
+                    Method broadcast = generatorClass.getDeclaredMethod("broadcastLatestDataPoint", Context.class);
+
+                    broadcast.invoke(null, this.mContext);
+                }
+            } catch (NoSuchMethodException e) {
+
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private static class GeneratorsHolder {
