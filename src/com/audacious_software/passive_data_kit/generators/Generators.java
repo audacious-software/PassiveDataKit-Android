@@ -54,6 +54,8 @@ public class Generators {
 
                     Boolean enabled = (Boolean) isEnabled.invoke(null, this.mContext);
 
+                    Log.e("PDK", "GENERATOR ENABLED? " + probeClass + " ==> " + enabled);
+
                     if (enabled) {
                         this.startGenerator(className);
                     }
@@ -87,6 +89,9 @@ public class Generators {
             }
             else {
                 Method start = generatorClass.getDeclaredMethod("start", Context.class);
+
+                Log.e("PDK", "GOT START METHOD: " + className + " -> " + start);
+
                 start.invoke(null, this.mContext);
 
                 this.mActiveGenerators.add(className);
@@ -186,6 +191,8 @@ public class Generators {
 
     public Class<? extends Generator> fetchCustomViewClass(String identifier) {
         Class<? extends Generator> generatorClass = this.mGeneratorMap.get(identifier);
+
+        Log.e("PDK", "FETCH VIEW: " + identifier + " => " + generatorClass);
 
         if (generatorClass == null)
             generatorClass = Generator.class;

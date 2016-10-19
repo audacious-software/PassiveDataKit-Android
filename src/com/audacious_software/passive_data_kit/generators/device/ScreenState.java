@@ -7,7 +7,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -93,8 +92,6 @@ public class ScreenState extends Generator{
                         break;
                 }
 
-                Log.e("BB", "SCREEN STATE: " + bundle.getString(ScreenState.SCREEN_STATE_KEY));
-
                 Generators.getInstance(context).transmitData(ScreenState.GENERATOR_IDENTIFIER, bundle);
 
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -126,8 +123,6 @@ public class ScreenState extends Generator{
         Generators.getInstance(this.mContext).registerCustomViewClass(ScreenState.GENERATOR_IDENTIFIER, ScreenState.class);
 
         this.mReceiver.onReceive(this.mContext, null);
-
-        Log.e("BB", "LISTENING FOR SCEEEN STATE CHANGES");
     }
 
     public static boolean isEnabled(Context context) {
@@ -155,7 +150,7 @@ public class ScreenState extends Generator{
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
             JSONArray history = new JSONArray(prefs.getString(ScreenState.SCREEN_HISTORY_KEY, "[]"));
 
-            Log.e("PDK", "SCREEN HISTORY: " + history.toString(2));
+//            Log.e("PDK", "SCREEN HISTORY: " + history.toString(2));
 
             Calendar cal = Calendar.getInstance();
             cal.set(Calendar.HOUR_OF_DAY, 0);
