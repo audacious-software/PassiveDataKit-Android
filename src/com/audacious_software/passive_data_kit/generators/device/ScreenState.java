@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.Display;
@@ -28,6 +29,7 @@ import org.json.JSONObject;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 
 public class ScreenState extends Generator{
     private static final String GENERATOR_IDENTIFIER = "pdk-screen-state";
@@ -74,22 +76,34 @@ public class ScreenState extends Generator{
                 WindowManager window = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
                 Display display = window.getDefaultDisplay();
 
-                switch(display.getState()) {
-                    case Display.STATE_DOZE:
-                        bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_DOZE);
-                        break;
-                    case Display.STATE_DOZE_SUSPEND:
-                        bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_DOZE_SUSPEND);
-                        break;
-                    case Display.STATE_ON:
-                        bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_ON);
-                        break;
-                    case Display.STATE_OFF:
+                final String action = intent.getAction();
+
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                    switch (display.getState()) {
+                        case Display.STATE_DOZE:
+                            bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_DOZE);
+                            break;
+                        case Display.STATE_DOZE_SUSPEND:
+                            bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_DOZE_SUSPEND);
+                            break;
+                        case Display.STATE_ON:
+                            bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_ON);
+                            break;
+                        case Display.STATE_OFF:
+                            bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_OFF);
+                            break;
+                        case Display.STATE_UNKNOWN:
+                            bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_UNKNOWN);
+                            break;
+                    }
+                } else {
+                    if (Intent.ACTION_SCREEN_OFF.equals(action)) {
                         bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_OFF);
-                        break;
-                    case Display.STATE_UNKNOWN:
+                    } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
+                        bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_ON);
+                    } else {
                         bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_UNKNOWN);
-                        break;
+                    }
                 }
 
                 Generators.getInstance(context).transmitData(ScreenState.GENERATOR_IDENTIFIER, bundle);
@@ -101,7 +115,18 @@ public class ScreenState extends Generator{
 
                     JSONObject latest = new JSONObject();
                     latest.put(ScreenState.SCREEN_HISTORY_TIMESTAMP, System.currentTimeMillis());
-                    latest.put(ScreenState.SCREEN_HISTORY_STATE, display.getState());
+
+                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                        latest.put(ScreenState.SCREEN_HISTORY_STATE, display.getState());
+                    } else {
+                        if (Intent.ACTION_SCREEN_OFF.equals(action)) {
+                            latest.put(ScreenState.SCREEN_HISTORY_STATE, 0x01);
+                        } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
+                            latest.put(ScreenState.SCREEN_HISTORY_STATE, 0x02);
+                        } else {
+                            latest.put(ScreenState.SCREEN_HISTORY_STATE, 0x00);
+                        }
+                    }
 
                     history.put(latest);
 
@@ -240,12 +265,27 @@ public class ScreenState extends Generator{
 
             View startView = new View(context);
 
-            if (lastState == -1) {
 
-            } else if (lastState != Display.STATE_OFF) {
-                startView.setBackgroundColor(0xff4CAF50);
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                if (lastState == -1) {
+
+                } else if (firstState == Display.STATE_ON) {
+                    startView.setBackgroundColor(0xff4CAF50);
+                } else if (firstState == Display.STATE_OFF) {
+                    startView.setBackgroundColor(0xff263238);
+                } else if (firstState == Display.STATE_DOZE) {
+                    startView.setBackgroundColor(0xff1b5e20);
+                } else if (firstState == Display.STATE_DOZE_SUSPEND) {
+                    startView.setBackgroundColor(0xff1b5e20);
+                }
             } else {
-                startView.setBackgroundColor(0xff263238);
+                if (lastState == -1) {
+
+                } else if (firstState == 0x02) {
+                    startView.setBackgroundColor(0xff4CAF50);
+                } else if (firstState == 0x01) {
+                    startView.setBackgroundColor(0xff263238);
+                }
             }
 
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, firstTimestamp - start);
@@ -256,10 +296,22 @@ public class ScreenState extends Generator{
             if (activeStates.size() == 1) {
                 View v = new View(context);
 
-                if (firstState != Display.STATE_OFF) {
-                    v.setBackgroundColor(0xff4CAF50);
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                    if (firstState == Display.STATE_ON) {
+                        v.setBackgroundColor(0xff4CAF50);
+                    } else if (firstState == Display.STATE_OFF) {
+                        v.setBackgroundColor(0xff263238);
+                    } else if (firstState == Display.STATE_DOZE) {
+                        v.setBackgroundColor(0xff3f51b5);
+                    } else if (firstState == Display.STATE_DOZE_SUSPEND) {
+                        v.setBackgroundColor(0xff3f51b5);
+                    }
                 } else {
-                    v.setBackgroundColor(0xff263238);
+                    if (firstState == 0x02) {
+                        v.setBackgroundColor(0xff4CAF50);
+                    } else if (firstState == 0x01) {
+                        v.setBackgroundColor(0xff263238);
+                    }
                 }
 
                 if (end > now) {
@@ -280,10 +332,22 @@ public class ScreenState extends Generator{
 
                     View v = new View(context);
 
-                    if (priorState != Display.STATE_OFF) {
-                        v.setBackgroundColor(0xff4CAF50);
+                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                        if (priorState == Display.STATE_ON) {
+                            v.setBackgroundColor(0xff4CAF50);
+                        } else if (priorState == Display.STATE_OFF) {
+                            v.setBackgroundColor(0xff263238);
+                        } else if (priorState == Display.STATE_DOZE) {
+                            v.setBackgroundColor(0xff3f51b5);
+                        } else if (priorState == Display.STATE_DOZE_SUSPEND) {
+                            v.setBackgroundColor(0xff3f51b5);
+                        }
                     } else {
-                        v.setBackgroundColor(0xff263238);
+                        if (priorState == 0x02) {
+                            v.setBackgroundColor(0xff4CAF50);
+                        } else if (priorState == 0x01) {
+                            v.setBackgroundColor(0xff263238);
+                        }
                     }
 
                     params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, currentTimestamp - priorTimestamp);
@@ -297,10 +361,14 @@ public class ScreenState extends Generator{
 
                 View v = new View(context);
 
-                if (finalState != Display.STATE_OFF) {
+                if (finalState == Display.STATE_ON) {
                     v.setBackgroundColor(0xff4CAF50);
-                } else {
+                } else if (finalState == Display.STATE_OFF) {
                     v.setBackgroundColor(0xff263238);
+                } else if (finalState == Display.STATE_DOZE) {
+                    v.setBackgroundColor(0xff3f51b5);
+                } else if (finalState == Display.STATE_DOZE_SUSPEND) {
+                    v.setBackgroundColor(0xff3f51b5);
                 }
 
                 if (end > now) {

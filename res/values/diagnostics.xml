@@ -3,5 +3,5 @@
     <string name="diagnostic_missing_msft_band_auth">Please grant the app sensor access on the Microsoft Band.</string>
     <string name="diagnostic_missing_location_permission">Please grant the app permission to access location services on this device.</string>
 
-
+    <string name="diagnostic_call_log_permission_required">Please grant the app permission to access the phone call logs on this device.</string>
 </resources>
