@@ -33,13 +33,15 @@ public abstract class Generator
         this.mContext = context.getApplicationContext();
     }
 
-    public static void start(Context context)
-    {
+    public static void start(Context context) {
         // Do nothing - override in subclasses...
     }
 
-    public static void stop(Context context)
-    {
+    public static void stop(Context context) {
+        // Do nothing - override in subclasses.
+    }
+
+    public static void broadcastLatestDataPoint(Context context) {
         // Do nothing - override in subclasses.
     }
 

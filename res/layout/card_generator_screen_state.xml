@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <android.support.v7.widget.CardView
+        android:id="@+id/card_view"
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        card_view:cardCornerRadius="4dp"
+        android:layout_margin="8dp">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <LinearLayout android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#607D8B"
+                android:padding="8dp"
+                android:baselineAligned="false">
+                <ImageView android:src="@drawable/ic_screen_state"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginRight="8dp" />
+                <TextView android:text="@string/generator_screen_state"
+                    android:gravity="center_vertical|start"
+                    android:layout_width="0dp"
+                    android:layout_height="24dp"
+                    android:layout_weight="1"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white" />
+                <TextView android:id="@+id/generator_data_point_date"
+                    android:gravity="center_vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/white"
+                    android:layout_marginRight="8dp"/>
+            </LinearLayout>
+            <LinearLayout android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp">
+                <LinearLayout android:orientation="vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="8dp">
+                    <TextView android:id="@+id/day_zero_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="24dp"
+                        android:paddingTop="2dp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+                    <TextView android:id="@+id/day_one_label"
+                        android:layout_width="wrap_content"
+                        android:paddingTop="2dp"
+                        android:layout_height="24dp"
+                        android:layout_marginBottom="8dp" />
+                    <TextView android:id="@+id/day_two_label"
+                        android:paddingTop="2dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="24dp" />
+                </LinearLayout>
+                <LinearLayout android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content">
+                    <LinearLayout android:id="@+id/day_zero_value"
+                        android:orientation="horizontal"
+                        android:background="#CFD8DC"
+                        android:layout_width="match_parent"
+                        android:layout_height="24dp"
+                        android:layout_marginBottom="8dp">
+                    </LinearLayout>
+                    <LinearLayout android:id="@+id/day_one_value"
+                        android:orientation="horizontal"
+                        android:background="#CFD8DC"
+                        android:layout_width="match_parent"
+                        android:layout_height="24dp"
+                        android:layout_marginBottom="8dp">
+                    </LinearLayout>
+                    <LinearLayout android:id="@+id/day_two_value"
+                        android:orientation="horizontal"
+                        android:background="#CFD8DC"
+                        android:layout_width="match_parent"
+                        android:layout_height="24dp"
+                        android:layout_marginBottom="8dp">
+                    </LinearLayout>
+                    <LinearLayout android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+                        <View android:layout_height="16dp"
+                            android:layout_width="16dp"
+                            android:layout_marginRight="4dp"
+                            android:background="@drawable/circle_screen_state_on" />
+                        <TextView android:text="@string/legend_screen_state_on_pdk"
+                            android:textSize="12sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="16dp" />
+                        <View android:layout_height="4px"
+                            android:layout_width="0dp"
+                            android:layout_weight="1" />
+                        <View android:layout_height="16dp"
+                            android:layout_width="16dp"
+                            android:layout_marginRight="4dp"
+                            android:background="@drawable/circle_screen_state_doze" />
+                        <TextView android:text="@string/legend_screen_state_doze_pdk"
+                            android:textSize="12sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="16dp" />
+                        <View android:layout_height="4px"
+                            android:layout_width="0dp"
+                            android:layout_weight="1" />
+                        <View android:layout_height="16dp"
+                            android:textSize="12sp"
+                            android:layout_width="16dp"
+                            android:layout_marginRight="4dp"
+                            android:background="@drawable/circle_screen_state_off" />
+                        <TextView android:text="@string/legend_screen_state_off_pdk"
+                            android:textSize="12sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="16dp" />
+                        <View android:layout_height="4px"
+                            android:layout_width="0dp"
+                            android:layout_weight="1" />
+                        <View android:layout_height="16dp"
+                            android:layout_width="16dp"
+                            android:layout_marginRight="4dp"
+                            android:background="@drawable/circle_screen_state_unknown" />
+                        <TextView android:text="@string/legend_screen_state_unknown_pdk"
+                            android:textSize="12sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="16dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </android.support.v7.widget.CardView>
+</LinearLayout>

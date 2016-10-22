@@ -57,6 +57,7 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
     public static final String CHARGING_ONLY = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.CHARGING_ONLY";
     public static final String USE_EXTERNAL_STORAGE = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.CHARGING_ONLY";
     private static final String STORAGE_FOLDER_NAME = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.STORAGE_FOLDER_NAME";
+    public static final String USER_AGENT_NAME = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.USER_AGENT_NAME";
 
     private static final String ERROR_FILE_EXTENSION = ".error";
     private static final String JSON_EXTENSION = ".json";
@@ -77,6 +78,7 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
     private boolean mChargingOnly = false;
     private boolean mUseExternalStorage = false;
     private String mFolderName = "http-transmitter";
+    private String mUserAgent = "http-transmitter";
 
     private JsonGenerator mJsonGenerator = null;
     private File mCurrentFile = null;
@@ -123,6 +125,10 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
 
         if (options.containsKey(HttpTransmitter.STORAGE_FOLDER_NAME)) {
             this.mFolderName = options.get(HttpTransmitter.STORAGE_FOLDER_NAME);
+        }
+
+        if (options.containsKey(HttpTransmitter.USER_AGENT_NAME)) {
+            this.mUserAgent = options.get(HttpTransmitter.USER_AGENT_NAME);
         }
 
         this.mContext = context.getApplicationContext();
@@ -308,15 +314,19 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
 
             builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, payload));
 
-            String version = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0).versionName;
-            String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
 
             RequestBody requestBody = builder.build();
 
+            if (this.mUserAgent == null) {
+                String version = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0).versionName;
+                String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
+
+                this.mUserAgent = appName + " " + version;
+            }
 
             Request request = new Request.Builder()
                     .removeHeader("User-Agent")
-                    .addHeader("User-Agent", appName + " " + version)
+                    .addHeader("User-Agent", this.mUserAgent)
                     .url(this.mUploadUri.toString())
                     .post(requestBody)
                     .build();
@@ -409,24 +419,25 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
 
     @Override
     public void onNewDataPoint(String identifier, Bundle data) {
-        if (data.containsKey(Generator.PDK_METADATA)) {
-            data.getBundle(Generator.PDK_METADATA).putString(Generator.SOURCE, this.mUserId);
-        }
-
-        if (this.mJsonGenerator == null)
-        {
-            this.mCurrentFile = new File(this.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
-
-            try {
-                JsonFactory factory = new JsonFactory();
-                this.mJsonGenerator = factory.createGenerator(this.mCurrentFile, JsonEncoding.UTF8);
-                this.mJsonGenerator.writeStartArray();
-            } catch (IOException e) {
-                Logger.getInstance(this.mContext).logThrowable(e);
+        if (data.keySet().size() > 1) {  // Only transmit non-empty bundles...
+            if (data.containsKey(Generator.PDK_METADATA)) {
+                data.getBundle(Generator.PDK_METADATA).putString(Generator.SOURCE, this.mUserId);
             }
-        }
 
-        HttpTransmitter.writeBundle(this.mContext, this.mJsonGenerator, data);
+            if (this.mJsonGenerator == null) {
+                this.mCurrentFile = new File(this.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
+
+                try {
+                    JsonFactory factory = new JsonFactory();
+                    this.mJsonGenerator = factory.createGenerator(this.mCurrentFile, JsonEncoding.UTF8);
+                    this.mJsonGenerator.writeStartArray();
+                } catch (IOException e) {
+                    Logger.getInstance(this.mContext).logThrowable(e);
+                }
+            }
+
+            HttpTransmitter.writeBundle(this.mContext, this.mJsonGenerator, data);
+        }
     }
 
     public static Map<String, Object> getValues(Context context, final Bundle bundle) {

@@ -1,6 +1,8 @@
 <resources>
     <string-array name="pdk_available_generators">
         <item>com.audacious_software.passive_data_kit.generators.device.Location</item>
+        <item>com.audacious_software.passive_data_kit.generators.device.ScreenState</item>
+        <item>com.audacious_software.passive_data_kit.generators.communication.PhoneCalls</item>
         <item>com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand</item>
         <item>com.audacious_software.passive_data_kit.generators.services.GoogleAwareness</item>
     </string-array>
@@ -40,4 +42,25 @@
     <!-- Location Resources -->
     <string name="generator_location">Device Location</string>
     <string name="generator_location_value">Coordinates: %1$.4f, %2$.4f</string>
+
+    <!-- Screen State Resources -->
+    <string name="generator_screen_state">Screen State</string>
+
+    <!-- Phone Call Resources -->
+    <string name="generator_phone_calls">Phone Calls</string>
+    <string name="generator_phone_calls_incoming_label">Incoming</string>
+    <string name="generator_phone_calls_outgoing_label">Outgoing</string>
+    <string name="generator_phone_calls_missed_label">Missed</string>
+    <string name="generator_phone_calls_other_label">Other</string>
+
+    <color name="generator_phone_call_incoming">#3F51B5</color>
+    <color name="generator_phone_call_outgoing">#4CAF50</color>
+    <color name="generator_phone_call_missed">#F44336</color>
+    <color name="generator_phone_call_other">#9E9E9E</color>
+
+    <string name="generator_phone_calls_latest_call_label">Latest Call</string>
+    <string name="generator_phone_calls_duration_label">Duration</string>
+    <string name="generator_phone_calls_direction_label">Direction</string>
+    <string name="generator_phone_calls_duration_format">%1$.2f min.</string>
+
 </resources>
