@@ -51,6 +51,8 @@ public class Generators {
             for (String className : this.mGenerators)
             {
                 try {
+                    Log.e("PDK", "TRYING " + className);
+
                     Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
 
                     Method isEnabled = probeClass.getDeclaredMethod("isEnabled", Context.class);
@@ -64,12 +66,16 @@ public class Generators {
                         this.stopGenerator(className);
                     }
                 } catch (ClassNotFoundException e) {
+                    Log.e("PDK", "ClassNotFoundException " + className);
                     Logger.getInstance(this.mContext).logThrowable(e);
                 } catch (NoSuchMethodException e) {
+                    Log.e("PDK", "NoSuchMethodException " + className);
                     Logger.getInstance(this.mContext).logThrowable(e);
                 } catch (InvocationTargetException e) {
+                    Log.e("PDK", "InvocationTargetException " + className);
                     Logger.getInstance(this.mContext).logThrowable(e);
                 } catch (IllegalAccessException e) {
+                    Log.e("PDK", "IllegalAccessException " + className);
                     Logger.getInstance(this.mContext).logThrowable(e);
                 }
             }
