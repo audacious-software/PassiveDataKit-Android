@@ -282,10 +282,9 @@ public class PhoneCalls extends Generator {
                     e.putLong(PhoneCalls.LAST_MISSED_COUNT, totalMissed);
                     e.putLong(PhoneCalls.LAST_TOTAL_COUNT, total);
 
+                    e.putLong(PhoneCalls.LAST_SAMPLE, now);
+                    e.apply();
                 }
-
-                e.putLong(PhoneCalls.LAST_SAMPLE, now);
-                e.apply();
 
                 long sampleInterval = prefs.getLong(PhoneCalls.SAMPLE_INTERVAL, PhoneCalls.SAMPLE_INTERVAL_DEFAULT);
 
@@ -389,9 +388,17 @@ public class PhoneCalls extends Generator {
 
         List<PieEntry> entries = new ArrayList<>();
 
-        entries.add(new PieEntry(totalIncoming, context.getString(R.string.generator_phone_calls_incoming_label)));
-        entries.add(new PieEntry(totalOutgoing, context.getString(R.string.generator_phone_calls_outgoing_label)));
-        entries.add(new PieEntry(totalMissed, context.getString(R.string.generator_phone_calls_missed_label)));
+        if (totalIncoming > 0) {
+            entries.add(new PieEntry(totalIncoming, context.getString(R.string.generator_phone_calls_incoming_label)));
+        }
+
+        if (totalOutgoing > 0) {
+            entries.add(new PieEntry(totalOutgoing, context.getString(R.string.generator_phone_calls_outgoing_label)));
+        }
+
+        if (totalMissed > 0) {
+            entries.add(new PieEntry(totalMissed, context.getString(R.string.generator_phone_calls_missed_label)));
+        }
 
         long other = total - (totalIncoming + totalOutgoing + totalMissed);
 
