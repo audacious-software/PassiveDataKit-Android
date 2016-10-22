@@ -7,7 +7,7 @@ before_install:
   - unzip gradle-2.14.1-bin.zip
   - export GRADLE_HOME=$PWD/gradle-2.14.1
   - export PATH=$GRADLE_HOME/bin:$PATH
-  - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-25
+  - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-25.0.0
 
 script:
   - gradle assembleDebug
