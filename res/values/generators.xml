@@ -4,6 +4,7 @@
         <item>com.audacious_software.passive_data_kit.generators.device.ScreenState</item>
         <item>com.audacious_software.passive_data_kit.generators.communication.PhoneCalls</item>
         <item>com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand</item>
+        <item>com.audacious_software.passive_data_kit.generators.services.GoogleAwareness</item>
     </string-array>
 
     <string-array name="pdk_app_generators"></string-array>
