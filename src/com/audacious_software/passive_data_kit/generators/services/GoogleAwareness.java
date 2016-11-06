@@ -174,6 +174,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.e("PDK", "GA onConnected");
+
         final GoogleAwareness me = this;
 
         Runnable r = new Runnable() {
