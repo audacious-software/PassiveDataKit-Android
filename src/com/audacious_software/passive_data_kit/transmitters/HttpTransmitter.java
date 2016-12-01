@@ -136,13 +136,20 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
         Generators.getInstance(this.mContext).addNewDataPointListener(this);
     }
 
-    private boolean shouldAttemptUpload() {
+    private boolean shouldAttemptUpload(boolean force) {
+        if (force) {
+            return true;
+        }
         if (this.mWifiOnly) {
-            return DeviceInformation.wifiAvailable(this.mContext);
+            if (DeviceInformation.wifiAvailable(this.mContext) == false) {
+                return false;
+            }
         }
 
         if (this.mChargingOnly) {
-            return DeviceInformation.isPluggedIn(this.mContext);
+            if (DeviceInformation.isPluggedIn(this.mContext) == false) {
+                return false;
+            }
         }
 
         return true;
@@ -156,7 +163,7 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
             this.mLastAttempt = 0;
         }
 
-        if (now - this.mLastAttempt < this.mUploadInterval || !this.shouldAttemptUpload()) {
+        if (now - this.mLastAttempt < this.mUploadInterval || !this.shouldAttemptUpload(force)) {
             return;
         }
 
@@ -313,7 +320,6 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
             }
 
             builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, payload));
-
 
             RequestBody requestBody = builder.build();
 
@@ -589,6 +595,10 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
         catch (IOException e) {
             Logger.getInstance(context).logThrowable(e);
         }
+    }
+
+    public void setUserId(String userId) {
+        this.mUserId = userId;
     }
 
     public static class IncompleteConfigurationException extends RuntimeException {
