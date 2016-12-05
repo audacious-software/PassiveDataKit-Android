@@ -240,6 +240,33 @@ public class Generators {
         }
     }
 
+    public Generator getGenerator(String className) {
+        Log.e("BB", "GENERATOR FIND START");
+        for (String name : this.mActiveGenerators) {
+            Log.e("BB", "GENERATOR NAME: " + name);
+        }
+        Log.e("BB", "GENERATOR FIND END");
+
+        if (this.mActiveGenerators.contains(className)) {
+            try {
+                Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
+
+                Method getInstance = probeClass.getDeclaredMethod("getInstance", Context.class);
+                return (Generator) getInstance.invoke(null, this.mContext);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
     private static class GeneratorsHolder {
         public static Generators instance = new Generators();
     }

@@ -73,8 +73,11 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static Location sInstance = null;
     private GoogleApiClient mGoogleApiClient = null;
     private android.location.Location mLastLocation = null;
+    private long mUpdateInterval = 60000;
 
     public static Location getInstance(Context context) {
+        Log.e("BB", "SHARED LOCATION INSTANCE: " + Location.sInstance);
+
         if (Location.sInstance == null) {
             Location.sInstance = new Location(context.getApplicationContext());
         }
@@ -114,7 +117,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                         me.mGoogleApiClient = builder.build();
                         me.mGoogleApiClient.connect();
                     }
-
                 }
                 else
                 {
@@ -128,6 +130,13 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         t.start();
 
         Generators.getInstance(this.mContext).registerCustomViewClass(Location.GENERATOR_IDENTIFIER, Location.class);
+    }
+
+    private void stopGenerator() {
+        if (this.mGoogleApiClient != null) {
+            this.mGoogleApiClient.disconnect();
+            this.mGoogleApiClient = null;
+        }
     }
 
     public static boolean useGoogleLocationServices(Context context) {
@@ -206,13 +215,15 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return actions;
     }
 
-
     @Override
     public void onConnected(Bundle bundle) {
         final LocationRequest request = new LocationRequest();
         request.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
-        request.setInterval(60000);
+        Log.e("BB", "USING INTERVAL: " + this.mUpdateInterval);
+
+        request.setFastestInterval(this.mUpdateInterval);
+        request.setInterval(this.mUpdateInterval);
 
         if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected()) {
             if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -223,6 +234,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     @Override
     public void onConnectionSuspended(int i) {
+        Log.e("BB", "DISCONNECTING");
+
         if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected())
             LocationServices.FusedLocationApi.removeLocationUpdates(this.mGoogleApiClient, this);
     }
@@ -238,6 +251,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             return;
 
         long now = System.currentTimeMillis();
+
+        Log.e("BB", "LOCATION UPDATE");
 
         Bundle bundle = new Bundle();
 
@@ -380,7 +395,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         android.location.Location last = null;
 
-        if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+        if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
             Log.e("FC", "LOCATION PERMISSIONS GRANTED...");
@@ -401,5 +416,12 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     public static void broadcastLatestDataPoint(Context context) {
         Generators.getInstance(context).transmitData(Location.GENERATOR_IDENTIFIER, new Bundle());
+    }
+
+    public void setUpdateInterval(long interval) {
+        this.mUpdateInterval = interval;
+
+        this.stopGenerator();
+        this.startGenerator();
     }
 }
