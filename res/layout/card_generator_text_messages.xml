@@ -18,14 +18,14 @@
             <LinearLayout android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#FF9800"
+                android:background="#9C27B0"
                 android:padding="8dp"
                 android:baselineAligned="false">
-                <ImageView android:src="@drawable/ic_phone_calls"
+                <ImageView android:src="@drawable/ic_text_messages"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginRight="8dp" />
-                <TextView android:text="@string/generator_phone_calls"
+                <TextView android:text="@string/generator_text_messages"
                     android:gravity="center_vertical|start"
                     android:layout_width="0dp"
                     android:layout_height="24dp"
@@ -47,7 +47,7 @@
                 android:layout_height="wrap_content"
                 android:padding="8dp">
                 <com.github.mikephil.charting.charts.PieChart
-                    android:id="@+id/chart_phone_calls"
+                    android:id="@+id/chart_text_messages"
                     android:layout_width="120dp"
                     android:layout_height="120dp"
                     android:layout_marginRight="16dp"/>
@@ -64,8 +64,8 @@
                         <View android:layout_width="16dp"
                             android:layout_marginRight="4dp"
                             android:layout_height="16dp"
-                            android:background="@color/generator_phone_call_incoming" />
-                        <TextView android:text="@string/generator_phone_calls_incoming_label"
+                            android:background="@color/generator_text_messages_incoming" />
+                        <TextView android:text="@string/generator_text_messages_incoming_label"
                             android:layout_width="wrap_content"
                             android:textSize="12sp"
                             android:layout_height="16dp" />
@@ -77,33 +77,8 @@
                         <View android:layout_width="16dp"
                             android:layout_marginRight="4dp"
                             android:layout_height="16dp"
-                            android:background="@color/generator_phone_call_outgoing" />
-                        <TextView android:text="@string/generator_phone_calls_outgoing_label"
-                            android:layout_width="wrap_content"
-                            android:textSize="12sp"
-                            android:layout_height="16dp" />
-                    </LinearLayout>
-                    <LinearLayout android:orientation="horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp">
-                        <View android:layout_width="16dp"
-                            android:layout_marginRight="4dp"
-                            android:layout_height="16dp"
-                            android:background="@color/generator_phone_call_missed" />
-                        <TextView android:text="@string/generator_phone_calls_missed_label"
-                            android:layout_width="wrap_content"
-                            android:textSize="12sp"
-                            android:layout_height="16dp" />
-                    </LinearLayout>
-                    <LinearLayout android:orientation="horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-                        <View android:layout_width="16dp"
-                            android:layout_marginRight="4dp"
-                            android:layout_height="16dp"
-                            android:background="@color/generator_phone_call_other" />
-                        <TextView android:text="@string/generator_phone_calls_other_label"
+                            android:background="@color/generator_text_messages_outgoing" />
+                        <TextView android:text="@string/generator_text_messages_outgoing_label"
                             android:layout_width="wrap_content"
                             android:textSize="12sp"
                             android:layout_height="16dp" />
@@ -116,30 +91,27 @@
                     android:layout_width="0dp"
                     android:layout_weight="1"
                     android:layout_height="wrap_content">
-                    <TextView android:text="@string/generator_phone_calls_latest_call_label"
+                    <TextView android:text="@string/generator_text_messages_latest_text_message_label"
                         android:textStyle="bold"
                         android:textSize="12sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
-                    <TextView android:id="@+id/field_latest_call"
+                    <TextView android:id="@+id/field_latest_text_message"
                         android:textSize="13sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"/>
-
-
-                    <TextView android:text="@string/generator_phone_calls_duration_label"
+                    <TextView android:text="@string/generator_text_messages_length_label"
                         android:textStyle="bold"
                         android:textSize="12sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
-                    <TextView android:id="@+id/field_duration"
+                    <TextView android:id="@+id/field_length"
                         android:textSize="13sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"/>
-
-                    <TextView android:text="@string/generator_phone_calls_direction_label"
+                    <TextView android:text="@string/generator_text_messages_direction_label"
                         android:textStyle="bold"
                         android:textSize="12sp"
                         android:layout_width="match_parent"
@@ -152,7 +124,7 @@
                 </LinearLayout>
             </LinearLayout>
             <TextView android:id="@+id/card_empty"
-                android:text="@string/message_generator_phone_calls_empty"
+                android:text="@string/message_generator_text_messages_empty"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"

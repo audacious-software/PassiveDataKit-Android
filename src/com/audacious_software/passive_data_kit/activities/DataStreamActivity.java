@@ -20,7 +20,7 @@ import com.audacious_software.pdk.passivedatakit.R;
 
 import java.util.ArrayList;
 
-public class DataStreamActivity extends AppCompatActivity implements Generators.NewDataPointListener {
+public class DataStreamActivity extends AppCompatActivity implements Generators.GeneratorUpdatedListener {
     private DataPointsAdapter mAdapter = null;
 
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +30,7 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
         this.getSupportActionBar().setSubtitle(this.getResources().getQuantityString(R.plurals.activity_data_stream_subtitle, 0, 0));
 
         this.mAdapter = new DataPointsAdapter();
+        this.mAdapter.setContext(this.getApplicationContext());
 
         RecyclerView listView = (RecyclerView) this.findViewById(R.id.list_view);
 
@@ -41,20 +42,7 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
     protected void onResume() {
         super.onResume();
 
-        Generators.getInstance(this).addNewDataPointListener(this);
-
-        Generators.getInstance(this).broadcastLatestDataPoints();
-    }
-
-    protected void onPause() {
-        super.onPause();
-
-        Generators.getInstance(this).removeNewDataPointListener(this);
-    }
-
-    @Override
-    public void onNewDataPoint(String identifier, Bundle data) {
-        this.mAdapter.updateDataPoint(identifier, data);
+        Generators.getInstance(this).addNewGeneratorUpdatedListener(this);
 
         final int count = this.mAdapter.getItemCount();
 
@@ -68,5 +56,35 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
                 me.getSupportActionBar().setSubtitle(me.getResources().getQuantityString(R.plurals.activity_data_stream_subtitle, count, count));
             }
         });
+    }
+
+    protected void onPause() {
+        super.onPause();
+
+        Generators.getInstance(this).removeGeneratorUpdatedListener(this);
+    }
+
+    @Override
+    public void onGeneratorUpdated(String identifier, Bundle data) {
+        Log.e("PDK", "GOT GENERATOR UPDATE: " + identifier + " -- " + data);
+
+        this.mAdapter.notifyDataSetChanged();
+
+        final int count = this.mAdapter.getItemCount();
+
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+
+        final DataStreamActivity me = this;
+
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                me.getSupportActionBar().setSubtitle(me.getResources().getQuantityString(R.plurals.activity_data_stream_subtitle, count, count));
+            }
+        });
+
+//        RecyclerView listView = (RecyclerView) this.findViewById(R.id.list_view);
+//        listView.setAdapter(this.mAdapter);
+//        listView.invalidate();
     }
 }

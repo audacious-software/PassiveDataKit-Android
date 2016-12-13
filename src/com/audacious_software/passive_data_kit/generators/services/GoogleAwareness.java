@@ -28,6 +28,7 @@ import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by cjkarr on 6/28/2016.
@@ -218,5 +219,10 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.e("PDK", "GA onConnectionFailed");
         this.mGoogleApiClient = null;
+    }
+
+    @Override
+    public List<Bundle> fetchPayloads() {
+        return new ArrayList<>();
     }
 }

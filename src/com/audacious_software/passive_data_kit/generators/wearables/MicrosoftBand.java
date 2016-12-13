@@ -65,6 +65,7 @@ import com.microsoft.band.sensors.UVIndexLevel;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 @SuppressWarnings("unused")
 public class MicrosoftBand extends Generator
@@ -543,7 +544,7 @@ public class MicrosoftBand extends Generator
             this.mHeartRateVariabilityDataPoints.clear();
         }
 
-        Generators.getInstance(this.mContext).transmitData(MicrosoftBand.GENERATOR_IDENTIFIER, bundle);
+//        Generators.getInstance(this.mContext).transmitData(MicrosoftBand.GENERATOR_IDENTIFIER, bundle);
     }
 
     public static ArrayList<DiagnosticAction> diagnostics(Context context)
@@ -1428,5 +1429,10 @@ public class MicrosoftBand extends Generator
         } else {
             uvLevel.setText(context.getString(R.string.generator_value_not_applicable));
         }
+    }
+
+    @Override
+    public List<Bundle> fetchPayloads() {
+        return new ArrayList<>();
     }
 }

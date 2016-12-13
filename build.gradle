@@ -6,7 +6,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.2'
+        classpath 'com.android.tools.build:gradle:2.2.3'
     }
 }
 
@@ -17,7 +17,7 @@ repositories {
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25"
+    buildToolsVersion "25.0.2"
 
     useLibrary 'org.apache.http.legacy'
 
@@ -53,6 +53,7 @@ android {
         compile 'com.google.android.gms:play-services-nearby:10.0.1'
         compile 'com.google.android.gms:play-services-places:10.0.1'
         compile 'com.google.android.gms:play-services-awareness:10.0.1'
+        compile 'com.google.maps.android:android-maps-utils:0.4'
         compile 'com.squareup.okhttp3:okhttp:3.2.0'
         compile 'commons-io:commons-io:2.4'
         compile 'commons-codec:commons-codec:1.10'

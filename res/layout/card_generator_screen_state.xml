@@ -41,7 +41,8 @@
                     android:textColor="@android:color/white"
                     android:layout_marginRight="8dp"/>
             </LinearLayout>
-            <LinearLayout android:orientation="horizontal"
+            <LinearLayout android:id="@+id/card_content"
+                android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="8dp">
@@ -138,6 +139,12 @@
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
+            <TextView android:id="@+id/card_empty"
+                android:text="@string/message_generator_screen_state_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="16dp" />
         </LinearLayout>
     </android.support.v7.widget.CardView>
 </LinearLayout>
