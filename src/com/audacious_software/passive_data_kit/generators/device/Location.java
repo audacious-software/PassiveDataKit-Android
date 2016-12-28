@@ -1,25 +1,35 @@
 package com.audacious_software.passive_data_kit.generators.device;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.widget.SwitchCompat;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.DeviceInformation;
+import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
 import com.audacious_software.passive_data_kit.activities.generators.RequestPermissionActivity;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
@@ -35,16 +45,20 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.maps.android.ui.IconGenerator;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("unused")
 public class Location extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-location";
+    private static final String DATABASE_PATH = "pdk-location.sqlite";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.Location.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
@@ -61,18 +75,27 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final String BEARING_KEY = "bearing";
     private static final String SPEED_KEY = "speed";
     private static final String EXTRAS_KEY = "extras";
-
-    private static final String LAST_KNOWN_LATITUDE = "com.audacious_software.passive_data_kit.generators.device.Location.LAST_KNOWN_LATITUDE";
-    private static final float LAST_KNOWN_LATITUDE_DEFAULT = 0;
-
-    private static final String LAST_KNOWN_LONGITUDE = "com.audacious_software.passive_data_kit.generators.device.Location.LAST_KNOWN_LONGITUDE";
-    private static final float LAST_KNOWN_LONGITUDE_DEFAULT = 0;
-
-    private static final String LAST_KNOWN_TIMESTAMP = "com.audacious_software.passive_data_kit.generators.device.Location.LAST_KNOWN_TIMESTAMP";;
+    private static final String SETTING_DISPLAY_HYBRID_MAP = "com.audacious_software.passive_data_kit.generators.device.Location.SETTING_DISPLAY_HYBRID_MAP";
+    private static final boolean SETTING_DISPLAY_HYBRID_MAP_DEFAULT = true;
 
     private static Location sInstance = null;
     private GoogleApiClient mGoogleApiClient = null;
     private android.location.Location mLastLocation = null;
+    private long mUpdateInterval = 60000;
+
+    private SQLiteDatabase mDatabase = null;
+    private static int DATABASE_VERSION = 1;
+
+    private static final String TABLE_HISTORY = "history";
+    private static final String HISTORY_OBSERVED = "observed";
+    private static final String HISTORY_LATITUDE = "latitude";
+    private static final String HISTORY_LONGITUDE = "longitude";
+    private static final String HISTORY_ALTITUDE = "altitude";
+    private static final String HISTORY_BEARING = "bearing";
+    private static final String HISTORY_SPEED = "speed";
+    private static final String HISTORY_PROVIDER = "provider";
+    private static final String HISTORY_LOCATION_TIMESTAMP = "location_timestamp";
+    private static final String HISTORY_ACCURACY = "accuracy";
 
     public static Location getInstance(Context context) {
         if (Location.sInstance == null) {
@@ -114,7 +137,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                         me.mGoogleApiClient = builder.build();
                         me.mGoogleApiClient.connect();
                     }
-
                 }
                 else
                 {
@@ -128,6 +150,31 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         t.start();
 
         Generators.getInstance(this.mContext).registerCustomViewClass(Location.GENERATOR_IDENTIFIER, Location.class);
+
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, Location.DATABASE_PATH);
+
+        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+
+        int version = this.getDatabaseVersion(this.mDatabase);
+
+        switch (version) {
+            case 0:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_location_create_history_table));
+        }
+
+        this.setDatabaseVersion(this.mDatabase, Location.DATABASE_VERSION);
+    }
+
+    private void stopGenerator() {
+        if (this.mGoogleApiClient != null) {
+            this.mGoogleApiClient.disconnect();
+            this.mGoogleApiClient = null;
+        }
+
+        this.mDatabase.close();
+        this.mDatabase = null;
     }
 
     public static boolean useGoogleLocationServices(Context context) {
@@ -206,13 +253,13 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return actions;
     }
 
-
     @Override
     public void onConnected(Bundle bundle) {
         final LocationRequest request = new LocationRequest();
         request.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
-        request.setInterval(60000);
+        request.setFastestInterval(this.mUpdateInterval);
+        request.setInterval(this.mUpdateInterval);
 
         if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected()) {
             if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -239,78 +286,103 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         long now = System.currentTimeMillis();
 
-        Bundle bundle = new Bundle();
+        ContentValues values = new ContentValues();
+        values.put(Location.HISTORY_OBSERVED, System.currentTimeMillis());
+        values.put(Location.HISTORY_LATITUDE, location.getLatitude());
+        values.put(Location.HISTORY_LONGITUDE, location.getLongitude());
+        values.put(Location.HISTORY_PROVIDER, location.getProvider());
+        values.put(Location.HISTORY_LOCATION_TIMESTAMP, location.getTime());
 
-        bundle.putDouble(Location.LATITUDE_KEY, location.getLatitude());
-        bundle.putDouble(Location.LONGITUDE_KEY, location.getLongitude());
-        bundle.putDouble(Location.FIX_TIMESTAMP_KEY, ((double) location.getTime()) / 1000);
-        bundle.putString(Location.PROVIDER_KEY, location.getProvider());
+        Bundle updated = new Bundle();
+        updated.putLong(Location.HISTORY_OBSERVED, System.currentTimeMillis());
+        updated.putDouble(Location.HISTORY_LATITUDE, location.getLatitude());
+        updated.putDouble(Location.HISTORY_LONGITUDE, location.getLongitude());
+        updated.putString(Location.HISTORY_PROVIDER, location.getProvider());
+        updated.putLong(Location.HISTORY_LOCATION_TIMESTAMP, location.getTime());
 
-        this.mLastLocation = location;
+        Bundle metadata = new Bundle();
+        metadata.putDouble(Generator.LATITUDE, location.getLatitude());
+        metadata.putDouble(Generator.LONGITUDE, location.getLongitude());
 
-        if (location.hasAccuracy()) {
-            bundle.putFloat(Location.ACCURACY_KEY, location.getAccuracy());
-        }
+        updated.putBundle(Generator.PDK_METADATA, metadata);
 
         if (location.hasAltitude()) {
-            bundle.putDouble(Location.ALTITUDE_KEY, location.getAltitude());
+            values.put(Location.HISTORY_ALTITUDE, location.getAltitude());
+            updated.putDouble(Location.HISTORY_ALTITUDE, location.getAltitude());
         }
 
         if (location.hasBearing()) {
-            bundle.putFloat(Location.BEARING_KEY, location.getBearing());
+            values.put(Location.HISTORY_BEARING, location.getBearing());
+            updated.putDouble(Location.HISTORY_BEARING, location.getBearing());
         }
 
         if (location.hasSpeed()) {
-            bundle.putFloat(Location.SPEED_KEY, location.getSpeed());
+            values.put(Location.HISTORY_SPEED, location.getBearing());
+            updated.putDouble(Location.HISTORY_SPEED, location.getBearing());
         }
 
-        Bundle extras = location.getExtras();
-
-        if (extras != null) {
-            bundle.putBundle(Location.EXTRAS_KEY, extras);
+        if (location.hasAccuracy()) {
+            values.put(Location.HISTORY_ACCURACY, location.getAccuracy());
+            updated.putDouble(Location.HISTORY_ACCURACY, location.getAccuracy());
         }
 
-        Generators.getInstance(this.mContext).transmitData(Location.GENERATOR_IDENTIFIER, bundle);
+        this.mDatabase.insert(Location.TABLE_HISTORY, null, values);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-        SharedPreferences.Editor e = prefs.edit();
-
-        e.putFloat(Location.LAST_KNOWN_LATITUDE, (float) location.getLatitude());
-        e.putFloat(Location.LAST_KNOWN_LONGITUDE, (float) location.getLongitude());
-        e.putLong(Location.LAST_KNOWN_TIMESTAMP, System.currentTimeMillis());
-
-        e.apply();
+        Generators.getInstance(this.mContext).notifyGeneratorUpdated(Location.GENERATOR_IDENTIFIER, updated);
     }
 
-    public static void bindViewHolder(DataPointViewHolder holder, final Bundle dataPoint) {
-        Log.e("PDK", "DRAWING LOCATION: " + dataPoint);
+    public static long latestPointGenerated(Context context) {
+        long timestamp = 0;
 
-        final Context context = holder.itemView.getContext();
+        Location me = Location.getInstance(context);
 
-        String identifier = dataPoint.getBundle(Generator.PDK_METADATA).getString(Generator.IDENTIFIER);
+        Cursor c = me.mDatabase.query(Location.TABLE_HISTORY, null, null, null, null, null, Location.HISTORY_OBSERVED + " DESC");
 
-        double timestamp = dataPoint.getBundle(Generator.PDK_METADATA).getDouble(Generator.TIMESTAMP);
-
-        double latitude = Location.LAST_KNOWN_LATITUDE_DEFAULT;
-        double longitude = Location.LAST_KNOWN_LONGITUDE_DEFAULT;
-
-        if (dataPoint.containsKey(Location.LATITUDE_KEY) && dataPoint.containsKey(Location.LONGITUDE_KEY)) {
-            latitude = dataPoint.getDouble(Location.LATITUDE_KEY);
-            longitude = dataPoint.getDouble(Location.LONGITUDE_KEY);
-        } else { // Empty point - retrieve last known location...
-            Log.e("PDK", "FETCHING LAST KNOWN LOCATION...");
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-
-            latitude = prefs.getFloat(Location.LAST_KNOWN_LATITUDE, Location.LAST_KNOWN_LATITUDE_DEFAULT);
-            longitude = prefs.getFloat(Location.LAST_KNOWN_LONGITUDE, Location.LAST_KNOWN_LONGITUDE_DEFAULT);
-            timestamp = ((double) prefs.getLong(Location.LAST_KNOWN_TIMESTAMP, System.currentTimeMillis())) / 1000 ;
+        if (c.moveToNext()) {
+            timestamp = c.getLong(c.getColumnIndex(Location.HISTORY_OBSERVED));
         }
 
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
-        dateLabel.setText(Generator.formatTimestamp(context, timestamp));
+        c.close();
 
-        final double finalLatitude = latitude;
-        final double finalLongitude = longitude;
+        return timestamp;
+    }
+
+    public static void bindViewHolder(DataPointViewHolder holder) {
+        final Context context = holder.itemView.getContext();
+
+        Location me = Location.getInstance(context);
+
+        double lastLatitude = 0.0;
+        double lastLongitude = 0.0;
+        long timestamp = 0;
+
+        final List<LatLng> locations = new ArrayList<>();
+
+        String where = Location.HISTORY_OBSERVED + " > ?";
+        String[] args = { "" + (System.currentTimeMillis() - (1000 * 60 * 60 * 24)) };
+
+        Cursor c = me.mDatabase.query(Location.TABLE_HISTORY, null, where, args, null, null, Location.HISTORY_OBSERVED);
+
+        while (c.moveToNext()) {
+            lastLatitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LATITUDE));
+            lastLongitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LONGITUDE));
+            timestamp = c.getLong(c.getColumnIndex(Location.HISTORY_OBSERVED));
+
+            LatLng location = new LatLng(lastLatitude, lastLongitude);
+
+            locations.add(location);
+        }
+
+        c.close();
+
+        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000));
+
+        final double finalLatitude = lastLatitude;
+        final double finalLongitude = lastLongitude;
+
+        final DisplayMetrics metrics = new DisplayMetrics();
+        ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
         if (Location.useKindleLocationServices())
         {
@@ -322,24 +394,93 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             final MapView mapView = (MapView) holder.itemView.findViewById(R.id.map_view);
             mapView.onCreate(null);
 
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+            final boolean useHybrid = prefs.getBoolean(Location.SETTING_DISPLAY_HYBRID_MAP, Location.SETTING_DISPLAY_HYBRID_MAP_DEFAULT);
+
+            SwitchCompat hybridSwitch = (SwitchCompat) holder.itemView.findViewById(R.id.pdk_google_location_map_type_hybrid);
+            hybridSwitch.setChecked(useHybrid);
+
+            hybridSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, final boolean checked) {
+                    SharedPreferences.Editor e = prefs.edit();
+                    e.putBoolean(Location.SETTING_DISPLAY_HYBRID_MAP, checked);
+                    e.apply();
+
+                    mapView.getMapAsync(new OnMapReadyCallback() {
+                        public void onMapReady(GoogleMap googleMap) {
+                            if (checked) {
+                                googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                            } else {
+                                googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                            }
+                        }
+                    });
+                }
+            });
+
+            ColorStateList buttonStates = new ColorStateList(
+                    new int[][]{
+                            new int[]{android.R.attr.state_checked},
+                            new int[]{-android.R.attr.state_enabled},
+                            new int[]{}
+                    },
+                    new int[]{
+                            0xfff1f1f1,
+                            0x1c000000,
+                            0xff33691E
+                    }
+            );
+
+            DrawableCompat.setTintList(hybridSwitch.getThumbDrawable(), buttonStates);
+
+            IconGenerator iconGen = new IconGenerator(context);
+
+            Drawable shapeDrawable = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_location_heatmap_marker, null);
+            iconGen.setBackground(shapeDrawable);
+
+            View view = new View(context);
+            view.setLayoutParams(new ViewGroup.LayoutParams(8, 8));
+            iconGen.setContentView(view);
+
+            final Bitmap bitmap = iconGen.makeIcon();
+
             mapView.getMapAsync(new OnMapReadyCallback() {
                 public void onMapReady(GoogleMap googleMap) {
-                    googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-                    googleMap.getUiSettings().setZoomControlsEnabled(false);
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        googleMap.setMyLocationEnabled(true);
+                    }
+
+                    if (useHybrid) {
+                        googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                    } else {
+                        googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                    }
+
+                    googleMap.getUiSettings().setZoomControlsEnabled(true);
                     googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+                    googleMap.getUiSettings().setMapToolbarEnabled(false);
+                    googleMap.getUiSettings().setAllGesturesEnabled(false);
 
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(finalLatitude, finalLongitude), 14));
+                    LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
-                    googleMap.addMarker(new MarkerOptions()
-                            .position(new LatLng(finalLatitude, finalLongitude)));
-//                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_none)));
+                    for (LatLng latlng : locations) {
+                        builder.include(latlng);
+                    }
+
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
 
                     DisplayMetrics metrics = context.getResources().getDisplayMetrics();
 
-                    googleMap.setPadding(0, 0, 0, (int) (32 * metrics.density));
+                    for (LatLng latLng : locations) {
+                        googleMap.addMarker(new MarkerOptions()
+                                .position(latLng)
+                                .icon(BitmapDescriptorFactory.fromBitmap(bitmap)));
+                    }
 
-                    UiSettings settings = googleMap.getUiSettings();
-                    settings.setMapToolbarEnabled(false);
+                    mapView.onResume();
                 }
             });
         }
@@ -348,9 +489,11 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             // TODO
             throw new RuntimeException("Throw rocks at developer to implement generic location support.");
         }
+    }
 
-        TextView description = (TextView) holder.itemView.findViewById(R.id.generator_location_description);
-        description.setText(context.getResources().getString(R.string.generator_location_value, latitude, longitude));
+    @Override
+    public List<Bundle> fetchPayloads() {
+        return new ArrayList<Bundle>();
     }
 
     public static View fetchView(ViewGroup parent)
@@ -380,26 +523,23 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         android.location.Location last = null;
 
-        if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+        if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-            Log.e("FC", "LOCATION PERMISSIONS GRANTED...");
 
             last = locations.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-            Log.e("FC", "GPS: " + last);
-
             if (last == null) {
                 last = locations.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-                Log.e("FC", "NETWORK: " + last);
             }
         }
 
         return last;
     }
 
-    public static void broadcastLatestDataPoint(Context context) {
-        Generators.getInstance(context).transmitData(Location.GENERATOR_IDENTIFIER, new Bundle());
+    public void setUpdateInterval(long interval) {
+        this.mUpdateInterval = interval;
+
+        this.stopGenerator();
+        this.startGenerator();
     }
 }
