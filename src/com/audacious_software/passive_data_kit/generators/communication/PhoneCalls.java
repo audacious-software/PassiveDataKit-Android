@@ -142,6 +142,7 @@ public class PhoneCalls extends Generator {
         final Runnable checkLogs = new Runnable() {
             @Override
             public void run() {
+                Log.e("PDK", "CHECK PHONE LOGS");
                 boolean approved = false;
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -365,7 +366,7 @@ public class PhoneCalls extends Generator {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED){
                 final Handler handler = new Handler(Looper.getMainLooper());
 
-                actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_call_log_permission_required), new Runnable() {
+                actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_call_log_permission_required_title), context.getString(R.string.diagnostic_call_log_permission_required), new Runnable() {
 
                     @Override
                     public void run() {

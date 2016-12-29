@@ -16,6 +16,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -119,6 +120,9 @@ public class TextMessages extends Generator {
         final Runnable checkLogs = new Runnable() {
             @Override
             public void run() {
+
+                Log.e("PDK", "CHECK TEXT LOGS");
+
                 boolean approved = false;
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -311,7 +315,7 @@ public class TextMessages extends Generator {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED){
                 final Handler handler = new Handler(Looper.getMainLooper());
 
-                actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_sms_log_permission_required), new Runnable() {
+                actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_sms_log_permission_required_title), context.getString(R.string.diagnostic_sms_log_permission_required), new Runnable() {
 
                     @Override
                     public void run() {

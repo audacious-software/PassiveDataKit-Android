@@ -19,13 +19,10 @@ import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.google.android.gms.awareness.Awareness;
-import com.google.android.gms.awareness.snapshot.DetectedActivityResult;
 import com.google.android.gms.awareness.snapshot.HeadphoneStateResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.location.ActivityRecognitionResult;
-import com.google.android.gms.location.DetectedActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,7 +103,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
             int permissionCheck = ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION);
 
             if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-                actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_location_permission), new Runnable() {
+                actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_location_permission_title), me.mContext.getString(R.string.diagnostic_missing_location_permission), new Runnable() {
                     @Override
                     public void run() {
                         handler.post(new Runnable() {
@@ -130,7 +127,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
             if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
                 Log.e("PDK", "3.3");
-                actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_activity_recognition_permission), new Runnable() {
+                actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_activity_recognition_permission_title), me.mContext.getString(R.string.diagnostic_missing_activity_recognition_permission), new Runnable() {
                     @Override
                     public void run() {
                         handler.post(new Runnable() {

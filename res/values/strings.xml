@@ -15,5 +15,10 @@
     <string name="label_today_pdk">Today</string>
 
     <string name="label_never_pdk">Never</string>
+    <string name="action_diagnostics">Diagnostics</string>
+    <string name="action_diagnostics_incomplete">Diagnostics (%d)</string>
+    <string name="title_pdk_diagnostics">Diagnostics</string>
+
+    <string name="message_no_diagnostic_actions">The app is set up correctly.\n\nNo further actions are needed.</string>
 </resources>
 

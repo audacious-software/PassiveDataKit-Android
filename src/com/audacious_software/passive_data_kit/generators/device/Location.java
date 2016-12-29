@@ -22,6 +22,7 @@ import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.widget.SwitchCompat;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -230,7 +231,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             int permissionCheck = ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION);
 
             if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-                actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_location_permission), new Runnable() {
+                actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_location_permission_title), me.mContext.getString(R.string.diagnostic_missing_location_permission), new Runnable() {
 
                     @Override
                     public void run() {
@@ -281,6 +282,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     @Override
     public void onLocationChanged(android.location.Location location) {
+        Log.e("PDK", "LOCATION CHANGED");
+
         if (location == null)
             return;
 

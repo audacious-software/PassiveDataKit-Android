@@ -69,7 +69,6 @@
     <string name="generator_text_messages_length_format">%1$d chars.</string>
 
     <string name="message_generator_text_messages_empty">No text messages have been sent or received on this device.</string>
-    <string name="diagnostic_sms_log_permission_required">Please all the app permission to access your text messages to gather and report your messaging activity statistics.</string>
 
     <!-- Phone Call Resources -->
     <string name="generator_phone_calls">Phone Calls</string>

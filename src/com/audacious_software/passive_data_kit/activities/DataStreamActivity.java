@@ -66,25 +66,15 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
 
     @Override
     public void onGeneratorUpdated(String identifier, Bundle data) {
-        Log.e("PDK", "GOT GENERATOR UPDATE: " + identifier + " -- " + data);
-
-        this.mAdapter.notifyDataSetChanged();
-
-        final int count = this.mAdapter.getItemCount();
-
-        Handler mainHandler = new Handler(Looper.getMainLooper());
-
         final DataStreamActivity me = this;
 
-        mainHandler.post(new Runnable() {
+        this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                me.mAdapter.notifyDataSetChanged();
+                int count = me.mAdapter.getItemCount();
                 me.getSupportActionBar().setSubtitle(me.getResources().getQuantityString(R.plurals.activity_data_stream_subtitle, count, count));
             }
         });
-
-//        RecyclerView listView = (RecyclerView) this.findViewById(R.id.list_view);
-//        listView.setAdapter(this.mAdapter);
-//        listView.invalidate();
     }
 }
