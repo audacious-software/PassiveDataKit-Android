@@ -379,7 +379,12 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         c.close();
 
         TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
-        dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000));
+
+        if (timestamp > 0) {
+            dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000));
+        } else {
+            dateLabel.setText(R.string.label_never_pdk);
+        }
 
         final double finalLatitude = lastLatitude;
         final double finalLongitude = lastLongitude;
@@ -473,7 +478,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                         builder.include(latlng);
                     }
 
-                    googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
+                    if (locations.size() > 0) {
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
+                    }
 
                     DisplayMetrics metrics = context.getResources().getDisplayMetrics();
 
