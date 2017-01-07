@@ -65,6 +65,7 @@ import com.microsoft.band.sensors.UVIndexLevel;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 @SuppressWarnings("unused")
 public class MicrosoftBand extends Generator
@@ -543,7 +544,7 @@ public class MicrosoftBand extends Generator
             this.mHeartRateVariabilityDataPoints.clear();
         }
 
-        Generators.getInstance(this.mContext).transmitData(MicrosoftBand.GENERATOR_IDENTIFIER, bundle);
+//        Generators.getInstance(this.mContext).transmitData(MicrosoftBand.GENERATOR_IDENTIFIER, bundle);
     }
 
     public static ArrayList<DiagnosticAction> diagnostics(Context context)
@@ -560,7 +561,7 @@ public class MicrosoftBand extends Generator
             final MicrosoftBand me = this;
 
             if (MicrosoftBand.sInstance.mBandClient == null) {
-                actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_msft_band_client), new Runnable() {
+                actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_msft_band_client_title), me.mContext.getString(R.string.diagnostic_missing_msft_band_client), new Runnable() {
 
                     @Override
                     public void run() {
@@ -574,7 +575,7 @@ public class MicrosoftBand extends Generator
                     }
                 }));
             } else if (!MicrosoftBand.sInstance.mBandClient.isConnected()) {
-                actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_msft_band_client), new Runnable() {
+                actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_msft_band_client_title), me.mContext.getString(R.string.diagnostic_missing_msft_band_client), new Runnable() {
 
                     @Override
                     public void run() {
@@ -595,7 +596,7 @@ public class MicrosoftBand extends Generator
                 if (this.canAccessSensor(sensors, MicrosoftBand.HeartRateDataPoint.class) ||
                         this.canAccessSensor(sensors, MicrosoftBand.HeartRateVariabilityDataPoint.class)) {
                     if (sensors.getCurrentHeartRateConsent() != UserConsent.GRANTED) {
-                        actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_msft_band_auth), new Runnable() {
+                        actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_msft_band_auth_title), me.mContext.getString(R.string.diagnostic_missing_msft_band_auth), new Runnable() {
 
                             @Override
                             public void run() {
@@ -1428,5 +1429,10 @@ public class MicrosoftBand extends Generator
         } else {
             uvLevel.setText(context.getString(R.string.generator_value_not_applicable));
         }
+    }
+
+    @Override
+    public List<Bundle> fetchPayloads() {
+        return new ArrayList<>();
     }
 }

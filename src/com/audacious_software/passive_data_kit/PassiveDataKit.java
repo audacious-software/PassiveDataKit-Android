@@ -5,9 +5,13 @@ import android.content.Context;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generators;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class PassiveDataKit {
+    private static final String STORAGE_PATH = "passive-data-kit";
+    private static final String GENERATORS_PATH = "generators";
+
     private Context mContext = null;
     private boolean mStarted = false;
 
@@ -28,6 +32,17 @@ public class PassiveDataKit {
         actions.addAll(Generators.getInstance(context).diagnostics());
 
         return actions;
+    }
+
+    public static File getGeneratorsStorage(Context context) {
+        File path = new File(context.getFilesDir(), PassiveDataKit.STORAGE_PATH);
+        path = new File(path, PassiveDataKit.GENERATORS_PATH);
+
+        if (path.exists() == false) {
+            path.mkdirs();
+        }
+
+        return path;
     }
 
     private static class PassiveDataKitHolder {

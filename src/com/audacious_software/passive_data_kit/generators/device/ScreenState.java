@@ -1,13 +1,15 @@
 package com.audacious_software.passive_data_kit.generators.device;
 
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,20 +18,18 @@ import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import java.io.File;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.List;
 
 public class ScreenState extends Generator{
     private static final String GENERATOR_IDENTIFIER = "pdk-screen-state";
@@ -37,19 +37,23 @@ public class ScreenState extends Generator{
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.ScreenState.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
-    private static final String SCREEN_STATE_KEY = "screen_state";
     private static final String STATE_DOZE = "doze";
     private static final String STATE_DOZE_SUSPEND = "doze_suspend";
     private static final String STATE_ON = "on";
     private static final String STATE_OFF = "off";
     private static final String STATE_UNKNOWN = "unknown";
-    private static final String SCREEN_HISTORY_KEY = "com.audacious_software.passive_data_kit.generators.device.ScreenState.SCREEN_HISTORY_KEY";;
-    private static final String SCREEN_HISTORY_TIMESTAMP = "ts";
-    private static final String SCREEN_HISTORY_STATE = "state";
+
+    private static final String DATABASE_PATH = "pdk-screen-state.sqlite";
+    private static final int DATABASE_VERSION = 2;
+    private static final String HISTORY_OBSERVED = "observed";
+    private static final String HISTORY_STATE = "state";
+    private static final String TABLE_HISTORY = "history";
 
     private static ScreenState sInstance = null;
 
     private BroadcastReceiver mReceiver = null;
+
+    private SQLiteDatabase mDatabase = null;
 
     public static ScreenState getInstance(Context context) {
         if (ScreenState.sInstance == null) {
@@ -68,10 +72,18 @@ public class ScreenState extends Generator{
     }
 
     private void startGenerator() {
+        final ScreenState me = this;
+
         this.mReceiver = new BroadcastReceiver() {
             @Override
-            public void onReceive(Context context, Intent intent) {
-                Bundle bundle = new Bundle();
+            public void onReceive(final Context context, Intent intent) {
+                long now = System.currentTimeMillis();
+
+                ContentValues values = new ContentValues();
+                values.put(ScreenState.HISTORY_OBSERVED, now);
+
+                Bundle update = new Bundle();
+                update.putLong(ScreenState.HISTORY_OBSERVED, now);
 
                 WindowManager window = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
                 Display display = window.getDefaultDisplay();
@@ -81,62 +93,36 @@ public class ScreenState extends Generator{
                 if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
                     switch (display.getState()) {
                         case Display.STATE_DOZE:
-                            bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_DOZE);
+                            values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_DOZE);
                             break;
                         case Display.STATE_DOZE_SUSPEND:
-                            bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_DOZE_SUSPEND);
+                            values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_DOZE_SUSPEND);
                             break;
                         case Display.STATE_ON:
-                            bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_ON);
+                            values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_ON);
                             break;
                         case Display.STATE_OFF:
-                            bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_OFF);
+                            values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_OFF);
                             break;
                         case Display.STATE_UNKNOWN:
-                            bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_UNKNOWN);
+                            values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_UNKNOWN);
                             break;
                     }
                 } else {
                     if (Intent.ACTION_SCREEN_OFF.equals(action)) {
-                        bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_OFF);
+                        values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_OFF);
                     } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
-                        bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_ON);
+                        values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_ON);
                     } else {
-                        bundle.putString(ScreenState.SCREEN_STATE_KEY, ScreenState.STATE_UNKNOWN);
+                        values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_UNKNOWN);
                     }
                 }
 
-                Generators.getInstance(context).transmitData(ScreenState.GENERATOR_IDENTIFIER, bundle);
+                me.mDatabase.insert(ScreenState.TABLE_HISTORY, null, values);
 
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+                update.putString(ScreenState.HISTORY_STATE, values.getAsString(ScreenState.HISTORY_STATE));
 
-                try {
-                    JSONArray history = new JSONArray(prefs.getString(ScreenState.SCREEN_HISTORY_KEY, "[]"));
-
-                    JSONObject latest = new JSONObject();
-                    latest.put(ScreenState.SCREEN_HISTORY_TIMESTAMP, System.currentTimeMillis());
-
-                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                        latest.put(ScreenState.SCREEN_HISTORY_STATE, display.getState());
-                    } else {
-                        if (Intent.ACTION_SCREEN_OFF.equals(action)) {
-                            latest.put(ScreenState.SCREEN_HISTORY_STATE, 0x01);
-                        } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
-                            latest.put(ScreenState.SCREEN_HISTORY_STATE, 0x02);
-                        } else {
-                            latest.put(ScreenState.SCREEN_HISTORY_STATE, 0x00);
-                        }
-                    }
-
-                    history.put(latest);
-
-                    SharedPreferences.Editor e = prefs.edit();
-
-                    e.putString(ScreenState.SCREEN_HISTORY_KEY, history.toString());
-                    e.apply();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                Generators.getInstance(context).notifyGeneratorUpdated(ScreenState.GENERATOR_IDENTIFIER, update);
             }
         };
 
@@ -147,7 +133,23 @@ public class ScreenState extends Generator{
 
         Generators.getInstance(this.mContext).registerCustomViewClass(ScreenState.GENERATOR_IDENTIFIER, ScreenState.class);
 
-        this.mReceiver.onReceive(this.mContext, null);
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, ScreenState.DATABASE_PATH);
+
+        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+
+        int version = this.getDatabaseVersion(this.mDatabase);
+
+        switch (version) {
+            case 0:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_screen_state_create_history_table));
+            case 1:
+                this.mDatabase.execSQL("DROP TABLE history");
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_screen_state_create_history_table));
+        }
+
+        this.setDatabaseVersion(this.mDatabase, ScreenState.DATABASE_VERSION);
     }
 
     public static boolean isEnabled(Context context) {
@@ -168,95 +170,111 @@ public class ScreenState extends Generator{
         return new ArrayList<>();
     }
 
-    public static void bindViewHolder(DataPointViewHolder holder, final Bundle dataPoint) {
+    public static void bindViewHolder(DataPointViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
-        try {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-            JSONArray history = new JSONArray(prefs.getString(ScreenState.SCREEN_HISTORY_KEY, "[]"));
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
 
-//            Log.e("PDK", "SCREEN HISTORY: " + history.toString(2));
+        long zeroStart = cal.getTimeInMillis();
+        cal.add(Calendar.DATE, -1);
 
-            Calendar cal = Calendar.getInstance();
-            cal.set(Calendar.HOUR_OF_DAY, 0);
-            cal.set(Calendar.MINUTE, 0);
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
+        LinearLayout zeroTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_zero_value);
 
-            long zeroStart = cal.getTimeInMillis();
-            cal.add(Calendar.DATE, -1);
+        ScreenState.populateTimeline(context, zeroTimeline, zeroStart);
 
-            LinearLayout zeroTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_zero_value);
+        long oneStart = cal.getTimeInMillis();
+        cal.add(Calendar.DATE, -1);
 
-            ScreenState.populateTimeline(context, zeroTimeline, zeroStart, history);
+        LinearLayout oneTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_one_value);
 
-            long oneStart = cal.getTimeInMillis();
-            cal.add(Calendar.DATE, -1);
+        ScreenState.populateTimeline(context, oneTimeline, oneStart);
 
-            LinearLayout oneTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_one_value);
+        long twoStart = cal.getTimeInMillis();
 
-            ScreenState.populateTimeline(context, oneTimeline, oneStart, history);
+        LinearLayout twoTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_two_value);
 
-            long twoStart = cal.getTimeInMillis();
+        ScreenState.populateTimeline(context, twoTimeline, twoStart);
 
-            LinearLayout twoTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_two_value);
+        ScreenState generator = ScreenState.getInstance(context);
 
-            ScreenState.populateTimeline(context, twoTimeline, twoStart, history);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        Cursor c = generator.mDatabase.query(ScreenState.TABLE_HISTORY, null, null, null, null, null, ScreenState.HISTORY_OBSERVED + " DESC");
 
-        double timestamp = dataPoint.getBundle(Generator.PDK_METADATA).getDouble(Generator.TIMESTAMP);
-
+        View cardContent = holder.itemView.findViewById(R.id.card_content);
+        View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
         TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
 
-        dateLabel.setText(Generator.formatTimestamp(context, timestamp));
+        if (c.moveToNext()) {
+            cardContent.setVisibility(View.VISIBLE);
+            cardEmpty.setVisibility(View.GONE);
 
-        Calendar cal = Calendar.getInstance();
-        DateFormat format = android.text.format.DateFormat.getDateFormat(context);
+            long timestamp = c.getLong(c.getColumnIndex(ScreenState.HISTORY_OBSERVED)) / 1000;
 
-        TextView zeroDayLabel = (TextView) holder.itemView.findViewById(R.id.day_zero_label);
-        zeroDayLabel.setText(format.format(cal.getTime()));
+            dateLabel.setText(Generator.formatTimestamp(context, timestamp));
 
-        cal.add(Calendar.DATE, -1);
+            cal = Calendar.getInstance();
+            DateFormat format = android.text.format.DateFormat.getDateFormat(context);
 
-        TextView oneDayLabel = (TextView) holder.itemView.findViewById(R.id.day_one_label);
-        oneDayLabel.setText(format.format(cal.getTime()));
+            TextView zeroDayLabel = (TextView) holder.itemView.findViewById(R.id.day_zero_label);
+            zeroDayLabel.setText(format.format(cal.getTime()));
 
-        cal.add(Calendar.DATE, -1);
+            cal.add(Calendar.DATE, -1);
 
-        TextView twoDayLabel = (TextView) holder.itemView.findViewById(R.id.day_two_label);
-        twoDayLabel.setText(format.format(cal.getTime()));
+            TextView oneDayLabel = (TextView) holder.itemView.findViewById(R.id.day_one_label);
+            oneDayLabel.setText(format.format(cal.getTime()));
+
+            cal.add(Calendar.DATE, -1);
+
+            TextView twoDayLabel = (TextView) holder.itemView.findViewById(R.id.day_two_label);
+            twoDayLabel.setText(format.format(cal.getTime()));
+        } else {
+            cardContent.setVisibility(View.GONE);
+            cardEmpty.setVisibility(View.VISIBLE);
+
+            dateLabel.setText(R.string.label_never_pdk);
+        }
+
+        c.close();
     }
 
-    private static void populateTimeline(Context context, LinearLayout timeline, long start, JSONArray history) {
+    private static void populateTimeline(Context context, LinearLayout timeline, long start) {
         timeline.removeAllViews();
+
+        ScreenState generator = ScreenState.getInstance(context);
 
         long end = start + (24 * 60 * 60 * 1000);
 
-        long now = System.currentTimeMillis();
+        String where = ScreenState.HISTORY_OBSERVED + " >= ? AND " + ScreenState.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start, "" + end };
 
-        int lastState = -1;
+        Cursor c = generator.mDatabase.query(ScreenState.TABLE_HISTORY, null, where, args, null, null, ScreenState.HISTORY_OBSERVED);
 
-        ArrayList<Integer> activeStates = new ArrayList<>();
+        ArrayList<String> activeStates = new ArrayList<>();
         ArrayList<Long> activeTimestamps = new ArrayList<>();
 
-        for (int i = 0; i < history.length(); i++) {
-            try {
-                JSONObject point = history.getJSONObject(i);
+        while (c.moveToNext()) {
+            long timestamp = c.getLong(c.getColumnIndex(ScreenState.HISTORY_OBSERVED));
 
-                long timestamp = point.getLong(ScreenState.SCREEN_HISTORY_TIMESTAMP);
-                int state = point.getInt(ScreenState.SCREEN_HISTORY_STATE);
+            activeTimestamps.add(timestamp);
 
-                if (timestamp < start) {
-                    lastState = state;
-                } else if (timestamp < end) {
-                    activeStates.add(state);
-                    activeTimestamps.add(timestamp);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            String state = c.getString(c.getColumnIndex(ScreenState.HISTORY_STATE));
+            activeStates.add(state);
+        }
+
+        c.close();
+
+        String lastState = ScreenState.STATE_UNKNOWN;
+
+        String lastWhere = ScreenState.HISTORY_OBSERVED + " < ?";
+        String[] lastArgs = { "" + start };
+
+        c = generator.mDatabase.query(ScreenState.TABLE_HISTORY, null, lastWhere, lastArgs, null, null, ScreenState.HISTORY_OBSERVED + " DESC");
+
+        if (c.moveToNext()) {
+            lastState = c.getString(c.getColumnIndex(ScreenState.HISTORY_STATE));
         }
 
         if (activeStates.size() > 0) {
@@ -265,25 +283,24 @@ public class ScreenState extends Generator{
 
             View startView = new View(context);
 
-
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                if (lastState == -1) {
+                if (ScreenState.STATE_UNKNOWN.equals(lastState)) {
 
-                } else if (firstState == Display.STATE_ON) {
+                } else if (ScreenState.STATE_ON.equals(lastState)) {
                     startView.setBackgroundColor(0xff4CAF50);
-                } else if (firstState == Display.STATE_OFF) {
+                } else if (ScreenState.STATE_OFF.equals(lastState)) {
                     startView.setBackgroundColor(0xff263238);
-                } else if (firstState == Display.STATE_DOZE) {
+                } else if (ScreenState.STATE_DOZE.equals(lastState)) {
                     startView.setBackgroundColor(0xff1b5e20);
-                } else if (firstState == Display.STATE_DOZE_SUSPEND) {
+                } else if (ScreenState.STATE_DOZE_SUSPEND.equals(lastState)) {
                     startView.setBackgroundColor(0xff1b5e20);
                 }
             } else {
-                if (lastState == -1) {
+                if (ScreenState.STATE_UNKNOWN.equals(lastState)) {
 
-                } else if (firstState == 0x02) {
+                } else if (ScreenState.STATE_ON.equals(lastState)) {
                     startView.setBackgroundColor(0xff4CAF50);
-                } else if (firstState == 0x01) {
+                } else if (ScreenState.STATE_OFF.equals(lastState)) {
                     startView.setBackgroundColor(0xff263238);
                 }
             }
@@ -293,28 +310,30 @@ public class ScreenState extends Generator{
 
             timeline.addView(startView);
 
+            long now = System.currentTimeMillis();
+
             if (activeStates.size() == 1) {
                 View v = new View(context);
 
                 if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                    if (firstState == Display.STATE_ON) {
+                    if (ScreenState.STATE_ON.equals(firstState)) {
                         v.setBackgroundColor(0xff4CAF50);
-                    } else if (firstState == Display.STATE_OFF) {
+                    } else if (ScreenState.STATE_OFF.equals(firstState)) {
                         v.setBackgroundColor(0xff263238);
-                    } else if (firstState == Display.STATE_DOZE) {
+                    } else if (ScreenState.STATE_DOZE.equals(firstState)) {
                         v.setBackgroundColor(0xff3f51b5);
-                    } else if (firstState == Display.STATE_DOZE_SUSPEND) {
+                    } else if (ScreenState.STATE_DOZE_SUSPEND.equals(firstState)) {
                         v.setBackgroundColor(0xff3f51b5);
                     }
                 } else {
-                    if (firstState == 0x02) {
+                    if (ScreenState.STATE_ON.equals(firstState)) {
                         v.setBackgroundColor(0xff4CAF50);
-                    } else if (firstState == 0x01) {
+                    } else if (ScreenState.STATE_OFF.equals(firstState)) {
                         v.setBackgroundColor(0xff263238);
                     }
                 }
 
-                if (end > now) {
+                if (end > System.currentTimeMillis()) {
                     params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, now - firstTimestamp);
                     v.setLayoutParams(params);
                 } else {
@@ -328,24 +347,24 @@ public class ScreenState extends Generator{
                     long currentTimestamp = activeTimestamps.get(i);
 
                     long priorTimestamp = activeTimestamps.get(i - 1);
-                    long priorState = activeStates.get(i - 1);
+                    String priorState = activeStates.get(i - 1);
 
                     View v = new View(context);
 
                     if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                        if (priorState == Display.STATE_ON) {
+                        if (ScreenState.STATE_ON.equals(priorState)) {
                             v.setBackgroundColor(0xff4CAF50);
-                        } else if (priorState == Display.STATE_OFF) {
+                        } else if (ScreenState.STATE_OFF.equals(priorState)) {
                             v.setBackgroundColor(0xff263238);
-                        } else if (priorState == Display.STATE_DOZE) {
+                        } else if (ScreenState.STATE_DOZE.equals(priorState)) {
                             v.setBackgroundColor(0xff3f51b5);
-                        } else if (priorState == Display.STATE_DOZE_SUSPEND) {
+                        } else if (ScreenState.STATE_DOZE_SUSPEND.equals(priorState)) {
                             v.setBackgroundColor(0xff3f51b5);
                         }
                     } else {
-                        if (priorState == 0x02) {
+                        if (ScreenState.STATE_ON.equals(priorState)) {
                             v.setBackgroundColor(0xff4CAF50);
-                        } else if (priorState == 0x01) {
+                        } else if (ScreenState.STATE_OFF.equals(priorState)) {
                             v.setBackgroundColor(0xff263238);
                         }
                     }
@@ -357,17 +376,17 @@ public class ScreenState extends Generator{
                 }
 
                 long finalTimestamp = activeTimestamps.get(activeTimestamps.size() - 1);
-                long finalState = activeStates.get(activeStates.size() - 1);
+                String finalState = activeStates.get(activeStates.size() - 1);
 
                 View v = new View(context);
 
-                if (finalState == Display.STATE_ON) {
+                if (ScreenState.STATE_ON.equals(finalState)) {
                     v.setBackgroundColor(0xff4CAF50);
-                } else if (finalState == Display.STATE_OFF) {
+                } else if (ScreenState.STATE_OFF.equals(finalState)) {
                     v.setBackgroundColor(0xff263238);
-                } else if (finalState == Display.STATE_DOZE) {
+                } else if (ScreenState.STATE_DOZE.equals(finalState)) {
                     v.setBackgroundColor(0xff3f51b5);
-                } else if (finalState == Display.STATE_DOZE_SUSPEND) {
+                } else if (ScreenState.STATE_DOZE_SUSPEND.equals(finalState)) {
                     v.setBackgroundColor(0xff3f51b5);
                 }
 
@@ -390,6 +409,8 @@ public class ScreenState extends Generator{
 
                 timeline.addView(v);
             }
+        } else {
+
         }
     }
 
@@ -398,7 +419,24 @@ public class ScreenState extends Generator{
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_screen_state, parent, false);
     }
 
-    public static void broadcastLatestDataPoint(Context context) {
-        Generators.getInstance(context).transmitData(ScreenState.GENERATOR_IDENTIFIER, new Bundle());
+    @Override
+    public List<Bundle> fetchPayloads() {
+        return new ArrayList<>();
+    }
+
+    public static long latestPointGenerated(Context context) {
+        long timestamp = 0;
+
+        ScreenState me = ScreenState.getInstance(context);
+
+        Cursor c = me.mDatabase.query(ScreenState.TABLE_HISTORY, null, null, null, null, null, ScreenState.HISTORY_OBSERVED + " DESC");
+
+        if (c.moveToNext()) {
+            timestamp = c.getLong(c.getColumnIndex(ScreenState.HISTORY_OBSERVED));
+        }
+
+        c.close();
+
+        return timestamp;
     }
 }

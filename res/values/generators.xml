@@ -3,6 +3,7 @@
         <item>com.audacious_software.passive_data_kit.generators.device.Location</item>
         <item>com.audacious_software.passive_data_kit.generators.device.ScreenState</item>
         <item>com.audacious_software.passive_data_kit.generators.communication.PhoneCalls</item>
+        <item>com.audacious_software.passive_data_kit.generators.communication.TextMessages</item>
         <item>com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand</item>
         <item>com.audacious_software.passive_data_kit.generators.services.GoogleAwareness</item>
     </string-array>
@@ -45,6 +46,29 @@
 
     <!-- Screen State Resources -->
     <string name="generator_screen_state">Screen State</string>
+    <string name="legend_screen_state_on_pdk">On</string>
+    <string name="legend_screen_state_off_pdk">Off</string>
+    <string name="legend_screen_state_doze_pdk">Doze</string>
+    <string name="legend_screen_state_unknown_pdk">Unknown</string>
+    <string name="label_legend_pdk">Legend: </string>
+    <string name="message_generator_screen_state_empty">No screen state changes have been observed yet.</string>
+
+    <!-- Phone Call Resources -->
+    <string name="generator_text_messages">SMS Text Messages</string>
+    <string name="generator_text_messages_incoming_label">Incoming</string>
+    <string name="generator_text_messages_outgoing_label">Outgoing</string>
+    <string name="generator_text_messages_other_label">Other</string>
+
+    <color name="generator_text_messages_incoming">#3F51B5</color>
+    <color name="generator_text_messages_outgoing">#4CAF50</color>
+    <color name="generator_text_messages_other">#9E9E9E</color>
+
+    <string name="generator_text_messages_latest_text_message_label">Latest Text Message</string>
+    <string name="generator_text_messages_length_label">Length</string>
+    <string name="generator_text_messages_direction_label">Direction</string>
+    <string name="generator_text_messages_length_format">%1$d chars.</string>
+
+    <string name="message_generator_text_messages_empty">No text messages have been sent or received on this device.</string>
 
     <!-- Phone Call Resources -->
     <string name="generator_phone_calls">Phone Calls</string>
@@ -62,5 +86,7 @@
     <string name="generator_phone_calls_duration_label">Duration</string>
     <string name="generator_phone_calls_direction_label">Direction</string>
     <string name="generator_phone_calls_duration_format">%1$.2f min.</string>
+
+    <string name="message_generator_phone_calls_empty">No phone calls have been made or received on this device.</string>
 
 </resources>
