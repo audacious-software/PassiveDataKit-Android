@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
+import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.pdk.passivedatakit.R;
 
 import java.text.DateFormat;
@@ -73,6 +74,20 @@ public abstract class Generator
     }
 
     public static void bindViewHolder(DataPointViewHolder holder) {
+        Class currentClass = new Object() { }.getClass().getEnclosingClass();
+
+        String identifier = currentClass.getCanonicalName();
+
+        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+
+        generatorLabel.setText(identifier);
+    }
+
+    public static View fetchDisclosureView(ViewGroup parent) {
+        return LayoutInflater.from(parent.getContext()).inflate(R.layout.row_generator_disclosure_generic, parent, false);
+    }
+
+    public static void bindDisclosureViewHolder(GeneratorViewHolder holder) {
         Class currentClass = new Object() { }.getClass().getEnclosingClass();
 
         String identifier = currentClass.getCanonicalName();

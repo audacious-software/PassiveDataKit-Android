@@ -24,6 +24,7 @@ import java.util.List;
 public class Generators {
     private Context mContext = null;
     private boolean mStarted = false;
+
     private ArrayList<String> mGenerators = new ArrayList<>();
     private HashSet<String> mActiveGenerators = new HashSet<>();
     private SharedPreferences mSharedPreferences = null;
