@@ -67,8 +67,10 @@ import com.google.maps.android.ui.IconGenerator;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @SuppressWarnings("unused")
 public class Location extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
@@ -312,12 +314,41 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     @Override
     public void onLocationChanged(android.location.Location location) {
-        Log.e("PDK", "LOCATION CHANGED");
-
         if (location == null)
             return;
 
         long now = System.currentTimeMillis();
+
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        int selected = prefs.getInt(Location.ACCURACY_MODE, Location.ACCURACY_BEST);
+
+        if (selected == Location.ACCURACY_RANDOMIZED) {
+            // http://gis.stackexchange.com/a/68275/10230
+
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+
+            double radius = prefs.getLong(Location.ACCURACY_MODE_RANDOMIZED_RANGE, Location.ACCURACY_MODE_RANDOMIZED_RANGE_DEFAULT);
+
+            double radiusInDegrees = radius / 111000;
+
+            Random r = new SecureRandom();
+
+            double u = r.nextDouble();
+            double v = r.nextDouble();
+
+            double w = radiusInDegrees * Math.sqrt(u);
+            double t = 2 * Math.PI * v;
+            double x = w * Math.cos(t);
+            double y = w * Math.sin(t);
+
+            // Adjust the x-coordinate for the shrinking of the east-west distances
+            longitude = longitude + (x / Math.cos(latitude));
+            latitude = y + latitude;
+
+            location.setLongitude(longitude);
+            location.setLatitude(latitude);
+        }
 
         ContentValues values = new ContentValues();
         values.put(Location.HISTORY_OBSERVED, System.currentTimeMillis());
@@ -911,6 +942,34 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             if (last == null) {
                 last = locations.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             }
+        }
+
+        if (selected == Location.ACCURACY_RANDOMIZED) {
+            // http://gis.stackexchange.com/a/68275/10230
+
+            double latitude = last.getLatitude();
+            double longitude = last.getLongitude();
+
+            double radius = prefs.getLong(Location.ACCURACY_MODE_RANDOMIZED_RANGE, Location.ACCURACY_MODE_RANDOMIZED_RANGE_DEFAULT);
+
+            double radiusInDegrees = radius / 111000;
+
+            Random r = new SecureRandom();
+
+            double u = r.nextDouble();
+            double v = r.nextDouble();
+
+            double w = radiusInDegrees * Math.sqrt(u);
+            double t = 2 * Math.PI * v;
+            double x = w * Math.cos(t);
+            double y = w * Math.sin(t);
+
+            // Adjust the x-coordinate for the shrinking of the east-west distances
+            longitude = longitude + (x / Math.cos(latitude));
+            latitude = y + latitude;
+
+            last.setLongitude(longitude);
+            last.setLatitude(latitude);
         }
 
         return last;

@@ -65,7 +65,7 @@
     <string name="message_location_accuracy_disabled">This app will not use your location, but use an placeholder instead.</string>
 
     <string name="title_location_accuracy_randomized">Locally Randomized</string>
-    <string name="message_location_accuracy_randomized">Please enter the random distance (miles/kilometers)to use to obfuscate your exact location:</string>
+    <string name="message_location_accuracy_randomized">Please enter the random distance (kilometers) to use to obfuscate your exact location:</string>
 
     <string name="title_location_accuracy_user">User Provided</string>
     <string name="message_location_accuracy_user">Please enter a postal code or city and province to use as your location:</string>
