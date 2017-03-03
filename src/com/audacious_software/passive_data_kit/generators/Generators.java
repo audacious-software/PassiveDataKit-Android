@@ -237,9 +237,17 @@ public class Generators {
         return active;
     }
 
-    public void notifyGeneratorUpdated(String identifier, Bundle bundle) {
+    public void notifyGeneratorUpdated(String identifier, long timestamp, Bundle bundle) {
         for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
-            listener.onGeneratorUpdated(identifier, bundle);
+            listener.onGeneratorUpdated(identifier, timestamp, bundle);
+        }
+    }
+
+    public void notifyGeneratorUpdated(String identifier, Bundle bundle) {
+        long timestamp = System.currentTimeMillis();
+
+        for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
+            listener.onGeneratorUpdated(identifier, timestamp, bundle);
         }
     }
 
@@ -269,6 +277,6 @@ public class Generators {
     }
 
     public interface GeneratorUpdatedListener {
-        void onGeneratorUpdated(String identifier, Bundle data);
+        void onGeneratorUpdated(String identifier, long timestamp, Bundle data);
     }
 }

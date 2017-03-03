@@ -37,17 +37,18 @@ public class ScreenState extends Generator{
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.ScreenState.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
-    private static final String STATE_DOZE = "doze";
-    private static final String STATE_DOZE_SUSPEND = "doze_suspend";
-    private static final String STATE_ON = "on";
-    private static final String STATE_OFF = "off";
-    private static final String STATE_UNKNOWN = "unknown";
+    public static final String STATE_DOZE = "doze";
+    public static final String STATE_DOZE_SUSPEND = "doze_suspend";
+    public static final String STATE_ON = "on";
+    public static final String STATE_OFF = "off";
+    public static final String STATE_UNKNOWN = "unknown";
 
     private static final String DATABASE_PATH = "pdk-screen-state.sqlite";
     private static final int DATABASE_VERSION = 2;
-    private static final String HISTORY_OBSERVED = "observed";
-    private static final String HISTORY_STATE = "state";
-    private static final String TABLE_HISTORY = "history";
+
+    public static final String HISTORY_OBSERVED = "observed";
+    public static final String HISTORY_STATE = "state";
+    public static final String TABLE_HISTORY = "history";
 
     private static ScreenState sInstance = null;
 
@@ -438,5 +439,9 @@ public class ScreenState extends Generator{
         c.close();
 
         return timestamp;
+    }
+
+    public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
+        return this.mDatabase.query(ScreenState.TABLE_HISTORY, cols, where, args, null, null, orderBy);
     }
 }

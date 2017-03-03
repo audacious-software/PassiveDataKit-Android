@@ -424,10 +424,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     }
 
     @Override
-    public void onGeneratorUpdated(String identifier, Bundle data) {
+    public void onGeneratorUpdated(String identifier, long timestamp, Bundle data) {
         if (data.keySet().size() > 1) {  // Only transmit non-empty bundles...
-            double now = (double) System.currentTimeMillis();
-            now = now / 1000; // Convert to seconds...
+            timestamp = timestamp / 1000; // Convert to seconds...
 
             Generators generators = Generators.getInstance(this.mContext);
 
@@ -438,7 +437,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             }
 
             metadata.putString(Generator.IDENTIFIER, identifier);
-            metadata.putDouble(Generator.TIMESTAMP, now);
+            metadata.putDouble(Generator.TIMESTAMP, timestamp);
             metadata.putString(Generator.GENERATOR, generators.getGeneratorFullName(identifier));
             metadata.putString(Generator.SOURCE, generators.getSource());
             metadata.putString(Generator.SOURCE, this.mUserId);

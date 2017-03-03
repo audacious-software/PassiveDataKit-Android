@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -88,15 +89,15 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static int DATABASE_VERSION = 1;
 
     private static final String TABLE_HISTORY = "history";
-    private static final String HISTORY_OBSERVED = "observed";
-    private static final String HISTORY_LATITUDE = "latitude";
-    private static final String HISTORY_LONGITUDE = "longitude";
-    private static final String HISTORY_ALTITUDE = "altitude";
-    private static final String HISTORY_BEARING = "bearing";
-    private static final String HISTORY_SPEED = "speed";
-    private static final String HISTORY_PROVIDER = "provider";
-    private static final String HISTORY_LOCATION_TIMESTAMP = "location_timestamp";
-    private static final String HISTORY_ACCURACY = "accuracy";
+    public static final String HISTORY_OBSERVED = "observed";
+    public static final String HISTORY_LATITUDE = "latitude";
+    public static final String HISTORY_LONGITUDE = "longitude";
+    public static final String HISTORY_ALTITUDE = "altitude";
+    public static final String HISTORY_BEARING = "bearing";
+    public static final String HISTORY_SPEED = "speed";
+    public static final String HISTORY_PROVIDER = "provider";
+    public static final String HISTORY_LOCATION_TIMESTAMP = "location_timestamp";
+    public static final String HISTORY_ACCURACY = "accuracy";
 
     public static Location getInstance(Context context) {
         if (Location.sInstance == null) {
@@ -282,8 +283,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     @Override
     public void onLocationChanged(android.location.Location location) {
-        Log.e("PDK", "LOCATION CHANGED");
-
         if (location == null)
             return;
 
@@ -551,5 +550,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         this.stopGenerator();
         this.startGenerator();
+    }
+
+    public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
+        return this.mDatabase.query(Location.TABLE_HISTORY, cols, where, args, null, null, orderBy);
     }
 }

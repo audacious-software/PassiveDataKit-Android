@@ -171,130 +171,132 @@ public class PhoneCalls extends Generator {
 
                     Cursor c = me.mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null, where, args, CallLog.Calls.DATE);
 
-                    while (c.moveToNext()) {
-                        ContentValues values = new ContentValues();
-                        values.put(PhoneCalls.HISTORY_OBSERVED, c.getLong(c.getColumnIndex(CallLog.Calls.DATE)));
-                        values.put(PhoneCalls.HISTORY_DURATION, c.getLong(c.getColumnIndex(CallLog.Calls.DURATION)));
-                        values.put(PhoneCalls.HISTORY_NUMBER, c.getLong(c.getColumnIndex(CallLog.Calls.DURATION)));
-                        values.put(PhoneCalls.HISTORY_IS_NEW, (c.getInt(c.getColumnIndex(CallLog.Calls.NEW)) != 0));
+                    if (c != null) {
+                        while (c.moveToNext()) {
+                            ContentValues values = new ContentValues();
+                            values.put(PhoneCalls.HISTORY_OBSERVED, c.getLong(c.getColumnIndex(CallLog.Calls.DATE)));
+                            values.put(PhoneCalls.HISTORY_DURATION, c.getLong(c.getColumnIndex(CallLog.Calls.DURATION)));
+                            values.put(PhoneCalls.HISTORY_NUMBER, c.getLong(c.getColumnIndex(CallLog.Calls.DURATION)));
+                            values.put(PhoneCalls.HISTORY_IS_NEW, (c.getInt(c.getColumnIndex(CallLog.Calls.NEW)) != 0));
 
-                        Bundle bundle = new Bundle();
-                        bundle.putLong(PhoneCalls.CALL_DATE_KEY, c.getLong(c.getColumnIndex(CallLog.Calls.DATE)));
-                        bundle.putLong(PhoneCalls.CALL_DURATION_KEY, c.getLong(c.getColumnIndex(CallLog.Calls.DURATION)));
-                        bundle.putString(PhoneCalls.CALL_NUMBER_KEY, c.getString(c.getColumnIndex(CallLog.Calls.NUMBER)));
-                        bundle.putBoolean(PhoneCalls.CALL_IS_NEW_KEY, (c.getInt(c.getColumnIndex(CallLog.Calls.NEW)) != 0));
+                            Bundle bundle = new Bundle();
+                            bundle.putLong(PhoneCalls.CALL_DATE_KEY, c.getLong(c.getColumnIndex(CallLog.Calls.DATE)));
+                            bundle.putLong(PhoneCalls.CALL_DURATION_KEY, c.getLong(c.getColumnIndex(CallLog.Calls.DURATION)));
+                            bundle.putString(PhoneCalls.CALL_NUMBER_KEY, c.getString(c.getColumnIndex(CallLog.Calls.NUMBER)));
+                            bundle.putBoolean(PhoneCalls.CALL_IS_NEW_KEY, (c.getInt(c.getColumnIndex(CallLog.Calls.NEW)) != 0));
 
-                        int features = 0;
+                            int features = 0;
 
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            features = c.getInt(c.getColumnIndex(CallLog.Calls.FEATURES));
-                        }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                features = c.getInt(c.getColumnIndex(CallLog.Calls.FEATURES));
+                            }
 
-                        int typeInt = c.getInt(c.getColumnIndex(CallLog.Calls.TYPE));
-                        String type = PhoneCalls.CALL_TYPE_UNKNOWN;
+                            int typeInt = c.getInt(c.getColumnIndex(CallLog.Calls.TYPE));
+                            String type = PhoneCalls.CALL_TYPE_UNKNOWN;
 
-                        switch(Build.VERSION.SDK_INT) {
-                            case 25:
-                                if (typeInt == CallLog.Calls.ANSWERED_EXTERNALLY_TYPE) {
-                                    type = PhoneCalls.CALL_TYPE_ANSWERED_EXTERNALLY;
-                                }
+                            switch (Build.VERSION.SDK_INT) {
+                                case 25:
+                                    if (typeInt == CallLog.Calls.ANSWERED_EXTERNALLY_TYPE) {
+                                        type = PhoneCalls.CALL_TYPE_ANSWERED_EXTERNALLY;
+                                    }
 
-                                bundle.putBoolean(PhoneCalls.CALL_PULLED_EXTERNALLY_KEY, ((features & CallLog.Calls.FEATURES_PULLED_EXTERNALLY) == CallLog.Calls.FEATURES_PULLED_EXTERNALLY));
+                                    bundle.putBoolean(PhoneCalls.CALL_PULLED_EXTERNALLY_KEY, ((features & CallLog.Calls.FEATURES_PULLED_EXTERNALLY) == CallLog.Calls.FEATURES_PULLED_EXTERNALLY));
 
-                                values.put(PhoneCalls.HISTORY_PULLED_EXTERNALLY, ((features & CallLog.Calls.FEATURES_PULLED_EXTERNALLY) == CallLog.Calls.FEATURES_PULLED_EXTERNALLY));
-                            case 24:
-                                if (typeInt == CallLog.Calls.REJECTED_TYPE) {
-                                    type = PhoneCalls.CALL_TYPE_REJECTED;
-                                } else if (typeInt == CallLog.Calls.BLOCKED_TYPE) {
-                                    type = PhoneCalls.CALL_TYPE_BLOCKED;
-                                }
+                                    values.put(PhoneCalls.HISTORY_PULLED_EXTERNALLY, ((features & CallLog.Calls.FEATURES_PULLED_EXTERNALLY) == CallLog.Calls.FEATURES_PULLED_EXTERNALLY));
+                                case 24:
+                                    if (typeInt == CallLog.Calls.REJECTED_TYPE) {
+                                        type = PhoneCalls.CALL_TYPE_REJECTED;
+                                    } else if (typeInt == CallLog.Calls.BLOCKED_TYPE) {
+                                        type = PhoneCalls.CALL_TYPE_BLOCKED;
+                                    }
 
-                                bundle.putString(PhoneCalls.CALL_POST_DIAL_DIGITS_KEY, c.getString(c.getColumnIndex(CallLog.Calls.POST_DIAL_DIGITS)));
-                                bundle.putString(PhoneCalls.CALL_VIA_NUMBER_KEY, c.getString(c.getColumnIndex(CallLog.Calls.VIA_NUMBER)));
+                                    bundle.putString(PhoneCalls.CALL_POST_DIAL_DIGITS_KEY, c.getString(c.getColumnIndex(CallLog.Calls.POST_DIAL_DIGITS)));
+                                    bundle.putString(PhoneCalls.CALL_VIA_NUMBER_KEY, c.getString(c.getColumnIndex(CallLog.Calls.VIA_NUMBER)));
 
-                                values.put(PhoneCalls.HISTORY_POST_DIAL_DIGITS, c.getString(c.getColumnIndex(CallLog.Calls.POST_DIAL_DIGITS)));
-                                values.put(PhoneCalls.HISTORY_VIA_NUMBER, c.getString(c.getColumnIndex(CallLog.Calls.VIA_NUMBER)));
-                            case 21:
-                                if (typeInt == CallLog.Calls.VOICEMAIL_TYPE) {
-                                    type = PhoneCalls.CALL_TYPE_VOICEMAIL;
-                                }
+                                    values.put(PhoneCalls.HISTORY_POST_DIAL_DIGITS, c.getString(c.getColumnIndex(CallLog.Calls.POST_DIAL_DIGITS)));
+                                    values.put(PhoneCalls.HISTORY_VIA_NUMBER, c.getString(c.getColumnIndex(CallLog.Calls.VIA_NUMBER)));
+                                case 21:
+                                    if (typeInt == CallLog.Calls.VOICEMAIL_TYPE) {
+                                        type = PhoneCalls.CALL_TYPE_VOICEMAIL;
+                                    }
 
-                                bundle.putString(PhoneCalls.CALL_COUNTRY_ISO_KEY, c.getString(c.getColumnIndex(CallLog.Calls.COUNTRY_ISO)));
-                                bundle.putLong(PhoneCalls.CALL_DATA_USAGE_KEY, c.getLong(c.getColumnIndex(CallLog.Calls.DATA_USAGE)));
-                                bundle.putString(PhoneCalls.CALL_GEOCODED_LOCATION_KEY, c.getString(c.getColumnIndex(CallLog.Calls.GEOCODED_LOCATION)));
-                                bundle.putBoolean(PhoneCalls.CALL_VIDEO_KEY, ((features & CallLog.Calls.FEATURES_VIDEO) == CallLog.Calls.FEATURES_VIDEO));
+                                    bundle.putString(PhoneCalls.CALL_COUNTRY_ISO_KEY, c.getString(c.getColumnIndex(CallLog.Calls.COUNTRY_ISO)));
+                                    bundle.putLong(PhoneCalls.CALL_DATA_USAGE_KEY, c.getLong(c.getColumnIndex(CallLog.Calls.DATA_USAGE)));
+                                    bundle.putString(PhoneCalls.CALL_GEOCODED_LOCATION_KEY, c.getString(c.getColumnIndex(CallLog.Calls.GEOCODED_LOCATION)));
+                                    bundle.putBoolean(PhoneCalls.CALL_VIDEO_KEY, ((features & CallLog.Calls.FEATURES_VIDEO) == CallLog.Calls.FEATURES_VIDEO));
 
-                                values.put(PhoneCalls.HISTORY_COUNTRY_ISO, c.getString(c.getColumnIndex(CallLog.Calls.COUNTRY_ISO)));
-                                values.put(PhoneCalls.HISTORY_DATA_USAGE, c.getLong(c.getColumnIndex(CallLog.Calls.DATA_USAGE)));
-                                values.put(PhoneCalls.HISTORY_GEOCODED_LOCATION, c.getString(c.getColumnIndex(CallLog.Calls.GEOCODED_LOCATION)));
-                                values.put(PhoneCalls.HISTORY_VIDEO, ((features & CallLog.Calls.FEATURES_VIDEO) == CallLog.Calls.FEATURES_VIDEO));
+                                    values.put(PhoneCalls.HISTORY_COUNTRY_ISO, c.getString(c.getColumnIndex(CallLog.Calls.COUNTRY_ISO)));
+                                    values.put(PhoneCalls.HISTORY_DATA_USAGE, c.getLong(c.getColumnIndex(CallLog.Calls.DATA_USAGE)));
+                                    values.put(PhoneCalls.HISTORY_GEOCODED_LOCATION, c.getString(c.getColumnIndex(CallLog.Calls.GEOCODED_LOCATION)));
+                                    values.put(PhoneCalls.HISTORY_VIDEO, ((features & CallLog.Calls.FEATURES_VIDEO) == CallLog.Calls.FEATURES_VIDEO));
 
 //                                bundle.putString(PhoneCalls.CALL_TRANSCRIPTION_KEY, c.getString(c.getColumnIndex(CallLog.Calls.TRANSCRIPTION)));
-                            case 19:
-                                switch (c.getInt(c.getColumnIndex(CallLog.Calls.NUMBER_PRESENTATION))) {
-                                    case CallLog.Calls.PRESENTATION_ALLOWED:
-                                        bundle.putString(PhoneCalls.CALL_PRESENTATION_KEY, PhoneCalls.CALL_PRESENTATION_ALLOWED);
-                                        values.put(PhoneCalls.HISTORY_PRESENTATION, PhoneCalls.CALL_PRESENTATION_ALLOWED);
-                                        break;
-                                    case CallLog.Calls.PRESENTATION_RESTRICTED:
-                                        bundle.putString(PhoneCalls.CALL_PRESENTATION_KEY, PhoneCalls.CALL_PRESENTATION_RESTRICTED);
-                                        values.put(PhoneCalls.HISTORY_PRESENTATION, PhoneCalls.CALL_PRESENTATION_RESTRICTED);
-                                        break;
-                                    case CallLog.Calls.PRESENTATION_PAYPHONE:
-                                        bundle.putString(PhoneCalls.CALL_PRESENTATION_KEY, PhoneCalls.CALL_PRESENTATION_PAYPHONE);
-                                        values.put(PhoneCalls.HISTORY_PRESENTATION, PhoneCalls.CALL_PRESENTATION_PAYPHONE);
-                                        break;
-                                    case CallLog.Calls.PRESENTATION_UNKNOWN:
-                                        bundle.putString(PhoneCalls.CALL_PRESENTATION_KEY, PhoneCalls.CALL_PRESENTATION_UNKNOWN);
-                                        values.put(PhoneCalls.HISTORY_PRESENTATION, PhoneCalls.CALL_PRESENTATION_UNKNOWN);
-                                        break;
-                                }
-                            case 14:
-                                bundle.putBoolean(PhoneCalls.CALL_IS_READ_KEY, (c.getInt(c.getColumnIndex(CallLog.Calls.IS_READ)) != 0));
-                                values.put(PhoneCalls.HISTORY_IS_READ, (c.getInt(c.getColumnIndex(CallLog.Calls.IS_READ)) != 0));
-                            case 1:
-                                if (typeInt == CallLog.Calls.INCOMING_TYPE) {
-                                    type = PhoneCalls.CALL_TYPE_INCOMING;
-                                } else if (typeInt == CallLog.Calls.OUTGOING_TYPE) {
-                                    type = PhoneCalls.CALL_TYPE_OUTGOING;
-                                } else if (typeInt == CallLog.Calls.MISSED_TYPE) {
-                                    type = PhoneCalls.CALL_TYPE_MISSED;
-                                }
-                        }
-
-                        bundle.putString(PhoneCalls.CALL_TYPE_KEY, type);
-                        values.put(PhoneCalls.HISTORY_CALL_TYPE, type);
-
-                        String[] sensitiveFields = {
-                                PhoneCalls.CALL_NUMBER_KEY,
-                                PhoneCalls.CALL_POST_DIAL_DIGITS_KEY,
-                                PhoneCalls.CALL_VIA_NUMBER_KEY,
-                        };
-
-                        for (String field : sensitiveFields) {
-                            if (bundle.containsKey(field)) {
-                                bundle.putString(field, new String(Hex.encodeHex(DigestUtils.sha256(bundle.getString(field)))));
+                                case 19:
+                                    switch (c.getInt(c.getColumnIndex(CallLog.Calls.NUMBER_PRESENTATION))) {
+                                        case CallLog.Calls.PRESENTATION_ALLOWED:
+                                            bundle.putString(PhoneCalls.CALL_PRESENTATION_KEY, PhoneCalls.CALL_PRESENTATION_ALLOWED);
+                                            values.put(PhoneCalls.HISTORY_PRESENTATION, PhoneCalls.CALL_PRESENTATION_ALLOWED);
+                                            break;
+                                        case CallLog.Calls.PRESENTATION_RESTRICTED:
+                                            bundle.putString(PhoneCalls.CALL_PRESENTATION_KEY, PhoneCalls.CALL_PRESENTATION_RESTRICTED);
+                                            values.put(PhoneCalls.HISTORY_PRESENTATION, PhoneCalls.CALL_PRESENTATION_RESTRICTED);
+                                            break;
+                                        case CallLog.Calls.PRESENTATION_PAYPHONE:
+                                            bundle.putString(PhoneCalls.CALL_PRESENTATION_KEY, PhoneCalls.CALL_PRESENTATION_PAYPHONE);
+                                            values.put(PhoneCalls.HISTORY_PRESENTATION, PhoneCalls.CALL_PRESENTATION_PAYPHONE);
+                                            break;
+                                        case CallLog.Calls.PRESENTATION_UNKNOWN:
+                                            bundle.putString(PhoneCalls.CALL_PRESENTATION_KEY, PhoneCalls.CALL_PRESENTATION_UNKNOWN);
+                                            values.put(PhoneCalls.HISTORY_PRESENTATION, PhoneCalls.CALL_PRESENTATION_UNKNOWN);
+                                            break;
+                                    }
+                                case 14:
+                                    bundle.putBoolean(PhoneCalls.CALL_IS_READ_KEY, (c.getInt(c.getColumnIndex(CallLog.Calls.IS_READ)) != 0));
+                                    values.put(PhoneCalls.HISTORY_IS_READ, (c.getInt(c.getColumnIndex(CallLog.Calls.IS_READ)) != 0));
+                                case 1:
+                                    if (typeInt == CallLog.Calls.INCOMING_TYPE) {
+                                        type = PhoneCalls.CALL_TYPE_INCOMING;
+                                    } else if (typeInt == CallLog.Calls.OUTGOING_TYPE) {
+                                        type = PhoneCalls.CALL_TYPE_OUTGOING;
+                                    } else if (typeInt == CallLog.Calls.MISSED_TYPE) {
+                                        type = PhoneCalls.CALL_TYPE_MISSED;
+                                    }
                             }
-                        }
 
-                        String[] valueSensitiveFields = {
-                                PhoneCalls.HISTORY_NUMBER,
-                                PhoneCalls.HISTORY_POST_DIAL_DIGITS,
-                                PhoneCalls.HISTORY_VIA_NUMBER,
-                        };
+                            bundle.putString(PhoneCalls.CALL_TYPE_KEY, type);
+                            values.put(PhoneCalls.HISTORY_CALL_TYPE, type);
 
-                        for (String field : valueSensitiveFields) {
-                            if (values.containsKey(field)) {
-                                values.put(field, new String(Hex.encodeHex(DigestUtils.sha256(values.getAsString(field)))));
+                            String[] sensitiveFields = {
+                                    PhoneCalls.CALL_NUMBER_KEY,
+                                    PhoneCalls.CALL_POST_DIAL_DIGITS_KEY,
+                                    PhoneCalls.CALL_VIA_NUMBER_KEY,
+                            };
+
+                            for (String field : sensitiveFields) {
+                                if (bundle.containsKey(field)) {
+                                    bundle.putString(field, new String(Hex.encodeHex(DigestUtils.sha256(bundle.getString(field)))));
+                                }
                             }
+
+                            String[] valueSensitiveFields = {
+                                    PhoneCalls.HISTORY_NUMBER,
+                                    PhoneCalls.HISTORY_POST_DIAL_DIGITS,
+                                    PhoneCalls.HISTORY_VIA_NUMBER,
+                            };
+
+                            for (String field : valueSensitiveFields) {
+                                if (values.containsKey(field)) {
+                                    values.put(field, new String(Hex.encodeHex(DigestUtils.sha256(values.getAsString(field)))));
+                                }
+                            }
+
+                            me.mDatabase.insert(PhoneCalls.TABLE_HISTORY, null, values);
+
+                            Generators.getInstance(me.mContext).notifyGeneratorUpdated(PhoneCalls.GENERATOR_IDENTIFIER, bundle);
                         }
 
-                        me.mDatabase.insert(PhoneCalls.TABLE_HISTORY, null, values);
-
-                        Generators.getInstance(me.mContext).notifyGeneratorUpdated(PhoneCalls.GENERATOR_IDENTIFIER, bundle);
+                        c.close();
                     }
-
-                    c.close();
                 }
 
                 if (me.mHandler != null) {
