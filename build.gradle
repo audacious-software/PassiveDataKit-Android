@@ -59,7 +59,7 @@ android {
         compile 'commons-codec:commons-codec:1.10'
         compile 'org.apache.commons:commons-lang3:3.4'
         compile 'com.fasterxml.jackson.core:jackson-core:2.7.3'
-        compile 'com.github.philjay:mpandroidchart:v3.0.0'
+        compile 'com.github.philjay:mpandroidchart:v3.0.1'
     }
 
     buildTypes {
