@@ -11,6 +11,7 @@ import android.util.SparseArray;
 
 import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
+import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.pdk.passivedatakit.R;
 
 import java.lang.reflect.InvocationTargetException;
@@ -36,6 +37,8 @@ public class Generators {
         if (!this.mStarted)
         {
             this.mGenerators.clear();
+
+            this.mGenerators.add(AppEvent.class.getCanonicalName());
 
             for (String className : this.mContext.getResources().getStringArray(R.array.pdk_available_generators))
             {
