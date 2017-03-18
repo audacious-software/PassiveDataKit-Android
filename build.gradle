@@ -3,6 +3,9 @@ apply plugin: 'com.android.library'
 buildscript {
     repositories {
         jcenter()
+        flatDir {
+            dirs 'libs'
+        }
     }
 
     dependencies {
@@ -13,6 +16,9 @@ buildscript {
 repositories {
     jcenter()
     maven { url "https://jitpack.io" }
+    flatDir{
+        dirs 'libs'
+    }
 }
 
 android {
@@ -22,7 +28,7 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 19
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
@@ -59,6 +65,11 @@ android {
         compile 'org.apache.commons:commons-lang3:3.4'
         compile 'com.fasterxml.jackson.core:jackson-core:2.7.3'
         compile 'com.github.philjay:mpandroidchart:v3.0.0'
+        compile 'com.google.protobuf.nano:protobuf-javanano:3.0.0-alpha-7'
+
+        compile project(':libraries-base')
+        compile project(':libraries-common')
+        compile project(':libraries-controller')
     }
 
     buildTypes {
