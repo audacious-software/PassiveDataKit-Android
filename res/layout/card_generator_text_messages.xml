@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <android.support.v7.widget.CardView
+        android:id="@+id/card_view"
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        card_view:cardCornerRadius="4dp"
+        android:layout_margin="8dp">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <LinearLayout android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#9C27B0"
+                android:padding="8dp"
+                android:baselineAligned="false">
+                <ImageView android:src="@drawable/ic_text_messages"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginRight="8dp" />
+                <TextView android:text="@string/generator_text_messages"
+                    android:gravity="center_vertical|start"
+                    android:layout_width="0dp"
+                    android:layout_height="24dp"
+                    android:layout_weight="1"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white" />
+                <TextView android:id="@+id/generator_data_point_date"
+                    android:gravity="center_vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/white"
+                    android:layout_marginRight="8dp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/card_content"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp">
+                <com.github.mikephil.charting.charts.PieChart
+                    android:id="@+id/chart_text_messages"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_marginRight="16dp"/>
+                <LinearLayout android:orientation="vertical"
+                    android:layout_width="100dp"
+                    android:layout_height="120dp">
+                    <View android:layout_weight="1"
+                        android:layout_height="0dp"
+                        android:layout_width="40dp" />
+                    <LinearLayout android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+                        <View android:layout_width="16dp"
+                            android:layout_marginRight="4dp"
+                            android:layout_height="16dp"
+                            android:background="@color/generator_text_messages_incoming" />
+                        <TextView android:text="@string/generator_text_messages_incoming_label"
+                            android:layout_width="wrap_content"
+                            android:textSize="12sp"
+                            android:layout_height="16dp" />
+                    </LinearLayout>
+                    <LinearLayout android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+                        <View android:layout_width="16dp"
+                            android:layout_marginRight="4dp"
+                            android:layout_height="16dp"
+                            android:background="@color/generator_text_messages_outgoing" />
+                        <TextView android:text="@string/generator_text_messages_outgoing_label"
+                            android:layout_width="wrap_content"
+                            android:textSize="12sp"
+                            android:layout_height="16dp" />
+                    </LinearLayout>
+                    <View android:layout_weight="1"
+                        android:layout_height="0dp"
+                        android:layout_width="40dp" />
+                </LinearLayout>
+                <LinearLayout android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content">
+                    <TextView android:text="@string/generator_text_messages_latest_text_message_label"
+                        android:textStyle="bold"
+                        android:textSize="12sp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <TextView android:id="@+id/field_latest_text_message"
+                        android:textSize="13sp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"/>
+                    <TextView android:text="@string/generator_text_messages_length_label"
+                        android:textStyle="bold"
+                        android:textSize="12sp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <TextView android:id="@+id/field_length"
+                        android:textSize="13sp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"/>
+                    <TextView android:text="@string/generator_text_messages_direction_label"
+                        android:textStyle="bold"
+                        android:textSize="12sp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <TextView android:id="@+id/field_direction"
+                        android:textSize="13sp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"/>
+                </LinearLayout>
+            </LinearLayout>
+            <TextView android:id="@+id/card_empty"
+                android:text="@string/message_generator_text_messages_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="16dp" />
+        </LinearLayout>
+    </android.support.v7.widget.CardView>
+</LinearLayout>

@@ -46,7 +46,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okio.Buffer;
 
-public class HttpTransmitter extends Transmitter implements Generators.NewDataPointListener {
+public class HttpTransmitter extends Transmitter implements Generators.GeneratorUpdatedListener {
     public static final String UPLOAD_URI = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.UPLOAD_URI";
     public static final String USER_ID = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.USER_ID";
     private static final String HASH_ALGORITHM = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.HASH_ALGORITHM";
@@ -133,16 +133,23 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
 
         this.mContext = context.getApplicationContext();
 
-        Generators.getInstance(this.mContext).addNewDataPointListener(this);
+        Generators.getInstance(this.mContext).addNewGeneratorUpdatedListener(this);
     }
 
-    private boolean shouldAttemptUpload() {
+    private boolean shouldAttemptUpload(boolean force) {
+        if (force) {
+            return true;
+        }
         if (this.mWifiOnly) {
-            return DeviceInformation.wifiAvailable(this.mContext);
+            if (DeviceInformation.wifiAvailable(this.mContext) == false) {
+                return false;
+            }
         }
 
         if (this.mChargingOnly) {
-            return DeviceInformation.isPluggedIn(this.mContext);
+            if (DeviceInformation.isPluggedIn(this.mContext) == false) {
+                return false;
+            }
         }
 
         return true;
@@ -156,7 +163,7 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
             this.mLastAttempt = 0;
         }
 
-        if (now - this.mLastAttempt < this.mUploadInterval || !this.shouldAttemptUpload()) {
+        if (now - this.mLastAttempt < this.mUploadInterval || !this.shouldAttemptUpload(force)) {
             return;
         }
 
@@ -314,7 +321,6 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
 
             builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, payload));
 
-
             RequestBody requestBody = builder.build();
 
             if (this.mUserAgent == null) {
@@ -418,11 +424,24 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
     }
 
     @Override
-    public void onNewDataPoint(String identifier, Bundle data) {
+    public void onGeneratorUpdated(String identifier, long timestamp, Bundle data) {
         if (data.keySet().size() > 1) {  // Only transmit non-empty bundles...
+            timestamp = timestamp / 1000; // Convert to seconds...
+
+            Generators generators = Generators.getInstance(this.mContext);
+
+            Bundle metadata = new Bundle();
+
             if (data.containsKey(Generator.PDK_METADATA)) {
-                data.getBundle(Generator.PDK_METADATA).putString(Generator.SOURCE, this.mUserId);
+                metadata = data.getBundle(Generator.PDK_METADATA);
             }
+
+            metadata.putString(Generator.IDENTIFIER, identifier);
+            metadata.putDouble(Generator.TIMESTAMP, timestamp);
+            metadata.putString(Generator.GENERATOR, generators.getGeneratorFullName(identifier));
+            metadata.putString(Generator.SOURCE, generators.getSource());
+            metadata.putString(Generator.SOURCE, this.mUserId);
+            data.putBundle(Generator.PDK_METADATA, metadata);
 
             if (this.mJsonGenerator == null) {
                 this.mCurrentFile = new File(this.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
@@ -589,6 +608,10 @@ public class HttpTransmitter extends Transmitter implements Generators.NewDataPo
         catch (IOException e) {
             Logger.getInstance(context).logThrowable(e);
         }
+    }
+
+    public void setUserId(String userId) {
+        this.mUserId = userId;
     }
 
     public static class IncompleteConfigurationException extends RuntimeException {

@@ -3,9 +3,11 @@
         <item>com.audacious_software.passive_data_kit.generators.device.Location</item>
         <item>com.audacious_software.passive_data_kit.generators.device.ScreenState</item>
         <item>com.audacious_software.passive_data_kit.generators.communication.PhoneCalls</item>
-        <item>com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand</item>
-        <item>com.audacious_software.passive_data_kit.generators.services.GoogleAwareness</item>
-        <item>com.audacious_software.passive_data_kit.generators.vr.DaydreamViewController</item>
+        <item>com.audacious_software.passive_data_kit.generators.communication.TextMessages</item>
+        <!-- <item>com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand</item> -->
+        <!-- <item>com.audacious_software.passive_data_kit.generators.services.GoogleAwareness</item> -->
+        <!-- <item>com.audacious_software.passive_data_kit.generators.vr.DaydreamViewController</item> -->
+        <item>com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice</item>
     </string-array>
 
     <string-array name="pdk_app_generators"></string-array>
@@ -43,9 +45,59 @@
     <!-- Location Resources -->
     <string name="generator_location">Device Location</string>
     <string name="generator_location_value">Coordinates: %1$.4f, %2$.4f</string>
+    <string name="label_data_collection_location_accuracy">Location Accuracy</string>
+    <string name="label_data_collection_location_accuracy_more">Tap here to update the accuracy of your data.</string>
+
+    <string name="label_data_collection_location_accuracy_best">Best Accuracy</string>
+    <string name="label_data_collection_location_accuracy_best_more">Best Available Data From Location Hardware</string>
+
+    <string name="label_data_collection_location_accuracy_randomized">Locally Randomized</string>
+    <string name="label_data_collection_location_accuracy_randomized_more">Location Combined With Random Noise</string>
+
+    <string name="label_data_collection_location_accuracy_user">User Provided</string>
+    <string name="label_data_collection_location_accuracy_user_more">Static Location Provided By User</string>
+
+    <string name="label_data_collection_location_accuracy_disabled">Disabled</string>
+    <string name="label_data_collection_location_accuracy_disabled_more">App Does Not Use Location Data</string>
+
+    <string name="title_location_accuracy_best">Best Accuracy</string>
+    <string name="message_location_accuracy_best">This app will use the location hardware on this device to obtain the most accurate location readings.</string>
+
+    <string name="title_location_accuracy_disabled">Location Disabled</string>
+    <string name="message_location_accuracy_disabled">This app will not use your location, but use an placeholder instead.</string>
+
+    <string name="title_location_accuracy_randomized">Locally Randomized</string>
+    <string name="message_location_accuracy_randomized">Please enter the random distance (kilometers) to use to obfuscate your exact location:</string>
+
+    <string name="title_location_accuracy_user">User Provided</string>
+    <string name="message_location_accuracy_user">Please enter a postal code or city and province to use as your location:</string>
+    <string name="toast_location_lookup_failed">Unable to find your location. Please enter your location another way and try again.</string>
 
     <!-- Screen State Resources -->
     <string name="generator_screen_state">Screen State</string>
+    <string name="legend_screen_state_on_pdk">On</string>
+    <string name="legend_screen_state_off_pdk">Off</string>
+    <string name="legend_screen_state_doze_pdk">Doze</string>
+    <string name="legend_screen_state_unknown_pdk">Unknown</string>
+    <string name="label_legend_pdk">Legend: </string>
+    <string name="message_generator_screen_state_empty">No screen state changes have been observed yet.</string>
+
+    <!-- Phone Call Resources -->
+    <string name="generator_text_messages">SMS Text Messages</string>
+    <string name="generator_text_messages_incoming_label">Incoming</string>
+    <string name="generator_text_messages_outgoing_label">Outgoing</string>
+    <string name="generator_text_messages_other_label">Other</string>
+
+    <color name="generator_text_messages_incoming">#3F51B5</color>
+    <color name="generator_text_messages_outgoing">#4CAF50</color>
+    <color name="generator_text_messages_other">#9E9E9E</color>
+
+    <string name="generator_text_messages_latest_text_message_label">Latest Text Message</string>
+    <string name="generator_text_messages_length_label">Length</string>
+    <string name="generator_text_messages_direction_label">Direction</string>
+    <string name="generator_text_messages_length_format">%1$d chars.</string>
+
+    <string name="message_generator_text_messages_empty">No text messages have been sent or received on this device.</string>
 
     <!-- Phone Call Resources -->
     <string name="generator_phone_calls">Phone Calls</string>
@@ -64,4 +116,8 @@
     <string name="generator_phone_calls_direction_label">Direction</string>
     <string name="generator_phone_calls_duration_format">%1$.2f min.</string>
 
+    <string name="message_generator_phone_calls_empty">No phone calls have been made or received on this device.</string>
+
+    <!-- Withings Device Resources -->
+    <string name="generator_withings_device">Withings Device</string>
 </resources>

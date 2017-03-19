@@ -1,7 +1,23 @@
 <resources>
-    <string name="diagnostic_missing_msft_band_client">Unable to connect to Microsoft Band.</string>
+    <string name="diagnostic_missing_msft_band_client_title">Microsoft Band App Not Installed</string>
+    <string name="diagnostic_missing_msft_band_client">Unable to connect to Microsoft Band. Please install the app and try again.</string>
+
+    <string name="diagnostic_missing_msft_band_auth_title">Microsoft Band Permission Required</string>
     <string name="diagnostic_missing_msft_band_auth">Please grant the app sensor access on the Microsoft Band.</string>
-    <string name="diagnostic_missing_location_permission">Please grant the app permission to access location services on this device.</string>
+
+    <string name="diagnostic_missing_activity_recognition_permission_title">Activity Recognition Permission Required</string>
     <string name="diagnostic_missing_activity_recognition_permission">Please grant the app permission to recognize your activity using data from this device.</string>
+
+    <string name="diagnostic_call_log_permission_required_title">Call Log Permission Required</string>
     <string name="diagnostic_call_log_permission_required">Please grant the app permission to access the phone call logs on this device.</string>
+
+    <string name="diagnostic_sms_log_permission_required_title">Text Messaging Permission Required</string>
+    <string name="diagnostic_sms_log_permission_required">Please all the app permission to access your text messages to gather and report your messaging activity statistics.</string>
+
+    <string name="diagnostic_missing_location_permission_title">Location Permission Required</string>
+    <string name="diagnostic_missing_location_permission">Please grant the app permission to access location services on this device.</string>
+
+    <string name="diagnostic_withings_auth_required_title">Access to Withing Account Required</string>
+    <string name="diagnostic_withings_auth_required">Permission is required to fetch data from the Withings server. Please grant this application the requested permissions.</string>
+
 </resources>

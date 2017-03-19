@@ -14,10 +14,11 @@ import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
-import com.google.vr.sdk.controller.Controller;
-import com.google.vr.sdk.controller.ControllerManager;
+// import com.google.vr.sdk.controller.Controller;
+/// import com.google.vr.sdk.controller.ControllerManager;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by cjkarr on 11/20/2016.
@@ -32,8 +33,8 @@ public class DaydreamViewController extends Generator  {
     private static DaydreamViewController sInstance = null;
 
     private BroadcastReceiver mReceiver = null;
-    private ControllerManager mControllerManager = null;
-    private Controller mController = null;
+//    private ControllerManager mControllerManager = null;
+//    private Controller mController = null;
 
     public static DaydreamViewController getInstance(Context context) {
         if (DaydreamViewController.sInstance == null) {
@@ -49,7 +50,7 @@ public class DaydreamViewController extends Generator  {
 
     public static void start(final Context context) {
         DaydreamViewController.getInstance(context).startGenerator();
-
+/*
         DaydreamViewController.sInstance.mControllerManager = new ControllerManager(context, new ControllerManager.EventListener() {
             @Override
             public void onApiStatusChanged(int status) {
@@ -78,6 +79,8 @@ public class DaydreamViewController extends Generator  {
         });
 
         DaydreamViewController.sInstance.mControllerManager.start();
+
+*/
     }
 
     private void startGenerator() {
@@ -103,9 +106,9 @@ public class DaydreamViewController extends Generator  {
     }
 
     public static void bindViewHolder(DataPointViewHolder holder, final Bundle dataPoint) {
+        /*
         final Context context = holder.itemView.getContext();
 
-        /*
         try {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
             JSONArray history = new JSONArray(prefs.getString(ScreenState.SCREEN_HISTORY_KEY, "[]"));
@@ -171,8 +174,12 @@ public class DaydreamViewController extends Generator  {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_daydream_vr_controller, parent, false);
     }
 
-    public static void broadcastLatestDataPoint(Context context) {
-        Generators.getInstance(context).transmitData(DaydreamViewController.GENERATOR_IDENTIFIER, new Bundle());
+    @Override
+    public List<Bundle> fetchPayloads() {
+        return null;
     }
 
+    public static void broadcastLatestDataPoint(Context context) {
+//        Generators.getInstance(context).transmitData(DaydreamViewController.GENERATOR_IDENTIFIER, new Bundle());
+    }
 }

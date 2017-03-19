@@ -8,8 +8,10 @@ import android.content.Context;
 public class DiagnosticAction {
     private String mMessage = null;
     private Runnable mAction = null;
+    private String mTitle = null;
 
-    public DiagnosticAction(String message, Runnable action) {
+    public DiagnosticAction(String title, String message, Runnable action) {
+        this.mTitle = title;
         this.mMessage = message;
         this.mAction = action;
     }
@@ -24,5 +26,9 @@ public class DiagnosticAction {
 
     public String getMessage() {
         return this.mMessage;
+    }
+
+    public String getTitle() {
+        return this.mTitle;
     }
 }

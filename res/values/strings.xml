@@ -4,6 +4,7 @@
     <string name="pdk_version">0.0.1</string>
     <string name="unknown_version">Unknown Version</string>
     <string name="activity_data_stream">Data Stream</string>
+    <string name="action_continue">Continue</string>
 
     <plurals name="activity_data_stream_subtitle">
         <item quantity="one">%d generator</item>
@@ -14,10 +15,17 @@
 
     <string name="label_today_pdk">Today</string>
 
-    <string name="legend_screen_state_on_pdk">On</string>
-    <string name="legend_screen_state_off_pdk">Off</string>
-    <string name="legend_screen_state_doze_pdk">Doze</string>
-    <string name="legend_screen_state_unknown_pdk">Unknown</string>
-    <string name="label_legend_pdk">Legend: </string>
+    <string name="label_never_pdk">Never</string>
+    <string name="action_diagnostics">Diagnostics</string>
+    <string name="action_diagnostics_incomplete">Diagnostics (%d)</string>
+    <string name="title_pdk_diagnostics">Diagnostics</string>
+
+    <string name="message_no_diagnostic_actions">The app is set up correctly.\n\nNo further actions are needed.</string>
+
+    <string name="title_data_disclosure">Passive Data Disclosure</string>
+    <string name="pdk_message_select_disclosure">Select a disclosure item for more information&#8230;</string>
+
+    <string name="label_data_collection_description">Data Collection Description</string>
+    <string name="label_data_collection_description_more">Tap here to learn how this app uses your data.</string>
 </resources>
 

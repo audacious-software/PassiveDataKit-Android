@@ -1,11 +1,14 @@
 package com.audacious_software.passive_data_kit.activities;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -17,6 +20,38 @@ import com.audacious_software.pdk.passivedatakit.R;
 import java.util.ArrayList;
 
 public class DiagnosticsActivity extends AppCompatActivity {
+    public static void setUpDiagnositicsItem(Activity activity, Menu menu, boolean showAction) {
+        final ArrayList<DiagnosticAction> actions = PassiveDataKit.diagnostics(activity);
+
+        MenuItem item = menu.add(Menu.NONE, R.id.action_diagnostics, 0, activity.getString(R.string.action_diagnostics));
+
+        if (actions.size() > 0 && showAction) {
+            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+            item.setIcon(R.drawable.ic_pdk_diagnostic);
+            item.setTitle("" + actions.size());
+        } else {
+            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+
+            if (actions.size() > 0) {
+                item.setTitle(activity.getString(R.string.action_diagnostics_incomplete, actions.size()));
+            }
+        }
+    }
+
+    public static boolean diagnosticItemSelected(Activity activity, MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_diagnostics) {
+            Intent diagnosticsIntent = new Intent(activity, DiagnosticsActivity.class);
+            activity.startActivity(diagnosticsIntent);
+
+            return true;
+        }
+
+        return false;
+    }
+
     private class DiagnosticViewHolder extends RecyclerView.ViewHolder {
 
         private View mView = null;
@@ -44,7 +79,10 @@ public class DiagnosticsActivity extends AppCompatActivity {
         {
             this.mAction = action;
 
-            TextView message = (TextView) this.mView.findViewById(R.id.message_action);
+            TextView title = (TextView) this.mView.findViewById(R.id.action_title);
+            title.setText(action.getTitle());
+
+            TextView message = (TextView) this.mView.findViewById(R.id.action_message);
             message.setText(action.getMessage());
         }
     }
@@ -52,34 +90,46 @@ public class DiagnosticsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.layout_diagnostics_pdk);
+        this.getSupportActionBar().setTitle(R.string.title_pdk_diagnostics);
+    }
+
+    protected void onResume() {
+        super.onResume();
 
         final ArrayList<DiagnosticAction> actions = PassiveDataKit.diagnostics(this);
 
-        Log.e("PDK", "ACTIONS COUNT: " + actions.size());
-
         RecyclerView listView = (RecyclerView) this.findViewById(R.id.list_view);
+        TextView emptyMessage = (TextView) this.findViewById(R.id.message_no_diagnostics);
 
-        listView.setLayoutManager(new LinearLayoutManager(this));
+        if (actions.size() > 0) {
+            listView.setVisibility(View.VISIBLE);
+            emptyMessage.setVisibility(View.GONE);
 
-        listView.setAdapter(new RecyclerView.Adapter() {
-            @Override
-            public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_diagnostic_action, parent, false);
+            listView.setLayoutManager(new LinearLayoutManager(this));
 
-                return new DiagnosticViewHolder(v);
-            }
+            listView.setAdapter(new RecyclerView.Adapter() {
+                @Override
+                public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                    View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_diagnostic_action, parent, false);
 
-            @Override
-            public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-                DiagnosticViewHolder diagHolder = (DiagnosticViewHolder) holder;
+                    return new DiagnosticViewHolder(v);
+                }
 
-                diagHolder.bindDiagnosticAction(actions.get(position));
-            }
+                @Override
+                public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+                    DiagnosticViewHolder diagHolder = (DiagnosticViewHolder) holder;
 
-            @Override
-            public int getItemCount() {
-                return actions.size();
-            }
-        });
+                    diagHolder.bindDiagnosticAction(actions.get(position));
+                }
+
+                @Override
+                public int getItemCount() {
+                    return actions.size();
+                }
+            });
+        } else {
+            listView.setVisibility(View.GONE);
+            emptyMessage.setVisibility(View.VISIBLE);
+        }
     }
 }
