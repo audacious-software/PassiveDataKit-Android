@@ -409,6 +409,9 @@ public class AppEvent extends Generator{
                 } else if (value instanceof String) {
                     detailsBundle.putString(key, value.toString());
                     detailsJson.put(key, value.toString());
+                } else if (value instanceof Boolean) {
+                    detailsBundle.putBoolean(key, ((Boolean) value).booleanValue());
+                    detailsJson.put(key, ((Boolean) value).booleanValue());
                 } else {
                     detailsBundle.putString(key, "Unknown Class: " + value.getClass().getCanonicalName());
                     detailsJson.put(key, "Unknown Class: " + value.getClass().getCanonicalName());
