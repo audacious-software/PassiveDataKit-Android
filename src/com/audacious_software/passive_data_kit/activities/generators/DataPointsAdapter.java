@@ -2,6 +2,7 @@ package com.audacious_software.passive_data_kit.activities.generators;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -36,6 +37,8 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
                 Method fetchView = generatorClass.getDeclaredMethod("fetchView", ViewGroup.class);
                 View view = (View) fetchView.invoke(null, parent);
 
+                Log.e("PDK", "GENERATOR CLASS: " + generatorClass);
+
                 return new DataPointViewHolder(view);
             } catch (NoSuchMethodException e1) {
                 Logger.getInstance(parent.getContext()).logThrowable(e1);
@@ -66,6 +69,8 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
                 generatorClass = Generator.class;
 
                 Method bindViewHolder = generatorClass.getDeclaredMethod("bindViewHolder", DataPointViewHolder.class);
+
+                Log.e("PDK", "GENERATOR CLASS: " + generatorClass);
 
                 bindViewHolder.invoke(null, holder);
             } catch (NoSuchMethodException e1) {

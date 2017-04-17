@@ -233,6 +233,9 @@ public class Generators {
         for (String className : this.mActiveGenerators) {
             try {
                 active.add((Class<? extends Generator>) Class.forName(className));
+
+                Log.e("PDK", "ACTIVE GENERATOR CLASS: " + className);
+
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }

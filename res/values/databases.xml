@@ -16,4 +16,7 @@
     <!-- App Events Generator -->
     <string name="pdk_generator_app_events_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, event_name TEXT, event_details TEXT);</string>
 
+    <!-- Battery Generator -->
+    <string name="pdk_generator_device_battery_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, health TEXT, level INTERGER, plugged TEXT, present INTEGER, scale INTEGER, temperature INTEGER, voltage INTEGER, technology TEXT, status TEXT);</string>
+
 </resources>

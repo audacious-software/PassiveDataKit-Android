@@ -116,4 +116,12 @@
 
     <string name="message_generator_phone_calls_empty">No phone calls have been made or received on this device.</string>
 
+    <!-- Device Battery -->
+    <string name="generator_device_battery">Device Battery</string>
+    <string name="message_generator_device_battery_empty">No battery levels have been reported yet.</string>
+
+    <!-- App Event History -->
+    <string name="generator_app_event">App Event History</string>
+    <string name="message_generator_device_app_event_empty">No app events have been logged yet.</string>
+
 </resources>
