@@ -250,8 +250,10 @@ public class Generators {
     public void notifyGeneratorUpdated(String identifier, Bundle bundle) {
         long timestamp = System.currentTimeMillis();
 
-        for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
-            listener.onGeneratorUpdated(identifier, timestamp, bundle);
+        synchronized(this.mGeneratorUpdatedListeners) {
+            for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
+                listener.onGeneratorUpdated(identifier, timestamp, bundle);
+            }
         }
     }
 
@@ -273,11 +275,15 @@ public class Generators {
     }
 
     public void addNewGeneratorUpdatedListener(Generators.GeneratorUpdatedListener listener) {
-        this.mGeneratorUpdatedListeners.add(listener);
+        synchronized(this.mGeneratorUpdatedListeners) {
+            this.mGeneratorUpdatedListeners.add(listener);
+        }
     }
 
     public void removeGeneratorUpdatedListener(Generators.GeneratorUpdatedListener listener) {
-        this.mGeneratorUpdatedListeners.remove(listener);
+        synchronized (this.mGeneratorUpdatedListeners) {
+            this.mGeneratorUpdatedListeners.remove(listener);
+        }
     }
 
     public interface GeneratorUpdatedListener {

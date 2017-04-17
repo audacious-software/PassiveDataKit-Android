@@ -19,5 +19,4 @@
 
     <string name="diagnostic_withings_auth_required_title">Access to Withing Account Required</string>
     <string name="diagnostic_withings_auth_required">Permission is required to fetch data from the Withings server. Please grant this application the requested permissions.</string>
-
 </resources>
