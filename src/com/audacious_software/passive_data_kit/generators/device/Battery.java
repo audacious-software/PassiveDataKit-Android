@@ -10,6 +10,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,9 +23,19 @@ import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 
 import java.io.File;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -253,11 +265,19 @@ public class Battery extends Generator {
 
         Battery generator = Battery.getInstance(context);
 
-        Cursor c = generator.mDatabase.query(Battery.TABLE_HISTORY, null, null, null, null, null, Battery.HISTORY_OBSERVED + " DESC");
+        long now = System.currentTimeMillis();
+        long start = now - (24 * 60 * 60 * 1000);
+
+        String where = Battery.HISTORY_OBSERVED + " >= ?";
+        String[] args = { "" + start };
+
+        Cursor c = generator.mDatabase.query(Battery.TABLE_HISTORY, null, where, args, null, null, Battery.HISTORY_OBSERVED + " DESC");
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
         TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+
+        Log.e("SLEEP-SIGHT", "BATT VALUES COUNT 1: " + c.getCount());
 
         if (c.moveToNext()) {
             cardContent.setVisibility(View.VISIBLE);
@@ -267,8 +287,85 @@ public class Battery extends Generator {
 
             dateLabel.setText(Generator.formatTimestamp(context, timestamp));
 
-            TextView lastLevel = (TextView) holder.itemView.findViewById(R.id.card_last_battery_level);
-            lastLevel.setText("TODO: LEVEL " + c.getInt(c.getColumnIndex(Battery.HISTORY_LEVEL)));
+            c.moveToPrevious();
+
+            final LineChart chart = (LineChart) holder.itemView.findViewById(R.id.battery_level_chart);
+            chart.setViewPortOffsets(0,0,0,0);
+            chart.setHighlightPerDragEnabled(false);
+            chart.setHighlightPerTapEnabled(false);
+            chart.setBackgroundColor(ContextCompat.getColor(context, android.R.color.black));
+            chart.setPinchZoom(false);
+
+            final DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(context);
+
+            final XAxis xAxis = chart.getXAxis();
+            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM_INSIDE);
+            xAxis.setTextSize(10f);
+            xAxis.setDrawAxisLine(true);
+            xAxis.setDrawGridLines(true);
+            xAxis.setCenterAxisLabels(true);
+            xAxis.setDrawLabels(true);
+            xAxis.setTextColor(ContextCompat.getColor(context, android.R.color.white));
+            xAxis.setGranularityEnabled(true);
+            xAxis.setGranularity(1);
+            xAxis.setAxisMinimum(start);
+            xAxis.setAxisMaximum(now);
+            xAxis.setValueFormatter(new IAxisValueFormatter() {
+                @Override
+                public String getFormattedValue(float value, AxisBase axis) {
+                   Date date = new Date((long) value);
+
+                    return timeFormat.format(date);
+                }
+            });
+
+            YAxis leftAxis = chart.getAxisLeft();
+            leftAxis.setPosition(YAxis.YAxisLabelPosition.INSIDE_CHART);
+            leftAxis.setDrawGridLines(true);
+            leftAxis.setDrawAxisLine(true);
+            leftAxis.setGranularityEnabled(true);
+            leftAxis.setAxisMaximum(110);
+            leftAxis.setAxisMinimum(-10);
+            leftAxis.setTextColor(ContextCompat.getColor(context, android.R.color.white));
+
+            YAxis rightAxis = chart.getAxisRight();
+            rightAxis.setEnabled(false);
+
+            chart.getLegend().setEnabled(false);
+            chart.getDescription().setEnabled(false);
+
+            ArrayList<Entry> values = new ArrayList<>();
+
+            long lastLevel = -1;
+
+            while (c.moveToNext()) {
+                long when = c.getLong(c.getColumnIndex(Battery.HISTORY_OBSERVED));
+                long level = c.getLong(c.getColumnIndex(Battery.HISTORY_LEVEL));
+
+                if (level != lastLevel) {
+                    values.add(0, new Entry(when, level));
+                    lastLevel = level;
+
+                    Log.e("SLEEP-SIGHT", "VALUE: " + level + " -- " + (when - start));
+                }
+            }
+
+            Log.e("SLEEP-SIGHT", "BATT VALUES COUNT 2: " + values.size());
+
+            LineDataSet set = new LineDataSet(values, "Battery");
+            set.setAxisDependency(YAxis.AxisDependency.LEFT);
+            set.setLineWidth(2.0f);
+            set.setDrawCircles(false);
+            set.setFillAlpha(192);
+            set.setDrawFilled(false);
+            set.setDrawValues(true);
+            set.setColor(ContextCompat.getColor(context, R.color.generator_battery_plot));
+            set.setDrawCircleHole(false);
+            set.setDrawValues(false);
+            set.setMode(LineDataSet.Mode.LINEAR);
+
+            chart.setVisibleYRange(0, 120, YAxis.AxisDependency.LEFT);
+            chart.setData(new LineData(set));
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);

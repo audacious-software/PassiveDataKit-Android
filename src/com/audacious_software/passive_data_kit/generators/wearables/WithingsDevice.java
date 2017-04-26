@@ -4,7 +4,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,6 +18,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
@@ -24,6 +27,13 @@ import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.pdk.passivedatakit.R;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.IValueFormatter;
+import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,6 +49,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,7 +166,7 @@ public class WithingsDevice extends Generator {
     private static final String LAST_DATA_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.LAST_DATA_FETCH";
 
     private static final String DATA_FETCH_INTERVAL = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.DATA_FETCH_INTERVAL";
-    private static final long DATA_FETCH_INTERVAL_DEFAULT = (60 * 60 * 1000);
+    private static final long DATA_FETCH_INTERVAL_DEFAULT = (15 * 60 * 1000); // (60 * 60 * 1000);
 
     private static final String ACTIVITY_MEASURES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.ACTIVITY_MEASURES_ENABLED";
     private static final boolean ACTIVITY_MEASURES_ENABLED_DEFAULT = true;
@@ -256,26 +267,32 @@ public class WithingsDevice extends Generator {
                             @Override
                             public void run() {
                                 if (prefs.getBoolean(WithingsDevice.ACTIVITY_MEASURES_ENABLED, WithingsDevice.ACTIVITY_MEASURES_ENABLED_DEFAULT)) {
+                                    Log.e("SLEEP-SIGHT", "FETCH ACTIVITY MEASURES");
                                     me.fetchActivityMeasures();
                                 }
 
                                 if (prefs.getBoolean(WithingsDevice.BODY_MEASURES_ENABLED, WithingsDevice.BODY_MEASURES_ENABLED_DEFAULT)) {
+                                    Log.e("SLEEP-SIGHT", "FETCH BODY MEASURES");
                                     me.fetchBodyMeasures();
                                 }
 
                                 if (prefs.getBoolean(WithingsDevice.INTRADAY_ACTIVITY_ENABLED, WithingsDevice.INTRADAY_ACTIVITY_ENABLED_DEFAULT)) {
+                                    Log.e("SLEEP-SIGHT", "FETCH INTRADAY ACTIVITY");
                                     me.fetchIntradayActivities();
                                 }
 
                                 if (prefs.getBoolean(WithingsDevice.SLEEP_MEASURES_ENABLED, WithingsDevice.SLEEP_MEASURES_ENABLED_DEFAULT)) {
+                                    Log.e("SLEEP-SIGHT", "FETCH SLEEP MEASURES");
                                     me.fetchSleepMeasures();
                                 }
 
                                 if (prefs.getBoolean(WithingsDevice.SLEEP_SUMMARY_ENABLED, WithingsDevice.SLEEP_SUMMARY_ENABLED_DEFAULT)) {
+                                    Log.e("SLEEP-SIGHT", "FETCH SLEEP SUMMARY");
                                     me.fetchSleepSummary();
                                 }
 
                                 if (prefs.getBoolean(WithingsDevice.WORKOUTS_ENABLED, WithingsDevice.WORKOUTS_ENABLED_DEFAULT)) {
+                                    Log.e("SLEEP-SIGHT", "FETCH WORKOUTS");
                                     me.fetchWorkouts();
                                 }
                             }
@@ -552,6 +569,12 @@ public class WithingsDevice extends Generator {
     private void fetchBodyMeasures() {
         JSONObject response = this.queryApi(WithingsDevice.API_ACTION_BODY_MEASURES_URL);
 
+        try {
+            Log.e("SLEEP-SIGHT", "BODY JSON: " + response.toString(2));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
         if (response != null) {
             try {
                 if (response.getInt("status") == 0) {
@@ -699,6 +722,12 @@ public class WithingsDevice extends Generator {
     private void fetchSleepMeasures() {
         JSONObject response = this.queryApi(WithingsDevice.API_ACTION_SLEEP_MEASURES_URL);
 
+        try {
+            Log.e("SLEEP-SIGHT", "SLEEP JSON: " + response.toString(2));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
         if (response != null) {
             try {
                 if (response.getInt("status") == 0) {
@@ -766,6 +795,12 @@ public class WithingsDevice extends Generator {
 
     private void fetchSleepSummary() {
         JSONObject response = this.queryApi(WithingsDevice.API_ACTION_SLEEP_SUMMARY_URL);
+
+        try {
+            Log.e("SLEEP-SIGHT", "SLEEP SUMMARY JSON: " + response.toString(2));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         if (response != null) {
             try {
@@ -882,133 +917,135 @@ public class WithingsDevice extends Generator {
 
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
-        actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_withings_auth_required_title), context.getString(R.string.diagnostic_withings_auth_required), new Runnable() {
+        if (me.approvalGranted() == false) {
+            actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_withings_auth_required_title), context.getString(R.string.diagnostic_withings_auth_required), new Runnable() {
 
-            @Override
-            public void run() {
-                Runnable r = new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            String requestUrl = "https://oauth.withings.com/account/request_token";
+                @Override
+                public void run() {
+                    Runnable r = new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                String requestUrl = "https://oauth.withings.com/account/request_token";
 
-                            Uri apiUri = Uri.parse(requestUrl);
+                                Uri apiUri = Uri.parse(requestUrl);
 
-                            Uri.Builder builder = new Uri.Builder();
-                            builder.scheme(apiUri.getScheme());
-                            builder.authority(apiUri.getAuthority());
-                            builder.path(apiUri.getPath());
+                                Uri.Builder builder = new Uri.Builder();
+                                builder.scheme(apiUri.getScheme());
+                                builder.authority(apiUri.getAuthority());
+                                builder.path(apiUri.getPath());
 
-                            String signature = "GET&" + URLEncoder.encode(builder.build().toString(), "UTF-8");
+                                String signature = "GET&" + URLEncoder.encode(builder.build().toString(), "UTF-8");
 
-                            String callbackUrl = me.getProperty(WithingsDevice.OPTION_OAUTH_CALLBACK_URL);
-                            String apiKey = me.getProperty(WithingsDevice.OPTION_OAUTH_CONSUMER_KEY);
-                            String apiSecret = me.getProperty(WithingsDevice.OPTION_OAUTH_CONSUMER_SECRET);
+                                String callbackUrl = me.getProperty(WithingsDevice.OPTION_OAUTH_CALLBACK_URL);
+                                String apiKey = me.getProperty(WithingsDevice.OPTION_OAUTH_CONSUMER_KEY);
+                                String apiSecret = me.getProperty(WithingsDevice.OPTION_OAUTH_CONSUMER_SECRET);
 
-                            String nonce = UUID.randomUUID().toString();
+                                String nonce = UUID.randomUUID().toString();
 
-                            builder.appendQueryParameter("oauth_callback", callbackUrl);
-                            builder.appendQueryParameter("oauth_consumer_key", apiKey);
-                            builder.appendQueryParameter("oauth_nonce", nonce);
-                            builder.appendQueryParameter("oauth_signature_method", "HMAC-SHA1");
-                            builder.appendQueryParameter("oauth_timestamp", "" + (System.currentTimeMillis() / 1000));
-                            builder.appendQueryParameter("oauth_version", "1.0");
+                                builder.appendQueryParameter("oauth_callback", callbackUrl);
+                                builder.appendQueryParameter("oauth_consumer_key", apiKey);
+                                builder.appendQueryParameter("oauth_nonce", nonce);
+                                builder.appendQueryParameter("oauth_signature_method", "HMAC-SHA1");
+                                builder.appendQueryParameter("oauth_timestamp", "" + (System.currentTimeMillis() / 1000));
+                                builder.appendQueryParameter("oauth_version", "1.0");
 
-                            Uri baseUri = builder.build();
+                                Uri baseUri = builder.build();
 
-                            signature += "&" + URLEncoder.encode(baseUri.getEncodedQuery(), "UTF-8");
+                                signature += "&" + URLEncoder.encode(baseUri.getEncodedQuery(), "UTF-8");
 
-                            String key = apiSecret + "&";
+                                String key = apiSecret + "&";
 
-                            SecretKeySpec secret = new SecretKeySpec(key.getBytes(), "HmacSHA1");
-                            Mac mac = Mac.getInstance("HmacSHA1");
-                            mac.init(secret);
+                                SecretKeySpec secret = new SecretKeySpec(key.getBytes(), "HmacSHA1");
+                                Mac mac = Mac.getInstance("HmacSHA1");
+                                mac.init(secret);
 
-                            byte[] bytes = mac.doFinal(signature.getBytes());
+                                byte[] bytes = mac.doFinal(signature.getBytes());
 
-                            signature = Base64.encodeToString(bytes, Base64.DEFAULT).trim();
+                                signature = Base64.encodeToString(bytes, Base64.DEFAULT).trim();
 
-                            builder.appendQueryParameter("oauth_signature", signature);
+                                builder.appendQueryParameter("oauth_signature", signature);
 
-                            Uri uri = builder.build();
+                                Uri uri = builder.build();
 
-                            OkHttpClient client = new OkHttpClient();
+                                OkHttpClient client = new OkHttpClient();
 
-                            Request request = new Request.Builder()
-                                    .url(uri.toString())
-                                    .build();
+                                Request request = new Request.Builder()
+                                        .url(uri.toString())
+                                        .build();
 
-                            Response response = client.newCall(request).execute();
+                                Response response = client.newCall(request).execute();
 
-                            String responseBody = response.body().string();
+                                String responseBody = response.body().string();
 
-                            StringTokenizer st = new StringTokenizer(responseBody, "&");
+                                StringTokenizer st = new StringTokenizer(responseBody, "&");
 
-                            String requestToken = null;
-                            String requestSecret = null;
+                                String requestToken = null;
+                                String requestSecret = null;
 
-                            while (st.hasMoreTokens()) {
-                                String authToken = st.nextToken();
+                                while (st.hasMoreTokens()) {
+                                    String authToken = st.nextToken();
 
-                                if (authToken.startsWith("oauth_token=")) {
-                                    requestToken = authToken.replace("oauth_token=", "");
-                                } else if (authToken.startsWith("oauth_token_secret=")) {
-                                    requestSecret = authToken.replace("oauth_token_secret=", "");
+                                    if (authToken.startsWith("oauth_token=")) {
+                                        requestToken = authToken.replace("oauth_token=", "");
+                                    } else if (authToken.startsWith("oauth_token_secret=")) {
+                                        requestSecret = authToken.replace("oauth_token_secret=", "");
+                                    }
                                 }
+
+                                key = apiSecret + "&" + requestSecret;
+
+                                me.setProperty(WithingsDevice.OPTION_OAUTH_REQUEST_SECRET, requestSecret);
+
+                                builder = new Uri.Builder();
+                                builder.scheme("https");
+                                builder.authority("oauth.withings.com");
+                                builder.path("/account/authorize");
+
+                                signature = "GET&" + URLEncoder.encode(builder.build().toString(), "UTF-8");
+
+                                nonce = UUID.randomUUID().toString();
+
+                                builder.appendQueryParameter("oauth_consumer_key", apiKey);
+                                builder.appendQueryParameter("oauth_nonce", nonce);
+                                builder.appendQueryParameter("oauth_signature_method", "HMAC-SHA1");
+                                builder.appendQueryParameter("oauth_timestamp", "" + (System.currentTimeMillis() / 1000));
+                                builder.appendQueryParameter("oauth_token", requestToken);
+                                builder.appendQueryParameter("oauth_version", "1.0");
+
+                                baseUri = builder.build();
+
+                                signature += "&" + URLEncoder.encode(baseUri.getEncodedQuery(), "UTF-8");
+
+                                secret = new SecretKeySpec(key.getBytes(), "HmacSHA1");
+                                mac = Mac.getInstance("HmacSHA1");
+                                mac.init(secret);
+
+                                bytes = mac.doFinal(signature.getBytes(Charset.forName("UTF-8")));
+
+                                signature = Base64.encodeToString(bytes, Base64.DEFAULT);
+
+                                builder.appendQueryParameter("oauth_signature", signature.trim());
+
+                                Intent intent = new Intent(Intent.ACTION_VIEW, builder.build());
+                                context.startActivity(intent);
+                            } catch (NoSuchAlgorithmException e) {
+                                AppEvent.getInstance(context).logThrowable(e);
+                            } catch (InvalidKeyException e) {
+                                AppEvent.getInstance(context).logThrowable(e);
+                            } catch (UnsupportedEncodingException e) {
+                                AppEvent.getInstance(context).logThrowable(e);
+                            } catch (IOException e) {
+                                AppEvent.getInstance(context).logThrowable(e);
                             }
-
-                            key = apiSecret + "&" + requestSecret;
-
-                            me.setProperty(WithingsDevice.OPTION_OAUTH_REQUEST_SECRET, requestSecret);
-
-                            builder = new Uri.Builder();
-                            builder.scheme("https");
-                            builder.authority("oauth.withings.com");
-                            builder.path("/account/authorize");
-
-                            signature = "GET&" + URLEncoder.encode(builder.build().toString(), "UTF-8");
-
-                            nonce = UUID.randomUUID().toString();
-
-                            builder.appendQueryParameter("oauth_consumer_key", apiKey);
-                            builder.appendQueryParameter("oauth_nonce", nonce);
-                            builder.appendQueryParameter("oauth_signature_method", "HMAC-SHA1");
-                            builder.appendQueryParameter("oauth_timestamp", "" + (System.currentTimeMillis() / 1000));
-                            builder.appendQueryParameter("oauth_token", requestToken);
-                            builder.appendQueryParameter("oauth_version", "1.0");
-
-                            baseUri = builder.build();
-
-                            signature += "&" + URLEncoder.encode(baseUri.getEncodedQuery(), "UTF-8");
-
-                            secret = new SecretKeySpec(key.getBytes(), "HmacSHA1");
-                            mac = Mac.getInstance("HmacSHA1");
-                            mac.init(secret);
-
-                            bytes = mac.doFinal(signature.getBytes(Charset.forName("UTF-8")));
-
-                            signature = Base64.encodeToString(bytes, Base64.DEFAULT);
-
-                            builder.appendQueryParameter("oauth_signature", signature.trim());
-
-                            Intent intent = new Intent(Intent.ACTION_VIEW, builder.build());
-                            context.startActivity(intent);
-                        } catch (NoSuchAlgorithmException e) {
-                            AppEvent.getInstance(context).logThrowable(e);
-                        } catch (InvalidKeyException e) {
-                            AppEvent.getInstance(context).logThrowable(e);
-                        } catch (UnsupportedEncodingException e) {
-                            AppEvent.getInstance(context).logThrowable(e);
-                        } catch (IOException e) {
-                            AppEvent.getInstance(context).logThrowable(e);
                         }
-                    }
-                };
+                    };
 
-                Thread t = new Thread(r);
-                t.start();
-            }
-        }));
+                    Thread t = new Thread(r);
+                    t.start();
+                }
+            }));
+        }
 
         return actions;
     }
@@ -1105,26 +1142,112 @@ public class WithingsDevice extends Generator {
     }
 
     public static void bindViewHolder(DataPointViewHolder holder) {
-/*
         final Context context = holder.itemView.getContext();
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         long lastTimestamp = 0;
-        long lastDuration = 0;
-        String callType = null;
 
-        long totalIncoming = 0;
-        long totalOutgoing = 0;
-        long totalMissed = 0;
-        long total = 0;
+        double steps = 0;
+        double distance = 0;
+        double elevation = 0;
+
+        double softActivity = 0;
+        double moderateActivity = 0;
+        double intenseActivity = 0;
 
         WithingsDevice generator = WithingsDevice.getInstance(holder.itemView.getContext());
+
+        Cursor c = generator.mDatabase.query(WithingsDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, WithingsDevice.HISTORY_OBSERVED + " DESC");
+
+        if (c.moveToNext()) {
+            if (lastTimestamp == 0) {
+                lastTimestamp = c.getLong(c.getColumnIndex(WithingsDevice.HISTORY_OBSERVED));
+            }
+
+            steps = c.getDouble(c.getColumnIndex(WithingsDevice.ACTIVITY_MEASURE_STEPS));
+            distance = c.getDouble(c.getColumnIndex(WithingsDevice.ACTIVITY_MEASURE_DISTANCE));
+            elevation = c.getDouble(c.getColumnIndex(WithingsDevice.ACTIVITY_MEASURE_ELEVATION));
+
+            softActivity = c.getDouble(c.getColumnIndex(WithingsDevice.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION));
+            moderateActivity = c.getDouble(c.getColumnIndex(WithingsDevice.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION));
+            intenseActivity = c.getDouble(c.getColumnIndex(WithingsDevice.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION));
+        }
+
+        c.close();
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
         TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
-*/
+
+        if (lastTimestamp > 0) {
+            cardContent.setVisibility(View.VISIBLE);
+            cardEmpty.setVisibility(View.GONE);
+
+            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp));
+
+            PieChart pieChart = (PieChart) holder.itemView.findViewById(R.id.chart_phone_calls);
+            pieChart.getLegend().setEnabled(false);
+
+            pieChart.setEntryLabelColor(android.R.color.transparent);
+            pieChart.getDescription().setEnabled(false);
+            pieChart.setDrawHoleEnabled(false);
+
+            List<PieEntry> entries = new ArrayList<>();
+
+            if (softActivity > 0) {
+                entries.add(new PieEntry((long) softActivity, context.getString(R.string.generator_withings_soft_activities_label)));
+            }
+
+            if (moderateActivity > 0) {
+                entries.add(new PieEntry((long) moderateActivity, context.getString(R.string.generator_withings_moderate_activities_label)));
+            }
+
+            if (intenseActivity > 0) {
+                entries.add(new PieEntry((long) intenseActivity, context.getString(R.string.generator_withings_intense_activities_label)));
+            }
+
+            PieDataSet set = new PieDataSet(entries, " ");
+
+            int[] colors = {
+                    R.color.generator_withings_soft_activities,
+                    R.color.generator_withings_moderate_activities,
+                    R.color.generator_withings_intense_activities
+            };
+
+            set.setColors(colors, context);
+
+            PieData data = new PieData(set);
+            data.setValueTextSize(14);
+            data.setValueTypeface(Typeface.DEFAULT_BOLD);
+            data.setValueTextColor(0xffffffff);
+
+            data.setValueFormatter(new IValueFormatter() {
+                @Override
+                public String getFormattedValue(float value, Entry entry, int dataSetIndex, ViewPortHandler viewPortHandler) {
+                    return "" + ((Float) value).intValue();
+                }
+            });
+
+            pieChart.setData(data);
+            pieChart.invalidate();
+
+            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
+
+            TextView stepsValue = (TextView) holder.itemView.findViewById(R.id.field_steps);
+            stepsValue.setText(context.getString(R.string.generator_withings_steps_value, (int) steps));
+
+            TextView distanceValue = (TextView) holder.itemView.findViewById(R.id.field_distance);
+            distanceValue.setText(context.getString(R.string.generator_withings_distance_value, (distance / 1000)));
+
+            TextView elevationValue = (TextView) holder.itemView.findViewById(R.id.field_elevation);
+            elevationValue.setText(context.getString(R.string.generator_withings_elevation_value, elevation));
+        } else {
+            cardContent.setVisibility(View.GONE);
+            cardEmpty.setVisibility(View.VISIBLE);
+
+            dateLabel.setText(R.string.label_never_pdk);
+        }
     }
 
     @Override

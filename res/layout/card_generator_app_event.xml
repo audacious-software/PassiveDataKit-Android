@@ -18,10 +18,10 @@
             <LinearLayout android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#607D8B"
+                android:background="#424242"
                 android:padding="8dp"
                 android:baselineAligned="false">
-                <ImageView android:src="@drawable/ic_screen_state"
+                <ImageView android:src="@drawable/ic_app_events"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginRight="8dp" />

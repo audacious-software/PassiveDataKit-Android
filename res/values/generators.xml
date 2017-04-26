@@ -120,10 +120,28 @@
 
     <!-- Withings Device Resources -->
     <string name="generator_withings_device">Withings Device</string>
+    <string name="generator_withings_soft_activities_label">Soft Activities</string>
+    <string name="generator_withings_moderate_activities_label">Moderate Activities</string>
+    <string name="generator_withings_intense_activities_label">Intense Activities</string>
+    <color name="generator_withings_soft_activities">#757575</color>
+    <color name="generator_withings_moderate_activities">#039BE5</color>
+    <color name="generator_withings_intense_activities">#43A047</color>
+    <string name="message_generator_withings_empty">No activity data has been downloaded yet.</string>
+
+    <string name="generator_withings_steps_label">Steps</string>
+    <string name="generator_withings_steps_value">%1$d steps</string>
+
+    <string name="generator_withings_distance_label">Distance</string>
+    <string name="generator_withings_distance_value">%1$.2f km</string>
+
+    <string name="generator_withings_elevation_label">Elevation</string>
+    <string name="generator_withings_elevation_value">%1$.2f m</string>
 
     <!-- Device Battery -->
     <string name="generator_device_battery">Device Battery</string>
     <string name="message_generator_device_battery_empty">No battery levels have been reported yet.</string>
+    <color name="generator_battery_plot">#66BB6A</color>
+    <color name="generator_battery_header">#1B5E20</color>
 
     <!-- App Event History -->
     <string name="generator_app_event">App Event History</string>
