@@ -44,7 +44,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okio.Buffer;
 
 public class HttpTransmitter extends Transmitter implements Generators.GeneratorUpdatedListener {
     public static final String UPLOAD_URI = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.UPLOAD_URI";
@@ -158,6 +157,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     @Override
     public void transmit(boolean force) {
         long now = System.currentTimeMillis();
+
+        Log.e("PDK", "TRANSMIT: " + force);
 
         if (force) {
             this.mLastAttempt = 0;

@@ -43,7 +43,6 @@ import java.util.List;
  */
 
 public class Battery extends Generator {
-
     private static final String GENERATOR_IDENTIFIER = "pdk-device-battery";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.Battery.ENABLED";
@@ -276,8 +275,6 @@ public class Battery extends Generator {
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
         TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
-
-        Log.e("SLEEP-SIGHT", "BATT VALUES COUNT 1: " + c.getCount());
 
         if (c.moveToNext()) {
             cardContent.setVisibility(View.VISIBLE);

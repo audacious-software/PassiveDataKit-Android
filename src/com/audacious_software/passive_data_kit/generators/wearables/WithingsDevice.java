@@ -13,11 +13,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.util.Base64;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
@@ -27,8 +30,12 @@ import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.pdk.passivedatakit.R;
+import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
@@ -49,8 +56,8 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -71,6 +78,10 @@ public class WithingsDevice extends Generator {
 
     private static final String DATASTREAM = "datastream";
     private static final String DATASTREAM_ACTIVITY_MEASURES = "activity-measures";
+    private static final String DATASTREAM_INTRADAY_ACTIVITY = "intraday-activity";
+    private static final String DATASTREAM_BODY = "body";
+    private static final String DATASTREAM_SLEEP_MEASURES = "sleep-measures";
+    private static final String DATASTREAM_SLEEP_SUMMARY = "sleep-summary";
 
     private static final String TABLE_ACTIVITY_MEASURE_HISTORY = "activity_measure_history";
     private static final String ACTIVITY_MEASURE_HISTORY_DATE_START = "date_start";
@@ -122,6 +133,14 @@ public class WithingsDevice extends Generator {
     private static final String BODY_MEASURE_HISTORY_VALUE = "measure_value";
 
     private static final String TABLE_INTRADAY_ACTIVITY_HISTORY = "intraday_activity_history";
+    private static final String INTRADAY_ACTIVITY_START = "activity_start";
+    private static final String INTRADAY_ACTIVITY_DURATION = "activity_duration";
+    private static final String INTRADAY_ACTIVITY_CALORIES = "calories";
+    private static final String INTRADAY_ACTIVITY_DISTANCE = "distance";
+    private static final String INTRADAY_ACTIVITY_ELEVATION_CLIMBED = "elevation_climbed";
+    private static final String INTRADAY_ACTIVITY_STEPS = "steps";
+    private static final String INTRADAY_ACTIVITY_SWIM_STROKES = "swim_strokes";
+    private static final String INTRADAY_ACTIVITY_POOL_LAPS = "pool_laps";
 
     private static final String TABLE_SLEEP_MEASURE_HISTORY = "sleep_measure_history";
     private static final String SLEEP_MEASURE_MODEL_UNKNOWN = "unknown";
@@ -186,6 +205,9 @@ public class WithingsDevice extends Generator {
     private static final String WORKOUTS_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.WORKOUTS_ENABLED";
     private static final boolean WORKOUTS_ENABLED_DEFAULT = true;
 
+    private static final String SERVER_FETCH_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.SERVER_FETCH_ENABLED";
+    private static final boolean SERVER_FETCH_ENABLED_DEFAULT = false;
+
     public static final String OPTION_OAUTH_CALLBACK_URL = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.OPTION_CALLBACK_URL";
     public static final String OPTION_OAUTH_CONSUMER_KEY = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.OPTION_OAUTH_CONSUMER_KEY";
     public static final String OPTION_OAUTH_CONSUMER_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.OPTION_OAUTH_CONSUMER_SECRET";
@@ -202,11 +224,17 @@ public class WithingsDevice extends Generator {
     private static final String API_ACTION_WORKOUTS_URL = "https://wbsapi.withings.net/v2/measure?action=getworkouts";
     public static final String API_OAUTH_CALLBACK_PATH = "/oauth/withings";
 
+    private static final String OAUTH_CONSUMER_KEY = "oauth_consumer_key";
+    private static final String OAUTH_USER_TOKEN = "oauth_user_token";
+    private static final String OAUTH_USER_SECRET = "oauth_user_secret";
+
     private static WithingsDevice sInstance = null;
     private Context mContext = null;
     private SQLiteDatabase mDatabase = null;
     private Handler mHandler = null;
     private Map<String, String> mProperties = new HashMap<>();
+
+    private int mPage = 0;
 
     public static WithingsDevice getInstance(Context context) {
         if (WithingsDevice.sInstance == null) {
@@ -248,51 +276,39 @@ public class WithingsDevice extends Generator {
         final Runnable fetchData = new Runnable() {
             @Override
             public void run() {
-                Log.e("PDK", "WITHINGS FETCH DATA");
-
                 final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
                 long fetchInterval = prefs.getLong(WithingsDevice.DATA_FETCH_INTERVAL, WithingsDevice.DATA_FETCH_INTERVAL_DEFAULT);
 
                 if (me.approvalGranted()) {
-                    Log.e("PDK", "WITHINGS APPROVED");
-
                     long lastFetch = prefs.getLong(WithingsDevice.LAST_DATA_FETCH, 0);
 
                     long now = System.currentTimeMillis();
 
                     if (now - lastFetch > fetchInterval) {
-                        Log.e("PDK", "TIME TO FETCH");
-
                         Runnable r = new Runnable() {
                             @Override
                             public void run() {
                                 if (prefs.getBoolean(WithingsDevice.ACTIVITY_MEASURES_ENABLED, WithingsDevice.ACTIVITY_MEASURES_ENABLED_DEFAULT)) {
-                                    Log.e("SLEEP-SIGHT", "FETCH ACTIVITY MEASURES");
                                     me.fetchActivityMeasures();
                                 }
 
                                 if (prefs.getBoolean(WithingsDevice.BODY_MEASURES_ENABLED, WithingsDevice.BODY_MEASURES_ENABLED_DEFAULT)) {
-                                    Log.e("SLEEP-SIGHT", "FETCH BODY MEASURES");
                                     me.fetchBodyMeasures();
                                 }
 
                                 if (prefs.getBoolean(WithingsDevice.INTRADAY_ACTIVITY_ENABLED, WithingsDevice.INTRADAY_ACTIVITY_ENABLED_DEFAULT)) {
-                                    Log.e("SLEEP-SIGHT", "FETCH INTRADAY ACTIVITY");
                                     me.fetchIntradayActivities();
                                 }
 
                                 if (prefs.getBoolean(WithingsDevice.SLEEP_MEASURES_ENABLED, WithingsDevice.SLEEP_MEASURES_ENABLED_DEFAULT)) {
-                                    Log.e("SLEEP-SIGHT", "FETCH SLEEP MEASURES");
                                     me.fetchSleepMeasures();
                                 }
 
                                 if (prefs.getBoolean(WithingsDevice.SLEEP_SUMMARY_ENABLED, WithingsDevice.SLEEP_SUMMARY_ENABLED_DEFAULT)) {
-                                    Log.e("SLEEP-SIGHT", "FETCH SLEEP SUMMARY");
                                     me.fetchSleepSummary();
                                 }
 
                                 if (prefs.getBoolean(WithingsDevice.WORKOUTS_ENABLED, WithingsDevice.WORKOUTS_ENABLED_DEFAULT)) {
-                                    Log.e("SLEEP-SIGHT", "FETCH WORKOUTS");
                                     me.fetchWorkouts();
                                 }
                             }
@@ -304,11 +320,7 @@ public class WithingsDevice extends Generator {
                         SharedPreferences.Editor e = prefs.edit();
                         e.putLong(WithingsDevice.LAST_DATA_FETCH, now);
                         e.apply();
-                    } else {
-                        Log.e("PDK", "NOT TIME TO FETCH");
                     }
-                } else {
-                    Log.e("PDK", "WITHINGS NOT APPROVED");
                 }
 
                 if (me.mHandler != null) {
@@ -557,6 +569,8 @@ public class WithingsDevice extends Generator {
                         updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION, activity.getDouble("intense"));
                         updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_ACTIVITY_MEASURES);
 
+                        this.annotateGeneratorReading(updated);
+
                         Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
                     }
                 }
@@ -568,12 +582,6 @@ public class WithingsDevice extends Generator {
 
     private void fetchBodyMeasures() {
         JSONObject response = this.queryApi(WithingsDevice.API_ACTION_BODY_MEASURES_URL);
-
-        try {
-            Log.e("SLEEP-SIGHT", "BODY JSON: " + response.toString(2));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
 
         if (response != null) {
             try {
@@ -700,6 +708,9 @@ public class WithingsDevice extends Generator {
                             updated.putString(WithingsDevice.BODY_MEASURE_HISTORY_CATEGORY, category);
                             updated.putString(WithingsDevice.BODY_MEASURE_HISTORY_TYPE, type);
                             updated.putDouble(WithingsDevice.BODY_MEASURE_HISTORY_VALUE, value);
+                            updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_BODY);
+
+                            this.annotateGeneratorReading(updated);
 
                             Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
                         }
@@ -715,18 +726,89 @@ public class WithingsDevice extends Generator {
         JSONObject response = this.queryApi(WithingsDevice.API_ACTION_INTRADAY_ACTIVITY_URL);
 
         if (response != null) {
-            // TODO
+            try {
+                long now = System.currentTimeMillis();
+
+                if (response.getInt("status") == 0) {
+                    JSONObject body = response.getJSONObject("body");
+
+                    JSONObject series = body.getJSONObject("series");
+
+                    Iterator<String> keys = series.keys();
+
+                    while (keys.hasNext()) {
+                        String key = keys.next();
+
+                        long timestamp = Long.parseLong(key);
+
+                        String where = WithingsDevice.INTRADAY_ACTIVITY_START + " = ?";
+                        String[] args = { "" + timestamp };
+
+                        Cursor c = this.mDatabase.query(WithingsDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, null, where, args, null, null, WithingsDevice.HISTORY_OBSERVED + " DESC");
+
+                        if (c.moveToNext() == false) {
+                            JSONObject item = series.getJSONObject(key);
+
+                            ContentValues values = new ContentValues();
+                            values.put(WithingsDevice.HISTORY_OBSERVED, now);
+                            values.put(WithingsDevice.INTRADAY_ACTIVITY_START, timestamp);
+                            values.put(WithingsDevice.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
+
+                            Bundle updated = new Bundle();
+                            updated.putLong(WithingsDevice.HISTORY_OBSERVED, System.currentTimeMillis());
+                            updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_START, timestamp);
+                            updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
+
+                            if (item.has("steps")) {
+                                values.put(WithingsDevice.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
+                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
+                            }
+
+                            if (item.has("elevation")) {
+                                values.put(WithingsDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
+                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
+                            }
+
+                            if (item.has("distance")) {
+                                values.put(WithingsDevice.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
+                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
+                            }
+
+                            if (item.has("calories")) {
+                                values.put(WithingsDevice.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
+                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
+                            }
+
+                            if (item.has("stroke")) {
+                                values.put(WithingsDevice.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
+                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
+                            }
+
+                            if (item.has("pool_lap")) {
+                                values.put(WithingsDevice.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
+                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
+                            }
+
+                            this.mDatabase.insert(WithingsDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, null, values);
+
+                            this.annotateGeneratorReading(updated);
+
+                            updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_INTRADAY_ACTIVITY);
+
+                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
+                        }
+
+                        c.close();
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     private void fetchSleepMeasures() {
         JSONObject response = this.queryApi(WithingsDevice.API_ACTION_SLEEP_MEASURES_URL);
-
-        try {
-            Log.e("SLEEP-SIGHT", "SLEEP JSON: " + response.toString(2));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
 
         if (response != null) {
             try {
@@ -784,6 +866,10 @@ public class WithingsDevice extends Generator {
                         updated.putString(WithingsDevice.SLEEP_MEASURE_STATE, state);
                         updated.putString(WithingsDevice.SLEEP_MEASURE_MEASUREMENT_DEVICE, model);
 
+                        this.annotateGeneratorReading(updated);
+
+                        updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_SLEEP_MEASURES);
+
                         Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
                     }
                 }
@@ -795,12 +881,6 @@ public class WithingsDevice extends Generator {
 
     private void fetchSleepSummary() {
         JSONObject response = this.queryApi(WithingsDevice.API_ACTION_SLEEP_SUMMARY_URL);
-
-        try {
-            Log.e("SLEEP-SIGHT", "SLEEP SUMMARY JSON: " + response.toString(2));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
 
         if (response != null) {
             try {
@@ -871,12 +951,30 @@ public class WithingsDevice extends Generator {
                             updated.putDouble(WithingsDevice.SLEEP_SUMMARY_TO_WAKE_DURATION, data.getDouble("durationtowakeup"));
                         }
 
+                        this.annotateGeneratorReading(updated);
+
+                        updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_SLEEP_SUMMARY);
+
                         Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
                     }
                 }
             } catch (JSONException e) {
                 AppEvent.getInstance(this.mContext).logThrowable(e);
             }
+        }
+    }
+
+    private void annotateGeneratorReading(Bundle reading) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        if (prefs.getBoolean(WithingsDevice.SERVER_FETCH_ENABLED, WithingsDevice.SERVER_FETCH_ENABLED_DEFAULT)) {
+            String apiKey = this.getProperty(WithingsDevice.OPTION_OAUTH_CONSUMER_KEY);
+            String token = this.getProperty(WithingsDevice.OPTION_OAUTH_ACCESS_TOKEN);
+            String tokenSecret = this.getProperty(WithingsDevice.OPTION_OAUTH_ACCESS_TOKEN_SECRET);
+
+            reading.putString(WithingsDevice.OAUTH_CONSUMER_KEY, apiKey);
+            reading.putString(WithingsDevice.OAUTH_USER_TOKEN, token);
+            reading.putString(WithingsDevice.OAUTH_USER_SECRET, tokenSecret);
         }
     }
 
@@ -1141,10 +1239,94 @@ public class WithingsDevice extends Generator {
         t.start();
     }
 
-    public static void bindViewHolder(DataPointViewHolder holder) {
-        final Context context = holder.itemView.getContext();
+    public static void bindViewHolder(final DataPointViewHolder holder) {
+        final WithingsDevice withings = WithingsDevice.getInstance(holder.itemView.getContext());
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        ViewPager pager = (ViewPager) holder.itemView.findViewById(R.id.content_pager);
+
+        PagerAdapter adapter = new PagerAdapter() {
+            @Override
+            public int getCount() {
+                return 7;
+            }
+
+            @Override
+            public boolean isViewFromObject(View view, Object content) {
+                return view.getTag().equals(content);
+            }
+
+            public void destroyItem(ViewGroup container, int position, Object content) {
+                int toRemove = -1;
+
+                for (int i = 0; i < container.getChildCount(); i++) {
+                    View child = container.getChildAt(i);
+
+                    if (this.isViewFromObject(child, content))
+                        toRemove = i;
+                }
+
+                if (toRemove >= 0)
+                    container.removeViewAt(toRemove);
+            }
+
+            public Object instantiateItem(ViewGroup container, int position) {
+                switch (position) {
+                    case 0:
+                        return WithingsDevice.bindActivityPage(container, holder, position);
+                    case 1:
+                        return WithingsDevice.bindIntradayPage(container, holder, position);
+                    case 2:
+                        return WithingsDevice.bindBodyPage(container, holder, position);
+                    case 3:
+                        return WithingsDevice.bindSleepPage(container, holder, position);
+                    case 4:
+                        return WithingsDevice.bindSleepSummaryPage(container, holder, position);
+                    case 5:
+                        return WithingsDevice.bindWorkoutsPage(container, holder, position);
+                    default:
+                        return WithingsDevice.bindInformationPage(container, holder, position);
+                }
+            }
+        };
+
+        pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                withings.mPage = position;
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+        pager.setAdapter(adapter);
+
+        pager.setCurrentItem(withings.mPage);
+    }
+
+    private static String bindInformationPage(ViewGroup container, DataPointViewHolder holder, int position) {
+        final Context context = container.getContext();
+
+        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_info_page, null);
+        card.setTag("" + position);
+
+        container.addView(card);
+
+        return "" + card.getTag();
+    }
+
+    private static String bindActivityPage(ViewGroup container, DataPointViewHolder holder, int position) {
+        final Context context = container.getContext();
+
+        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_activity_page, null);
+        card.setTag("" + position);
 
         long lastTimestamp = 0;
 
@@ -1156,7 +1338,7 @@ public class WithingsDevice extends Generator {
         double moderateActivity = 0;
         double intenseActivity = 0;
 
-        WithingsDevice generator = WithingsDevice.getInstance(holder.itemView.getContext());
+        WithingsDevice generator = WithingsDevice.getInstance(card.getContext());
 
         Cursor c = generator.mDatabase.query(WithingsDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, WithingsDevice.HISTORY_OBSERVED + " DESC");
 
@@ -1176,8 +1358,8 @@ public class WithingsDevice extends Generator {
 
         c.close();
 
-        View cardContent = holder.itemView.findViewById(R.id.card_content);
-        View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
+        View cardContent = card.findViewById(R.id.content_activity);
+        View cardEmpty = card.findViewById(R.id.card_empty);
         TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (lastTimestamp > 0) {
@@ -1186,7 +1368,7 @@ public class WithingsDevice extends Generator {
 
             dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp));
 
-            PieChart pieChart = (PieChart) holder.itemView.findViewById(R.id.chart_phone_calls);
+            PieChart pieChart = (PieChart) card.findViewById(R.id.chart_phone_calls);
             pieChart.getLegend().setEnabled(false);
 
             pieChart.setEntryLabelColor(android.R.color.transparent);
@@ -1234,13 +1416,13 @@ public class WithingsDevice extends Generator {
 
             dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
 
-            TextView stepsValue = (TextView) holder.itemView.findViewById(R.id.field_steps);
+            TextView stepsValue = (TextView) card.findViewById(R.id.field_steps);
             stepsValue.setText(context.getString(R.string.generator_withings_steps_value, (int) steps));
 
-            TextView distanceValue = (TextView) holder.itemView.findViewById(R.id.field_distance);
+            TextView distanceValue = (TextView) card.findViewById(R.id.field_distance);
             distanceValue.setText(context.getString(R.string.generator_withings_distance_value, (distance / 1000)));
 
-            TextView elevationValue = (TextView) holder.itemView.findViewById(R.id.field_elevation);
+            TextView elevationValue = (TextView) card.findViewById(R.id.field_elevation);
             elevationValue.setText(context.getString(R.string.generator_withings_elevation_value, elevation));
         } else {
             cardContent.setVisibility(View.GONE);
@@ -1248,6 +1430,10 @@ public class WithingsDevice extends Generator {
 
             dateLabel.setText(R.string.label_never_pdk);
         }
+
+        container.addView(card);
+
+        return "" + card.getTag();
     }
 
     @Override
@@ -1294,5 +1480,279 @@ public class WithingsDevice extends Generator {
         }
 
         this.mProperties.put(key, value);
+    }
+
+    private static String bindIntradayPage(ViewGroup container, DataPointViewHolder holder, int position) {
+        final Context context = container.getContext();
+
+        long now = System.currentTimeMillis();
+
+        WithingsDevice withings = WithingsDevice.getInstance(context);
+
+        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_intraday_page, null);
+        card.setTag("" + position);
+
+        LineChart stepsChart = (LineChart) card.findViewById(R.id.chart_steps);
+        LineChart distanceChart = (LineChart) card.findViewById(R.id.chart_distance);
+        LineChart elevationChart = (LineChart) card.findViewById(R.id.chart_elevation);
+        LineChart caloriesChart = (LineChart) card.findViewById(R.id.chart_calories);
+
+        ArrayList<Entry> steps = new ArrayList<>();
+        ArrayList<Entry> distance = new ArrayList<>();
+        ArrayList<Entry> elevation = new ArrayList<>();
+        ArrayList<Entry> calories = new ArrayList<>();
+
+        float stepSum = 0;
+        float distanceSum = 0;
+        float elevationSum = 0;
+        float caloriesSum = 0;
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+        long start = cal.getTimeInMillis() / 1000;
+
+        cal.add(Calendar.DATE, 1);
+
+        long end = cal.getTimeInMillis() / 1000;
+
+        String where = WithingsDevice.INTRADAY_ACTIVITY_START + " > ?";
+        String[] args = { "" + start };
+
+        Cursor c = withings.mDatabase.query(WithingsDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, null, where, args, null, null, WithingsDevice.INTRADAY_ACTIVITY_START);
+
+        steps.add(new Entry(0, 0));
+        distance.add(new Entry(0, 0));
+        elevation.add(new Entry(0, 0));
+        calories.add(new Entry(0, 0));
+
+        while (c.moveToNext()) {
+            long when = c.getLong(c.getColumnIndex(WithingsDevice.INTRADAY_ACTIVITY_START));
+
+            if (c.isNull(c.getColumnIndex(WithingsDevice.INTRADAY_ACTIVITY_STEPS)) == false) {
+                float value = c.getFloat(c.getColumnIndex(WithingsDevice.INTRADAY_ACTIVITY_STEPS));
+
+                stepSum += value;
+
+                steps.add(new Entry(when - start, stepSum));
+            }
+
+            if (c.isNull(c.getColumnIndex(WithingsDevice.INTRADAY_ACTIVITY_DISTANCE)) == false) {
+                float value = c.getFloat(c.getColumnIndex(WithingsDevice.INTRADAY_ACTIVITY_DISTANCE));
+
+                distanceSum += value;
+
+                distance.add(new Entry(when - start, distanceSum));
+            }
+
+            if (c.isNull(c.getColumnIndex(WithingsDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED)) == false) {
+                float value = c.getFloat(c.getColumnIndex(WithingsDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED));
+
+                elevationSum += value;
+
+                elevation.add(new Entry(when - start, elevationSum));
+            }
+
+            if (c.isNull(c.getColumnIndex(WithingsDevice.INTRADAY_ACTIVITY_CALORIES)) == false) {
+                float value = c.getFloat(c.getColumnIndex(WithingsDevice.INTRADAY_ACTIVITY_CALORIES));
+
+                caloriesSum += value;
+
+                calories.add(new Entry(when - start, caloriesSum));
+            }
+        }
+
+        steps.add(new Entry((now / 1000) - start, stepSum));
+        distance.add(new Entry((now / 1000) - start, distanceSum));
+        elevation.add(new Entry((now / 1000) - start, elevationSum));
+        calories.add(new Entry((now / 1000) - start, caloriesSum));
+
+        WithingsDevice.populateIntradayChart(context, stepsChart, steps, 0, end - start);
+        WithingsDevice.populateIntradayChart(context, distanceChart, distance, 0, end - start);
+        WithingsDevice.populateIntradayChart(context, elevationChart, elevation, 0, end - start);
+        WithingsDevice.populateIntradayChart(context, caloriesChart, calories, 0, end - start);
+
+        c.close();
+
+        container.addView(card);
+
+        return "" + card.getTag();
+    }
+
+    private static void populateIntradayChart(Context context, LineChart chart, ArrayList<Entry> values, long start, long end) {
+        chart.getLegend().setEnabled(false);
+        chart.getAxisRight().setEnabled(false);
+        chart.getDescription().setEnabled(false);
+
+        LineData data = new LineData();
+
+        LineDataSet set = new LineDataSet(values, "");
+        set.setAxisDependency(YAxis.AxisDependency.LEFT);
+        set.setLineWidth(1.0f);
+        set.setDrawCircles(false);
+        set.setFillAlpha(128);
+        set.setDrawFilled(true);
+        set.setDrawValues(false);
+        set.setColor(ContextCompat.getColor(context, R.color.generator_battery_plot));
+        set.setFillColor(ContextCompat.getColor(context, R.color.generator_battery_plot));
+
+        data.addDataSet(set);
+
+        float minimum = (float) (0 - (values.get(values.size() - 1).getY() * 0.05));
+        float maximum = (float) (values.get(values.size() - 1).getY() * 1.25);
+
+        if (minimum == 0) {
+            minimum = -0.05f;
+            maximum = 0.95f;
+        }
+
+        chart.getAxisLeft().setAxisMinimum(minimum);
+        chart.getAxisLeft().setAxisMaximum(maximum);
+        chart.getAxisLeft().setDrawGridLines(false);
+        chart.getAxisLeft().setPosition(YAxis.YAxisLabelPosition.INSIDE_CHART);
+        chart.getAxisLeft().setDrawAxisLine(false);
+        chart.getAxisLeft().setDrawLabels(false);
+        chart.getAxisLeft().setTextColor(ContextCompat.getColor(context, android.R.color.white));
+
+        chart.getXAxis().setAxisMinimum(start);
+        chart.getXAxis().setAxisMaximum(end);
+        chart.getXAxis().setDrawGridLines(false);
+        chart.getXAxis().setDrawLabels(false);
+        chart.getXAxis().setDrawAxisLine(false);
+
+        chart.setViewPortOffsets(0,0,8,0);
+        chart.setHighlightPerDragEnabled(false);
+        chart.setHighlightPerTapEnabled(false);
+        chart.setBackgroundColor(ContextCompat.getColor(context, android.R.color.black));
+        chart.setPinchZoom(false);
+
+        ArrayList<Entry> lastValue = new ArrayList<>();
+        lastValue.add(values.get(values.size() - 1));
+
+        LineDataSet lastItem = new LineDataSet(lastValue, "");
+        lastItem.setAxisDependency(YAxis.AxisDependency.LEFT);
+        lastItem.setLineWidth(1.0f);
+        lastItem.setCircleRadius(3.0f);
+        lastItem.setCircleHoleRadius(2.0f);
+        lastItem.setDrawCircles(true);
+        lastItem.setValueTextSize(10f);
+        lastItem.setDrawValues(true);
+        lastItem.setCircleColor(ContextCompat.getColor(context, R.color.generator_battery_plot));
+        lastItem.setCircleColorHole(ContextCompat.getColor(context, android.R.color.black));
+        lastItem.setValueTextColor(ContextCompat.getColor(context, android.R.color.white));
+
+        data.addDataSet(lastItem);
+
+        chart.setData(data);
+    }
+
+    private static String bindBodyPage(ViewGroup container, DataPointViewHolder holder, int position) {
+        final Context context = container.getContext();
+
+        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_body_page, null);
+        card.setTag("" + position);
+
+        container.addView(card);
+
+        return "" + card.getTag();
+    }
+
+    private static String bindSleepPage(ViewGroup container, DataPointViewHolder holder, int position) {
+        final Context context = container.getContext();
+
+        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_sleep_page, null);
+        card.setTag("" + position);
+
+        container.addView(card);
+
+        return "" + card.getTag();
+    }
+
+    private static String bindSleepSummaryPage(ViewGroup container, DataPointViewHolder holder, int position) {
+        final Context context = container.getContext();
+
+        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_sleep_summary_page, null);
+        card.setTag("" + position);
+
+        container.addView(card);
+
+        return "" + card.getTag();
+    }
+
+    private static String bindWorkoutsPage(ViewGroup container, DataPointViewHolder holder, int position) {
+        final Context context = container.getContext();
+
+        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_workouts_page, null);
+        card.setTag("" + position);
+
+        container.addView(card);
+
+        return "" + card.getTag();
+    }
+
+    public void enableActivityMeasures(boolean enable) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putBoolean(WithingsDevice.ACTIVITY_MEASURES_ENABLED, enable);
+
+        e.commit();
+    }
+
+    public void enableBodyMeasures(boolean enable) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putBoolean(WithingsDevice.BODY_MEASURES_ENABLED, enable);
+
+        e.commit();
+    }
+
+    public void enableIntradayActivity(boolean enable) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putBoolean(WithingsDevice.INTRADAY_ACTIVITY_ENABLED, enable);
+
+        e.commit();
+    }
+
+    public void enableSleepMeasures(boolean enable) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putBoolean(WithingsDevice.SLEEP_MEASURES_ENABLED, enable);
+
+        e.commit();
+    }
+
+    public void enableSleepSummary(boolean enable) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putBoolean(WithingsDevice.SLEEP_SUMMARY_ENABLED, enable);
+
+        e.commit();
+    }
+
+    public void enableWorkouts(boolean enable) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putBoolean(WithingsDevice.WORKOUTS_ENABLED, enable);
+
+        e.commit();
+    }
+
+    public void enableServerFetch(boolean enable) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putBoolean(WithingsDevice.SERVER_FETCH_ENABLED, enable);
+
+        e.commit();
     }
 }

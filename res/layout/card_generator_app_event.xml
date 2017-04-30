@@ -41,20 +41,20 @@
                     android:textColor="@android:color/white"
                     android:layout_marginRight="8dp"/>
             </LinearLayout>
-            <LinearLayout android:id="@+id/card_content"
-                android:orientation="horizontal"
+            <FrameLayout android:id="@+id/card_content"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="8dp">
-                <TextView android:id="@+id/card_app_event_count"
+                android:layout_height="wrap_content">
+                <include layout="@layout/card_generator_app_event_page"
+                    android:id="@+id/card_sizer" />
+                <android.support.v4.view.ViewPager
+                    android:id="@+id/content_pager"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:padding="16dp" />
-            </LinearLayout>
+                    android:layout_height="match_parent">
+                </android.support.v4.view.ViewPager>
+            </FrameLayout>
             <TextView android:id="@+id/card_empty"
                 android:text="@string/message_generator_device_app_event_empty"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:padding="16dp" />

@@ -6,9 +6,12 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
@@ -23,7 +26,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,9 +43,14 @@ public class AppEvent extends Generator{
     public static final String HISTORY_EVENT_DETAILS = "event_details";
     public static final String TABLE_HISTORY = "history";
 
+    private static final int CARD_PAGE_SIZE = 8;
+    private static final int CARD_MAX_PAGES = 8;
+
     private static AppEvent sInstance = null;
 
     private SQLiteDatabase mDatabase = null;
+
+    private int mPage = 0;
 
     public static AppEvent getInstance(Context context) {
         if (AppEvent.sInstance == null) {
@@ -99,33 +106,158 @@ public class AppEvent extends Generator{
     public static void bindViewHolder(DataPointViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
-        AppEvent generator = AppEvent.getInstance(context);
+        final AppEvent generator = AppEvent.getInstance(context);
+
+        final ArrayList<Object[]> events = new ArrayList<>();
 
         Cursor c = generator.mDatabase.query(AppEvent.TABLE_HISTORY, null, null, null, null, null, AppEvent.HISTORY_OBSERVED + " DESC");
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
+        View cardSizer = holder.itemView.findViewById(R.id.card_sizer);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
         TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+
+        int eventCount = c.getCount();
 
         if (c.moveToNext()) {
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
+            cardSizer.setVisibility(View.INVISIBLE);
 
             long timestamp = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED)) / 1000;
 
             dateLabel.setText(Generator.formatTimestamp(context, timestamp));
-
-            TextView eventCount = (TextView) holder.itemView.findViewById(R.id.card_app_event_count);
-
-            eventCount.setText("TODO: EVENT VIEW - " + c.getCount());
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);
+            cardSizer.setVisibility(View.INVISIBLE);
 
             dateLabel.setText(R.string.label_never_pdk);
         }
 
+        c.moveToPrevious();
+
+        while (c.moveToNext()) {
+            String event = c.getString(c.getColumnIndex(AppEvent.HISTORY_EVENT_NAME));
+            long timestamp = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED));
+
+            Object[] values = { event, timestamp };
+
+            events.add(values);
+        }
+
         c.close();
+
+        if (eventCount > AppEvent.CARD_PAGE_SIZE * AppEvent.CARD_MAX_PAGES) {
+            eventCount = AppEvent.CARD_PAGE_SIZE * AppEvent.CARD_MAX_PAGES;
+        }
+
+        final int pages = (int) Math.ceil(((double) eventCount) / AppEvent.CARD_PAGE_SIZE);
+
+        final AppEvent appEvent = AppEvent.getInstance(holder.itemView.getContext());
+
+        ViewPager pager = (ViewPager) holder.itemView.findViewById(R.id.content_pager);
+
+        PagerAdapter adapter = new PagerAdapter() {
+            @Override
+            public int getCount() {
+                return pages;
+            }
+
+            @Override
+            public boolean isViewFromObject(View view, Object content) {
+                return view.getTag().equals(content);
+            }
+
+            public void destroyItem(ViewGroup container, int position, Object content) {
+                int toRemove = -1;
+
+                for (int i = 0; i < container.getChildCount(); i++) {
+                    View child = container.getChildAt(i);
+
+                    if (this.isViewFromObject(child, content))
+                        toRemove = i;
+                }
+
+                if (toRemove >= 0)
+                    container.removeViewAt(toRemove);
+            }
+
+            public Object instantiateItem(ViewGroup container, int position) {
+                LinearLayout list = (LinearLayout) LayoutInflater.from(container.getContext()).inflate(R.layout.card_generator_app_event_page, container, false);
+
+                int listPosition = AppEvent.CARD_PAGE_SIZE * position;
+
+                for (int i = 0; i < AppEvent.CARD_PAGE_SIZE; i++) {
+                    Object[] values = events.get(listPosition + i);
+
+                    String event = (String) values[0];
+                    long timestamp = (long) values[1];
+
+                    LinearLayout row = null;
+
+                    switch (i) {
+                        case 0:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_0);
+                            break;
+                        case 1:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_1);
+                            break;
+                        case 2:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_2);
+                            break;
+                        case 3:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_3);
+                            break;
+                        case 4:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_4);
+                            break;
+                        case 5:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_5);
+                            break;
+                        case 6:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_6);
+                            break;
+                        default:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_7);
+                            break;
+                    }
+
+                    TextView eventName = (TextView) row.findViewById(R.id.app_event_row_event_name);
+                    TextView eventWhen = (TextView) row.findViewById(R.id.app_event_row_event_when);
+
+                    eventName.setText(event);
+                    eventWhen.setText(Generator.formatTimestamp(context, timestamp / 1000));
+                }
+
+                list.setTag("" + position);
+
+                container.addView(list);
+
+                return "" + list.getTag();
+            }
+        };
+
+        pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                appEvent.mPage = position;
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+        pager.setAdapter(adapter);
+
+        pager.setCurrentItem(appEvent.mPage);
     }
 
     public static View fetchView(ViewGroup parent)
