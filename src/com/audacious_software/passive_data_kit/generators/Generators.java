@@ -11,6 +11,7 @@ import android.util.SparseArray;
 
 import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
+import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.pdk.passivedatakit.R;
 
 import java.lang.reflect.InvocationTargetException;
@@ -36,6 +37,8 @@ public class Generators {
         if (!this.mStarted)
         {
             this.mGenerators.clear();
+
+            this.mGenerators.add(AppEvent.class.getCanonicalName());
 
             for (String className : this.mContext.getResources().getStringArray(R.array.pdk_available_generators))
             {
@@ -238,9 +241,19 @@ public class Generators {
         return active;
     }
 
-    public void notifyGeneratorUpdated(String identifier, Bundle bundle) {
+    public void notifyGeneratorUpdated(String identifier, long timestamp, Bundle bundle) {
         for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
-            listener.onGeneratorUpdated(identifier, bundle);
+            listener.onGeneratorUpdated(identifier, timestamp, bundle);
+        }
+    }
+
+    public void notifyGeneratorUpdated(String identifier, Bundle bundle) {
+        long timestamp = System.currentTimeMillis();
+
+        synchronized(this.mGeneratorUpdatedListeners) {
+            for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
+                listener.onGeneratorUpdated(identifier, timestamp, bundle);
+            }
         }
     }
 
@@ -262,14 +275,18 @@ public class Generators {
     }
 
     public void addNewGeneratorUpdatedListener(Generators.GeneratorUpdatedListener listener) {
-        this.mGeneratorUpdatedListeners.add(listener);
+        synchronized(this.mGeneratorUpdatedListeners) {
+            this.mGeneratorUpdatedListeners.add(listener);
+        }
     }
 
     public void removeGeneratorUpdatedListener(Generators.GeneratorUpdatedListener listener) {
-        this.mGeneratorUpdatedListeners.remove(listener);
+        synchronized(this.mGeneratorUpdatedListeners) {
+            this.mGeneratorUpdatedListeners.remove(listener);
+        }
     }
 
     public interface GeneratorUpdatedListener {
-        void onGeneratorUpdated(String identifier, Bundle data);
+        void onGeneratorUpdated(String identifier, long timestamp, Bundle data);
     }
 }

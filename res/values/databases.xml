@@ -12,4 +12,8 @@
 
     <!-- Phone Calls Generator -->
     <string name="pdk_generator_text_messages_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, direction TEXT, length INTEGER, body TEXT, number_name TEXT, number TEXT);</string>
+
+    <!-- App Events Generator -->
+    <string name="pdk_generator_app_events_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, event_name TEXT, event_details TEXT);</string>
+
 </resources>

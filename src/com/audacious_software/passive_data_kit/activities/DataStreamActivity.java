@@ -58,7 +58,7 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
     }
 
     @Override
-    public void onGeneratorUpdated(String identifier, Bundle data) {
+    public void onGeneratorUpdated(String identifier, long timestamp, Bundle data) {
         final DataStreamActivity me = this;
 
         this.runOnUiThread(new Runnable() {

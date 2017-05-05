@@ -2,7 +2,10 @@ package com.audacious_software.passive_data_kit;
 
 import android.content.Context;
 
+import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
+
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by cjkarr on 4/3/2016.
@@ -10,8 +13,12 @@ import java.util.HashMap;
 public class Logger {
     private Context mContext = null;
 
-    public void log(String event, HashMap<String, Object> details) {
-        // TODO
+    public void log(String event, Map<String, ? extends Object> details) {
+        if (details == null) {
+            details = new HashMap<>();
+        }
+
+        AppEvent.getInstance(this.mContext).logEvent(event, details);
     }
 
     private static class LoggerHolder {

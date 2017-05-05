@@ -3,6 +3,7 @@ package com.audacious_software.passive_data_kit.generators;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -119,6 +120,12 @@ public abstract class Generator
     }
 
     public abstract List<Bundle> fetchPayloads();
+
+    public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
+        Cursor c = new MatrixCursor(cols);
+
+        return c;
+    }
 
     protected int getDatabaseVersion(SQLiteDatabase db) {
         String where = "type = ? AND name = ?";
