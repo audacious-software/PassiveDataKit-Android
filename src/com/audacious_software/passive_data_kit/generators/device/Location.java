@@ -113,7 +113,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     private static Location sInstance = null;
     private GoogleApiClient mGoogleApiClient = null;
-    private android.location.Location mLastLocation = null;
     private long mUpdateInterval = 60000;
 
     private SQLiteDatabase mDatabase = null;
@@ -316,6 +315,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     public void onLocationChanged(android.location.Location location) {
         if (location == null)
             return;
+
+        Log.e("PDK", "LOCATION CHANGED: " + location);
 
         long now = System.currentTimeMillis();
 
@@ -926,9 +927,30 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             return location;
         }
 
-        if (this.mLastLocation != null) {
-            return this.mLastLocation;
+        android.location.Location lastLocation = null;
+
+        Cursor c = this.mDatabase.query(Location.TABLE_HISTORY, null, null, null, null, null, Location.HISTORY_OBSERVED + " DESC");
+
+        if (c.moveToNext()) {
+            double latitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LATITUDE));
+            double longitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LONGITUDE));
+
+            lastLocation = new android.location.Location("Passive-Data-Kit");
+            lastLocation.setLatitude(latitude);
+            lastLocation.setLongitude(longitude);
         }
+
+        c.close();
+
+
+
+        if (lastLocation != null) {
+            Log.e("PDK", "RETURNING LAST SAVED LOCATION: " + lastLocation);
+
+            return lastLocation;
+        }
+
+        Log.e("PDK", "FETCHING LOCATION");
 
         LocationManager locations = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
 
@@ -939,8 +961,12 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
             last = locations.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
+            Log.e("PDK", "GPS LAST: " + last);
+
             if (last == null) {
                 last = locations.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+                Log.e("PDK", "NET LAST: " + last);
             }
         }
 
