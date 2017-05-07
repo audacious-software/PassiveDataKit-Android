@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
-import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -27,7 +26,6 @@ import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -316,8 +314,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     public void onLocationChanged(android.location.Location location) {
         if (location == null)
             return;
-
-        Log.e("PDK", "LOCATION CHANGED: " + location);
 
         long now = System.currentTimeMillis();
 
@@ -658,8 +654,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                 checked.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(final CompoundButton compoundButton, final boolean checked) {
-                        Log.e("PDK", "CHECK CHANGE!");
-
                         final CompoundButton.OnCheckedChangeListener me = this;
 
                         if (option == Location.ACCURACY_BEST) {
@@ -946,12 +940,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
 
         if (lastLocation != null) {
-            Log.e("PDK", "RETURNING LAST SAVED LOCATION: " + lastLocation);
-
             return lastLocation;
         }
-
-        Log.e("PDK", "FETCHING LOCATION");
 
         LocationManager locations = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
 
@@ -962,12 +952,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
             last = locations.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-            Log.e("PDK", "GPS LAST: " + last);
-
             if (last == null) {
                 last = locations.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-                Log.e("PDK", "NET LAST: " + last);
             }
         }
 

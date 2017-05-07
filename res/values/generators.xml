@@ -116,4 +116,6 @@
 
     <string name="message_generator_phone_calls_empty">No phone calls have been made or received on this device.</string>
 
+    <!-- App Event Resources -->
+    <string name="generator_app_events">Application Events</string>
 </resources>
