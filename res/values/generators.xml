@@ -121,7 +121,6 @@
     <string name="message_generator_device_battery_empty">No battery levels have been reported yet.</string>
 
     <!-- App Event History -->
-    <string name="generator_app_event">App Event History</string>
+    <string name="generator_app_events">App Events History</string>
     <string name="message_generator_device_app_event_empty">No app events have been logged yet.</string>
-
 </resources>

@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
-import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -27,7 +26,6 @@ import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -114,7 +112,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     private static Location sInstance = null;
     private GoogleApiClient mGoogleApiClient = null;
-    private android.location.Location mLastLocation = null;
     private long mUpdateInterval = 60000;
 
     private SQLiteDatabase mDatabase = null;
@@ -657,8 +654,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                 checked.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(final CompoundButton compoundButton, final boolean checked) {
-                        Log.e("PDK", "CHECK CHANGE!");
-
                         final CompoundButton.OnCheckedChangeListener me = this;
 
                         if (option == Location.ACCURACY_BEST) {
@@ -927,8 +922,25 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             return location;
         }
 
-        if (this.mLastLocation != null) {
-            return this.mLastLocation;
+        android.location.Location lastLocation = null;
+
+        Cursor c = this.mDatabase.query(Location.TABLE_HISTORY, null, null, null, null, null, Location.HISTORY_OBSERVED + " DESC");
+
+        if (c.moveToNext()) {
+            double latitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LATITUDE));
+            double longitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LONGITUDE));
+
+            lastLocation = new android.location.Location("Passive-Data-Kit");
+            lastLocation.setLatitude(latitude);
+            lastLocation.setLongitude(longitude);
+        }
+
+        c.close();
+
+
+
+        if (lastLocation != null) {
+            return lastLocation;
         }
 
         LocationManager locations = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
