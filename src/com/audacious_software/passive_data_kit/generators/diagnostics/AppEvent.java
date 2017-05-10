@@ -11,11 +11,14 @@ import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
+import com.audacious_software.passive_data_kit.activities.DataDisclosureDetailActivity;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
+import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -68,9 +71,11 @@ public class AppEvent extends Generator{
         AppEvent.getInstance(context).startGenerator();
     }
 
-    private void startGenerator() {
-        final AppEvent me = this;
+    public static String getGeneratorTitle(Context context) {
+        return context.getString(R.string.generator_app_events);
+    }
 
+    private void startGenerator() {
         Generators.getInstance(this.mContext).registerCustomViewClass(AppEvent.GENERATOR_IDENTIFIER, AppEvent.class);
 
         File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
@@ -101,6 +106,16 @@ public class AppEvent extends Generator{
 
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
+    }
+
+    public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
+        Class currentClass = new Object() { }.getClass().getEnclosingClass();
+
+        String identifier = currentClass.getCanonicalName();
+
+        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+
+        generatorLabel.setText(AppEvent.getGeneratorTitle(holder.itemView.getContext()));
     }
 
     public static void bindViewHolder(DataPointViewHolder holder) {
@@ -188,7 +203,7 @@ public class AppEvent extends Generator{
 
                 int listPosition = AppEvent.CARD_PAGE_SIZE * position;
 
-                for (int i = 0; i < AppEvent.CARD_PAGE_SIZE; i++) {
+                for (int i = 0; i < AppEvent.CARD_PAGE_SIZE && listPosition + i < events.size(); i++) {
                     Object[] values = events.get(listPosition + i);
 
                     String event = (String) values[0];
@@ -357,5 +372,32 @@ public class AppEvent extends Generator{
 
     public void logThrowable(Throwable t) {
 
+    }
+
+    public static List<DataDisclosureDetailActivity.Action> getDisclosureActions(final Context context) {
+        List<DataDisclosureDetailActivity.Action> actions = new ArrayList<>();
+
+        DataDisclosureDetailActivity.Action disclosure = new DataDisclosureDetailActivity.Action();
+
+        disclosure.title = context.getString(R.string.label_data_collection_description);
+        disclosure.subtitle = context.getString(R.string.label_data_collection_description_more);
+
+        WebView disclosureView = new WebView(context);
+        disclosureView.loadUrl("file:///android_asset/html/passive_data_kit/generator_app_events_disclosure.html");
+
+        disclosure.view = disclosureView;
+
+        actions.add(disclosure);
+
+        return actions;
+    }
+
+    public static View getDisclosureDataView(final GeneratorViewHolder holder) {
+        final Context context = holder.itemView.getContext();
+
+        WebView disclosureView = new WebView(context);
+        disclosureView.loadUrl("file:///android_asset/html/passive_data_kit/generator_app_events_disclosure.html");
+
+        return disclosureView;
     }
 }

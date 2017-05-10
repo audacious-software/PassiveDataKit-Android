@@ -25,7 +25,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginRight="8dp" />
-                <TextView android:text="@string/generator_app_event"
+                <TextView android:text="@string/generator_app_events"
                     android:gravity="center_vertical|start"
                     android:layout_width="0dp"
                     android:layout_height="24dp"
