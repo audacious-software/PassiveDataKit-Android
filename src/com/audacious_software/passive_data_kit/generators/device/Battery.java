@@ -11,7 +11,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -342,12 +341,8 @@ public class Battery extends Generator {
                 if (level != lastLevel) {
                     values.add(0, new Entry(when, level));
                     lastLevel = level;
-
-                    Log.e("SLEEP-SIGHT", "VALUE: " + level + " -- " + (when - start));
                 }
             }
-
-            Log.e("SLEEP-SIGHT", "BATT VALUES COUNT 2: " + values.size());
 
             LineDataSet set = new LineDataSet(values, "Battery");
             set.setAxisDependency(YAxis.AxisDependency.LEFT);

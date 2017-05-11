@@ -1,6 +1,8 @@
 package com.audacious_software.passive_data_kit.activities.generators;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
@@ -18,6 +20,9 @@ import java.util.Date;
 import java.util.List;
 
 public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder> {
+    public static final String SORT_BY_UPDATED = "com.audacious_software.passive_data_kit.activities.generators.DataPointsAdapter";
+    public static final boolean SORT_BY_UPDATED_DEFAULT = true;
+
     private Context mContext = null;
 
     @Override
@@ -85,46 +90,57 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
     }
 
     private void sortGenerators(final Context context, List<Class<? extends Generator>> generators) {
-        Collections.sort(generators, new Comparator<Class<? extends Generator>>() {
-            @Override
-            public int compare(Class<? extends Generator> one, Class<? extends Generator> two) {
-                long oneUpdated = 0;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-                try {
-                    Method oneGenerated = one.getDeclaredMethod("latestPointGenerated", Context.class);
+        if (prefs.getBoolean(DataPointsAdapter.SORT_BY_UPDATED, DataPointsAdapter.SORT_BY_UPDATED_DEFAULT)) {
+            Collections.sort(generators, new Comparator<Class<? extends Generator>>() {
+                @Override
+                public int compare(Class<? extends Generator> one, Class<? extends Generator> two) {
+                    long oneUpdated = 0;
 
-                    oneUpdated = (long) oneGenerated.invoke(null, context);
-                } catch (NoSuchMethodException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    try {
+                        Method oneGenerated = one.getDeclaredMethod("latestPointGenerated", Context.class);
+
+                        oneUpdated = (long) oneGenerated.invoke(null, context);
+                    } catch (NoSuchMethodException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+
+                    long twoUpdated = 0;
+
+                    try {
+                        Method twoGenerated = two.getDeclaredMethod("latestPointGenerated", Context.class);
+
+                        twoUpdated = (long) twoGenerated.invoke(null, context);
+                    } catch (NoSuchMethodException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (oneUpdated < twoUpdated) {
+                        return 1;
+                    } else if (oneUpdated > twoUpdated) {
+                        return -1;
+                    }
+
+                    return 0;
                 }
-
-                long twoUpdated = 0;
-
-                try {
-                    Method twoGenerated = two.getDeclaredMethod("latestPointGenerated", Context.class);
-
-                    twoUpdated = (long) twoGenerated.invoke(null, context);
-                } catch (NoSuchMethodException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+            });
+        } else {
+            Collections.sort(generators, new Comparator<Class<? extends Generator>>() {
+                @Override
+                public int compare(Class<? extends Generator> one, Class<? extends Generator> two) {
+                    return one.getCanonicalName().compareTo(two.getCanonicalName());
                 }
-
-                if (oneUpdated < twoUpdated) {
-                    return 1;
-                } else if (oneUpdated > twoUpdated) {
-                    return -1;
-                }
-
-                return 0;
-            }
-        });
+            });
+        }
     }
 
     public int getItemViewType (int position) {

@@ -13,9 +13,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -46,12 +48,13 @@ public class ForegroundApplication extends Generator{
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
-    private static int DATABASE_VERSION = 2;
+    private static int DATABASE_VERSION = 3;
 
     private static final String TABLE_HISTORY = "history";
     private static final String HISTORY_OBSERVED = "observed";
     private static final String HISTORY_APPLICATION = "application";
     private static final String HISTORY_DURATION = "duration";
+    private static final String HISTORY_SCREEN_ACTIVE = "screen_active";
 
     private static ForegroundApplication sInstance = null;
 
@@ -94,14 +97,26 @@ public class ForegroundApplication extends Generator{
         this.mAppChecker.other(new AppChecker.Listener() {
             @Override
             public void onForeground(String process) {
-                Log.e("PDK", "PROCESS: " + process);
-
                 long now = System.currentTimeMillis();
+
+                WindowManager window = (WindowManager) me.mContext.getSystemService(Context.WINDOW_SERVICE);
+                Display display = window.getDefaultDisplay();
+
+                boolean screenActive = true;
+
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                    if (display.getState() != Display.STATE_ON) {
+                        screenActive = false;
+                    }
+                }
+
+                Log.e("PDK", "PROCESS: " + process + " -- " + screenActive);
 
                 ContentValues values = new ContentValues();
                 values.put(ForegroundApplication.HISTORY_OBSERVED, now);
                 values.put(ForegroundApplication.HISTORY_APPLICATION, process);
                 values.put(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
+                values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
 
                 me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
 
@@ -130,6 +145,8 @@ public class ForegroundApplication extends Generator{
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_create_history_table));
             case 1:
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_duration));
+            case 2:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_screen_active));
         }
 
         this.setDatabaseVersion(this.mDatabase, ForegroundApplication.DATABASE_VERSION);
@@ -200,8 +217,8 @@ public class ForegroundApplication extends Generator{
 
         ArrayList<String> latest = new ArrayList<>();
 
-        String where = ForegroundApplication.HISTORY_OBSERVED + " > ?";
-        String[] args = { "" + yesterday };
+        String where = ForegroundApplication.HISTORY_OBSERVED + " > ? AND " + ForegroundApplication.HISTORY_SCREEN_ACTIVE + " = ?";
+        String[] args = { "" + yesterday, "1" };
 
         c = generator.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
 
@@ -298,16 +315,19 @@ public class ForegroundApplication extends Generator{
                 for (String key : appDef.keySet()) {
                     double duration = appDef.get(key);
 
+                    double minutes = duration / (1000 * 60);
+
                     try {
                         String name = packageManager.getApplicationLabel(packageManager.getApplicationInfo(key, PackageManager.GET_META_DATA)).toString();
-
-                        double minutes = duration / (1000 * 60);
 
                         appName.setText(context.getString(R.string.generator_foreground_application_app_name_duration, name, minutes));
                         Drawable icon = packageManager.getApplicationIcon(key);
                         appIcon.setImageDrawable(icon);
                     } catch (PackageManager.NameNotFoundException e) {
                         e.printStackTrace();
+
+                        appName.setText(context.getString(R.string.generator_foreground_application_app_name_duration, key, minutes));
+                        appIcon.setImageDrawable(null);
                     }
 
                     double remainder = largestUsage - duration;
