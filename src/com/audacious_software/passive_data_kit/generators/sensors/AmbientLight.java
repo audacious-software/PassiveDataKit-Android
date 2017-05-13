@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.generators.sensors;
 
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -14,6 +15,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -62,6 +64,8 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
     private static AmbientLight sInstance = null;
     private static Handler sHandler = null;
+    private static boolean sIsDrawing = false;
+    private static long sLastDrawStart = 0;
 
     private SQLiteDatabase mDatabase = null;
 
@@ -194,166 +198,206 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         return new ArrayList<>();
     }
 
-    public static void bindViewHolder(DataPointViewHolder holder) {
+    public static void bindViewHolder(final DataPointViewHolder holder) {
+        if (AmbientLight.sIsDrawing) {
+            return;
+        }
+
+        final long drawStart = System.currentTimeMillis();
+
+        if (drawStart - AmbientLight.sLastDrawStart < (30 * 1000)) {
+            return;
+        }
+
+        AmbientLight.sLastDrawStart = drawStart;
+
+        AmbientLight.sIsDrawing = true;
+
         final Context context = holder.itemView.getContext();
 
-        AmbientLight generator = AmbientLight.getInstance(context);
+        final AmbientLight generator = AmbientLight.getInstance(context);
 
-        long now = System.currentTimeMillis() / (1000 * 60 * 5);
-        long start = now - (24 * 12); //  * 60);
-
-        String where = AmbientLight.HISTORY_OBSERVED + " >= ?";
-        String[] args = { "" + start };
-
-        Cursor c = generator.mDatabase.query(AmbientLight.TABLE_HISTORY, null, where, args, null, null, AmbientLight.HISTORY_OBSERVED + " DESC");
+        final long now = System.currentTimeMillis() / (1000 * 60 * 5);
+        final long start = now - (24 * 12); //  * 60);
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
         TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
 
-        if (c.moveToNext()) {
+        if (context instanceof Activity) {
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
 
-            long timestamp = c.getLong(c.getColumnIndex(AmbientLight.HISTORY_OBSERVED)) / (1000 * 1000 * 1000);
+            dateLabel.setText(Generator.formatTimestamp(context, AmbientLight.latestPointGenerated(context) / 1000));
 
-            dateLabel.setText(Generator.formatTimestamp(context, timestamp));
-
-            c.moveToPrevious();
-
-            final LineChart chart = (LineChart) holder.itemView.findViewById(R.id.light_chart);
-            chart.setViewPortOffsets(0,0,0,0);
-            chart.setHighlightPerDragEnabled(false);
-            chart.setHighlightPerTapEnabled(false);
-            chart.setBackgroundColor(ContextCompat.getColor(context, android.R.color.black));
-            chart.setPinchZoom(false);
-
-            final DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(context);
-
-            final XAxis xAxis = chart.getXAxis();
-            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM_INSIDE);
-            xAxis.setTextSize(10f);
-            xAxis.setDrawAxisLine(true);
-            xAxis.setDrawGridLines(true);
-            xAxis.setCenterAxisLabels(true);
-            xAxis.setDrawLabels(true);
-            xAxis.setTextColor(ContextCompat.getColor(context, android.R.color.white));
-            xAxis.setGranularityEnabled(true);
-            xAxis.setGranularity(1);
-            xAxis.setAxisMinimum(start);
-            xAxis.setAxisMaximum(now);
-            xAxis.setValueFormatter(new IAxisValueFormatter() {
+            Runnable r = new Runnable() {
                 @Override
-                public String getFormattedValue(float value, AxisBase axis) {
-                    Date date = new Date((long) value * 5 * 60 * 1000);
+                public void run() {
+                    final ArrayList<Entry> lowValues = new ArrayList<>();
+                    final ArrayList<Entry> highValues = new ArrayList<>();
 
-                    return timeFormat.format(date);
-                }
-            });
+                    long lastTimestamp = -1;
 
-            YAxis leftAxis = chart.getAxisLeft();
-            leftAxis.setPosition(YAxis.YAxisLabelPosition.INSIDE_CHART);
-            leftAxis.setDrawGridLines(true);
-            leftAxis.setDrawAxisLine(true);
-            leftAxis.setGranularityEnabled(true);
-            leftAxis.setTextColor(ContextCompat.getColor(context, android.R.color.white));
+                    float maxValue = 0;
+                    float minValue = 0;
 
-            YAxis rightAxis = chart.getAxisRight();
-            rightAxis.setEnabled(false);
+                    float lowLevel = -1;
+                    float highLevel = -1;
 
-            chart.getLegend().setEnabled(false);
-            chart.getDescription().setEnabled(false);
+                    final String where = Accelerometer.HISTORY_OBSERVED + " >= ? AND _id";
+                    final String[] args = { "" + (System.currentTimeMillis() - (24 * 60 * 60 * 1000)) };
 
-            ArrayList<Entry> lowValues = new ArrayList<>();
-            ArrayList<Entry> highValues = new ArrayList<>();
+                    Cursor c = generator.mDatabase.query(AmbientLight.TABLE_HISTORY, null, where, args, null, null, AmbientLight.HISTORY_OBSERVED + " DESC");
 
-            long lastTimestamp = -1;
+                    while (c.moveToNext()) {
+                        long when = c.getLong(c.getColumnIndex(AmbientLight.HISTORY_OBSERVED));
 
-            float maxValue = 0;
-            float minValue = 0;
+                        when = when / (1000 * 1000);
+                        when = when / (1000 * 6 * 50);
 
-            float lowLevel = -1;
-            float highLevel = -1;
+                        float level = c.getFloat(c.getColumnIndex(AmbientLight.HISTORY_LEVEL));
 
-            while (c.moveToNext()) {
-                long when = c.getLong(c.getColumnIndex(AmbientLight.HISTORY_OBSERVED));
+                        if (level < 0.001) {
+                            level = 0.001f;
+                        }
 
-                when = when / (1000 * 1000);
-                when = when / (1000 * 6 * 50);
+                        level = (float) Math.log10(level);
 
-                float level = c.getFloat(c.getColumnIndex(AmbientLight.HISTORY_LEVEL));
+                        if (lastTimestamp != when) {
+                            if (lastTimestamp != -1) {
+                                lowValues.add(0, new Entry(lastTimestamp, lowLevel));
+                                highValues.add(0, new Entry(lastTimestamp, highLevel));
+                            }
 
-                if (lastTimestamp != when) {
+                            lastTimestamp = when;
+                            lowLevel = level;
+                            highLevel = level;
+                        } else {
+                            if (level < lowLevel) {
+                                lowLevel = level;
+                            }
+
+                            if (level > highLevel) {
+                                highLevel = level;
+                            }
+                        }
+
+                        if (level > maxValue) {
+                            maxValue = level;
+                        }
+
+                        if (level < minValue) {
+                            minValue = level;
+                        }
+                    }
+
                     if (lastTimestamp != -1) {
                         lowValues.add(0, new Entry(lastTimestamp, lowLevel));
                         highValues.add(0, new Entry(lastTimestamp, highLevel));
                     }
 
-                    lastTimestamp = when;
-                    lowLevel = level;
-                    highLevel = level;
-                } else {
-                    if (level < lowLevel) {
-                        lowLevel = level;
-                    }
+                    final float finalMaxValue = maxValue;
+                    final float finalMinValue = minValue;
 
-                    if (level > highLevel) {
-                        highLevel = level;
-                    }
+                    Activity activity = (Activity) context;
+
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            final LineChart chart = (LineChart) holder.itemView.findViewById(R.id.light_chart);
+                            chart.setViewPortOffsets(0,0,0,0);
+                            chart.setHighlightPerDragEnabled(false);
+                            chart.setHighlightPerTapEnabled(false);
+                            chart.setBackgroundColor(ContextCompat.getColor(context, android.R.color.black));
+                            chart.setPinchZoom(false);
+
+                            final DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(context);
+
+                            final XAxis xAxis = chart.getXAxis();
+                            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM_INSIDE);
+                            xAxis.setTextSize(10f);
+                            xAxis.setDrawAxisLine(true);
+                            xAxis.setDrawGridLines(true);
+                            xAxis.setCenterAxisLabels(true);
+                            xAxis.setDrawLabels(true);
+                            xAxis.setTextColor(ContextCompat.getColor(context, android.R.color.white));
+                            xAxis.setGranularityEnabled(true);
+                            xAxis.setGranularity(1);
+                            xAxis.setAxisMinimum(start);
+                            xAxis.setAxisMaximum(now);
+                            xAxis.setValueFormatter(new IAxisValueFormatter() {
+                                @Override
+                                public String getFormattedValue(float value, AxisBase axis) {
+                                    Date date = new Date((long) value * 5 * 60 * 1000);
+
+                                    return timeFormat.format(date);
+                                }
+                            });
+
+                            YAxis leftAxis = chart.getAxisLeft();
+                            leftAxis.setPosition(YAxis.YAxisLabelPosition.INSIDE_CHART);
+                            leftAxis.setDrawGridLines(true);
+                            leftAxis.setDrawAxisLine(true);
+                            leftAxis.setGranularityEnabled(true);
+                            leftAxis.setTextColor(ContextCompat.getColor(context, android.R.color.white));
+                            leftAxis.setValueFormatter(new IAxisValueFormatter() {
+                                @Override
+                                public String getFormattedValue(float value, AxisBase axis) {
+                                    return "" + Math.pow(10, value);
+                                }
+                            });
+
+                            YAxis rightAxis = chart.getAxisRight();
+                            rightAxis.setEnabled(false);
+
+                            chart.getLegend().setEnabled(false);
+                            chart.getDescription().setEnabled(false);
+
+                            LineDataSet set = new LineDataSet(lowValues, "Low Light Levels");
+                            set.setAxisDependency(YAxis.AxisDependency.LEFT);
+                            set.setLineWidth(1.0f);
+                            set.setDrawCircles(false);
+                            set.setFillAlpha(192);
+                            set.setDrawFilled(false);
+                            set.setDrawValues(true);
+                            set.setColor(ContextCompat.getColor(context, R.color.generator_ambient_light_low));
+                            set.setDrawCircleHole(false);
+                            set.setDrawValues(false);
+                            set.setMode(LineDataSet.Mode.LINEAR);
+
+                            LineData chartData = new LineData(set);
+
+                            set = new LineDataSet(highValues, "High Light Levels");
+                            set.setAxisDependency(YAxis.AxisDependency.LEFT);
+                            set.setLineWidth(1.0f);
+                            set.setDrawCircles(false);
+                            set.setFillAlpha(192);
+                            set.setDrawFilled(false);
+                            set.setDrawValues(true);
+                            set.setColor(ContextCompat.getColor(context, R.color.generator_ambient_light_high));
+                            set.setDrawCircleHole(false);
+                            set.setDrawValues(false);
+                            set.setMode(LineDataSet.Mode.LINEAR);
+
+                            chartData.addDataSet(set);
+
+                            chart.setVisibleYRange((float) Math.floor(finalMinValue) - 1, (float) Math.ceil(finalMaxValue) + 1, YAxis.AxisDependency.LEFT);
+                            chart.setData(chartData);
+
+                            AmbientLight.sIsDrawing = false;
+                        }
+                    });
                 }
+            };
 
-                if (level > maxValue) {
-                    maxValue = level;
-                }
-
-                if (level < minValue) {
-                    minValue = level;
-                }
-            }
-
-            if (lastTimestamp != -1) {
-                lowValues.add(0, new Entry(lastTimestamp, lowLevel));
-                highValues.add(0, new Entry(lastTimestamp, highLevel));
-            }
-
-            LineDataSet set = new LineDataSet(lowValues, "Low Light Levels");
-            set.setAxisDependency(YAxis.AxisDependency.LEFT);
-            set.setLineWidth(1.0f);
-            set.setDrawCircles(false);
-            set.setFillAlpha(192);
-            set.setDrawFilled(false);
-            set.setDrawValues(true);
-            set.setColor(ContextCompat.getColor(context, R.color.generator_ambient_light_low));
-            set.setDrawCircleHole(false);
-            set.setDrawValues(false);
-            set.setMode(LineDataSet.Mode.LINEAR);
-
-            LineData chartData = new LineData(set);
-
-            set = new LineDataSet(highValues, "High Light Levels");
-            set.setAxisDependency(YAxis.AxisDependency.LEFT);
-            set.setLineWidth(1.0f);
-            set.setDrawCircles(false);
-            set.setFillAlpha(192);
-            set.setDrawFilled(false);
-            set.setDrawValues(true);
-            set.setColor(ContextCompat.getColor(context, R.color.generator_ambient_light_high));
-            set.setDrawCircleHole(false);
-            set.setDrawValues(false);
-            set.setMode(LineDataSet.Mode.LINEAR);
-
-            chartData.addDataSet(set);
-
-            chart.setVisibleYRange((float) Math.floor(minValue) - 1, (float) Math.ceil(maxValue) + 1, YAxis.AxisDependency.LEFT);
-            chart.setData(chartData);
+            Thread t = new Thread(r, "render-ambient-light-graph");
+            t.start();
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);
 
             dateLabel.setText(R.string.label_never_pdk);
         }
-
-        c.close();
     }
 
     public static View fetchView(ViewGroup parent)
@@ -370,7 +414,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         AmbientLight me = AmbientLight.getInstance(context);
 
         if (me.mLatestTimestamp == 0) {
-            Cursor c = me.mDatabase.query(AmbientLight.TABLE_HISTORY, null, null, null, null, null, Accelerometer.HISTORY_OBSERVED + " DESC");
+            Cursor c = me.mDatabase.query(AmbientLight.TABLE_HISTORY, null, null, null, null, null, Accelerometer.HISTORY_OBSERVED + " DESC", "1");
 
             if (c.moveToNext()) {
                 me.mLatestTimestamp = c.getLong(c.getColumnIndex(Accelerometer.HISTORY_OBSERVED) / (1000 * 1000));

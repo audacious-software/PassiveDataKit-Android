@@ -210,22 +210,18 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
     public static void bindViewHolder(final DataPointViewHolder holder) {
         if (Accelerometer.sIsDrawing) {
-            Log.e("PDK", "IS DRAWING");
             return;
         }
 
         final long drawStart = System.currentTimeMillis();
 
         if (drawStart - Accelerometer.sLastDrawStart < (30 * 1000)) {
-            Log.e("PDK", "TOO SOON");
             return;
         }
 
         Accelerometer.sLastDrawStart = drawStart;
 
         Accelerometer.sIsDrawing = true;
-
-        Log.e("PDK", "HOLDER " + holder.hashCode());
 
         final Context context = holder.itemView.getContext();
         final View itemView = holder.itemView;
@@ -235,31 +231,19 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         final long now = System.currentTimeMillis() / (1000 * 60 * 5);
         final long start = now - (24 * 12); //  * 60);
 
-        Log.e("PDK", "START QUERY: " + (System.currentTimeMillis() - drawStart));
-
-        Cursor c = generator.mDatabase.query(Accelerometer.TABLE_HISTORY, null, null, null, null, null, Accelerometer.HISTORY_OBSERVED + " DESC");
-
-        Log.e("PDK", "END QUERY: " + (System.currentTimeMillis() - drawStart));
-
         View cardContent = itemView.findViewById(R.id.card_content);
         View cardEmpty = itemView.findViewById(R.id.card_empty);
         TextView dateLabel = (TextView) itemView.findViewById(R.id.generator_data_point_date);
 
-        Log.e("PDK", "ACCEL PREP: " + (System.currentTimeMillis() - drawStart) + " -- COUNT: " + c.getCount());
-
-        if (c.moveToNext() && (context instanceof Activity)) {
+        if (context instanceof Activity) {
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
 
-            long timestamp = c.getLong(c.getColumnIndex(Accelerometer.HISTORY_OBSERVED)) / (1000 * 1000 * 1000);
-
-            dateLabel.setText(Generator.formatTimestamp(context, timestamp));
+            dateLabel.setText(Generator.formatTimestamp(context, Accelerometer.latestPointGenerated(generator.mContext) / 1000));
 
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    Log.e("PDK", "THREAD START: " + (System.currentTimeMillis() - drawStart));
-
                     final ArrayList<Entry> xLowValues = new ArrayList<>();
                     final ArrayList<Entry> xHighValues = new ArrayList<>();
 
@@ -270,7 +254,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                     final ArrayList<Entry> zHighValues = new ArrayList<>();
 
                     final String where = Accelerometer.HISTORY_OBSERVED + " >= ? AND _id % 1024 = 0";
-                    final String[] args = { "" + start };
+                    final String[] args = { "" + (System.currentTimeMillis() - (24 * 60 * 60 * 1000)) };
 
                     Cursor c = generator.mDatabase.query(Accelerometer.TABLE_HISTORY, null, where, args, null, null, Accelerometer.HISTORY_OBSERVED + " DESC");
 
@@ -292,9 +276,6 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                     int xIndex = c.getColumnIndex(Accelerometer.HISTORY_X);
                     int yIndex = c.getColumnIndex(Accelerometer.HISTORY_Y);
                     int zIndex = c.getColumnIndex(Accelerometer.HISTORY_Z);
-
-                    Log.e("PDK", "COUNT: " + c.getCount());
-                    Log.e("PDK", "ACCEL START BUILD: " + (System.currentTimeMillis() - drawStart));
 
                     while (c.moveToNext()) {
                         long when = c.getLong(whenIndex);
@@ -379,10 +360,6 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                         }
                     }
 
-                    Log.e("PDK", "ACCEL END BUILD BUILD: " + (System.currentTimeMillis() - drawStart));
-
-                    Log.e("PDK", "DATA COUNT: " + xLowValues.size());
-
                     if (lastTimestamp != -1) {
                         xLowValues.add(0, new Entry(lastTimestamp, lowX));
                         xHighValues.add(0, new Entry(lastTimestamp, highX));
@@ -401,8 +378,6 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                     final float finalMaxValue = maxValue;
                     final float finalMinValue = minValue;
 
-                    Log.e("PDK", "THREAD HANDOFF: " + (System.currentTimeMillis() - drawStart));
-
                     final List<ArrayList<Entry>> data = new ArrayList<>();
                     data.add(xLowValues);
                     data.add(xHighValues);
@@ -414,8 +389,6 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                     activity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Log.e("PDK", "UI START: " + (System.currentTimeMillis() - drawStart));
-
                             int[] colors = {
                                     R.color.generator_accelerometer_x_low,
                                     R.color.generator_accelerometer_x_high,
@@ -446,8 +419,6 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
                                 chartData.addDataSet(set);
                             }
-
-                            Log.e("PDK", "ACCEL START GRAPH: " + (System.currentTimeMillis() - drawStart));
 
                             final LineChart chart = (LineChart) itemView.findViewById(R.id.accelerometer_chart);
 
@@ -498,26 +469,20 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                                 chart.setData(chartData);
                             }
 
-                            Log.e("PDK", "UI END: " + (System.currentTimeMillis() - drawStart));
-
                             Accelerometer.sIsDrawing = false;
                         }
                     });
                 }
             };
 
-            Thread t = new Thread(r, "render_accelerometer_graph");
+            Thread t = new Thread(r, "render-accelerometer-graph");
             t.start();
-
-            c.close();
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);
 
             dateLabel.setText(R.string.label_never_pdk);
         }
-
-        c.close();
 
         Log.e("PDK", "MAIN DONE: " + (System.currentTimeMillis() - drawStart));
     }
@@ -536,10 +501,10 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         Accelerometer me = Accelerometer.getInstance(context);
 
         if (me.mLatestTimestamp == 0) {
-            Cursor c = me.mDatabase.query(Accelerometer.TABLE_HISTORY, null, null, null, null, null, Accelerometer.HISTORY_OBSERVED + " DESC");
+            Cursor c = me.mDatabase.query(Accelerometer.TABLE_HISTORY, null, null, null, null, null, Accelerometer.HISTORY_OBSERVED + " DESC", "1");
 
             if (c.moveToNext()) {
-                me.mLatestTimestamp = c.getLong(c.getColumnIndex(Accelerometer.HISTORY_OBSERVED) / (1000 * 1000));
+                me.mLatestTimestamp = c.getLong(c.getColumnIndex(Accelerometer.HISTORY_OBSERVED) / 1000);
             }
 
             c.close();

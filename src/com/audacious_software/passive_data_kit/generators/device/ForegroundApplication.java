@@ -65,6 +65,7 @@ public class ForegroundApplication extends Generator{
     private SQLiteDatabase mDatabase = null;
     private long mSampleInterval = 15000;
     private AppChecker mAppChecker = null;
+    private long mLastTimestamp = 0;
 
     public static ForegroundApplication getInstance(Context context) {
         if (ForegroundApplication.sInstance == null) {
@@ -389,18 +390,18 @@ public class ForegroundApplication extends Generator{
     }
 
     public static long latestPointGenerated(Context context) {
-        long timestamp = 0;
-
         ForegroundApplication me = ForegroundApplication.getInstance(context);
 
-        Cursor c = me.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, null, null, null, null, ForegroundApplication.HISTORY_OBSERVED + " DESC");
+        if (me.mLastTimestamp == 0) {
+            Cursor c = me.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, null, null, null, null, ForegroundApplication.HISTORY_OBSERVED + " DESC");
 
-        if (c.moveToNext()) {
-            timestamp = c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_OBSERVED));
+            if (c.moveToNext()) {
+                me.mLastTimestamp = c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_OBSERVED));
+            }
+
+            c.close();
         }
 
-        c.close();
-
-        return timestamp;
+        return me.mLastTimestamp;
     }
 }

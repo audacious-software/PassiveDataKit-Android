@@ -24,6 +24,7 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
     public static final boolean SORT_BY_UPDATED_DEFAULT = true;
 
     private Context mContext = null;
+    private List<Class<? extends Generator>> mActiveGenerators = null;
 
     @Override
     public DataPointViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -55,13 +56,21 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
         return null;
     }
 
+    private List<Class<? extends Generator>> getGenerators(Context context) {
+        if (this.mActiveGenerators == null) {
+            this.mActiveGenerators = Generators.getInstance(context).activeGenerators();
+        }
+
+        this.sortGenerators();
+
+        return this.mActiveGenerators;
+    }
+
     @Override
     public void onBindViewHolder(final DataPointViewHolder holder, int position) {
-        List<Class<? extends Generator>> activeGenerators = Generators.getInstance(holder.itemView.getContext()).activeGenerators();
+        this.getGenerators(holder.itemView.getContext());
 
-        this.sortGenerators(this.mContext, activeGenerators);
-
-        Class<? extends Generator> generatorClass = activeGenerators.get(position);
+        Class<? extends Generator> generatorClass = this.mActiveGenerators.get(position);
 
         try {
             Method bindViewHolder = generatorClass.getDeclaredMethod("bindViewHolder", DataPointViewHolder.class);
@@ -86,14 +95,24 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
     @Override
     public int getItemCount() {
-        return Generators.getInstance(null).activeGenerators().size();
+        this.getGenerators(this.mContext);
+
+        return this.mActiveGenerators.size();
     }
 
-    private void sortGenerators(final Context context, List<Class<? extends Generator>> generators) {
+    public void sortGenerators() {
+        final Context context = this.mContext;
+
+        if (this.mActiveGenerators == null) {
+            this.mActiveGenerators = Generators.getInstance(this.mContext).activeGenerators();
+        }
+
+        final DataPointsAdapter me = this;
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         if (prefs.getBoolean(DataPointsAdapter.SORT_BY_UPDATED, DataPointsAdapter.SORT_BY_UPDATED_DEFAULT)) {
-            Collections.sort(generators, new Comparator<Class<? extends Generator>>() {
+            Collections.sort(me.mActiveGenerators, new Comparator<Class<? extends Generator>>() {
                 @Override
                 public int compare(Class<? extends Generator> one, Class<? extends Generator> two) {
                     long oneUpdated = 0;
@@ -133,22 +152,13 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
                     return 0;
                 }
             });
-        } else {
-            Collections.sort(generators, new Comparator<Class<? extends Generator>>() {
-                @Override
-                public int compare(Class<? extends Generator> one, Class<? extends Generator> two) {
-                    return one.getCanonicalName().compareTo(two.getCanonicalName());
-                }
-            });
         }
     }
 
     public int getItemViewType (int position) {
-        List<Class<? extends Generator>> activeGenerators = Generators.getInstance(this.mContext).activeGenerators();
+        this.getGenerators(this.mContext);
 
-        this.sortGenerators(this.mContext, activeGenerators);
-
-        Class<? extends Generator> generatorClass = activeGenerators.get(position);
+        Class<? extends Generator> generatorClass = this.mActiveGenerators.get(position);
 
         return generatorClass.hashCode();
     }

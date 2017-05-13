@@ -11,6 +11,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -91,6 +92,8 @@ public class Battery extends Generator {
 
     private SQLiteDatabase mDatabase = null;
 
+    private long mLastTimestamp = 0;
+
     public static Battery getInstance(Context context) {
         if (Battery.sInstance == null) {
             Battery.sInstance = new Battery(context.getApplicationContext());
@@ -110,11 +113,13 @@ public class Battery extends Generator {
     private void startGenerator() {
         final Battery me = this;
 
+        final long now = System.currentTimeMillis();
+
+        me.mLastTimestamp = now;
+
         this.mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(final Context context, Intent intent) {
-                long now = System.currentTimeMillis();
-
                 ContentValues values = new ContentValues();
                 values.put(Battery.HISTORY_OBSERVED, now);
 
@@ -271,6 +276,8 @@ public class Battery extends Generator {
 
         Cursor c = generator.mDatabase.query(Battery.TABLE_HISTORY, null, where, args, null, null, Battery.HISTORY_OBSERVED + " DESC");
 
+        Log.e("PDK", "BATTERY COUNT: " + c.getCount());
+
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
         TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
@@ -334,9 +341,12 @@ public class Battery extends Generator {
 
             long lastLevel = -1;
 
+            int observedIndex = c.getColumnIndex(Battery.HISTORY_OBSERVED);
+            int levelIndex = c.getColumnIndex(Battery.HISTORY_LEVEL);
+
             while (c.moveToNext()) {
-                long when = c.getLong(c.getColumnIndex(Battery.HISTORY_OBSERVED));
-                long level = c.getLong(c.getColumnIndex(Battery.HISTORY_LEVEL));
+                long when = c.getLong(observedIndex);
+                long level = c.getLong(levelIndex);
 
                 if (level != lastLevel) {
                     values.add(0, new Entry(when, level));
@@ -379,19 +389,19 @@ public class Battery extends Generator {
     }
 
     public static long latestPointGenerated(Context context) {
-        long timestamp = 0;
-
         Battery me = Battery.getInstance(context);
 
-        Cursor c = me.mDatabase.query(Battery.TABLE_HISTORY, null, null, null, null, null, Battery.HISTORY_OBSERVED + " DESC");
+        if (me.mLastTimestamp == 0) {
+            Cursor c = me.mDatabase.query(Battery.TABLE_HISTORY, null, null, null, null, null, Battery.HISTORY_OBSERVED + " DESC");
 
-        if (c.moveToNext()) {
-            timestamp = c.getLong(c.getColumnIndex(Battery.HISTORY_OBSERVED));
+            if (c.moveToNext()) {
+                me.mLastTimestamp = c.getLong(c.getColumnIndex(Battery.HISTORY_OBSERVED));
+            }
+
+            c.close();
         }
 
-        c.close();
-
-        return timestamp;
+        return me.mLastTimestamp;
     }
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
