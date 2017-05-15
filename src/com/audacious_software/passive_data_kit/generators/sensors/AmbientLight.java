@@ -473,7 +473,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             Cursor c = me.mDatabase.query(AmbientLight.TABLE_HISTORY, null, null, null, null, null, Accelerometer.HISTORY_OBSERVED + " DESC", "1");
 
             if (c.moveToNext()) {
-                me.mLatestTimestamp = c.getLong(c.getColumnIndex(Accelerometer.HISTORY_OBSERVED) / (1000 * 1000));
+                me.mLatestTimestamp = c.getLong(c.getColumnIndex(AmbientLight.HISTORY_OBSERVED) / (1000 * 1000));
             }
 
             c.close();
