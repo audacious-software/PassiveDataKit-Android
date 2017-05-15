@@ -180,7 +180,9 @@ public class ForegroundApplication extends Generator{
                 actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_usage_stats_permission_required_title), context.getString(R.string.diagnostic_usage_stats_permission_required), new Runnable() {
                     @Override
                     public void run() {
-                        context.startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+                        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(intent);
                     }
                 }));
             }

@@ -3,6 +3,7 @@ package com.audacious_software.passive_data_kit.generators.sensors;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -14,6 +15,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
+import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -51,6 +55,9 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.AmbientLight.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String IGNORE_POWER_MANAGEMENT = "com.audacious_software.passive_data_kit.generators.sensors.AmbientLight.IGNORE_POWER_MANAGEMENT";
+    private static final boolean IGNORE_POWER_MANAGEMENT_DEFAULT = true;
 
     private static final String DATABASE_PATH = "pdk-sensor-ambient-light.sqlite";
     private static final int DATABASE_VERSION = 1;
@@ -98,6 +105,17 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
     public AmbientLight(Context context) {
         super(context);
+    }
+
+    public void setIgnorePowerManagement(boolean ignore) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putBoolean(AmbientLight.IGNORE_POWER_MANAGEMENT, ignore);
+        e.apply();
+
+        this.stopGenerator();
+        this.startGenerator();
     }
 
     public static void start(final Context context) {
@@ -156,28 +174,44 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
             Thread t = new Thread(r, "ambient-light");
             t.start();
-        } else {
-            if (this.mSensor != null) {
-                sensors.unregisterListener(this, this.mSensor);
 
-                if (AmbientLight.sHandler != null) {
-                    Looper loop = AmbientLight.sHandler.getLooper();
-                    loop.quit();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-                    AmbientLight.sHandler = null;
-                }
-
-                me.mValueBuffers = null;
-                me.mAccuracyBuffers = null;
-                me.mRawTimestampBuffers = null;
-                me.mTimestampBuffers = null;
-
-                me.mActiveBuffersIndex = 0;
-                me.mCurrentBufferIndex = 0;
-
-                this.mSensor = null;
+            if (prefs.getBoolean(AmbientLight.IGNORE_POWER_MANAGEMENT, AmbientLight.IGNORE_POWER_MANAGEMENT_DEFAULT)) {
+                Generators.getInstance(this.mContext).acquireWakeLock(Accelerometer.IDENTIFIER, PowerManager.PARTIAL_WAKE_LOCK);
+            } else {
+                Generators.getInstance(this.mContext).releaseWakeLock(Accelerometer.IDENTIFIER);
             }
+        } else {
+            this.stopGenerator();
         }
+    }
+
+    private void stopGenerator() {
+        final SensorManager sensors = (SensorManager) this.mContext.getSystemService(Context.SENSOR_SERVICE);
+
+        if (this.mSensor != null) {
+            sensors.unregisterListener(this, this.mSensor);
+
+            if (AmbientLight.sHandler != null) {
+                Looper loop = AmbientLight.sHandler.getLooper();
+                loop.quit();
+
+                AmbientLight.sHandler = null;
+            }
+
+            this.mValueBuffers = null;
+            this.mAccuracyBuffers = null;
+            this.mRawTimestampBuffers = null;
+            this.mTimestampBuffers = null;
+
+            this.mActiveBuffersIndex = 0;
+            this.mCurrentBufferIndex = 0;
+
+            this.mSensor = null;
+        }
+
+        Generators.getInstance(this.mContext).releaseWakeLock(AmbientLight.IDENTIFIER);
     }
 
     public static boolean isEnabled(Context context) {
@@ -194,8 +228,30 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         return AmbientLight.sInstance.mSensor != null;
     }
 
-    public static ArrayList<DiagnosticAction> diagnostics(Context context) {
-        return new ArrayList<>();
+    public static ArrayList<DiagnosticAction> diagnostics(final Context context) {
+        ArrayList<DiagnosticAction> actions = new ArrayList<>();
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+        if (prefs.getBoolean(AmbientLight.IGNORE_POWER_MANAGEMENT, AmbientLight.IGNORE_POWER_MANAGEMENT_DEFAULT)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PowerManager power = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+
+                if (power.isIgnoringBatteryOptimizations(context.getPackageName()) == false) {
+                    actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_battery_optimization_exempt_title), context.getString(R.string.diagnostic_battery_optimization_exempt), new Runnable() {
+
+                        @Override
+                        public void run() {
+                            Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(intent);
+                        }
+                    }));
+                }
+            }
+        }
+
+        return actions;
     }
 
     public static void bindViewHolder(final DataPointViewHolder holder) {
@@ -508,7 +564,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                 if (now - me.mLastCleanup > me.mCleanupInterval) {
                     me.mLastCleanup = now;
 
-                    long start = (now - (2 * 24 * 60 * 60 * 1000)) * 1000 * 1000;
+                    long start = (now - (24 * 60 * 60 * 1000)) * 1000 * 1000;
 
                     String where = AmbientLight.HISTORY_OBSERVED + " < ?";
                     String[] args = { "" + start };

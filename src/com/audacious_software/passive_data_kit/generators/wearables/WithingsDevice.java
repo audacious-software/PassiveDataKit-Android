@@ -1126,6 +1126,7 @@ public class WithingsDevice extends Generator {
                                 builder.appendQueryParameter("oauth_signature", signature.trim());
 
                                 Intent intent = new Intent(Intent.ACTION_VIEW, builder.build());
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 context.startActivity(intent);
                             } catch (NoSuchAlgorithmException e) {
                                 AppEvent.getInstance(context).logThrowable(e);

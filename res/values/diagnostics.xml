@@ -22,4 +22,7 @@
 
     <string name="diagnostic_usage_stats_permission_required_title">App Usage Data Permission Required</string>
     <string name="diagnostic_usage_stats_permission_required">This app requires access to app usage data from your device\'s settings.</string>
+
+    <string name="diagnostic_battery_optimization_exempt_title">Battery Optimization Enabled</string>
+    <string name="diagnostic_battery_optimization_exempt">This app uses device features that do not function consistently while the app is subject to battery optimizations. Please grant a battery optimization exemption to ensure full and consistent functioning.</string>
 </resources>

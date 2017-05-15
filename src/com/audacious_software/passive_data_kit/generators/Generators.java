@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.SparseArray;
@@ -32,6 +33,7 @@ public class Generators {
     private HashMap<String, Class<? extends Generator>> mGeneratorMap = new HashMap<>();
     private SparseArray<Class<? extends Generator>> mViewTypeMap = new SparseArray<>();
     private HashSet<GeneratorUpdatedListener> mGeneratorUpdatedListeners = new HashSet<>();
+    private HashMap<String, PowerManager.WakeLock> mWakeLocks = new HashMap<>();
 
     public void start() {
         if (!this.mStarted)
@@ -254,6 +256,28 @@ public class Generators {
             for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
                 listener.onGeneratorUpdated(identifier, timestamp, bundle);
             }
+        }
+    }
+
+    public void acquireWakeLock(String tag, int lockType) {
+        this.releaseWakeLock(tag);
+
+        PowerManager power = (PowerManager) this.mContext.getSystemService(Context.POWER_SERVICE);
+
+        PowerManager.WakeLock lock = power.newWakeLock(lockType, tag);
+
+        this.mWakeLocks.put(tag, lock);
+    }
+
+    public void releaseWakeLock(String tag) {
+        if (this.mWakeLocks.containsKey(tag)) {
+            PowerManager.WakeLock lock = this.mWakeLocks.get(tag);
+
+            if (lock.isHeld()) {
+                lock.release();
+            }
+
+            this.mWakeLocks.remove(tag);
         }
     }
 
