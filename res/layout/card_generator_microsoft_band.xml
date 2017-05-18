@@ -20,7 +20,7 @@
                 android:background="#0075DA"
                 android:padding="8dp"
                 android:baselineAligned="false">
-                <ImageView android:src="@drawable/ic_microsoft_band"
+                <ImageView android:src="@drawable/ic_pdk_microsoft_band"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginRight="8dp" />

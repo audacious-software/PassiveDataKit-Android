@@ -21,7 +21,7 @@
                 android:background="@color/generator_battery_header"
                 android:padding="8dp"
                 android:baselineAligned="false">
-                <ImageView android:src="@drawable/ic_device_battery"
+                <ImageView android:src="@drawable/ic_pdk_device_battery"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginRight="8dp" />

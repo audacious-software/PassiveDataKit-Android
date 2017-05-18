@@ -11,7 +11,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -93,6 +92,8 @@ public class Battery extends Generator {
     private SQLiteDatabase mDatabase = null;
 
     private long mLastTimestamp = 0;
+    private long mCleanupInterval = (24 * 60 * 60 * 1000);
+    private long mLastCleanup = 0;
 
     public static Battery getInstance(Context context) {
         if (Battery.sInstance == null) {
@@ -220,6 +221,17 @@ public class Battery extends Generator {
                 me.mDatabase.insert(Battery.TABLE_HISTORY, null, values);
 
                 Generators.getInstance(context).notifyGeneratorUpdated(Battery.GENERATOR_IDENTIFIER, update);
+
+                if (now - me.mLastCleanup > me.mCleanupInterval) {
+                    me.mLastCleanup = now;
+
+                    long start = now - (24 * 60 * 60 * 1000);
+
+                    String where = Battery.HISTORY_OBSERVED + " < ?";
+                    String[] args = { "" + start };
+
+                    me.mDatabase.delete(Battery.TABLE_HISTORY, where, args);
+                }
             }
         };
 
@@ -275,8 +287,6 @@ public class Battery extends Generator {
         String[] args = { "" + start };
 
         Cursor c = generator.mDatabase.query(Battery.TABLE_HISTORY, null, where, args, null, null, Battery.HISTORY_OBSERVED + " DESC");
-
-        Log.e("PDK", "BATTERY COUNT: " + c.getCount());
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);

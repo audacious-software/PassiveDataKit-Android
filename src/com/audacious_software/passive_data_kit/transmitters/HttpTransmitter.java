@@ -158,8 +158,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     public void transmit(boolean force) {
         long now = System.currentTimeMillis();
 
-        Log.e("PDK", "TRANSMIT: " + force);
-
         if (force) {
             this.mLastAttempt = 0;
         }
@@ -346,6 +344,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 }
 
                 return HttpTransmitter.RESULT_SUCCESS;
+            } else {
+
             }
         } catch (Exception e) {
             e.printStackTrace();

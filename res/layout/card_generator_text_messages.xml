@@ -21,7 +21,7 @@
                 android:background="#9C27B0"
                 android:padding="8dp"
                 android:baselineAligned="false">
-                <ImageView android:src="@drawable/ic_text_messages"
+                <ImageView android:src="@drawable/ic_pdk_text_messages"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginRight="8dp" />

@@ -37,4 +37,7 @@
 
     <!-- Accelerometer Sensor Generator -->
     <string name="pdk_generator_accelerometer_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, x REAL, y REAL, z REAL, raw_timestamp BIGINT, accuracy INTEGER);</string>
+
+    <!-- System Status Generator -->
+    <string name="pdk_generator_diagnostics_system_status_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, runtime INTEGER, storage_app INTEGER, storage_other INTEGER, storage_available INTEGER, storage_total INTEGER, storage_path TEXT);</string>
 </resources>

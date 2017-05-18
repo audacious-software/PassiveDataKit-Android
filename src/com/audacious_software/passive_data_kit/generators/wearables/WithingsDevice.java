@@ -17,6 +17,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -1248,7 +1249,7 @@ public class WithingsDevice extends Generator {
         PagerAdapter adapter = new PagerAdapter() {
             @Override
             public int getCount() {
-                return 7;
+                return 2;
             }
 
             @Override
@@ -1452,13 +1453,13 @@ public class WithingsDevice extends Generator {
 
         WithingsDevice me = WithingsDevice.getInstance(context);
 
-//        Cursor c = me.mDatabase.query(WithingsDevice.TABLE_HISTORY, null, null, null, null, null, WithingsDevice.HISTORY_OBSERVED + " DESC");
-//
-//        if (c.moveToNext()) {
-//            timestamp = c.getLong(c.getColumnIndex(WithingsDevice.HISTORY_OBSERVED));
-//        }
-//
-//        c.close();
+        Cursor c = me.mDatabase.query(WithingsDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, WithingsDevice.HISTORY_OBSERVED + " DESC");
+
+        if (c.moveToNext()) {
+            timestamp = c.getLong(c.getColumnIndex(WithingsDevice.HISTORY_OBSERVED));
+        }
+
+        c.close();
 
         return timestamp;
     }
@@ -1653,8 +1654,63 @@ public class WithingsDevice extends Generator {
     private static String bindBodyPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
+        WithingsDevice withings = WithingsDevice.getInstance(holder.itemView.getContext());
+
         LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_body_page, null);
         card.setTag("" + position);
+
+        int[] labels = {
+                R.id.label_body_one,
+                R.id.label_body_two,
+                R.id.label_body_three,
+                R.id.label_body_four,
+                R.id.label_body_five,
+                R.id.label_body_six,
+                R.id.label_body_seven,
+                R.id.label_body_eight
+        };
+
+        int[] values = {
+                R.id.value_body_one,
+                R.id.value_body_two,
+                R.id.value_body_three,
+                R.id.value_body_four,
+                R.id.value_body_five,
+                R.id.value_body_six,
+                R.id.value_body_seven,
+                R.id.value_body_eight
+        };
+
+        HashMap<String, Double> bodyValues = new HashMap<>();
+        ArrayList<String> keys = new ArrayList<>();
+
+        Cursor c = withings.mDatabase.query(WithingsDevice.TABLE_BODY_MEASURE_HISTORY, null, null, null, null, null, WithingsDevice.BODY_MEASURE_HISTORY_DATE + " DESC");
+
+        Log.e("PDK", "MEASURE COUNT: " + c.getCount());
+
+        while (c.moveToNext() && bodyValues.size() < labels.length) {
+            String label = c.getString(c.getColumnIndex(WithingsDevice.BODY_MEASURE_HISTORY_TYPE));
+
+            if (bodyValues.containsKey(label) == false) {
+                double value = c.getDouble(c.getColumnIndex(WithingsDevice.BODY_MEASURE_HISTORY_VALUE));
+
+                bodyValues.put(label, value);
+
+                keys.add(label);
+            }
+        }
+
+        for (int i = 0; i < keys.size() && i < labels.length; i++) {
+            String label = keys.get(i);
+
+            TextView labelView = (TextView) card.findViewById(labels[i]);
+            labelView.setText(label.substring(0, 1).toUpperCase() + label.substring(1) + ":");
+
+            Double value = bodyValues.get(label);
+
+            TextView valueView = (TextView) card.findViewById(values[i]);
+            valueView.setText(value.toString());
+        }
 
         container.addView(card);
 

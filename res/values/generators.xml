@@ -7,7 +7,12 @@
         <!-- <item>com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand</item> -->
         <!-- <item>com.audacious_software.passive_data_kit.generators.services.GoogleAwareness</item> -->
         <!-- <item>com.audacious_software.passive_data_kit.generators.vr.DaydreamViewController</item> -->
+        <item>com.audacious_software.passive_data_kit.generators.device.Battery</item>
+        <item>com.audacious_software.passive_data_kit.generators.sensors.Accelerometer</item>
+        <item>com.audacious_software.passive_data_kit.generators.sensors.AmbientLight</item>
+        <item>com.audacious_software.passive_data_kit.generators.device.ForegroundApplication</item>
         <item>com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice</item>
+        <item>com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus</item>
     </string-array>
 
     <string-array name="pdk_app_generators"></string-array>
@@ -142,6 +147,9 @@
     <string name="generator_withings_elevation_label">Elevation</string>
     <string name="generator_withings_elevation_value">%1$.2f m</string>
 
+    <string name="generator_withings_body_placeholder">-</string>
+    <string name="generator_withings_body_title">Body Measures</string>
+
     <!-- Device Battery -->
     <string name="generator_device_battery">Device Battery</string>
     <string name="message_generator_device_battery_empty">No battery levels have been reported yet.</string>
@@ -176,5 +184,15 @@
     <color name="generator_accelerometer_y_high">#ff4CAF50</color>
     <color name="generator_accelerometer_z_low">#802196F3</color>
     <color name="generator_accelerometer_z_high">#ff2196F3</color>
+
+    <!-- System Status -->
+    <string name="generator_diagnostics_system_status">System Status</string>
+    <string name="message_generator_diagnostics_system_status_empty">No status information has been collected yet.</string>
+    <color name="generator_system_status_header">#616161</color>
+    <color name="generator_system_status_free">#2E7D32</color>
+    <color name="generator_system_status_app">#FAFAFA</color>
+    <color name="generator_system_status_other">#757575</color>
+    <string name="generator_system_status_runtime">Continuous Runtime: %1$s</string>
+    <string name="generator_system_status_runtime_formatted">%1$dd %2$s:%3$s:%4$s.%5$s</string>
 </resources>
 
