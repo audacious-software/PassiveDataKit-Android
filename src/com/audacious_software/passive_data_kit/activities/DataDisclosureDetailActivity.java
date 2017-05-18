@@ -46,7 +46,7 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
         try {
             this.mGeneratorClass = (Class<? extends Generator>) Class.forName(this.getIntent().getStringExtra(DataDisclosureDetailActivity.GENERATOR_CLASS_NAME));
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         }
 
         if (this.mGeneratorClass != null) {

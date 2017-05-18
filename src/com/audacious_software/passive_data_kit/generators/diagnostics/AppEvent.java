@@ -28,7 +28,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +51,11 @@ public class AppEvent extends Generator{
 
     private static final int CARD_PAGE_SIZE = 8;
     private static final int CARD_MAX_PAGES = 8;
+
+    private static final String DETAILS_THROWABLE_STACKTRACE = "stacktrace";
+    private static final String DETAILS_THROWABLE_MESSAGE = "message";
+    private static final String EVENT_LOG_THROWABLE = "log_throwable";
+
 
     private static AppEvent sInstance = null;
 
@@ -371,7 +379,19 @@ public class AppEvent extends Generator{
     }
 
     public void logThrowable(Throwable t) {
+        t.printStackTrace();
 
+        StringWriter out = new StringWriter();
+        PrintWriter writer = new PrintWriter(out);
+
+        t.printStackTrace(writer);
+        writer.flush();
+
+        HashMap<String, String> details = new HashMap<>();
+        details.put(AppEvent.DETAILS_THROWABLE_STACKTRACE, out.toString());
+        details.put(AppEvent.DETAILS_THROWABLE_MESSAGE, t.getMessage());
+
+        this.logEvent(AppEvent.EVENT_LOG_THROWABLE, details);
     }
 
     public static List<DataDisclosureDetailActivity.Action> getDisclosureActions(final Context context) {

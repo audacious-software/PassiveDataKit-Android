@@ -36,7 +36,6 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
             return new DataPointViewHolder(view);
         } catch (Exception e) {
-            e.printStackTrace();
             try {
                 generatorClass = Generator.class;
 
@@ -76,7 +75,6 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
             Method bindViewHolder = generatorClass.getDeclaredMethod("bindViewHolder", DataPointViewHolder.class);
             bindViewHolder.invoke(null, holder);
         } catch (Exception e) {
-            e.printStackTrace();
             try {
                 generatorClass = Generator.class;
 
@@ -122,11 +120,11 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
                         oneUpdated = (long) oneGenerated.invoke(null, context);
                     } catch (NoSuchMethodException e) {
-                        e.printStackTrace();
+//                        e.printStackTrace();
                     } catch (InvocationTargetException e) {
-                        e.printStackTrace();
+//                        e.printStackTrace();
                     } catch (IllegalAccessException e) {
-                        e.printStackTrace();
+//                        e.printStackTrace();
                     }
 
                     long twoUpdated = 0;
@@ -136,11 +134,11 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
                         twoUpdated = (long) twoGenerated.invoke(null, context);
                     } catch (NoSuchMethodException e) {
-                        e.printStackTrace();
+//                        e.printStackTrace();
                     } catch (InvocationTargetException e) {
-                        e.printStackTrace();
+//                        e.printStackTrace();
                     } catch (IllegalAccessException e) {
-                        e.printStackTrace();
+//                        e.printStackTrace();
                     }
 
                     if (oneUpdated < twoUpdated) {

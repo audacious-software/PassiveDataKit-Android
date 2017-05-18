@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.util.SparseArray;
 
 import com.audacious_software.passive_data_kit.Logger;
@@ -55,15 +54,11 @@ public class Generators {
             for (String className : this.mGenerators)
             {
                 try {
-                    Log.e("PDK", "TRYING " + className);
-
                     Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
 
                     Method isEnabled = probeClass.getDeclaredMethod("isEnabled", Context.class);
 
                     Boolean enabled = (Boolean) isEnabled.invoke(null, this.mContext);
-
-                    Log.e("PDK", "GENERATOR ENABLED? " + probeClass + " ==> " + enabled);
 
                     if (enabled) {
                         this.startGenerator(className);
@@ -72,16 +67,12 @@ public class Generators {
                         this.stopGenerator(className);
                     }
                 } catch (ClassNotFoundException e) {
-                    Log.e("PDK", "ClassNotFoundException " + className);
                     Logger.getInstance(this.mContext).logThrowable(e);
                 } catch (NoSuchMethodException e) {
-                    Log.e("PDK", "NoSuchMethodException " + className);
                     Logger.getInstance(this.mContext).logThrowable(e);
                 } catch (InvocationTargetException e) {
-                    Log.e("PDK", "InvocationTargetException " + className);
                     Logger.getInstance(this.mContext).logThrowable(e);
                 } catch (IllegalAccessException e) {
-                    Log.e("PDK", "IllegalAccessException " + className);
                     Logger.getInstance(this.mContext).logThrowable(e);
                 }
             }
@@ -102,8 +93,6 @@ public class Generators {
             }
             else {
                 Method start = generatorClass.getDeclaredMethod("start", Context.class);
-
-                Log.e("PDK", "GOT START METHOD: " + className + " -> " + start);
 
                 start.invoke(null, this.mContext);
 
@@ -142,13 +131,13 @@ public class Generators {
 
                 actions.addAll(generatorActions);
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } catch (InvocationTargetException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
 
@@ -185,8 +174,6 @@ public class Generators {
     public Class<? extends Generator> fetchCustomViewClass(String identifier) {
         Class<? extends Generator> generatorClass = this.mGeneratorMap.get(identifier);
 
-        Log.e("PDK", "FETCH VIEW: " + identifier + " => " + generatorClass);
-
         if (generatorClass == null)
             generatorClass = Generator.class;
 
@@ -203,12 +190,6 @@ public class Generators {
     }
 
     public Generator getGenerator(String className) {
-        Log.e("BB", "GENERATOR FIND START");
-        for (String name : this.mActiveGenerators) {
-            Log.e("BB", "GENERATOR NAME: " + name);
-        }
-        Log.e("BB", "GENERATOR FIND END");
-
         if (this.mActiveGenerators.contains(className)) {
             try {
                 Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
@@ -216,13 +197,13 @@ public class Generators {
                 Method getInstance = probeClass.getDeclaredMethod("getInstance", Context.class);
                 return (Generator) getInstance.invoke(null, this.mContext);
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } catch (InvocationTargetException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
 
@@ -236,7 +217,7 @@ public class Generators {
             try {
                 active.add((Class<? extends Generator>) Class.forName(className));
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
 

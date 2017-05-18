@@ -27,6 +27,7 @@ import com.audacious_software.passive_data_kit.activities.generators.DataPointVi
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.rvalerio.fgchecker.AppChecker;
 
@@ -110,8 +111,6 @@ public class ForegroundApplication extends Generator{
                         screenActive = false;
                     }
                 }
-
-                Log.e("PDK", "PROCESS: " + process + " -- " + screenActive);
 
                 ContentValues values = new ContentValues();
                 values.put(ForegroundApplication.HISTORY_OBSERVED, now);
@@ -362,7 +361,7 @@ public class ForegroundApplication extends Generator{
                     Drawable icon = packageManager.getApplicationIcon(appPackage);
                     appIcon.setImageDrawable(icon);
                 } catch (PackageManager.NameNotFoundException e) {
-                    e.printStackTrace();
+                    AppEvent.getInstance(context).logThrowable(e);
                 }
 
                 TextView appWhen = (TextView) row.findViewById(R.id.app_last_used);

@@ -121,6 +121,10 @@ public class Battery extends Generator {
         this.mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(final Context context, Intent intent) {
+                if (me.mDatabase == null) {
+                    return;
+                }
+
                 ContentValues values = new ContentValues();
                 values.put(Battery.HISTORY_OBSERVED, now);
 
@@ -235,10 +239,6 @@ public class Battery extends Generator {
             }
         };
 
-        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-
-        this.mContext.registerReceiver(this.mReceiver, filter);
-
         Generators.getInstance(this.mContext).registerCustomViewClass(Battery.GENERATOR_IDENTIFIER, Battery.class);
 
         File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
@@ -255,6 +255,9 @@ public class Battery extends Generator {
         }
 
         this.setDatabaseVersion(this.mDatabase, Battery.DATABASE_VERSION);
+
+        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        this.mContext.registerReceiver(this.mReceiver, filter);
     }
 
     public static boolean isEnabled(Context context) {

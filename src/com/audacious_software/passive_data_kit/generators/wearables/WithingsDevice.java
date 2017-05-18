@@ -803,7 +803,7 @@ public class WithingsDevice extends Generator {
                     }
                 }
             } catch (JSONException e) {
-                e.printStackTrace();
+                AppEvent.getInstance(this.mContext).logThrowable(e);
             }
         }
     }
