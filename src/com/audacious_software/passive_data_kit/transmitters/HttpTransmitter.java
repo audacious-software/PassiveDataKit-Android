@@ -44,7 +44,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okio.Buffer;
 
 public class HttpTransmitter extends Transmitter implements Generators.GeneratorUpdatedListener {
     public static final String UPLOAD_URI = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.UPLOAD_URI";
@@ -345,6 +344,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 }
 
                 return HttpTransmitter.RESULT_SUCCESS;
+            } else {
+
             }
         } catch (Exception e) {
             e.printStackTrace();

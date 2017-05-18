@@ -6,10 +6,13 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
@@ -26,7 +29,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,9 +46,14 @@ public class AppEvent extends Generator{
     public static final String HISTORY_EVENT_DETAILS = "event_details";
     public static final String TABLE_HISTORY = "history";
 
+    private static final int CARD_PAGE_SIZE = 8;
+    private static final int CARD_MAX_PAGES = 8;
+
     private static AppEvent sInstance = null;
 
     private SQLiteDatabase mDatabase = null;
+
+    private int mPage = 0;
 
     public static AppEvent getInstance(Context context) {
         if (AppEvent.sInstance == null) {
@@ -112,255 +119,165 @@ public class AppEvent extends Generator{
     }
 
     public static void bindViewHolder(DataPointViewHolder holder) {
-/*        final Context context = holder.itemView.getContext();
+        final Context context = holder.itemView.getContext();
 
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
+        final AppEvent generator = AppEvent.getInstance(context);
 
-        long zeroStart = cal.getTimeInMillis();
-        cal.add(Calendar.DATE, -1);
+        final ArrayList<Object[]> events = new ArrayList<>();
 
-        LinearLayout zeroTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_zero_value);
-
-        AppEvents.populateTimeline(context, zeroTimeline, zeroStart);
-
-        long oneStart = cal.getTimeInMillis();
-        cal.add(Calendar.DATE, -1);
-
-        LinearLayout oneTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_one_value);
-
-        AppEvents.populateTimeline(context, oneTimeline, oneStart);
-
-        long twoStart = cal.getTimeInMillis();
-
-        LinearLayout twoTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_two_value);
-
-        AppEvents.populateTimeline(context, twoTimeline, twoStart);
-
-        AppEvents generator = AppEvents.getInstance(context);
-
-        Cursor c = generator.mDatabase.query(AppEvents.TABLE_HISTORY, null, null, null, null, null, AppEvents.HISTORY_OBSERVED + " DESC");
+        Cursor c = generator.mDatabase.query(AppEvent.TABLE_HISTORY, null, null, null, null, null, AppEvent.HISTORY_OBSERVED + " DESC");
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
+        View cardSizer = holder.itemView.findViewById(R.id.card_sizer);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
         TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+
+        int eventCount = c.getCount();
 
         if (c.moveToNext()) {
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
+            cardSizer.setVisibility(View.INVISIBLE);
 
-            long timestamp = c.getLong(c.getColumnIndex(AppEvents.HISTORY_OBSERVED)) / 1000;
+            long timestamp = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED)) / 1000;
 
             dateLabel.setText(Generator.formatTimestamp(context, timestamp));
-
-            cal = Calendar.getInstance();
-            DateFormat format = android.text.format.DateFormat.getDateFormat(context);
-
-            TextView zeroDayLabel = (TextView) holder.itemView.findViewById(R.id.day_zero_label);
-            zeroDayLabel.setText(format.format(cal.getTime()));
-
-            cal.add(Calendar.DATE, -1);
-
-            TextView oneDayLabel = (TextView) holder.itemView.findViewById(R.id.day_one_label);
-            oneDayLabel.setText(format.format(cal.getTime()));
-
-            cal.add(Calendar.DATE, -1);
-
-            TextView twoDayLabel = (TextView) holder.itemView.findViewById(R.id.day_two_label);
-            twoDayLabel.setText(format.format(cal.getTime()));
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);
+            cardSizer.setVisibility(View.INVISIBLE);
 
             dateLabel.setText(R.string.label_never_pdk);
         }
 
-        c.close();
-        */
-    }
-
-    /*
-    private static void populateTimeline(Context context, LinearLayout timeline, long start) {
-        timeline.removeAllViews();
-
-        AppEvents generator = AppEvents.getInstance(context);
-
-        long end = start + (24 * 60 * 60 * 1000);
-
-        String where = AppEvents.HISTORY_OBSERVED + " >= ? AND " + AppEvents.HISTORY_OBSERVED + " < ?";
-        String[] args = { "" + start, "" + end };
-
-        Cursor c = generator.mDatabase.query(AppEvents.TABLE_HISTORY, null, where, args, null, null, AppEvents.HISTORY_OBSERVED);
-
-        ArrayList<String> activeStates = new ArrayList<>();
-        ArrayList<Long> activeTimestamps = new ArrayList<>();
+        c.moveToPrevious();
 
         while (c.moveToNext()) {
-            long timestamp = c.getLong(c.getColumnIndex(AppEvents.HISTORY_OBSERVED));
+            String event = c.getString(c.getColumnIndex(AppEvent.HISTORY_EVENT_NAME));
+            long timestamp = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED));
 
-            activeTimestamps.add(timestamp);
+            Object[] values = { event, timestamp };
 
-            String state = c.getString(c.getColumnIndex(AppEvents.HISTORY_STATE));
-            activeStates.add(state);
+            events.add(values);
         }
 
         c.close();
 
-        String lastState = AppEvents.STATE_UNKNOWN;
-
-        String lastWhere = AppEvents.HISTORY_OBSERVED + " < ?";
-        String[] lastArgs = { "" + start };
-
-        c = generator.mDatabase.query(AppEvents.TABLE_HISTORY, null, lastWhere, lastArgs, null, null, AppEvents.HISTORY_OBSERVED + " DESC");
-
-        if (c.moveToNext()) {
-            lastState = c.getString(c.getColumnIndex(AppEvents.HISTORY_STATE));
+        if (eventCount > AppEvent.CARD_PAGE_SIZE * AppEvent.CARD_MAX_PAGES) {
+            eventCount = AppEvent.CARD_PAGE_SIZE * AppEvent.CARD_MAX_PAGES;
         }
 
-        if (activeStates.size() > 0) {
-            long firstTimestamp = activeTimestamps.get(0);
-            long firstState = activeTimestamps.get(0);
+        final int pages = (int) Math.ceil(((double) eventCount) / AppEvent.CARD_PAGE_SIZE);
 
-            View startView = new View(context);
+        final AppEvent appEvent = AppEvent.getInstance(holder.itemView.getContext());
 
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                if (AppEvents.STATE_UNKNOWN.equals(lastState)) {
+        ViewPager pager = (ViewPager) holder.itemView.findViewById(R.id.content_pager);
 
-                } else if (AppEvents.STATE_ON.equals(lastState)) {
-                    startView.setBackgroundColor(0xff4CAF50);
-                } else if (AppEvents.STATE_OFF.equals(lastState)) {
-                    startView.setBackgroundColor(0xff263238);
-                } else if (AppEvents.STATE_DOZE.equals(lastState)) {
-                    startView.setBackgroundColor(0xff1b5e20);
-                } else if (AppEvents.STATE_DOZE_SUSPEND.equals(lastState)) {
-                    startView.setBackgroundColor(0xff1b5e20);
-                }
-            } else {
-                if (AppEvents.STATE_UNKNOWN.equals(lastState)) {
-
-                } else if (AppEvents.STATE_ON.equals(lastState)) {
-                    startView.setBackgroundColor(0xff4CAF50);
-                } else if (AppEvents.STATE_OFF.equals(lastState)) {
-                    startView.setBackgroundColor(0xff263238);
-                }
+        PagerAdapter adapter = new PagerAdapter() {
+            @Override
+            public int getCount() {
+                return pages;
             }
 
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, firstTimestamp - start);
-            startView.setLayoutParams(params);
-
-            timeline.addView(startView);
-
-            long now = System.currentTimeMillis();
-
-            if (activeStates.size() == 1) {
-                View v = new View(context);
-
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                    if (AppEvents.STATE_ON.equals(firstState)) {
-                        v.setBackgroundColor(0xff4CAF50);
-                    } else if (AppEvents.STATE_OFF.equals(firstState)) {
-                        v.setBackgroundColor(0xff263238);
-                    } else if (AppEvents.STATE_DOZE.equals(firstState)) {
-                        v.setBackgroundColor(0xff3f51b5);
-                    } else if (AppEvents.STATE_DOZE_SUSPEND.equals(firstState)) {
-                        v.setBackgroundColor(0xff3f51b5);
-                    }
-                } else {
-                    if (AppEvents.STATE_ON.equals(firstState)) {
-                        v.setBackgroundColor(0xff4CAF50);
-                    } else if (AppEvents.STATE_OFF.equals(firstState)) {
-                        v.setBackgroundColor(0xff263238);
-                    }
-                }
-
-                if (end > System.currentTimeMillis()) {
-                    params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, now - firstTimestamp);
-                    v.setLayoutParams(params);
-                } else {
-                    params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, end - firstTimestamp);
-                    v.setLayoutParams(params);
-                }
-
-                timeline.addView(v);
-            } else {
-                for (int i = 1; i < activeStates.size(); i++) {
-                    long currentTimestamp = activeTimestamps.get(i);
-
-                    long priorTimestamp = activeTimestamps.get(i - 1);
-                    String priorState = activeStates.get(i - 1);
-
-                    View v = new View(context);
-
-                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                        if (AppEvents.STATE_ON.equals(priorState)) {
-                            v.setBackgroundColor(0xff4CAF50);
-                        } else if (AppEvents.STATE_OFF.equals(priorState)) {
-                            v.setBackgroundColor(0xff263238);
-                        } else if (AppEvents.STATE_DOZE.equals(priorState)) {
-                            v.setBackgroundColor(0xff3f51b5);
-                        } else if (AppEvents.STATE_DOZE_SUSPEND.equals(priorState)) {
-                            v.setBackgroundColor(0xff3f51b5);
-                        }
-                    } else {
-                        if (AppEvents.STATE_ON.equals(priorState)) {
-                            v.setBackgroundColor(0xff4CAF50);
-                        } else if (AppEvents.STATE_OFF.equals(priorState)) {
-                            v.setBackgroundColor(0xff263238);
-                        }
-                    }
-
-                    params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, currentTimestamp - priorTimestamp);
-                    v.setLayoutParams(params);
-
-                    timeline.addView(v);
-                }
-
-                long finalTimestamp = activeTimestamps.get(activeTimestamps.size() - 1);
-                String finalState = activeStates.get(activeStates.size() - 1);
-
-                View v = new View(context);
-
-                if (AppEvents.STATE_ON.equals(finalState)) {
-                    v.setBackgroundColor(0xff4CAF50);
-                } else if (AppEvents.STATE_OFF.equals(finalState)) {
-                    v.setBackgroundColor(0xff263238);
-                } else if (AppEvents.STATE_DOZE.equals(finalState)) {
-                    v.setBackgroundColor(0xff3f51b5);
-                } else if (AppEvents.STATE_DOZE_SUSPEND.equals(finalState)) {
-                    v.setBackgroundColor(0xff3f51b5);
-                }
-
-                if (end > now) {
-                    params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, now - finalTimestamp);
-                    v.setLayoutParams(params);
-                } else {
-                    params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, end - finalTimestamp);
-                    v.setLayoutParams(params);
-                }
-
-                timeline.addView(v);
+            @Override
+            public boolean isViewFromObject(View view, Object content) {
+                return view.getTag().equals(content);
             }
 
-            if (end > now) {
-                View v = new View(context);
+            public void destroyItem(ViewGroup container, int position, Object content) {
+                int toRemove = -1;
 
-                params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, end - now);
-                v.setLayoutParams(params);
+                for (int i = 0; i < container.getChildCount(); i++) {
+                    View child = container.getChildAt(i);
 
-                timeline.addView(v);
+                    if (this.isViewFromObject(child, content))
+                        toRemove = i;
+                }
+
+                if (toRemove >= 0)
+                    container.removeViewAt(toRemove);
             }
-        } else {
 
-        }
+            public Object instantiateItem(ViewGroup container, int position) {
+                LinearLayout list = (LinearLayout) LayoutInflater.from(container.getContext()).inflate(R.layout.card_generator_app_event_page, container, false);
+
+                int listPosition = AppEvent.CARD_PAGE_SIZE * position;
+
+                for (int i = 0; i < AppEvent.CARD_PAGE_SIZE && listPosition + i < events.size(); i++) {
+                    Object[] values = events.get(listPosition + i);
+
+                    String event = (String) values[0];
+                    long timestamp = (long) values[1];
+
+                    LinearLayout row = null;
+
+                    switch (i) {
+                        case 0:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_0);
+                            break;
+                        case 1:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_1);
+                            break;
+                        case 2:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_2);
+                            break;
+                        case 3:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_3);
+                            break;
+                        case 4:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_4);
+                            break;
+                        case 5:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_5);
+                            break;
+                        case 6:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_6);
+                            break;
+                        default:
+                            row = (LinearLayout) list.findViewById(R.id.app_event_row_7);
+                            break;
+                    }
+
+                    TextView eventName = (TextView) row.findViewById(R.id.app_event_row_event_name);
+                    TextView eventWhen = (TextView) row.findViewById(R.id.app_event_row_event_when);
+
+                    eventName.setText(event);
+                    eventWhen.setText(Generator.formatTimestamp(context, timestamp / 1000));
+                }
+
+                list.setTag("" + position);
+
+                container.addView(list);
+
+                return "" + list.getTag();
+            }
+        };
+
+        pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                appEvent.mPage = position;
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+        pager.setAdapter(adapter);
+
+        pager.setCurrentItem(appEvent.mPage);
     }
 
-*/
     public static View fetchView(ViewGroup parent)
     {
-        return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_generic, parent, false);
+        return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_app_event, parent, false);
     }
 
     @Override
@@ -451,6 +368,10 @@ public class AppEvent extends Generator{
         }
 
         return false;
+    }
+
+    public void logThrowable(Throwable t) {
+
     }
 
     public static List<DataDisclosureDetailActivity.Action> getDisclosureActions(final Context context) {

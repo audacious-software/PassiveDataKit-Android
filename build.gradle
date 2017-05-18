@@ -3,16 +3,23 @@ apply plugin: 'com.android.library'
 buildscript {
     repositories {
         jcenter()
+        flatDir {
+            dirs 'libs'
+        }
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.1'
+        classpath 'com.android.tools.build:gradle:2.3.2'
     }
 }
 
 repositories {
     jcenter()
     maven { url "https://jitpack.io" }
+    maven { url 'https://dl.bintray.com/rvalerio/maven' }
+    flatDir{
+        dirs 'libs'
+    }
 }
 
 android {
@@ -22,7 +29,7 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 18
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
@@ -60,6 +67,7 @@ android {
         compile 'org.apache.commons:commons-lang3:3.4'
         compile 'com.fasterxml.jackson.core:jackson-core:2.7.3'
         compile 'com.github.philjay:mpandroidchart:v3.0.1'
+        compile 'com.rvalerio:fgchecker:1.0.1'
     }
 
     buildTypes {
