@@ -122,6 +122,8 @@ public class Battery extends Generator {
             @Override
             public void onReceive(final Context context, Intent intent) {
                 if (me.mDatabase == null) {
+                    PassiveDataKit.getInstance(context).start();
+
                     return;
                 }
 

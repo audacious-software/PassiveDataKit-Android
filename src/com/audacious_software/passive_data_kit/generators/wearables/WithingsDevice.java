@@ -17,7 +17,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Base64;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -733,73 +732,77 @@ public class WithingsDevice extends Generator {
                 if (response.getInt("status") == 0) {
                     JSONObject body = response.getJSONObject("body");
 
-                    JSONObject series = body.getJSONObject("series");
+                    try {
+                        JSONObject series = body.getJSONObject("series");
 
-                    Iterator<String> keys = series.keys();
+                        Iterator<String> keys = series.keys();
 
-                    while (keys.hasNext()) {
-                        String key = keys.next();
+                        while (keys.hasNext()) {
+                            String key = keys.next();
 
-                        long timestamp = Long.parseLong(key);
+                            long timestamp = Long.parseLong(key);
 
-                        String where = WithingsDevice.INTRADAY_ACTIVITY_START + " = ?";
-                        String[] args = { "" + timestamp };
+                            String where = WithingsDevice.INTRADAY_ACTIVITY_START + " = ?";
+                            String[] args = { "" + timestamp };
 
-                        Cursor c = this.mDatabase.query(WithingsDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, null, where, args, null, null, WithingsDevice.HISTORY_OBSERVED + " DESC");
+                            Cursor c = this.mDatabase.query(WithingsDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, null, where, args, null, null, WithingsDevice.HISTORY_OBSERVED + " DESC");
 
-                        if (c.moveToNext() == false) {
-                            JSONObject item = series.getJSONObject(key);
+                            if (c.moveToNext() == false) {
+                                JSONObject item = series.getJSONObject(key);
 
-                            ContentValues values = new ContentValues();
-                            values.put(WithingsDevice.HISTORY_OBSERVED, now);
-                            values.put(WithingsDevice.INTRADAY_ACTIVITY_START, timestamp);
-                            values.put(WithingsDevice.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
+                                ContentValues values = new ContentValues();
+                                values.put(WithingsDevice.HISTORY_OBSERVED, now);
+                                values.put(WithingsDevice.INTRADAY_ACTIVITY_START, timestamp);
+                                values.put(WithingsDevice.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
 
-                            Bundle updated = new Bundle();
-                            updated.putLong(WithingsDevice.HISTORY_OBSERVED, System.currentTimeMillis());
-                            updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_START, timestamp);
-                            updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
+                                Bundle updated = new Bundle();
+                                updated.putLong(WithingsDevice.HISTORY_OBSERVED, System.currentTimeMillis());
+                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_START, timestamp);
+                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
 
-                            if (item.has("steps")) {
-                                values.put(WithingsDevice.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
-                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
+                                if (item.has("steps")) {
+                                    values.put(WithingsDevice.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
+                                    updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
+                                }
+
+                                if (item.has("elevation")) {
+                                    values.put(WithingsDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
+                                    updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
+                                }
+
+                                if (item.has("distance")) {
+                                    values.put(WithingsDevice.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
+                                    updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
+                                }
+
+                                if (item.has("calories")) {
+                                    values.put(WithingsDevice.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
+                                    updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
+                                }
+
+                                if (item.has("stroke")) {
+                                    values.put(WithingsDevice.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
+                                    updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
+                                }
+
+                                if (item.has("pool_lap")) {
+                                    values.put(WithingsDevice.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
+                                    updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
+                                }
+
+                                this.mDatabase.insert(WithingsDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, null, values);
+
+                                this.annotateGeneratorReading(updated);
+
+                                updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_INTRADAY_ACTIVITY);
+
+                                Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
                             }
 
-                            if (item.has("elevation")) {
-                                values.put(WithingsDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
-                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
-                            }
-
-                            if (item.has("distance")) {
-                                values.put(WithingsDevice.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
-                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
-                            }
-
-                            if (item.has("calories")) {
-                                values.put(WithingsDevice.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
-                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
-                            }
-
-                            if (item.has("stroke")) {
-                                values.put(WithingsDevice.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
-                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
-                            }
-
-                            if (item.has("pool_lap")) {
-                                values.put(WithingsDevice.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
-                                updated.putLong(WithingsDevice.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
-                            }
-
-                            this.mDatabase.insert(WithingsDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, null, values);
-
-                            this.annotateGeneratorReading(updated);
-
-                            updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_INTRADAY_ACTIVITY);
-
-                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
+                            c.close();
                         }
-
-                        c.close();
+                    } catch (JSONException e) {
+                        // JSON type mismatch when day's data is empty. Do nothing...
                     }
                 }
             } catch (JSONException e) {
@@ -1391,6 +1394,10 @@ public class WithingsDevice extends Generator {
                 entries.add(new PieEntry((long) intenseActivity, context.getString(R.string.generator_withings_intense_activities_label)));
             }
 
+            if (entries.size() == 0) {
+                entries.add(new PieEntry(1L, context.getString(R.string.generator_withings_soft_activities_label)));
+            }
+
             PieDataSet set = new PieDataSet(entries, " ");
 
             int[] colors = {
@@ -1685,8 +1692,6 @@ public class WithingsDevice extends Generator {
         ArrayList<String> keys = new ArrayList<>();
 
         Cursor c = withings.mDatabase.query(WithingsDevice.TABLE_BODY_MEASURE_HISTORY, null, null, null, null, null, WithingsDevice.BODY_MEASURE_HISTORY_DATE + " DESC");
-
-        Log.e("PDK", "MEASURE COUNT: " + c.getCount());
 
         while (c.moveToNext() && bodyValues.size() < labels.length) {
             String label = c.getString(c.getColumnIndex(WithingsDevice.BODY_MEASURE_HISTORY_TYPE));
