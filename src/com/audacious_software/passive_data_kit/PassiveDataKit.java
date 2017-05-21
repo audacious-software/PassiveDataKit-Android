@@ -16,12 +16,13 @@ public class PassiveDataKit {
     private boolean mStarted = false;
 
     public void start() {
-        if (!this.mStarted)
-        {
-            Generators.getInstance(this.mContext).start();
-            Logger.getInstance(this.mContext);
+        synchronized (this) {
+            if (!this.mStarted) {
+                this.mStarted = true;
 
-            this.mStarted = true;
+                Generators.getInstance(this.mContext).start();
+                Logger.getInstance(this.mContext);
+            }
         }
     }
 

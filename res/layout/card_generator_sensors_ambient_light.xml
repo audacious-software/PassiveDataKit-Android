@@ -45,14 +45,17 @@
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="0dp">
+                android:padding="0dp"
+                android:background="@android:color/black">
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/light_chart"
                     android:layout_width="match_parent"
                     android:layout_height="160dp"
-                    android:layout_marginBottom="0dp"/>
+                    android:layout_marginBottom="0dp"
+                    android:background="@android:color/black" />
             </LinearLayout>
-            <TextView android:id="@+id/card_empty"
+            <TextView android:visibility="gone"
+                android:id="@+id/card_empty"
                 android:text="@string/message_generator_ambient_light_empty"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

@@ -35,49 +35,46 @@ public class Generators {
     private HashMap<String, PowerManager.WakeLock> mWakeLocks = new HashMap<>();
 
     public void start() {
-        if (!this.mStarted)
-        {
-            this.mGenerators.clear();
+        synchronized (this) {
+            if (!this.mStarted) {
+                this.mStarted = true;
 
-            this.mGenerators.add(AppEvent.class.getCanonicalName());
+                this.mGenerators.clear();
 
-            for (String className : this.mContext.getResources().getStringArray(R.array.pdk_available_generators))
-            {
-                this.mGenerators.add(className);
-            }
+                this.mGenerators.add(AppEvent.class.getCanonicalName());
 
-            for (String className : this.mContext.getResources().getStringArray(R.array.pdk_app_generators))
-            {
-                this.mGenerators.add(className);
-            }
+                for (String className : this.mContext.getResources().getStringArray(R.array.pdk_available_generators)) {
+                    this.mGenerators.add(className);
+                }
 
-            for (String className : this.mGenerators)
-            {
-                try {
-                    Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
+                for (String className : this.mContext.getResources().getStringArray(R.array.pdk_app_generators)) {
+                    this.mGenerators.add(className);
+                }
 
-                    Method isEnabled = probeClass.getDeclaredMethod("isEnabled", Context.class);
+                for (String className : this.mGenerators) {
+                    try {
+                        Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
 
-                    Boolean enabled = (Boolean) isEnabled.invoke(null, this.mContext);
+                        Method isEnabled = probeClass.getDeclaredMethod("isEnabled", Context.class);
 
-                    if (enabled) {
-                        this.startGenerator(className);
+                        Boolean enabled = (Boolean) isEnabled.invoke(null, this.mContext);
+
+                        if (enabled) {
+                            this.startGenerator(className);
+                        } else {
+                            this.stopGenerator(className);
+                        }
+                    } catch (ClassNotFoundException e) {
+                        Logger.getInstance(this.mContext).logThrowable(e);
+                    } catch (NoSuchMethodException e) {
+                        Logger.getInstance(this.mContext).logThrowable(e);
+                    } catch (InvocationTargetException e) {
+                        Logger.getInstance(this.mContext).logThrowable(e);
+                    } catch (IllegalAccessException e) {
+                        Logger.getInstance(this.mContext).logThrowable(e);
                     }
-                    else {
-                        this.stopGenerator(className);
-                    }
-                } catch (ClassNotFoundException e) {
-                    Logger.getInstance(this.mContext).logThrowable(e);
-                } catch (NoSuchMethodException e) {
-                    Logger.getInstance(this.mContext).logThrowable(e);
-                } catch (InvocationTargetException e) {
-                    Logger.getInstance(this.mContext).logThrowable(e);
-                } catch (IllegalAccessException e) {
-                    Logger.getInstance(this.mContext).logThrowable(e);
                 }
             }
-
-            this.mStarted = true;
         }
     }
 

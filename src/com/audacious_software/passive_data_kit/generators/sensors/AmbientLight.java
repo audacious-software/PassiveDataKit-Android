@@ -19,7 +19,6 @@ import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,10 +44,6 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-/**
- * Created by cjkarr on 4/17/2017.
- */
 
 public class AmbientLight extends SensorGenerator implements SensorEventListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-sensor-light";
@@ -285,6 +280,10 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             cardEmpty.setVisibility(View.GONE);
 
             dateLabel.setText(Generator.formatTimestamp(context, AmbientLight.latestPointGenerated(context) / 1000));
+
+            LineChart chart = (LineChart) holder.itemView.findViewById(R.id.light_chart);
+            chart.setNoDataText(context.getString(R.string.pdk_generator_chart_loading_data));
+            chart.setNoDataTextColor(0xFFE0E0E0);
 
             Runnable r = new Runnable() {
                 @Override

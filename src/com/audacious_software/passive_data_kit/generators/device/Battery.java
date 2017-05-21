@@ -114,10 +114,6 @@ public class Battery extends Generator {
     private void startGenerator() {
         final Battery me = this;
 
-        final long now = System.currentTimeMillis();
-
-        me.mLastTimestamp = now;
-
         this.mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(final Context context, Intent intent) {
@@ -126,6 +122,10 @@ public class Battery extends Generator {
 
                     return;
                 }
+
+                long now = System.currentTimeMillis();
+
+                me.mLastTimestamp = now;
 
                 ContentValues values = new ContentValues();
                 values.put(Battery.HISTORY_OBSERVED, now);

@@ -29,5 +29,7 @@
 
     <string name="label_data_collection_description">Data Collection Description</string>
     <string name="label_data_collection_description_more">Tap here to learn how this app uses your data.</string>
+
+    <string name="pdk_generator_chart_loading_data">Waiting for chart data&#8230;</string>
 </resources>
 

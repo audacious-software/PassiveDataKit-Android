@@ -368,6 +368,10 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
             dateLabel.setText(Generator.formatTimestamp(context, Accelerometer.latestPointGenerated(generator.mContext) / 1000));
 
+            LineChart chart = (LineChart) holder.itemView.findViewById(R.id.accelerometer_chart);
+            chart.setNoDataText(context.getString(R.string.pdk_generator_chart_loading_data));
+            chart.setNoDataTextColor(0xFFE0E0E0);
+
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
@@ -593,6 +597,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                                 chart.getDescription().setEnabled(false);
 
                                 chart.setVisibleYRange((float) Math.floor(finalMinValue) - 1, (float) Math.ceil(finalMaxValue) + 1, YAxis.AxisDependency.LEFT);
+                                chart.setNoDataText(context.getString(R.string.pdk_generator_chart_loading_data));
                                 chart.setData(chartData);
                             }
 
