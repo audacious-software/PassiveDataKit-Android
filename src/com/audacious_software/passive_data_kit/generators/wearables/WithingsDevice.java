@@ -158,7 +158,6 @@ public class WithingsDevice extends Generator {
     private static final String SLEEP_MEASURE_STATE = "state";
     private static final String SLEEP_MEASURE_MEASUREMENT_DEVICE = "measurement_device";
 
-
     private static final String TABLE_SLEEP_SUMMARY_HISTORY = "sleep_summary_history";
     private static final String SLEEP_SUMMARY_MODEL_UNKNOWN = "unknown";
     private static final String SLEEP_SUMMARY_MODEL_ACTIVITY_TRACKER = "activity-tracker";
@@ -227,6 +226,7 @@ public class WithingsDevice extends Generator {
     private static final String OAUTH_CONSUMER_KEY = "oauth_consumer_key";
     private static final String OAUTH_USER_TOKEN = "oauth_user_token";
     private static final String OAUTH_USER_SECRET = "oauth_user_secret";
+    private static final String OAUTH_USER_ID = "oauth_user_id";
 
     private static WithingsDevice sInstance = null;
     private Context mContext = null;
@@ -975,10 +975,12 @@ public class WithingsDevice extends Generator {
             String apiKey = this.getProperty(WithingsDevice.OPTION_OAUTH_CONSUMER_KEY);
             String token = this.getProperty(WithingsDevice.OPTION_OAUTH_ACCESS_TOKEN);
             String tokenSecret = this.getProperty(WithingsDevice.OPTION_OAUTH_ACCESS_TOKEN_SECRET);
+            String userId = this.getProperty(WithingsDevice.OPTION_OAUTH_ACCESS_USER_ID);
 
             reading.putString(WithingsDevice.OAUTH_CONSUMER_KEY, apiKey);
             reading.putString(WithingsDevice.OAUTH_USER_TOKEN, token);
             reading.putString(WithingsDevice.OAUTH_USER_SECRET, tokenSecret);
+            reading.putString(WithingsDevice.OAUTH_USER_ID, userId);
         }
     }
 
