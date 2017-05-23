@@ -539,7 +539,11 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                     }
 
                     if (locations.size() > 0) {
-                        googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
+                        try {
+                            googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
+                        } catch (IllegalStateException e) {
+                            // View not ready to update yet...
+                        }
                     }
 
                     DisplayMetrics metrics = context.getResources().getDisplayMetrics();

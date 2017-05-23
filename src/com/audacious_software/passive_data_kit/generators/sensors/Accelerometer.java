@@ -26,6 +26,7 @@ import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
+import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -333,6 +334,16 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         }
 
         return actions;
+    }
+
+    public static String getGeneratorTitle(Context context) {
+        return context.getString(R.string.generator_sensors_accelerometer);
+    }
+
+    public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
+        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+
+        generatorLabel.setText(Accelerometer.getGeneratorTitle(holder.itemView.getContext()));
     }
 
     public static void bindViewHolder(final DataPointViewHolder holder) {

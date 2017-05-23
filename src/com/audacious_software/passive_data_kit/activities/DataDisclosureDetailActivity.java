@@ -3,7 +3,6 @@ package com.audacious_software.passive_data_kit.activities;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -84,8 +83,6 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
                 actionsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                        Log.e("PDK", "TAPPED: " + position);
-
                         Action action = actions.get(position);
 
                         FrameLayout dataView = (FrameLayout) me.findViewById(R.id.data_view);

@@ -18,6 +18,7 @@ import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
+import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -36,10 +37,6 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-/**
- * Created by cjkarr on 4/17/2017.
- */
 
 public class Battery extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-device-battery";
@@ -278,6 +275,16 @@ public class Battery extends Generator {
 
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
+    }
+
+    public static String getGeneratorTitle(Context context) {
+        return context.getString(R.string.generator_device_battery);
+    }
+
+    public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
+        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+
+        generatorLabel.setText(Battery.getGeneratorTitle(holder.itemView.getContext()));
     }
 
     public static void bindViewHolder(DataPointViewHolder holder) {

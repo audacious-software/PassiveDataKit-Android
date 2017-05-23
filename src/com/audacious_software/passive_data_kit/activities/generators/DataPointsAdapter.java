@@ -4,13 +4,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -75,6 +75,8 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
             Method bindViewHolder = generatorClass.getDeclaredMethod("bindViewHolder", DataPointViewHolder.class);
             bindViewHolder.invoke(null, holder);
         } catch (Exception e) {
+            AppEvent.getInstance(this.mContext).logThrowable(e);
+
             try {
                 generatorClass = Generator.class;
 

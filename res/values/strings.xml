@@ -31,5 +31,7 @@
     <string name="label_data_collection_description_more">Tap here to learn how this app uses your data.</string>
 
     <string name="pdk_generator_chart_loading_data">Waiting for chart data&#8230;</string>
+
+    <string name="pdk_placeholder_disclosure_not_implemented">A disclosure view is not implemented for this generator.\n\nContact the app developer for assistance&#8230;</string>
 </resources>
 

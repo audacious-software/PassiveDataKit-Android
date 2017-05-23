@@ -3,12 +3,12 @@ package com.audacious_software.passive_data_kit.activities.generators;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.activities.DataDisclosureDetailActivity;
@@ -21,6 +21,7 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder> {
     private Context mContext = null;
@@ -43,26 +44,14 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
 
         Class<? extends Generator> generatorClass = activeGenerators.get(position);
 
-        Log.e("PDK", "GENERATOR CLASS: " + generatorClass);
-
         try {
             Method bindViewHolder = generatorClass.getDeclaredMethod("bindDisclosureViewHolder", GeneratorViewHolder.class);
             bindViewHolder.invoke(null, holder);
         } catch (Exception e) {
-//            e.printStackTrace();
-            try {
-                generatorClass = Generator.class;
+            TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
 
-                Method bindViewHolder = generatorClass.getDeclaredMethod("bindDisclosureViewHolder", GeneratorViewHolder.class);
-
-                bindViewHolder.invoke(null, holder);
-            } catch (NoSuchMethodException e1) {
-                Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
-            } catch (InvocationTargetException e1) {
-                Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
-            } catch (IllegalAccessException e1) {
-                Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
-            }
+            String[] tokens = generatorClass.getName().split(Pattern.quote("."));
+            generatorLabel.setText(tokens[tokens.length - 1] + "*");
         }
 
         final Class<? extends Generator> finalClass = generatorClass;
@@ -72,11 +61,12 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
             public void onClick(View view) {
                 me.mDataView.removeAllViews();
 
+                View dataView = LayoutInflater.from(holder.itemView.getContext()).inflate(R.layout.pdk_placeholder_disclosure_view, null);
+
                 try {
                     Method bindViewHolder = finalClass.getDeclaredMethod("getDisclosureDataView", GeneratorViewHolder.class);
 
-                    View dataView = (View) bindViewHolder.invoke(null, holder);
-                    me.mDataView.addView(dataView);
+                    dataView = (View) bindViewHolder.invoke(null, holder);
                 } catch (NoSuchMethodException e1) {
                     Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
                 } catch (InvocationTargetException e1) {
@@ -84,10 +74,26 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
                 } catch (IllegalAccessException e1) {
                     Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
                 }
+
+                me.mDataView.addView(dataView);
             }
         });
 
         ImageView settingsButton = (ImageView) holder.itemView.findViewById(R.id.button_disclosure_item);
+
+        settingsButton.setVisibility(View.GONE);
+
+        try {
+            Method getDisclosureActions = finalClass.getDeclaredMethod("getDisclosureActions", Context.class);
+
+            final List<DataDisclosureDetailActivity.Action> actions = (List<DataDisclosureDetailActivity.Action>) getDisclosureActions.invoke(null, holder.itemView.getContext());
+
+            if (actions.size() > 0) {
+                settingsButton.setVisibility(View.VISIBLE);
+            }
+        } catch (Exception e) {
+            // Do nothing - leave invisible...
+        }
 
         settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,7 +104,6 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
                 holder.itemView.getContext().startActivity(intent);
             }
         });
-
     }
 
     @Override

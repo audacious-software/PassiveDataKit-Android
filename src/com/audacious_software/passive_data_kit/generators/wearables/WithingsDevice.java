@@ -25,6 +25,7 @@ import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
+import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -1244,6 +1245,16 @@ public class WithingsDevice extends Generator {
 
         Thread t = new Thread(r);
         t.start();
+    }
+
+    public static String getGeneratorTitle(Context context) {
+        return context.getString(R.string.generator_withings_device);
+    }
+
+    public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
+        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+
+        generatorLabel.setText(WithingsDevice.getGeneratorTitle(holder.itemView.getContext()));
     }
 
     public static void bindViewHolder(final DataPointViewHolder holder) {

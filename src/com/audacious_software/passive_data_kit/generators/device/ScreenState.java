@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
+import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -169,6 +170,16 @@ public class ScreenState extends Generator{
 
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
+    }
+
+    public static String getGeneratorTitle(Context context) {
+        return context.getString(R.string.generator_screen_state);
+    }
+
+    public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
+        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+
+        generatorLabel.setText(ForegroundApplication.getGeneratorTitle(holder.itemView.getContext()));
     }
 
     public static void bindViewHolder(DataPointViewHolder holder) {

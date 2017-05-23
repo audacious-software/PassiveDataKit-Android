@@ -1,6 +1,5 @@
 package com.audacious_software.passive_data_kit.activities;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,15 +8,12 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.audacious_software.passive_data_kit.activities.generators.DataPointsAdapter;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
-
-import java.util.ArrayList;
 
 public class DataStreamActivity extends AppCompatActivity implements Generators.GeneratorUpdatedListener {
     private DataPointsAdapter mAdapter = null;
@@ -82,7 +78,13 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
             @Override
             public void run() {
                 me.mAdapter.sortGenerators();
-                me.mAdapter.notifyDataSetChanged();
+
+                try {
+                    me.mAdapter.notifyDataSetChanged();
+                } catch (IllegalStateException e) {
+                    // Do nothing - recycler is already updating...
+                }
+
                 int count = me.mAdapter.getItemCount();
                 me.getSupportActionBar().setSubtitle(me.getResources().getQuantityString(R.plurals.activity_data_stream_subtitle, count, count));
 

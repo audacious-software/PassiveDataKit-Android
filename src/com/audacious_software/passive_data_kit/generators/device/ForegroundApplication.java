@@ -12,7 +12,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +23,7 @@ import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
+import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -37,10 +37,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-
-/**
- * Created by cjkarr on 5/10/2017.
- */
 
 public class ForegroundApplication extends Generator{
 
@@ -188,6 +184,16 @@ public class ForegroundApplication extends Generator{
         }
 
         return actions;
+    }
+
+    public static String getGeneratorTitle(Context context) {
+        return context.getString(R.string.generator_foreground_application);
+    }
+
+    public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
+        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+
+        generatorLabel.setText(ForegroundApplication.getGeneratorTitle(holder.itemView.getContext()));
     }
 
     public static void bindViewHolder(DataPointViewHolder holder) {
@@ -345,27 +351,37 @@ public class ForegroundApplication extends Generator{
             }
 
             for (int i = 0; i < whenAppRowIds.length && i < latest.size(); i++) {
-                String appPackage = latest.get(i);
                 int appRowId = whenAppRowIds[i];
 
-                View row = cardContent.findViewById(appRowId);
-                row.setVisibility(View.VISIBLE);
+                String appPackage = latest.get(i);
 
-                TextView appName = (TextView) row.findViewById(R.id.app_name);
-                ImageView appIcon = (ImageView) row.findViewById(R.id.application_icon);
+                while (appPackage == null && i < latest.size() - 1) {
+                    i += 1;
 
-                try {
-                    String name = packageManager.getApplicationLabel(packageManager.getApplicationInfo(appPackage, PackageManager.GET_META_DATA)).toString();
-
-                    appName.setText(name);
-                    Drawable icon = packageManager.getApplicationIcon(appPackage);
-                    appIcon.setImageDrawable(icon);
-                } catch (PackageManager.NameNotFoundException e) {
-                    AppEvent.getInstance(context).logThrowable(e);
+                    appPackage = latest.get(i);
                 }
 
-                TextView appWhen = (TextView) row.findViewById(R.id.app_last_used);
-                appWhen.setText(Generator.formatTimestamp(context, appWhens.get(appPackage) / 1000));
+                if (appPackage != null) {
+                    View row = cardContent.findViewById(appRowId);
+                    row.setVisibility(View.VISIBLE);
+
+                    TextView appName = (TextView) row.findViewById(R.id.app_name);
+                    ImageView appIcon = (ImageView) row.findViewById(R.id.application_icon);
+
+                    try {
+                        String name = packageManager.getApplicationLabel(packageManager.getApplicationInfo(appPackage, PackageManager.GET_META_DATA)).toString();
+
+                        appName.setText(name);
+                        Drawable icon = packageManager.getApplicationIcon(appPackage);
+                        appIcon.setImageDrawable(icon);
+                    } catch (PackageManager.NameNotFoundException e) {
+                        appName.setText("" + appPackage);
+                        appIcon.setImageDrawable(null);
+                    }
+
+                    TextView appWhen = (TextView) row.findViewById(R.id.app_last_used);
+                    appWhen.setText(Generator.formatTimestamp(context, appWhens.get(appPackage) / 1000));
+                }
             }
 
             cardContent.setVisibility(View.VISIBLE);

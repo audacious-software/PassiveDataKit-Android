@@ -353,6 +353,8 @@ public class AppEvent extends Generator{
                 } else if (value instanceof Boolean) {
                     detailsBundle.putBoolean(key, ((Boolean) value).booleanValue());
                     detailsJson.put(key, ((Boolean) value).booleanValue());
+                } else if (value == null) {
+                    throw new NullPointerException("Value is null.");
                 } else {
                     detailsBundle.putString(key, "Unknown Class: " + value.getClass().getCanonicalName());
                     detailsJson.put(key, "Unknown Class: " + value.getClass().getCanonicalName());
@@ -389,7 +391,12 @@ public class AppEvent extends Generator{
 
         HashMap<String, String> details = new HashMap<>();
         details.put(AppEvent.DETAILS_THROWABLE_STACKTRACE, out.toString());
-        details.put(AppEvent.DETAILS_THROWABLE_MESSAGE, t.getMessage());
+
+        if (t.getMessage() != null) {
+            details.put(AppEvent.DETAILS_THROWABLE_MESSAGE, t.getMessage());
+        } else {
+            details.put(AppEvent.DETAILS_THROWABLE_MESSAGE, "(No message provided.)");
+        }
 
         this.logEvent(AppEvent.EVENT_LOG_THROWABLE, details);
     }
