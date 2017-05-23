@@ -1452,8 +1452,7 @@ public class WithingsDevice extends Generator {
         return new ArrayList<>();
     }
 
-    public static View fetchView(ViewGroup parent)
-    {
+    public static View fetchView(ViewGroup parent) {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_withings_device, parent, false);
     }
 
