@@ -65,7 +65,7 @@ android {
         compile 'commons-io:commons-io:2.4'
         compile 'commons-codec:commons-codec:1.10'
         compile 'org.apache.commons:commons-lang3:3.4'
-        compile 'com.fasterxml.jackson.core:jackson-core:2.7.3'
+        compile 'com.fasterxml.jackson.core:jackson-core:2.8.8'
         compile 'com.github.philjay:mpandroidchart:v3.0.1'
         compile 'com.rvalerio:fgchecker:1.0.1'
     }
