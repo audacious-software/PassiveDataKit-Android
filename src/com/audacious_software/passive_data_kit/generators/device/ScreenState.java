@@ -57,6 +57,10 @@ public class ScreenState extends Generator{
 
     private SQLiteDatabase mDatabase = null;
 
+    public static String generatorIdentifier() {
+        return ScreenState.GENERATOR_IDENTIFIER;
+    }
+
     public static ScreenState getInstance(Context context) {
         if (ScreenState.sInstance == null) {
             ScreenState.sInstance = new ScreenState(context.getApplicationContext());

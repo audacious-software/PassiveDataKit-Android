@@ -159,6 +159,10 @@ public class MicrosoftBand extends Generator
     private ArrayList<MicrosoftBand.SkinTemperatureDataPoint> mSkinTemperatureDataPoints = new ArrayList<>();
     private ArrayList<MicrosoftBand.UltravioletLightDataPoint> mUltravioletLightDataPoints = new ArrayList<>();
 
+    public static String generatorIdentifier() {
+        return MicrosoftBand.GENERATOR_IDENTIFIER;
+    }
+
     public static MicrosoftBand getInstance(Context context) {
         if (MicrosoftBand.sInstance == null) {
             MicrosoftBand.sInstance = new MicrosoftBand(context.getApplicationContext());

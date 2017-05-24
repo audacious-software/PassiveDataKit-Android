@@ -92,6 +92,10 @@ public class Battery extends Generator {
     private long mCleanupInterval = (24 * 60 * 60 * 1000);
     private long mLastCleanup = 0;
 
+    public static String generatorIdentifier() {
+        return Battery.GENERATOR_IDENTIFIER;
+    }
+
     public static Battery getInstance(Context context) {
         if (Battery.sInstance == null) {
             Battery.sInstance = new Battery(context.getApplicationContext());

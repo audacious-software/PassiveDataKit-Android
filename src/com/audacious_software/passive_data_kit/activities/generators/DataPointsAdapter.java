@@ -16,7 +16,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder> {
@@ -60,7 +59,7 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
             this.mActiveGenerators = Generators.getInstance(context).activeGenerators();
         }
 
-        this.sortGenerators();
+        this.sortGenerators(false);
 
         return this.mActiveGenerators;
     }
@@ -100,7 +99,7 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
         return this.mActiveGenerators.size();
     }
 
-    public void sortGenerators() {
+    public void sortGenerators(boolean redrawAll) {
         final Context context = this.mContext;
 
         if (this.mActiveGenerators == null) {
@@ -152,6 +151,33 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
                     return 0;
                 }
             });
+        }
+
+        if (redrawAll) {
+            this.notifyDataSetChanged();
+        }
+    }
+
+    public void notifyDataSetChanged(String identifier) {
+        int position = -1;
+
+        for (int i = 0; position == -1 && i < this.mActiveGenerators.size(); i++) {
+            Class<? extends Generator> generatorClass = this.mActiveGenerators.get(i);
+
+            try {
+                Method generatorIdentifier = generatorClass.getDeclaredMethod("generatorIdentifier", null);
+
+                if (identifier.equals(generatorIdentifier.invoke(null))) {
+                    position = i;
+                }
+            } catch (Exception e) {
+            }
+        }
+
+        if (position != -1) {
+            this.notifyItemChanged(position);
+        } else {
+            this.notifyDataSetChanged();
         }
     }
 

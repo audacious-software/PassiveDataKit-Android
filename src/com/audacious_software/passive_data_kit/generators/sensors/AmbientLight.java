@@ -68,7 +68,6 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     private static AmbientLight sInstance = null;
     private static Handler sHandler = null;
     private static boolean sIsDrawing = false;
-    private static long sLastDrawStart = 0;
 
     private SQLiteDatabase mDatabase = null;
 
@@ -90,6 +89,10 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
     long mBaseTimestamp = 0;
     private long mLatestTimestamp = 0;
+
+    public static String generatorIdentifier() {
+        return AmbientLight.GENERATOR_IDENTIFIER;
+    }
 
     public static AmbientLight getInstance(Context context) {
         if (AmbientLight.sInstance == null) {
@@ -174,9 +177,9 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
             if (prefs.getBoolean(AmbientLight.IGNORE_POWER_MANAGEMENT, AmbientLight.IGNORE_POWER_MANAGEMENT_DEFAULT)) {
-                Generators.getInstance(this.mContext).acquireWakeLock(Accelerometer.IDENTIFIER, PowerManager.PARTIAL_WAKE_LOCK);
+                Generators.getInstance(this.mContext).acquireWakeLock(AmbientLight.IDENTIFIER, PowerManager.PARTIAL_WAKE_LOCK);
             } else {
-                Generators.getInstance(this.mContext).releaseWakeLock(Accelerometer.IDENTIFIER);
+                Generators.getInstance(this.mContext).releaseWakeLock(AmbientLight.IDENTIFIER);
             }
         } else {
             this.stopGenerator();
@@ -265,14 +268,6 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             return;
         }
 
-        final long drawStart = System.currentTimeMillis();
-
-        if (drawStart - AmbientLight.sLastDrawStart < (30 * 1000)) {
-            return;
-        }
-
-        AmbientLight.sLastDrawStart = drawStart;
-
         AmbientLight.sIsDrawing = true;
 
         final Context context = holder.itemView.getContext();
@@ -292,7 +287,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
             dateLabel.setText(Generator.formatTimestamp(context, AmbientLight.latestPointGenerated(context) / 1000));
 
-            LineChart chart = (LineChart) holder.itemView.findViewById(R.id.light_chart);
+            final LineChart chart = (LineChart) holder.itemView.findViewById(R.id.light_chart);
             chart.setNoDataText(context.getString(R.string.pdk_generator_chart_loading_data));
             chart.setNoDataTextColor(0xFFE0E0E0);
 
@@ -310,7 +305,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                     float lowLevel = -1;
                     float highLevel = -1;
 
-                    final String where = Accelerometer.HISTORY_OBSERVED + " >= ? AND _id";
+                    final String where = AmbientLight.HISTORY_OBSERVED + " >= ?";
                     final String[] args = { "" + (System.currentTimeMillis() - (24 * 60 * 60 * 1000)) };
 
                     Cursor c = generator.mDatabase.query(AmbientLight.TABLE_HISTORY, null, where, args, null, null, AmbientLight.HISTORY_OBSERVED + " DESC");
@@ -370,7 +365,6 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                     activity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            final LineChart chart = (LineChart) holder.itemView.findViewById(R.id.light_chart);
                             chart.setViewPortOffsets(0,0,0,0);
                             chart.setHighlightPerDragEnabled(false);
                             chart.setHighlightPerTapEnabled(false);
@@ -450,6 +444,8 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                             chart.setVisibleYRange((float) Math.floor(finalMinValue) - 1, (float) Math.ceil(finalMaxValue) + 1, YAxis.AxisDependency.LEFT);
                             chart.setData(chartData);
 
+                            chart.invalidate();
+
                             AmbientLight.sIsDrawing = false;
                         }
                     });
@@ -480,7 +476,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         AmbientLight me = AmbientLight.getInstance(context);
 
         if (me.mLatestTimestamp == 0) {
-            Cursor c = me.mDatabase.query(AmbientLight.TABLE_HISTORY, null, null, null, null, null, Accelerometer.HISTORY_OBSERVED + " DESC", "1");
+            Cursor c = me.mDatabase.query(AmbientLight.TABLE_HISTORY, null, null, null, null, null, AmbientLight.HISTORY_OBSERVED + " DESC", "1");
 
             if (c.moveToNext()) {
                 me.mLatestTimestamp = c.getLong(c.getColumnIndex(AmbientLight.HISTORY_OBSERVED) / (1000 * 1000));

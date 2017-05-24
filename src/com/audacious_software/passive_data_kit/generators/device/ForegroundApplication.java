@@ -64,6 +64,10 @@ public class ForegroundApplication extends Generator{
     private AppChecker mAppChecker = null;
     private long mLastTimestamp = 0;
 
+    public static String generatorIdentifier() {
+        return ForegroundApplication.GENERATOR_IDENTIFIER;
+    }
+
     public static ForegroundApplication getInstance(Context context) {
         if (ForegroundApplication.sInstance == null) {
             ForegroundApplication.sInstance = new ForegroundApplication(context.getApplicationContext());

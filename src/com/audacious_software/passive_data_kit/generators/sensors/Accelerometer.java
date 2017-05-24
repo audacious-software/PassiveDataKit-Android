@@ -46,10 +46,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Created by cjkarr on 4/17/2017.
- */
-
 public class Accelerometer extends SensorGenerator implements SensorEventListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-sensor-accelerometer";
 
@@ -107,6 +103,10 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
     private long mLatestTimestamp = 0;
     private Thread mIntervalThread = null;
+
+    public static String generatorIdentifier() {
+        return Accelerometer.GENERATOR_IDENTIFIER;
+    }
 
     public static Accelerometer getInstance(Context context) {
         if (Accelerometer.sInstance == null) {
@@ -369,8 +369,8 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         final long now = System.currentTimeMillis() / (1000 * 60 * 5);
         final long start = now - (24 * 12); //  * 60);
 
-        View cardContent = itemView.findViewById(R.id.card_content);
-        View cardEmpty = itemView.findViewById(R.id.card_empty);
+        final View cardContent = itemView.findViewById(R.id.card_content);
+        final View cardEmpty = itemView.findViewById(R.id.card_empty);
         TextView dateLabel = (TextView) itemView.findViewById(R.id.generator_data_point_date);
 
         if (context instanceof Activity) {
@@ -379,7 +379,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
             dateLabel.setText(Generator.formatTimestamp(context, Accelerometer.latestPointGenerated(generator.mContext) / 1000));
 
-            LineChart chart = (LineChart) holder.itemView.findViewById(R.id.accelerometer_chart);
+            final LineChart chart = (LineChart) holder.itemView.findViewById(R.id.accelerometer_chart);
             chart.setNoDataText(context.getString(R.string.pdk_generator_chart_loading_data));
             chart.setNoDataTextColor(0xFFE0E0E0);
 
@@ -395,7 +395,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                     final ArrayList<Entry> zLowValues = new ArrayList<>();
                     final ArrayList<Entry> zHighValues = new ArrayList<>();
 
-                    final String where = Accelerometer.HISTORY_OBSERVED + " >= ? AND _id % 1024 = 0";
+                    final String where = Accelerometer.HISTORY_OBSERVED + " >= ? AND _id % 256 = 0";
                     final String[] args = { "" + (System.currentTimeMillis() - (24 * 60 * 60 * 1000)) };
 
                     Cursor c = generator.mDatabase.query(Accelerometer.TABLE_HISTORY, null, where, args, null, null, Accelerometer.HISTORY_OBSERVED + " DESC");
@@ -562,8 +562,6 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                                 chartData.addDataSet(set);
                             }
 
-                            final LineChart chart = (LineChart) itemView.findViewById(R.id.accelerometer_chart);
-
                             if (chart != null) {
                                 chart.setViewPortOffsets(0, 0, 0, 0);
                                 chart.setHighlightPerDragEnabled(false);
@@ -610,6 +608,8 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                                 chart.setVisibleYRange((float) Math.floor(finalMinValue) - 1, (float) Math.ceil(finalMaxValue) + 1, YAxis.AxisDependency.LEFT);
                                 chart.setNoDataText(context.getString(R.string.pdk_generator_chart_loading_data));
                                 chart.setData(chartData);
+
+                                chart.invalidate();
                             }
 
                             Accelerometer.sIsDrawing = false;

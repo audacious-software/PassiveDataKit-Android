@@ -73,6 +73,10 @@ public class SystemStatus extends Generator {
     private long mLastTimestamp = 0;
     private long mRefreshInterval = (5 * 60 * 1000);
 
+    public static String generatorIdentifier() {
+        return SystemStatus.GENERATOR_IDENTIFIER;
+    }
+
     public static SystemStatus getInstance(Context context) {
         if (SystemStatus.sInstance == null) {
             SystemStatus.sInstance = new SystemStatus(context.getApplicationContext());

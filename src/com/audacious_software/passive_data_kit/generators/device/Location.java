@@ -129,6 +129,10 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     public static final String HISTORY_LOCATION_TIMESTAMP = "location_timestamp";
     public static final String HISTORY_ACCURACY = "accuracy";
 
+    public static String generatorIdentifier() {
+        return Location.GENERATOR_IDENTIFIER;
+    }
+
     public static Location getInstance(Context context) {
         if (Location.sInstance == null) {
             Location.sInstance = new Location(context.getApplicationContext());
@@ -942,8 +946,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         c.close();
 
-
-
         if (lastLocation != null) {
             return lastLocation;
         }
@@ -996,8 +998,10 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     public void setUpdateInterval(long interval) {
         this.mUpdateInterval = interval;
 
-        this.stopGenerator();
-        this.startGenerator();
+        if (Location.isRunning(this.mContext)) {
+            this.stopGenerator();
+            this.startGenerator();
+        }
     }
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {

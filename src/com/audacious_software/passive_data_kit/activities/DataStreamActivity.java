@@ -30,7 +30,7 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
 
         this.mAdapter = new DataPointsAdapter();
         this.mAdapter.setContext(this.getApplicationContext());
-        this.mAdapter.sortGenerators();
+        this.mAdapter.sortGenerators(true);
 
         RecyclerView listView = (RecyclerView) this.findViewById(R.id.list_view);
 
@@ -65,7 +65,7 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
     }
 
     @Override
-    public void onGeneratorUpdated(String identifier, long timestamp, Bundle data) {
+    public void onGeneratorUpdated(final String identifier, long timestamp, Bundle data) {
         final DataStreamActivity me = this;
 
         if (me.mIsUpdating) {
@@ -77,10 +77,10 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                me.mAdapter.sortGenerators();
+                me.mAdapter.sortGenerators(false);
 
                 try {
-                    me.mAdapter.notifyDataSetChanged();
+                    me.mAdapter.notifyDataSetChanged(identifier);
                 } catch (IllegalStateException e) {
                     // Do nothing - recycler is already updating...
                 }
@@ -145,6 +145,6 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
         e.putBoolean(DataPointsAdapter.SORT_BY_UPDATED, (sortEnabled == false));
         e.apply();
 
-        this.mAdapter.sortGenerators();
+        this.mAdapter.sortGenerators(true);
     }
 }

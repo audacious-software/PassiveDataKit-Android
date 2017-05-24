@@ -237,6 +237,10 @@ public class WithingsDevice extends Generator {
 
     private int mPage = 0;
 
+    public static String generatorIdentifier() {
+        return WithingsDevice.GENERATOR_IDENTIFIER;
+    }
+
     public static WithingsDevice getInstance(Context context) {
         if (WithingsDevice.sInstance == null) {
             WithingsDevice.sInstance = new WithingsDevice(context.getApplicationContext());

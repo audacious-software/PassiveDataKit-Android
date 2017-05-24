@@ -86,6 +86,10 @@ public class TextMessages extends Generator {
     private SQLiteDatabase mDatabase = null;
     private long mSampleInterval = 60000;
 
+    public static String generatorIdentifier() {
+        return TextMessages.GENERATOR_IDENTIFIER;
+    }
+
     public static TextMessages getInstance(Context context) {
         if (TextMessages.sInstance == null) {
             TextMessages.sInstance = new TextMessages(context.getApplicationContext());

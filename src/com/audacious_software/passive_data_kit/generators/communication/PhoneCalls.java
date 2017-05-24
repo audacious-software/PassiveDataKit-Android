@@ -108,6 +108,10 @@ public class PhoneCalls extends Generator {
     private SQLiteDatabase mDatabase = null;
     private long mSampleInterval = 60000;
 
+    public static String generatorIdentifier() {
+        return PhoneCalls.GENERATOR_IDENTIFIER;
+    }
+
     public static PhoneCalls getInstance(Context context) {
         if (PhoneCalls.sInstance == null) {
             PhoneCalls.sInstance = new PhoneCalls(context.getApplicationContext());

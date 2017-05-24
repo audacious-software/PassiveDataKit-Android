@@ -63,6 +63,10 @@ public class AppEvent extends Generator{
 
     private int mPage = 0;
 
+    public static String generatorIdentifier() {
+        return AppEvent.GENERATOR_IDENTIFIER;
+    }
+
     public static AppEvent getInstance(Context context) {
         if (AppEvent.sInstance == null) {
             AppEvent.sInstance = new AppEvent(context.getApplicationContext());
