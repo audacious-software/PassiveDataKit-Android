@@ -120,9 +120,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final int DATABASE_VERSION = 1;
 
     private static final String TABLE_HISTORY = "history";
-    private static final String HISTORY_OBSERVED = "observed";
-    private static final String HISTORY_LATITUDE = "latitude";
-    private static final String HISTORY_LONGITUDE = "longitude";
+    public static final String HISTORY_OBSERVED = "observed";
+    public static final String HISTORY_LATITUDE = "latitude";
+    public static final String HISTORY_LONGITUDE = "longitude";
     private static final String HISTORY_ALTITUDE = "altitude";
     private static final String HISTORY_BEARING = "bearing";
     private static final String HISTORY_SPEED = "speed";

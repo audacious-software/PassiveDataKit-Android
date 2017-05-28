@@ -1793,6 +1793,7 @@ public class WithingsDevice extends Generator {
         return "" + card.getTag();
     }
 
+    @SuppressWarnings("unused")
     public void enableActivityMeasures(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1802,6 +1803,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableBodyMeasures(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1811,6 +1813,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableIntradayActivity(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1820,6 +1823,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableSleepMeasures(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1829,6 +1833,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableSleepSummary(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1838,6 +1843,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableWorkouts(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1847,6 +1853,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableServerFetch(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();

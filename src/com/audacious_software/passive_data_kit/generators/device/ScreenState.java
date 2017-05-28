@@ -57,8 +57,8 @@ public class ScreenState extends Generator{
     private static final String DATABASE_PATH = "pdk-screen-state.sqlite";
     private static final int DATABASE_VERSION = 2;
 
-    private static final String HISTORY_OBSERVED = "observed";
-    private static final String HISTORY_STATE = "state";
+    public static final String HISTORY_OBSERVED = "observed";
+    public static final String HISTORY_STATE = "state";
     private static final String TABLE_HISTORY = "history";
 
     private static ScreenState sInstance = null;
