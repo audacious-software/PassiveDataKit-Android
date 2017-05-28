@@ -10,6 +10,7 @@ before_install:
   - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-25.0.3
 
 script:
+  - gradle lint
   - gradle assembleDebug
 
 android:
