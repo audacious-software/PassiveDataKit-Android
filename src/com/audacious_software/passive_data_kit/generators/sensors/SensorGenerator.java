@@ -7,10 +7,7 @@ import android.os.Bundle;
 
 import com.audacious_software.passive_data_kit.generators.Generator;
 
-/**
- * Created by cjkarr on 5/11/2017.
- */
-
+@SuppressWarnings("WeakerAccess")
 public abstract class SensorGenerator extends Generator {
     public static final String SENSOR_DATA = "sensor_data";
 

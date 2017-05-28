@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.generators;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -18,6 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,14 +28,15 @@ public class Generators {
     private Context mContext = null;
     private boolean mStarted = false;
 
-    private ArrayList<String> mGenerators = new ArrayList<>();
-    private HashSet<String> mActiveGenerators = new HashSet<>();
+    private final ArrayList<String> mGenerators = new ArrayList<>();
+    private final HashSet<String> mActiveGenerators = new HashSet<>();
     private SharedPreferences mSharedPreferences = null;
-    private HashMap<String, Class<? extends Generator>> mGeneratorMap = new HashMap<>();
-    private SparseArray<Class<? extends Generator>> mViewTypeMap = new SparseArray<>();
-    private HashSet<GeneratorUpdatedListener> mGeneratorUpdatedListeners = new HashSet<>();
-    private HashMap<String, PowerManager.WakeLock> mWakeLocks = new HashMap<>();
+    private final HashMap<String, Class<? extends Generator>> mGeneratorMap = new HashMap<>();
+    private final SparseArray<Class<? extends Generator>> mViewTypeMap = new SparseArray<>();
+    private final HashSet<GeneratorUpdatedListener> mGeneratorUpdatedListeners = new HashSet<>();
+    private final HashMap<String, PowerManager.WakeLock> mWakeLocks = new HashMap<>();
 
+    @SuppressWarnings("unchecked")
     public void start() {
         synchronized (this) {
             if (!this.mStarted) {
@@ -43,15 +46,11 @@ public class Generators {
 
                 this.mGenerators.add(AppEvent.class.getCanonicalName());
 
-                for (String className : this.mContext.getResources().getStringArray(R.array.pdk_available_generators)) {
-                    this.mGenerators.add(className);
-                }
-
-                for (String className : this.mContext.getResources().getStringArray(R.array.pdk_app_generators)) {
-                    this.mGenerators.add(className);
-                }
+                Collections.addAll(this.mGenerators, this.mContext.getResources().getStringArray(R.array.pdk_available_generators));
+                Collections.addAll(this.mGenerators, this.mContext.getResources().getStringArray(R.array.pdk_app_generators));
 
                 for (String className : this.mGenerators) {
+                    //noinspection TryWithIdenticalCatches
                     try {
                         Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
 
@@ -78,6 +77,7 @@ public class Generators {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void startGenerator(String className) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         if (!this.mActiveGenerators.contains(className)) {
             Class<Generator> generatorClass = (Class<Generator>) Class.forName(className);
@@ -98,6 +98,7 @@ public class Generators {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void stopGenerator(String className) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         if (this.mActiveGenerators.contains(className)) {
             Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
@@ -116,6 +117,7 @@ public class Generators {
         return this.mSharedPreferences;
     }
 
+    @SuppressWarnings({"TryWithIdenticalCatches", "unchecked"})
     public ArrayList<DiagnosticAction> diagnostics() {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
@@ -141,6 +143,7 @@ public class Generators {
         return actions;
     }
 
+    @SuppressWarnings("SameReturnValue")
     public String getSource() {
         return "unknown-user-please-set-me";
     }
@@ -168,6 +171,7 @@ public class Generators {
         this.mViewTypeMap.put(generatorClass.hashCode(), generatorClass);
     }
 
+    @SuppressWarnings("unused")
     public Class<? extends Generator> fetchCustomViewClass(String identifier) {
         Class<? extends Generator> generatorClass = this.mGeneratorMap.get(identifier);
 
@@ -186,6 +190,7 @@ public class Generators {
         return generatorClass;
     }
 
+    @SuppressWarnings({"TryWithIdenticalCatches", "unchecked", "unused"})
     public Generator getGenerator(String className) {
         if (this.mActiveGenerators.contains(className)) {
             try {
@@ -207,6 +212,7 @@ public class Generators {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     public List<Class<? extends Generator>> activeGenerators() {
         ArrayList<Class<? extends Generator>> active = new ArrayList<>();
 
@@ -237,6 +243,7 @@ public class Generators {
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     public void acquireWakeLock(String tag, int lockType) {
         this.releaseWakeLock(tag);
 
@@ -260,11 +267,12 @@ public class Generators {
     }
 
     private static class GeneratorsHolder {
-        public static Generators instance = new Generators();
+        @SuppressLint("StaticFieldLeak")
+        public static final Generators instance = new Generators();
     }
 
-    public static Generators getInstance(Context context)
-    {
+    @SuppressWarnings("SameReturnValue")
+    public static Generators getInstance(Context context) {
         if (context != null) {
             GeneratorsHolder.instance.setContext(context);
         }

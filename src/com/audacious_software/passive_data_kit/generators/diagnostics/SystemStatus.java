@@ -42,6 +42,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+@SuppressWarnings("SimplifiableIfStatement")
 public class SystemStatus extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-system-status";
 
@@ -53,15 +54,15 @@ public class SystemStatus extends Generator {
     private static final String DATABASE_PATH = "pdk-system-status.sqlite";
     private static final int DATABASE_VERSION = 1;
 
-    public static final String TABLE_HISTORY = "history";
+    private static final String TABLE_HISTORY = "history";
 
-    public static final String HISTORY_OBSERVED = "observed";
-    public static final String HISTORY_RUNTIME = "runtime";
-    public static final String HISTORY_STORAGE_USED_APP = "storage_app";
-    public static final String HISTORY_STORAGE_USED_OTHER = "storage_other";
-    public static final String HISTORY_STORAGE_AVAILABLE = "storage_available";
-    public static final String HISTORY_STORAGE_TOTAL = "storage_total";
-    public static final String HISTORY_STORAGE_PATH = "storage_path";
+    private static final String HISTORY_OBSERVED = "observed";
+    private static final String HISTORY_RUNTIME = "runtime";
+    private static final String HISTORY_STORAGE_USED_APP = "storage_app";
+    private static final String HISTORY_STORAGE_USED_OTHER = "storage_other";
+    private static final String HISTORY_STORAGE_AVAILABLE = "storage_available";
+    private static final String HISTORY_STORAGE_TOTAL = "storage_total";
+    private static final String HISTORY_STORAGE_PATH = "storage_path";
     private static final double GIGABYTE = (1024 * 1024 * 1024);
 
     private static SystemStatus sInstance = null;
@@ -73,10 +74,12 @@ public class SystemStatus extends Generator {
     private long mLastTimestamp = 0;
     private long mRefreshInterval = (5 * 60 * 1000);
 
+    @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return SystemStatus.GENERATOR_IDENTIFIER;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static SystemStatus getInstance(Context context) {
         if (SystemStatus.sInstance == null) {
             SystemStatus.sInstance = new SystemStatus(context.getApplicationContext());
@@ -85,10 +88,12 @@ public class SystemStatus extends Generator {
         return SystemStatus.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public SystemStatus(Context context) {
         super(context);
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         SystemStatus.getInstance(context).startGenerator();
     }
@@ -181,12 +186,14 @@ public class SystemStatus extends Generator {
         this.mContext.registerReceiver(this.mReceiver, filter);
     }
 
+    @SuppressWarnings("unused")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(SystemStatus.ENABLED, SystemStatus.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static boolean isRunning(Context context) {
         if (SystemStatus.sInstance == null) {
             return false;
@@ -195,20 +202,24 @@ public class SystemStatus extends Generator {
         return SystemStatus.sInstance.mReceiver != null;
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static String getGeneratorTitle(Context context) {
         return context.getString(R.string.generator_diagnostics_system_status);
     }
 
+    @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
         TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(SystemStatus.getGeneratorTitle(holder.itemView.getContext()));
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
@@ -288,11 +299,11 @@ public class SystemStatus extends Generator {
             int observedIndex = c.getColumnIndex(SystemStatus.HISTORY_OBSERVED);
             int availableIndex = c.getColumnIndex(SystemStatus.HISTORY_STORAGE_AVAILABLE);
             int appUsedIndex = c.getColumnIndex(SystemStatus.HISTORY_STORAGE_USED_APP);
-            int othersUsedIndex = c.getColumnIndex(SystemStatus.HISTORY_STORAGE_USED_OTHER);
+            // int othersUsedIndex = c.getColumnIndex(SystemStatus.HISTORY_STORAGE_USED_OTHER);
 
             ArrayList<Entry> availableValues = new ArrayList<>();
             ArrayList<Entry> appValues = new ArrayList<>();
-            ArrayList<Entry> otherValues = new ArrayList<>();
+            // ArrayList<Entry> otherValues = new ArrayList<>();
 
             long runtime = -1;
 
@@ -301,11 +312,11 @@ public class SystemStatus extends Generator {
 
                 double available = (double) c.getLong(availableIndex);
                 double app = (double) c.getLong(appUsedIndex);
-                double other = (double) c.getLong(othersUsedIndex);
+                // double other = (double) c.getLong(othersUsedIndex);
 
                 availableValues.add(0, new Entry(when, (float) (available / SystemStatus.GIGABYTE)));
                 appValues.add(0, new Entry(when, (float) (app / SystemStatus.GIGABYTE)));
-                otherValues.add(0, new Entry(when, (float) (other / SystemStatus.GIGABYTE)));
+                // otherValues.add(0, new Entry(when, (float) (other / SystemStatus.GIGABYTE)));
 
                 if (runtime == -1) {
                     runtime = c.getLong(c.getColumnIndex(SystemStatus.HISTORY_RUNTIME));
@@ -403,7 +414,7 @@ public class SystemStatus extends Generator {
         return context.getString(R.string.generator_system_status_runtime_formatted, days, hourString, minuteString, secondString, msString);
     }
 
-    public static long getFileSize(final File file)
+    private static long getFileSize(final File file)
     {
         if (file == null||!file.exists()) {
             return 0;
@@ -444,6 +455,7 @@ public class SystemStatus extends Generator {
         return result;
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_diagnostics_system_status, parent, false);
@@ -454,6 +466,7 @@ public class SystemStatus extends Generator {
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
         SystemStatus me = SystemStatus.getInstance(context);
 

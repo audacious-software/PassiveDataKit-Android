@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
@@ -7,13 +8,10 @@ import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by cjkarr on 4/3/2016.
- */
 public class Logger {
     private Context mContext = null;
 
-    public void log(String event, Map<String, ? extends Object> details) {
+    public void log(String event, Map<String, ?> details) {
         if (details == null) {
             details = new HashMap<>();
         }
@@ -22,9 +20,11 @@ public class Logger {
     }
 
     private static class LoggerHolder {
-        public static Logger instance = new Logger();
+        @SuppressLint("StaticFieldLeak")
+        public static final Logger instance = new Logger();
     }
 
+    @SuppressWarnings("SameReturnValue")
     public static Logger getInstance(Context context) {
         LoggerHolder.instance.setContext(context.getApplicationContext());
 

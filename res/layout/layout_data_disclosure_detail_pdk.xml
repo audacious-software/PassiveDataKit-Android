@@ -8,8 +8,7 @@
         android:layout_height="0dp"
         android:layout_weight="1">
     </FrameLayout>
-    <View android:id="@+id/splitter"
-        android:layout_width="match_parent"
+    <View android:layout_width="match_parent"
         android:layout_height="8dp"
         android:background="@color/colorPrimary" />
     <ListView android:id="@+id/disclosure_actions"

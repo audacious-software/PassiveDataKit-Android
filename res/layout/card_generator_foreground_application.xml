@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="DuplicateIds,ContentDescription,SpUsage"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
     <android.support.v7.widget.CardView
-        android:id="@+id/card_view"
         android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         card_view:cardCornerRadius="4dp"
-        android:layout_margin="8dp">
+        android:layout_margin="8dp"
+        tools:ignore="UnusedIds">
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
@@ -45,6 +47,7 @@
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:baselineAligned="false"
                 android:padding="8dp">
                 <LinearLayout android:orientation="vertical"
                     android:layout_width="0dp"
@@ -221,16 +224,17 @@
                             android:layout_height="32dp">
                             <TextView
                                 android:layout_width="wrap_content"
-                                android:layout_height="0dp"
-                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
                                 android:textStyle="bold"
                                 android:id="@+id/app_last_used"
                                 android:textSize="11dp"
                                 android:lines="1" />
                             <TextView
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
                                 android:id="@+id/app_name"
+                                android:textSize="13dp"
                                 android:lines="1" />
                         </LinearLayout>
                     </LinearLayout>
@@ -250,16 +254,17 @@
                             android:layout_height="32dp">
                             <TextView
                                 android:layout_width="wrap_content"
-                                android:layout_height="0dp"
-                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
                                 android:textStyle="bold"
                                 android:id="@+id/app_last_used"
                                 android:textSize="11dp"
                                 android:lines="1" />
                             <TextView
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
                                 android:id="@+id/app_name"
+                                android:textSize="13dp"
                                 android:lines="1" />
                         </LinearLayout>
                     </LinearLayout>
@@ -278,16 +283,17 @@
                             android:layout_height="32dp">
                             <TextView
                                 android:layout_width="wrap_content"
-                                android:layout_height="0dp"
-                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
                                 android:textStyle="bold"
                                 android:id="@+id/app_last_used"
                                 android:textSize="11dp"
                                 android:lines="1" />
                             <TextView
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
                                 android:id="@+id/app_name"
+                                android:textSize="13dp"
                                 android:lines="1" />
                         </LinearLayout>
                     </LinearLayout>
@@ -306,16 +312,17 @@
                             android:layout_height="32dp">
                             <TextView
                                 android:layout_width="wrap_content"
-                                android:layout_height="0dp"
-                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
                                 android:textStyle="bold"
                                 android:id="@+id/app_last_used"
                                 android:textSize="11dp"
                                 android:lines="1" />
                             <TextView
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
                                 android:id="@+id/app_name"
+                                android:textSize="13dp"
                                 android:lines="1" />
                         </LinearLayout>
                     </LinearLayout>

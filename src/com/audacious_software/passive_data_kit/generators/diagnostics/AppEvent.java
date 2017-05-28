@@ -44,10 +44,10 @@ public class AppEvent extends Generator{
     private static final String DATABASE_PATH = "pdk-app-event.sqlite";
     private static final int DATABASE_VERSION = 1;
 
-    public static final String HISTORY_OBSERVED = "observed";
-    public static final String HISTORY_EVENT_NAME = "event_name";
-    public static final String HISTORY_EVENT_DETAILS = "event_details";
-    public static final String TABLE_HISTORY = "history";
+    private static final String HISTORY_OBSERVED = "observed";
+    private static final String HISTORY_EVENT_NAME = "event_name";
+    private static final String HISTORY_EVENT_DETAILS = "event_details";
+    private static final String TABLE_HISTORY = "history";
 
     private static final int CARD_PAGE_SIZE = 8;
     private static final int CARD_MAX_PAGES = 8;
@@ -63,6 +63,7 @@ public class AppEvent extends Generator{
 
     private int mPage = 0;
 
+    @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return AppEvent.GENERATOR_IDENTIFIER;
     }
@@ -79,10 +80,12 @@ public class AppEvent extends Generator{
         super(context);
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         AppEvent.getInstance(context).startGenerator();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static String getGeneratorTitle(Context context) {
         return context.getString(R.string.generator_app_events);
     }
@@ -106,30 +109,31 @@ public class AppEvent extends Generator{
         this.setDatabaseVersion(this.mDatabase, AppEvent.DATABASE_VERSION);
     }
 
+    @SuppressWarnings("unused")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(AppEvent.ENABLED, AppEvent.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static boolean isRunning(Context context) {
         return (AppEvent.sInstance != null);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        Class currentClass = new Object() { }.getClass().getEnclosingClass();
-
-        String identifier = currentClass.getCanonicalName();
-
         TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(AppEvent.getGeneratorTitle(holder.itemView.getContext()));
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
@@ -210,6 +214,7 @@ public class AppEvent extends Generator{
                     container.removeViewAt(toRemove);
             }
 
+            @SuppressWarnings("UnusedAssignment")
             public Object instantiateItem(ViewGroup container, int position) {
                 LinearLayout list = (LinearLayout) LayoutInflater.from(container.getContext()).inflate(R.layout.card_generator_app_event_page, container, false);
 
@@ -287,6 +292,7 @@ public class AppEvent extends Generator{
         pager.setCurrentItem(appEvent.mPage);
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_app_event, parent, false);
@@ -297,6 +303,7 @@ public class AppEvent extends Generator{
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
         long timestamp = 0;
 
@@ -317,7 +324,8 @@ public class AppEvent extends Generator{
         return this.mDatabase.query(AppEvent.TABLE_HISTORY, cols, where, args, null, null, orderBy);
     }
 
-    public boolean logEvent(String eventName, Map<String, ? extends Object> eventDetails) {
+    @SuppressWarnings("UnusedReturnValue")
+    public boolean logEvent(String eventName, Map<String, ?> eventDetails) {
         try {
             long now = System.currentTimeMillis();
 
@@ -344,7 +352,7 @@ public class AppEvent extends Generator{
                 } else if (value instanceof  Long) {
                     Long longValue = ((Long) value);
 
-                    detailsBundle.putLong(key, longValue.longValue());
+                    detailsBundle.putLong(key, longValue);
                     detailsJson.put(key, longValue.longValue());
                 } else if (value instanceof  Integer) {
                     Integer intValue = ((Integer) value);
@@ -355,7 +363,7 @@ public class AppEvent extends Generator{
                     detailsBundle.putString(key, value.toString());
                     detailsJson.put(key, value.toString());
                 } else if (value instanceof Boolean) {
-                    detailsBundle.putBoolean(key, ((Boolean) value).booleanValue());
+                    detailsBundle.putBoolean(key, ((Boolean) value));
                     detailsJson.put(key, ((Boolean) value).booleanValue());
                 } else if (value == null) {
                     throw new NullPointerException("Value is null.");
@@ -405,6 +413,7 @@ public class AppEvent extends Generator{
         this.logEvent(AppEvent.EVENT_LOG_THROWABLE, details);
     }
 
+    @SuppressWarnings("unused")
     public static List<DataDisclosureDetailActivity.Action> getDisclosureActions(final Context context) {
         List<DataDisclosureDetailActivity.Action> actions = new ArrayList<>();
 
@@ -423,6 +432,7 @@ public class AppEvent extends Generator{
         return actions;
     }
 
+    @SuppressWarnings("unused")
     public static View getDisclosureDataView(final GeneratorViewHolder holder) {
         final Context context = holder.itemView.getContext();
 

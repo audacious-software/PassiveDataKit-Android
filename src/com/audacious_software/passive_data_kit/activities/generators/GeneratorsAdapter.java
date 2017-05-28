@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.activities.generators;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
@@ -34,6 +35,8 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
         return new GeneratorViewHolder(view);
     }
 
+    @SuppressWarnings("unchecked")
+    @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(final GeneratorViewHolder holder, int position) {
         final GeneratorsAdapter me = this;
@@ -61,8 +64,9 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
             public void onClick(View view) {
                 me.mDataView.removeAllViews();
 
-                View dataView = LayoutInflater.from(holder.itemView.getContext()).inflate(R.layout.pdk_placeholder_disclosure_view, null);
+                @SuppressLint("InflateParams") View dataView = LayoutInflater.from(holder.itemView.getContext()).inflate(R.layout.pdk_placeholder_disclosure_view, null);
 
+                //noinspection TryWithIdenticalCatches
                 try {
                     Method bindViewHolder = finalClass.getDeclaredMethod("getDisclosureDataView", GeneratorViewHolder.class);
 
@@ -111,6 +115,7 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
         return Generators.getInstance(null).activeGenerators().size();
     }
 
+    @SuppressWarnings("UnusedParameters")
     private void sortGenerators(final Context context, List<Class<? extends Generator>> generators) {
         Collections.sort(generators, new Comparator<Class<? extends Generator>>() {
             @Override

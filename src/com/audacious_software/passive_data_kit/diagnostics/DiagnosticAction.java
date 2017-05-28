@@ -1,10 +1,5 @@
 package com.audacious_software.passive_data_kit.diagnostics;
 
-import android.content.Context;
-
-/**
- * Created by cjkarr on 4/3/2016.
- */
 public class DiagnosticAction {
     private String mMessage = null;
     private Runnable mAction = null;

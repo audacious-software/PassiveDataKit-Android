@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
@@ -8,6 +9,7 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import java.io.File;
 import java.util.ArrayList;
 
+@SuppressWarnings("PointlessBooleanExpression")
 public class PassiveDataKit {
     private static final String STORAGE_PATH = "passive-data-kit";
     private static final String GENERATORS_PATH = "generators";
@@ -35,6 +37,7 @@ public class PassiveDataKit {
         return actions;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public static File getGeneratorsStorage(Context context) {
         File path = new File(context.getFilesDir(), PassiveDataKit.STORAGE_PATH);
         path = new File(path, PassiveDataKit.GENERATORS_PATH);
@@ -47,9 +50,11 @@ public class PassiveDataKit {
     }
 
     private static class PassiveDataKitHolder {
-        public static PassiveDataKit instance = new PassiveDataKit();
+        @SuppressLint("StaticFieldLeak")
+        public static final PassiveDataKit instance = new PassiveDataKit();
     }
 
+    @SuppressWarnings("SameReturnValue")
     public static PassiveDataKit getInstance(Context context)
     {
         PassiveDataKitHolder.instance.setContext(context.getApplicationContext());

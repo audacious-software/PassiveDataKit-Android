@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.generators.sensors;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class AmbientLight extends SensorGenerator implements SensorEventListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-sensor-light";
 
@@ -58,10 +60,10 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     private static final String DATABASE_PATH = "pdk-sensor-ambient-light.sqlite";
     private static final int DATABASE_VERSION = 1;
 
-    public static final String TABLE_HISTORY = "history";
+    private static final String TABLE_HISTORY = "history";
 
-    public static final String HISTORY_OBSERVED = "observed";
-    public static final String HISTORY_LEVEL = "light_level";
+    private static final String HISTORY_OBSERVED = "observed";
+    private static final String HISTORY_LEVEL = "light_level";
     private static final String HISTORY_RAW_TIMESTAMP = "raw_timestamp";
     private static final String HISTORY_ACCURACY = "accuracy";
 
@@ -73,8 +75,8 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
     private Sensor mSensor = null;
 
-    private static int NUM_BUFFERS = 3;
-    private static int BUFFER_SIZE = 32;
+    private static final int NUM_BUFFERS = 3;
+    private static final int BUFFER_SIZE = 32;
 
     private long mLastCleanup = 0;
     private long mCleanupInterval = 15 * 60 * 1000;
@@ -87,13 +89,15 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     private long[][] mRawTimestampBuffers = null;
     private long[][] mTimestampBuffers = null;
 
-    long mBaseTimestamp = 0;
+    private long mBaseTimestamp = 0;
     private long mLatestTimestamp = 0;
 
+    @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return AmbientLight.GENERATOR_IDENTIFIER;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static AmbientLight getInstance(Context context) {
         if (AmbientLight.sInstance == null) {
             AmbientLight.sInstance = new AmbientLight(context.getApplicationContext());
@@ -102,10 +106,12 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         return AmbientLight.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public AmbientLight(Context context) {
         super(context);
     }
 
+    @SuppressWarnings("unused")
     public void setIgnorePowerManagement(boolean ignore) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -117,6 +123,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         this.startGenerator();
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         AmbientLight.getInstance(context).startGenerator();
     }
@@ -213,12 +220,14 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         Generators.getInstance(this.mContext).releaseWakeLock(AmbientLight.IDENTIFIER);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(AmbientLight.ENABLED, AmbientLight.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static boolean isRunning(Context context) {
         if (AmbientLight.sInstance == null) {
             return false;
@@ -227,6 +236,8 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         return AmbientLight.sInstance.mSensor != null;
     }
 
+    @SuppressWarnings("unused")
+    @SuppressLint("InlinedApi")
     public static ArrayList<DiagnosticAction> diagnostics(final Context context) {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
@@ -241,9 +252,12 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
                         @Override
                         public void run() {
-                            Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            context.startActivity(intent);
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                                Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                context.startActivity(intent);
+                            }
                         }
                     }));
                 }
@@ -253,16 +267,19 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         return actions;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static String getGeneratorTitle(Context context) {
         return context.getString(R.string.generator_sensors_ambient_light);
     }
 
+    @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
         TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(AmbientLight.getGeneratorTitle(holder.itemView.getContext()));
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(final DataPointViewHolder holder) {
         if (AmbientLight.sIsDrawing) {
             return;
@@ -292,6 +309,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             chart.setNoDataTextColor(0xFFE0E0E0);
 
             Runnable r = new Runnable() {
+                @SuppressWarnings("ConstantConditions")
                 @Override
                 public void run() {
                     final ArrayList<Entry> lowValues = new ArrayList<>();
@@ -351,6 +369,8 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                             minValue = level;
                         }
                     }
+
+                    c.close();
 
                     if (lastTimestamp != -1) {
                         lowValues.add(0, new Entry(lastTimestamp, lowLevel));
@@ -462,6 +482,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         }
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_sensors_ambient_light, parent, false);
@@ -472,6 +493,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static long latestPointGenerated(Context context) {
         AmbientLight me = AmbientLight.getInstance(context);
 
@@ -479,7 +501,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             Cursor c = me.mDatabase.query(AmbientLight.TABLE_HISTORY, null, null, null, null, null, AmbientLight.HISTORY_OBSERVED + " DESC", "1");
 
             if (c.moveToNext()) {
-                me.mLatestTimestamp = c.getLong(c.getColumnIndex(AmbientLight.HISTORY_OBSERVED) / (1000 * 1000));
+                me.mLatestTimestamp = c.getLong(c.getColumnIndex(AmbientLight.HISTORY_OBSERVED)) / (1000 * 1000);
             }
 
             c.close();

@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.generators.sensors;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class Accelerometer extends SensorGenerator implements SensorEventListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-sensor-accelerometer";
 
@@ -64,14 +66,14 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
     private static final String DATABASE_PATH = "pdk-sensor-accelerometer.sqlite";
     private static final int DATABASE_VERSION = 1;
 
-    public static final String TABLE_HISTORY = "history";
+    private static final String TABLE_HISTORY = "history";
 
-    public static final String HISTORY_OBSERVED = "observed";
+    private static final String HISTORY_OBSERVED = "observed";
     private static final String HISTORY_RAW_TIMESTAMP = "raw_timestamp";
     private static final String HISTORY_ACCURACY = "accuracy";
-    public static final String HISTORY_X = "x";
-    public static final String HISTORY_Y = "y";
-    public static final String HISTORY_Z = "z";
+    private static final String HISTORY_X = "x";
+    private static final String HISTORY_Y = "y";
+    private static final String HISTORY_Z = "z";
 
     private static Accelerometer sInstance = null;
     private static Handler sHandler = null;
@@ -83,8 +85,8 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
     private Sensor mSensor = null;
 
-    private static int NUM_BUFFERS = 3;
-    private static int BUFFER_SIZE = 1024;
+    private static final int NUM_BUFFERS = 3;
+    private static final int BUFFER_SIZE = 1024;
 
     private long mLastCleanup = 0;
     private long mCleanupInterval = 15 * 60 * 1000;
@@ -99,11 +101,12 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
     private long[][] mRawTimestampBuffers = null;
     private long[][] mTimestampBuffers = null;
 
-    long mBaseTimestamp = 0;
+    private long mBaseTimestamp = 0;
 
     private long mLatestTimestamp = 0;
     private Thread mIntervalThread = null;
 
+    @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return Accelerometer.GENERATOR_IDENTIFIER;
     }
@@ -116,14 +119,16 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         return Accelerometer.sInstance;
     }
 
-    public Accelerometer(Context context) {
+    private Accelerometer(Context context) {
         super(context);
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         Accelerometer.getInstance(context).startGenerator();
     }
 
+    @SuppressWarnings("unused")
     public void setIgnorePowerManagement(boolean ignore) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -221,7 +226,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                             @Override
                             public void run() {
                                 try {
-                                    while (true) {
+                                    while (Accelerometer.isEnabled(me.mContext)) {
                                         Thread.sleep(refreshDuration);
 
                                         sensors.unregisterListener(me, me.mSensor);
@@ -233,6 +238,8 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                                         else
                                             sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, Accelerometer.sHandler);
                                     }
+
+                                    sensors.unregisterListener(me, me.mSensor);
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
@@ -296,12 +303,14 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         Generators.getInstance(this.mContext).releaseWakeLock(Accelerometer.IDENTIFIER);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(Accelerometer.ENABLED, Accelerometer.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static boolean isRunning(Context context) {
         if (Accelerometer.sInstance == null) {
             return false;
@@ -310,6 +319,8 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         return Accelerometer.sInstance.mSensor != null;
     }
 
+    @SuppressWarnings("unused")
+    @SuppressLint("InlinedApi")
     public static ArrayList<DiagnosticAction> diagnostics(final Context context) {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
@@ -336,16 +347,19 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         return actions;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static String getGeneratorTitle(Context context) {
         return context.getString(R.string.generator_sensors_accelerometer);
     }
 
+    @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
         TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(Accelerometer.getGeneratorTitle(holder.itemView.getContext()));
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(final DataPointViewHolder holder) {
         if (Accelerometer.sIsDrawing) {
             return;
@@ -384,6 +398,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
             chart.setNoDataTextColor(0xFFE0E0E0);
 
             Runnable r = new Runnable() {
+                @SuppressWarnings({"ConstantConditions", "SuspiciousNameCombination"})
                 @Override
                 public void run() {
                     final ArrayList<Entry> xLowValues = new ArrayList<>();
@@ -628,6 +643,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         }
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent) {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_sensors_accelerometer, parent, false);
     }
@@ -637,6 +653,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static long latestPointGenerated(Context context) {
         Accelerometer me = Accelerometer.getInstance(context);
 

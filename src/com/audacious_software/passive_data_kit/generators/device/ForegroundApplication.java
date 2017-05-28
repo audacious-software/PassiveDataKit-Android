@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.generators.device;
 
+import android.annotation.SuppressLint;
 import android.app.AppOpsManager;
 import android.content.ContentValues;
 import android.content.Context;
@@ -27,7 +28,6 @@ import com.audacious_software.passive_data_kit.activities.generators.GeneratorVi
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.rvalerio.fgchecker.AppChecker;
 
@@ -38,6 +38,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
+@SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class ForegroundApplication extends Generator{
 
     private static final String GENERATOR_IDENTIFIER = "pdk-foreground-application";
@@ -45,7 +46,7 @@ public class ForegroundApplication extends Generator{
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
-    private static int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 3;
 
     private static final String TABLE_HISTORY = "history";
     private static final String HISTORY_OBSERVED = "observed";
@@ -55,8 +56,6 @@ public class ForegroundApplication extends Generator{
 
     private static ForegroundApplication sInstance = null;
 
-    private Context mContext = null;
-
     private static final String DATABASE_PATH = "pdk-foreground-application.sqlite";
 
     private SQLiteDatabase mDatabase = null;
@@ -64,10 +63,12 @@ public class ForegroundApplication extends Generator{
     private AppChecker mAppChecker = null;
     private long mLastTimestamp = 0;
 
+    @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return ForegroundApplication.GENERATOR_IDENTIFIER;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static ForegroundApplication getInstance(Context context) {
         if (ForegroundApplication.sInstance == null) {
             ForegroundApplication.sInstance = new ForegroundApplication(context.getApplicationContext());
@@ -76,12 +77,12 @@ public class ForegroundApplication extends Generator{
         return ForegroundApplication.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public ForegroundApplication(Context context) {
         super(context);
-
-        this.mContext = context.getApplicationContext();
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         ForegroundApplication.getInstance(context).startGenerator();
     }
@@ -154,12 +155,14 @@ public class ForegroundApplication extends Generator{
         Generators.getInstance(this.mContext).registerCustomViewClass(ForegroundApplication.GENERATOR_IDENTIFIER, ForegroundApplication.class);
     }
 
+    @SuppressWarnings("unused")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(ForegroundApplication.ENABLED, ForegroundApplication.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static boolean isRunning(Context context) {
         if (ForegroundApplication.sInstance == null) {
             return false;
@@ -168,6 +171,8 @@ public class ForegroundApplication extends Generator{
         return ForegroundApplication.sInstance.mAppChecker != null;
     }
 
+    @SuppressWarnings("unused")
+    @SuppressLint("InlinedApi")
     public static ArrayList<DiagnosticAction> diagnostics(final Context context) {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
@@ -194,12 +199,14 @@ public class ForegroundApplication extends Generator{
         return context.getString(R.string.generator_foreground_application);
     }
 
+    @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
         TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(ForegroundApplication.getGeneratorTitle(holder.itemView.getContext()));
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
@@ -237,25 +244,27 @@ public class ForegroundApplication extends Generator{
         while (c.moveToNext()) {
             String application = c.getString(c.getColumnIndex(ForegroundApplication.HISTORY_APPLICATION));
 
-            if (latest.contains(application)) {
-                latest.remove(application);
+            if (application != null) {
+                if (latest.contains(application)) {
+                    latest.remove(application);
+                }
+
+                latest.add(0, application);
+
+                if (appDurations.containsKey(application) == false) {
+                    appDurations.put(application, 0.0);
+                }
+
+                double appDuration = appDurations.get(application);
+                double duration = c.getDouble(c.getColumnIndex(ForegroundApplication.HISTORY_DURATION));
+
+                long lastObserved = c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_OBSERVED));
+
+                appDuration += duration;
+
+                appDurations.put(application, appDuration);
+                appWhens.put(application, lastObserved);
             }
-
-            latest.add(0, application);
-
-            if (appDurations.containsKey(application) == false) {
-                appDurations.put(application, 0.0);
-            }
-
-            double appDuration = appDurations.get(application);
-            double duration = c.getDouble(c.getColumnIndex(ForegroundApplication.HISTORY_DURATION));
-
-            long lastObserved = c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_OBSERVED));
-
-            appDuration += duration;
-
-            appDurations.put(application, appDuration);
-            appWhens.put(application, lastObserved);
         }
 
         c.close();
@@ -296,10 +305,6 @@ public class ForegroundApplication extends Generator{
 
         while (largest.size() > appRowIds.length) {
             largest.remove(largest.size() - 1);
-        }
-
-        while (latest.size() > whenAppRowIds.length) {
-            latest.remove(latest.size() - 1);
         }
 
         PackageManager packageManager = context.getPackageManager();
@@ -379,7 +384,7 @@ public class ForegroundApplication extends Generator{
                         Drawable icon = packageManager.getApplicationIcon(appPackage);
                         appIcon.setImageDrawable(icon);
                     } catch (PackageManager.NameNotFoundException e) {
-                        appName.setText("" + appPackage);
+                        appName.setText(appPackage);
                         appIcon.setImageDrawable(null);
                     }
 
@@ -405,11 +410,13 @@ public class ForegroundApplication extends Generator{
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_foreground_application, parent, false);
     }
 
+    @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
         ForegroundApplication me = ForegroundApplication.getInstance(context);
 

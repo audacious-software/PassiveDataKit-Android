@@ -25,6 +25,7 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
     private Context mContext = null;
     private List<Class<? extends Generator>> mActiveGenerators = null;
 
+    @SuppressWarnings("TryWithIdenticalCatches")
     @Override
     public DataPointViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         Class<? extends Generator> generatorClass = Generators.getInstance(this.mContext).fetchCustomViewClass(viewType);
@@ -54,6 +55,7 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
         return null;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     private List<Class<? extends Generator>> getGenerators(Context context) {
         if (this.mActiveGenerators == null) {
             this.mActiveGenerators = Generators.getInstance(context).activeGenerators();
@@ -64,6 +66,7 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
         return this.mActiveGenerators;
     }
 
+    @SuppressWarnings("TryWithIdenticalCatches")
     @Override
     public void onBindViewHolder(final DataPointViewHolder holder, int position) {
         this.getGenerators(holder.itemView.getContext());
@@ -112,6 +115,7 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
         if (prefs.getBoolean(DataPointsAdapter.SORT_BY_UPDATED, DataPointsAdapter.SORT_BY_UPDATED_DEFAULT)) {
             Collections.sort(me.mActiveGenerators, new Comparator<Class<? extends Generator>>() {
+                @SuppressWarnings("TryWithIdenticalCatches")
                 @Override
                 public int compare(Class<? extends Generator> one, Class<? extends Generator> two) {
                     long oneUpdated = 0;
@@ -165,12 +169,13 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
             Class<? extends Generator> generatorClass = this.mActiveGenerators.get(i);
 
             try {
-                Method generatorIdentifier = generatorClass.getDeclaredMethod("generatorIdentifier", null);
+                Method generatorIdentifier = generatorClass.getDeclaredMethod("generatorIdentifier");
 
                 if (identifier.equals(generatorIdentifier.invoke(null))) {
                     position = i;
                 }
             } catch (Exception e) {
+                // Method does not exist, skip...
             }
         }
 

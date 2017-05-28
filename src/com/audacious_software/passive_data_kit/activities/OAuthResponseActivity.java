@@ -1,16 +1,13 @@
 package com.audacious_software.passive_data_kit.activities;
 
+import android.annotation.SuppressLint;
 import android.net.Uri;
-import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
 import com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice;
 
+@SuppressLint("Registered")
 public class OAuthResponseActivity extends AppCompatActivity {
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
     protected void onResume() {
         super.onResume();
 

@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings("SimplifiableIfStatement")
 public class Battery extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-device-battery";
 
@@ -48,18 +49,18 @@ public class Battery extends Generator {
     private static final String DATABASE_PATH = "pdk-device-battery.sqlite";
     private static final int DATABASE_VERSION = 1;
 
-    public static final String TABLE_HISTORY = "history";
+    private static final String TABLE_HISTORY = "history";
 
-    public static final String HISTORY_OBSERVED = "observed";
-    public static final String HISTORY_HEALTH = "health";
-    public static final String HISTORY_LEVEL = "level";
-    public static final String HISTORY_PLUGGED = "plugged";
-    public static final String HISTORY_PRESENT = "present";
-    public static final String HISTORY_SCALE = "scale";
-    public static final String HISTORY_TEMPERATURE = "temperature";
-    public static final String HISTORY_VOLTAGE = "voltage";
-    public static final String HISTORY_TECHNOLOGY = "technology";
-    public static final String HISTORY_STATUS = "status";
+    private static final String HISTORY_OBSERVED = "observed";
+    private static final String HISTORY_HEALTH = "health";
+    private static final String HISTORY_LEVEL = "level";
+    private static final String HISTORY_PLUGGED = "plugged";
+    private static final String HISTORY_PRESENT = "present";
+    private static final String HISTORY_SCALE = "scale";
+    private static final String HISTORY_TEMPERATURE = "temperature";
+    private static final String HISTORY_VOLTAGE = "voltage";
+    private static final String HISTORY_TECHNOLOGY = "technology";
+    private static final String HISTORY_STATUS = "status";
 
     private static final String HEALTH_COLD = "cold";
     private static final String HEALTH_DEAD = "dead";
@@ -92,10 +93,12 @@ public class Battery extends Generator {
     private long mCleanupInterval = (24 * 60 * 60 * 1000);
     private long mLastCleanup = 0;
 
+    @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return Battery.GENERATOR_IDENTIFIER;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static Battery getInstance(Context context) {
         if (Battery.sInstance == null) {
             Battery.sInstance = new Battery(context.getApplicationContext());
@@ -104,10 +107,12 @@ public class Battery extends Generator {
         return Battery.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public Battery(Context context) {
         super(context);
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         Battery.getInstance(context).startGenerator();
     }
@@ -263,12 +268,14 @@ public class Battery extends Generator {
         this.mContext.registerReceiver(this.mReceiver, filter);
     }
 
+    @SuppressWarnings("unused")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(Battery.ENABLED, Battery.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static boolean isRunning(Context context) {
         if (Battery.sInstance == null) {
             return false;
@@ -277,20 +284,24 @@ public class Battery extends Generator {
         return Battery.sInstance.mReceiver != null;
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static String getGeneratorTitle(Context context) {
         return context.getString(R.string.generator_device_battery);
     }
 
+    @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
         TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(Battery.getGeneratorTitle(holder.itemView.getContext()));
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
@@ -404,6 +415,7 @@ public class Battery extends Generator {
         c.close();
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_device_battery, parent, false);
@@ -414,6 +426,7 @@ public class Battery extends Generator {
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
         Battery me = Battery.getInstance(context);
 

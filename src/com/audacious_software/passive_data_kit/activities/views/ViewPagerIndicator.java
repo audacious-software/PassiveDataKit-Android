@@ -12,10 +12,6 @@ import com.audacious_software.pdk.passivedatakit.R;
 
 import java.util.ArrayList;
 
-/**
- * Created by cjkarr on 4/27/2017.
- */
-
 public class ViewPagerIndicator extends LinearLayout {
     private final LinearLayout mIndicatorLayout;
 
@@ -47,6 +43,7 @@ public class ViewPagerIndicator extends LinearLayout {
         this.addView(right);
     }
 
+    @SuppressWarnings("unused")
     public void setPageCount(int count) {
         ArrayList<View> toRemove = new ArrayList<>();
 
@@ -76,6 +73,7 @@ public class ViewPagerIndicator extends LinearLayout {
         }
     }
 
+    @SuppressWarnings("unused")
     public void setSelectedPage(int position) {
         DisplayMetrics metrics = this.getContext().getResources().getDisplayMetrics();
 

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="DuplicateIds,HardcodedText"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -15,7 +17,8 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="-" />
+            android:text="-"
+            tools:ignore="DuplicateIds" />
         <TextView android:id="@+id/app_event_row_event_when"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"

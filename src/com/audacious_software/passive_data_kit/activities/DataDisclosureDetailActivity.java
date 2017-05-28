@@ -1,7 +1,9 @@
 package com.audacious_software.passive_data_kit.activities;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -33,6 +35,7 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
 
     private Class<? extends Generator> mGeneratorClass = null;
 
+    @SuppressWarnings({"unchecked", "TryWithIdenticalCatches", "ConstantConditions"})
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -61,7 +64,9 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
 
                 ListView actionsList = (ListView) this.findViewById(R.id.disclosure_actions);
                 ArrayAdapter<Action> adapter = new ArrayAdapter<Action>(this, R.layout.row_disclosure_action_pdk, actions) {
-                    public View getView (int position, View convertView, ViewGroup parent) {
+                    @NonNull
+                    @SuppressLint("InflateParams")
+                    public View getView (int position, View convertView, @NonNull ViewGroup parent) {
                         if (convertView == null) {
                             convertView = LayoutInflater.from(me).inflate(R.layout.row_disclosure_action_pdk, null);
                         }

@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.activities;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import com.audacious_software.pdk.passivedatakit.R;
 import java.util.ArrayList;
 
 public class DiagnosticsActivity extends AppCompatActivity {
+    @SuppressLint("AlwaysShowAction")
     public static void setUpDiagnositicsItem(Activity activity, Menu menu, boolean showAction) {
         final ArrayList<DiagnosticAction> actions = PassiveDataKit.diagnostics(activity);
 
@@ -87,6 +89,7 @@ public class DiagnosticsActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.layout_diagnostics_pdk);

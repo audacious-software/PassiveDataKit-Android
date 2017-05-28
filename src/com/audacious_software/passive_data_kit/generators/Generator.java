@@ -15,12 +15,10 @@ import com.audacious_software.passive_data_kit.activities.generators.DataPointVi
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.pdk.passivedatakit.R;
 
-import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-@SuppressWarnings("unused")
 public abstract class Generator
 {
     public static final String PDK_METADATA = "passive-data-metadata";
@@ -37,9 +35,9 @@ public abstract class Generator
     private static final String TABLE_SQLITE_MASTER = "sqlite_master";
 
     private static final String TABLE_METADATA = "metadata";
-    private static String TABLE_METADATA_LAST_UPDATED = "last_updated";
-    private static String TABLE_METADATA_KEY = "key";
-    private static String TABLE_METADATA_VALUE = "value";
+    private static final String TABLE_METADATA_LAST_UPDATED = "last_updated";
+    private static final String TABLE_METADATA_KEY = "key";
+    private static final String TABLE_METADATA_VALUE = "value";
 
     protected Context mContext = null;
 
@@ -48,32 +46,37 @@ public abstract class Generator
         this.mContext = context.getApplicationContext();
     }
 
+    @SuppressWarnings({"EmptyMethod", "unused"})
     public static void start(Context context) {
         // Do nothing - override in subclasses...
     }
 
+    @SuppressWarnings({"EmptyMethod", "unused"})
     public static void stop(Context context) {
         // Do nothing - override in subclasses.
     }
 
-    public static boolean isEnabled(Context context)
-    {
+    @SuppressWarnings({"SameReturnValue", "unused"})
+    public static boolean isEnabled(Context context) {
         return false;
     }
 
-    public static boolean isRunning(Context context)
-    {
+    @SuppressWarnings({"SameReturnValue", "unused"})
+    public static boolean isRunning(Context context) {
         return false;
     }
 
+    @SuppressWarnings({"SameReturnValue", "unused"})
     public static long latestPointGenerated(Context context) {
         return 0;
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent) {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_generic, parent, false);
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder) {
         Class currentClass = new Object() { }.getClass().getEnclosingClass();
 
@@ -88,6 +91,7 @@ public abstract class Generator
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.row_generator_disclosure_generic, parent, false);
     }
 
+    @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(GeneratorViewHolder holder) {
         Class currentClass = new Object() { }.getClass().getEnclosingClass();
 
@@ -119,12 +123,12 @@ public abstract class Generator
         return context.getString(R.string.format_full_timestamp_pdk, date, time);
     }
 
+    @SuppressWarnings("unused")
     public abstract List<Bundle> fetchPayloads();
 
+    @SuppressWarnings("unused")
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
-        Cursor c = new MatrixCursor(cols);
-
-        return c;
+        return new MatrixCursor(cols);
     }
 
     protected int getDatabaseVersion(SQLiteDatabase db) {
@@ -133,9 +137,7 @@ public abstract class Generator
 
         Cursor c = db.query(Generator.TABLE_SQLITE_MASTER, null, where, args, null, null, null);
 
-        if (c.getCount() > 0) {
-            // Do nothing - table exists...
-        } else {
+        if (c.getCount() == 0) {
             db.execSQL(this.mContext.getString(R.string.pdk_generator_create_version_table));
         }
 

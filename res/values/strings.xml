@@ -15,8 +15,6 @@
 
     <string name="format_full_timestamp_pdk">%1$s &#8226; %2$s</string>
 
-    <string name="label_today_pdk">Today</string>
-
     <string name="label_never_pdk">Never</string>
     <string name="action_diagnostics">Diagnostics</string>
     <string name="action_diagnostics_incomplete">Diagnostics (%d)</string>

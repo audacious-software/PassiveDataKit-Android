@@ -1,3 +1,4 @@
+<!--suppress CheckTagEmptyBody -->
 <resources>
     <string-array name="pdk_available_generators">
         <item>com.audacious_software.passive_data_kit.generators.device.Location</item>
@@ -45,11 +46,16 @@
     <string name="generator_microsoft_band_value_altimeter_flights_ascended_today">%1$d</string>
     <string name="generator_microsoft_band_value_barometer_pressure">%1$.2f hPa</string>
     <string name="generator_microsoft_band_value_barometer_temperature">%1$.2f&#8451;</string>
-    <string name="generator_microsoft_band_value_ambient_light_brightness">%1$d lux</string>
+
+    <!-- <string name="generator_microsoft_band_value_ambient_light_brightness">%1$d lux</string> -->
+    <plurals name="generator_microsoft_band_value_ambient_light_brightness">
+        <item quantity="zero">0 lux</item>
+        <item quantity="one">1 lux</item>
+        <item quantity="other">%d lux</item>
+    </plurals>
 
     <!-- Location Resources -->
     <string name="generator_location">Device Location</string>
-    <string name="generator_location_value">Coordinates: %1$.4f, %2$.4f</string>
     <string name="label_data_collection_location_accuracy">Location Accuracy</string>
     <string name="label_data_collection_location_accuracy_more">Tap here to update the accuracy of your data.</string>
 
@@ -84,23 +90,28 @@
     <string name="legend_screen_state_off_pdk">Off</string>
     <string name="legend_screen_state_doze_pdk">Doze</string>
     <string name="legend_screen_state_unknown_pdk">Unknown</string>
-    <string name="label_legend_pdk">Legend: </string>
     <string name="message_generator_screen_state_empty">No screen state changes have been observed yet.</string>
 
     <!-- Phone Call Resources -->
     <string name="generator_text_messages">SMS Text Messages</string>
     <string name="generator_text_messages_incoming_label">Incoming</string>
     <string name="generator_text_messages_outgoing_label">Outgoing</string>
-    <string name="generator_text_messages_other_label">Other</string>
+    <!-- <string name="generator_text_messages_other_label">Other</string> -->
 
     <color name="generator_text_messages_incoming">#3F51B5</color>
     <color name="generator_text_messages_outgoing">#4CAF50</color>
-    <color name="generator_text_messages_other">#9E9E9E</color>
+    <!-- <color name="generator_text_messages_other">#9E9E9E</color> -->
 
     <string name="generator_text_messages_latest_text_message_label">Latest Text Message</string>
     <string name="generator_text_messages_length_label">Length</string>
     <string name="generator_text_messages_direction_label">Direction</string>
-    <string name="generator_text_messages_length_format">%1$d chars.</string>
+
+    <!-- <string name="generator_text_messages_length_format">%1$d chars.</string> -->
+    <plurals name="generator_text_messages_length_format">
+        <item quantity="zero">0 chars.</item>
+        <item quantity="one">1 char.</item>
+        <item quantity="other">%d chars.</item>
+    </plurals>
 
     <string name="message_generator_text_messages_empty">No text messages have been sent or received on this device.</string>
 
@@ -139,7 +150,12 @@
     <string name="label_withings_calories">Calories</string>
 
     <string name="generator_withings_steps_label">Steps</string>
-    <string name="generator_withings_steps_value">%1$d steps</string>
+    <!-- <string name="generator_withings_steps_value">%1$d steps</string> -->
+    <plurals name="generator_withings_steps_value">
+        <item quantity="zero">0 steps</item>
+        <item quantity="one">1 step</item>
+        <item quantity="other">%d steps</item>
+    </plurals>
 
     <string name="generator_withings_distance_label">Distance</string>
     <string name="generator_withings_distance_value">%1$.2f km</string>
@@ -191,7 +207,7 @@
     <color name="generator_system_status_header">#616161</color>
     <color name="generator_system_status_free">#2E7D32</color>
     <color name="generator_system_status_app">#FAFAFA</color>
-    <color name="generator_system_status_other">#757575</color>
+    <!-- <color name="generator_system_status_other">#757575</color> -->
     <string name="generator_system_status_runtime">Continuous Runtime: %1$s</string>
     <string name="generator_system_status_runtime_formatted">%1$dd %2$s:%3$s:%4$s.%5$s</string>
 </resources>

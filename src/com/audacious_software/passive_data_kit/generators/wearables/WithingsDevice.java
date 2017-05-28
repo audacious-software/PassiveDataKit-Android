@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.generators.wearables;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -60,6 +61,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -71,6 +73,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+@SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class WithingsDevice extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-withings-device";
 
@@ -179,7 +182,7 @@ public class WithingsDevice extends Generator {
     private static final String TABLE_WORKOUT_HISTORY = "workout_history";
 
     private static final String HISTORY_OBSERVED = "observed";
-    private static final String DATABASE_PATH = "pdk-withings-device.sqlite";;
+    private static final String DATABASE_PATH = "pdk-withings-device.sqlite";
     private static final int DATABASE_VERSION = 1;
 
     private static final String LAST_DATA_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.LAST_DATA_FETCH";
@@ -233,10 +236,11 @@ public class WithingsDevice extends Generator {
     private Context mContext = null;
     private SQLiteDatabase mDatabase = null;
     private Handler mHandler = null;
-    private Map<String, String> mProperties = new HashMap<>();
+    private final Map<String, String> mProperties = new HashMap<>();
 
     private int mPage = 0;
 
+    @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return WithingsDevice.GENERATOR_IDENTIFIER;
     }
@@ -249,6 +253,7 @@ public class WithingsDevice extends Generator {
         return WithingsDevice.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public WithingsDevice(Context context) {
         super(context);
 
@@ -261,6 +266,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         WithingsDevice.getInstance(context).startGenerator();
     }
@@ -393,6 +399,8 @@ public class WithingsDevice extends Generator {
         return this.mProperties.get(key);
     }
 
+    @SuppressWarnings("TryWithIdenticalCatches")
+    @SuppressLint("SimpleDateFormat")
     private JSONObject queryApi(String apiUrl) {
         final WithingsDevice me = this;
 
@@ -585,6 +593,7 @@ public class WithingsDevice extends Generator {
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void fetchBodyMeasures() {
         JSONObject response = this.queryApi(WithingsDevice.API_ACTION_BODY_MEASURES_URL);
 
@@ -1000,19 +1009,17 @@ public class WithingsDevice extends Generator {
     private boolean approvalGranted() {
         String apiToken = this.getProperty(WithingsDevice.OPTION_OAUTH_ACCESS_TOKEN);
 
-        if (apiToken != null) {
-            return true;
-        }
-
-        return false;
+        return (apiToken != null);
     }
 
+    @SuppressWarnings("unused")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(WithingsDevice.ENABLED, WithingsDevice.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static boolean isRunning(Context context) {
         if (WithingsDevice.sInstance == null) {
             return false;
@@ -1021,6 +1028,7 @@ public class WithingsDevice extends Generator {
         return WithingsDevice.sInstance.mHandler != null;
     }
 
+    @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(final Context context) {
         final WithingsDevice me = WithingsDevice.getInstance(context);
 
@@ -1032,6 +1040,7 @@ public class WithingsDevice extends Generator {
                 @Override
                 public void run() {
                     Runnable r = new Runnable() {
+                        @SuppressWarnings("TryWithIdenticalCatches")
                         @Override
                         public void run() {
                             try {
@@ -1164,6 +1173,7 @@ public class WithingsDevice extends Generator {
         final WithingsDevice me = this;
 
         Runnable r = new Runnable() {
+            @SuppressWarnings("TryWithIdenticalCatches")
             @Override
             public void run() {
                 try {
@@ -1178,7 +1188,7 @@ public class WithingsDevice extends Generator {
 
                     String signature = "GET&" + URLEncoder.encode(builder.build().toString(), "UTF-8");
 
-                    String callbackUrl = me.getProperty(WithingsDevice.OPTION_OAUTH_CALLBACK_URL);
+                    // String callbackUrl = me.getProperty(WithingsDevice.OPTION_OAUTH_CALLBACK_URL);
                     String apiKey = me.getProperty(WithingsDevice.OPTION_OAUTH_CONSUMER_KEY);
                     String apiSecret = me.getProperty(WithingsDevice.OPTION_OAUTH_CONSUMER_SECRET);
 
@@ -1251,16 +1261,19 @@ public class WithingsDevice extends Generator {
         t.start();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static String getGeneratorTitle(Context context) {
         return context.getString(R.string.generator_withings_device);
     }
 
+    @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
         TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(WithingsDevice.getGeneratorTitle(holder.itemView.getContext()));
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(final DataPointViewHolder holder) {
         final WithingsDevice withings = WithingsDevice.getInstance(holder.itemView.getContext());
 
@@ -1333,10 +1346,11 @@ public class WithingsDevice extends Generator {
         pager.setCurrentItem(withings.mPage);
     }
 
+    @SuppressWarnings("UnusedParameters")
     private static String bindInformationPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
-        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_info_page, null);
+        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_info_page, null);
         card.setTag("" + position);
 
         container.addView(card);
@@ -1347,7 +1361,7 @@ public class WithingsDevice extends Generator {
     private static String bindActivityPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
-        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_activity_page, null);
+        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_activity_page, null);
         card.setTag("" + position);
 
         long lastTimestamp = 0;
@@ -1365,9 +1379,7 @@ public class WithingsDevice extends Generator {
         Cursor c = generator.mDatabase.query(WithingsDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, WithingsDevice.HISTORY_OBSERVED + " DESC");
 
         if (c.moveToNext()) {
-            if (lastTimestamp == 0) {
-                lastTimestamp = c.getLong(c.getColumnIndex(WithingsDevice.HISTORY_OBSERVED));
-            }
+            lastTimestamp = c.getLong(c.getColumnIndex(WithingsDevice.HISTORY_OBSERVED));
 
             steps = c.getDouble(c.getColumnIndex(WithingsDevice.ACTIVITY_MEASURE_STEPS));
             distance = c.getDouble(c.getColumnIndex(WithingsDevice.ACTIVITY_MEASURE_DISTANCE));
@@ -1443,7 +1455,7 @@ public class WithingsDevice extends Generator {
             dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
 
             TextView stepsValue = (TextView) card.findViewById(R.id.field_steps);
-            stepsValue.setText(context.getString(R.string.generator_withings_steps_value, (int) steps));
+            stepsValue.setText(context.getResources().getQuantityString(R.plurals.generator_withings_steps_value, (int) steps, (int) steps));
 
             TextView distanceValue = (TextView) card.findViewById(R.id.field_distance);
             distanceValue.setText(context.getString(R.string.generator_withings_distance_value, (distance / 1000)));
@@ -1467,10 +1479,12 @@ public class WithingsDevice extends Generator {
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent) {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_withings_device, parent, false);
     }
 
+    @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
         long timestamp = 0;
 
@@ -1507,6 +1521,7 @@ public class WithingsDevice extends Generator {
         this.mProperties.put(key, value);
     }
 
+    @SuppressWarnings("UnusedParameters")
     private static String bindIntradayPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
@@ -1514,7 +1529,7 @@ public class WithingsDevice extends Generator {
 
         WithingsDevice withings = WithingsDevice.getInstance(context);
 
-        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_intraday_page, null);
+        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_intraday_page, null);
         card.setTag("" + position);
 
         LineChart stepsChart = (LineChart) card.findViewById(R.id.chart_steps);
@@ -1607,6 +1622,7 @@ public class WithingsDevice extends Generator {
         return "" + card.getTag();
     }
 
+    @SuppressWarnings("SameParameterValue")
     private static void populateIntradayChart(Context context, LineChart chart, ArrayList<Entry> values, long start, long end) {
         chart.getLegend().setEnabled(false);
         chart.getAxisRight().setEnabled(false);
@@ -1674,12 +1690,13 @@ public class WithingsDevice extends Generator {
         chart.setData(data);
     }
 
+    @SuppressLint("SetTextI18n")
     private static String bindBodyPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
         WithingsDevice withings = WithingsDevice.getInstance(holder.itemView.getContext());
 
-        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_body_page, null);
+        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_body_page, null);
         card.setTag("" + position);
 
         int[] labels = {
@@ -1721,16 +1738,18 @@ public class WithingsDevice extends Generator {
             }
         }
 
+        c.close();
+
         for (int i = 0; i < keys.size() && i < labels.length; i++) {
             String label = keys.get(i);
 
             TextView labelView = (TextView) card.findViewById(labels[i]);
-            labelView.setText(label.substring(0, 1).toUpperCase() + label.substring(1) + ":");
+            labelView.setText(label.substring(0, 1).toUpperCase(Locale.getDefault()) + label.substring(1) + ":");
 
             Double value = bodyValues.get(label);
 
             TextView valueView = (TextView) card.findViewById(values[i]);
-            valueView.setText(value.toString());
+            valueView.setText(String.format(Locale.getDefault(), "%f", value));
         }
 
         container.addView(card);
@@ -1738,10 +1757,11 @@ public class WithingsDevice extends Generator {
         return "" + card.getTag();
     }
 
+    @SuppressWarnings("UnusedParameters")
     private static String bindSleepPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
-        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_sleep_page, null);
+        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_sleep_page, null);
         card.setTag("" + position);
 
         container.addView(card);
@@ -1749,10 +1769,11 @@ public class WithingsDevice extends Generator {
         return "" + card.getTag();
     }
 
+    @SuppressWarnings("UnusedParameters")
     private static String bindSleepSummaryPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
-        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_sleep_summary_page, null);
+        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_sleep_summary_page, null);
         card.setTag("" + position);
 
         container.addView(card);
@@ -1760,10 +1781,11 @@ public class WithingsDevice extends Generator {
         return "" + card.getTag();
     }
 
+    @SuppressWarnings("UnusedParameters")
     private static String bindWorkoutsPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
-        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_workouts_page, null);
+        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_workouts_page, null);
         card.setTag("" + position);
 
         container.addView(card);
@@ -1777,7 +1799,7 @@ public class WithingsDevice extends Generator {
 
         e.putBoolean(WithingsDevice.ACTIVITY_MEASURES_ENABLED, enable);
 
-        e.commit();
+        e.apply();
     }
 
     public void enableBodyMeasures(boolean enable) {
@@ -1786,7 +1808,7 @@ public class WithingsDevice extends Generator {
 
         e.putBoolean(WithingsDevice.BODY_MEASURES_ENABLED, enable);
 
-        e.commit();
+        e.apply();
     }
 
     public void enableIntradayActivity(boolean enable) {
@@ -1795,7 +1817,7 @@ public class WithingsDevice extends Generator {
 
         e.putBoolean(WithingsDevice.INTRADAY_ACTIVITY_ENABLED, enable);
 
-        e.commit();
+        e.apply();
     }
 
     public void enableSleepMeasures(boolean enable) {
@@ -1804,7 +1826,7 @@ public class WithingsDevice extends Generator {
 
         e.putBoolean(WithingsDevice.SLEEP_MEASURES_ENABLED, enable);
 
-        e.commit();
+        e.apply();
     }
 
     public void enableSleepSummary(boolean enable) {
@@ -1813,7 +1835,7 @@ public class WithingsDevice extends Generator {
 
         e.putBoolean(WithingsDevice.SLEEP_SUMMARY_ENABLED, enable);
 
-        e.commit();
+        e.apply();
     }
 
     public void enableWorkouts(boolean enable) {
@@ -1822,7 +1844,7 @@ public class WithingsDevice extends Generator {
 
         e.putBoolean(WithingsDevice.WORKOUTS_ENABLED, enable);
 
-        e.commit();
+        e.apply();
     }
 
     public void enableServerFetch(boolean enable) {
@@ -1831,6 +1853,6 @@ public class WithingsDevice extends Generator {
 
         e.putBoolean(WithingsDevice.SERVER_FETCH_ENABLED, enable);
 
-        e.commit();
+        e.apply();
     }
 }

@@ -1,6 +1,7 @@
 package com.audacious_software.passive_data_kit.generators.communication;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -13,7 +14,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 import android.provider.CallLog;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -45,6 +45,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings("SimplifiableIfStatement")
+@SuppressLint("InlinedApi")
 public class PhoneCalls extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-phone-calls";
 
@@ -80,7 +82,7 @@ public class PhoneCalls extends Generator {
     private static final String CALL_PRESENTATION_PAYPHONE = "payphone";
     private static final String CALL_PRESENTATION_UNKNOWN = "unknown";
 
-    private static int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE_HISTORY = "history";
     private static final String HISTORY_OBSERVED = "observed";
@@ -108,10 +110,12 @@ public class PhoneCalls extends Generator {
     private SQLiteDatabase mDatabase = null;
     private long mSampleInterval = 60000;
 
+    @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return PhoneCalls.GENERATOR_IDENTIFIER;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static PhoneCalls getInstance(Context context) {
         if (PhoneCalls.sInstance == null) {
             PhoneCalls.sInstance = new PhoneCalls(context.getApplicationContext());
@@ -120,12 +124,14 @@ public class PhoneCalls extends Generator {
         return PhoneCalls.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public PhoneCalls(Context context) {
         super(context);
 
         this.mContext = context.getApplicationContext();
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         PhoneCalls.getInstance(context).startGenerator();
     }
@@ -351,12 +357,14 @@ public class PhoneCalls extends Generator {
         Generators.getInstance(this.mContext).registerCustomViewClass(PhoneCalls.GENERATOR_IDENTIFIER, PhoneCalls.class);
     }
 
+    @SuppressWarnings("unused")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(PhoneCalls.ENABLED, PhoneCalls.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static boolean isRunning(Context context) {
         if (PhoneCalls.sInstance == null) {
             return false;
@@ -365,6 +373,7 @@ public class PhoneCalls extends Generator {
         return PhoneCalls.sInstance.mHandler != null;
     }
 
+    @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(final Context context) {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
@@ -395,10 +404,9 @@ public class PhoneCalls extends Generator {
         return actions;
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder) {
-       final Context context = holder.itemView.getContext();
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        final Context context = holder.itemView.getContext();
 
         long lastTimestamp = 0;
         long lastDuration = 0;
@@ -428,7 +436,7 @@ public class PhoneCalls extends Generator {
             } else if (PhoneCalls.CALL_TYPE_OUTGOING.equals(type)) {
                 totalOutgoing += 1;
             } else if (PhoneCalls.CALL_TYPE_MISSED.equals(type)) {
-                totalOutgoing += 1;
+                totalMissed += 1;
             }
 
             if (callType == null) {
@@ -527,11 +535,13 @@ public class PhoneCalls extends Generator {
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_phone_calls, parent, false);
     }
 
+    @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
         long timestamp = 0;
 

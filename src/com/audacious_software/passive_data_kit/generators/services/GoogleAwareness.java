@@ -11,7 +11,6 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 
 import com.audacious_software.passive_data_kit.activities.generators.RequestPermissionActivity;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
@@ -27,9 +26,7 @@ import com.google.android.gms.common.api.ResultCallback;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by cjkarr on 6/28/2016.
- */
+@SuppressWarnings("SimplifiableIfStatement")
 public class GoogleAwareness extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
     private static final String GENERATOR_IDENTIFIER = "google-awareness";
 
@@ -41,6 +38,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
     private GoogleApiClient mGoogleApiClient = null;
     private Handler mSensingHandler = null;
 
+    @SuppressWarnings("WeakerAccess")
     public static GoogleAwareness getInstance(Context context) {
         if (GoogleAwareness.sInstance == null) {
             GoogleAwareness.sInstance = new GoogleAwareness(context.getApplicationContext());
@@ -49,10 +47,12 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
         return GoogleAwareness.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public GoogleAwareness(Context context) {
         super(context);
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         GoogleAwareness.getInstance(context).startGenerator();
     }
@@ -65,7 +65,6 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
             @Override
             public void run() {
-                Log.e("PDK", "GA MAKE CLIENT");
                 if (me.mGoogleApiClient == null) {
                     GoogleApiClient.Builder builder = new GoogleApiClient.Builder(me.mContext);
                     builder.addConnectionCallbacks(me);
@@ -74,7 +73,6 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
                     me.mGoogleApiClient = builder.build();
                     me.mGoogleApiClient.connect();
-                    Log.e("PDK", "GA MADE CLIENT");
                 }
             }
         };
@@ -85,6 +83,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
         Generators.getInstance(this.mContext).registerCustomViewClass(GoogleAwareness.GENERATOR_IDENTIFIER, GoogleAwareness.class);
     }
 
+    @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(Context context)
     {
         return GoogleAwareness.getInstance(context).runDiagostics();
@@ -97,9 +96,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
         final Handler handler = new Handler(Looper.getMainLooper());
 
-        Log.e("PDK", "1");
         if (GoogleAwareness.isEnabled(this.mContext)) {
-            Log.e("PDK", "2");
             int permissionCheck = ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION);
 
             if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
@@ -121,12 +118,9 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
                 }));
             }
 
-            Log.e("PDK", "3");
-
             permissionCheck = ContextCompat.checkSelfPermission(this.mContext, "com.google.android.gms.permission.ACTIVITY_RECOGNITION");
 
             if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-                Log.e("PDK", "3.3");
                 actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_activity_recognition_permission_title), me.mContext.getString(R.string.diagnostic_missing_activity_recognition_permission), new Runnable() {
                     @Override
                     public void run() {
@@ -143,18 +137,13 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
                         });
                     }
                 }));
-                Log.e("PDK", "3.7");
             }
-
-
-            Log.e("PDK", "4");
         }
-
-        Log.e("PDK", "5 " + actions.size());
 
         return actions;
     }
 
+    @SuppressWarnings("unused")
     public static boolean isRunning(Context context) {
         if (GoogleAwareness.sInstance == null) {
             return false;
@@ -163,6 +152,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
         return (GoogleAwareness.sInstance.mGoogleApiClient != null);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
@@ -171,24 +161,18 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Log.e("PDK", "GA onConnected");
-
         final GoogleAwareness me = this;
 
         Runnable r = new Runnable() {
 
             @Override
             public void run() {
-                Log.e("PDK", "GA GET ACTIVITY");
                 Awareness.SnapshotApi.getHeadphoneState(mGoogleApiClient).setResultCallback(new ResultCallback<HeadphoneStateResult>() {
                     @Override
                     public void onResult(@NonNull HeadphoneStateResult headphoneStateResult) {
                         if (!headphoneStateResult.getStatus().isSuccess()) {
-                            Log.e("PDK", "Could not get the current headphone state.");
-                            return;
+                            // return;
                         }
-
-                        Log.i("PDK", "HEAD: " + headphoneStateResult.getHeadphoneState());
                     }
                 });
 
@@ -204,7 +188,6 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
     @Override
     public void onConnectionSuspended(int i) {
-        Log.e("PDK", "GA onConnectionSuspended");
         if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected()) {
             this.mGoogleApiClient.disconnect();
         }
@@ -214,7 +197,6 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.e("PDK", "GA onConnectionFailed");
         this.mGoogleApiClient = null;
     }
 

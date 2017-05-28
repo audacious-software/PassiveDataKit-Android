@@ -15,11 +15,13 @@ import com.audacious_software.passive_data_kit.activities.generators.DataPointsA
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
 
+@SuppressWarnings("PointlessBooleanExpression")
 public class DataStreamActivity extends AppCompatActivity implements Generators.GeneratorUpdatedListener {
     private DataPointsAdapter mAdapter = null;
     private Menu mMenu = null;
     private boolean mIsUpdating = false;
 
+    @SuppressWarnings("ConstantConditions")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.layout_data_stream_pdk);
@@ -51,6 +53,7 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
         final DataStreamActivity me = this;
 
         mainHandler.post(new Runnable() {
+            @SuppressWarnings("ConstantConditions")
             @Override
             public void run() {
                 me.getSupportActionBar().setSubtitle(me.getResources().getQuantityString(R.plurals.activity_data_stream_subtitle, count, count));
@@ -75,6 +78,7 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
         me.mIsUpdating = true;
 
         this.runOnUiThread(new Runnable() {
+            @SuppressWarnings("ConstantConditions")
             @Override
             public void run() {
                 me.mAdapter.sortGenerators(false);

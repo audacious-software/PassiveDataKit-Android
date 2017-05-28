@@ -1,6 +1,7 @@
 package com.audacious_software.passive_data_kit.generators.device;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
@@ -20,6 +21,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
@@ -72,7 +74,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-@SuppressWarnings("unused")
 public class Location extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-location";
     private static final String DATABASE_PATH = "pdk-location.sqlite";
@@ -95,12 +96,12 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final String SETTING_DISPLAY_HYBRID_MAP = "com.audacious_software.passive_data_kit.generators.device.Location.SETTING_DISPLAY_HYBRID_MAP";
     private static final boolean SETTING_DISPLAY_HYBRID_MAP_DEFAULT = true;
 
-    private static String ACCURACY_MODE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE";
+    private static final String ACCURACY_MODE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE";
 
-    private static int ACCURACY_BEST = 0;
-    private static int ACCURACY_RANDOMIZED = 1;
-    private static int ACCURACY_USER = 2;
-    private static int ACCURACY_DISABLED = 3;
+    private static final int ACCURACY_BEST = 0;
+    private static final int ACCURACY_RANDOMIZED = 1;
+    private static final int ACCURACY_USER = 2;
+    private static final int ACCURACY_DISABLED = 3;
 
     private static final String ACCURACY_MODE_RANDOMIZED_RANGE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_RANDOMIZED_RANGE";
     private static final long ACCURACY_MODE_RANDOMIZED_RANGE_DEFAULT = 100;
@@ -116,19 +117,20 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private long mUpdateInterval = 60000;
 
     private SQLiteDatabase mDatabase = null;
-    private static int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 1;
 
     private static final String TABLE_HISTORY = "history";
-    public static final String HISTORY_OBSERVED = "observed";
-    public static final String HISTORY_LATITUDE = "latitude";
-    public static final String HISTORY_LONGITUDE = "longitude";
-    public static final String HISTORY_ALTITUDE = "altitude";
-    public static final String HISTORY_BEARING = "bearing";
-    public static final String HISTORY_SPEED = "speed";
-    public static final String HISTORY_PROVIDER = "provider";
-    public static final String HISTORY_LOCATION_TIMESTAMP = "location_timestamp";
-    public static final String HISTORY_ACCURACY = "accuracy";
+    private static final String HISTORY_OBSERVED = "observed";
+    private static final String HISTORY_LATITUDE = "latitude";
+    private static final String HISTORY_LONGITUDE = "longitude";
+    private static final String HISTORY_ALTITUDE = "altitude";
+    private static final String HISTORY_BEARING = "bearing";
+    private static final String HISTORY_SPEED = "speed";
+    private static final String HISTORY_PROVIDER = "provider";
+    private static final String HISTORY_LOCATION_TIMESTAMP = "location_timestamp";
+    private static final String HISTORY_ACCURACY = "accuracy";
 
+    @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return Location.GENERATOR_IDENTIFIER;
     }
@@ -141,10 +143,11 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return Location.sInstance;
     }
 
-    public Location(Context context) {
+    private Location(Context context) {
         super(context);
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         Location.getInstance(context).startGenerator();
     }
@@ -213,22 +216,26 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         this.mDatabase = null;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean useGoogleLocationServices(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(Location.USE_GOOGLE_SERVICES, Location.USE_GOOGLE_SERVICES_DEFAULT);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean useKindleLocationServices() {
         return DeviceInformation.isKindleFire();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(Location.ENABLED, Location.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"Contract", "WeakerAccess"})
     public static boolean isRunning(Context context) {
         if (Location.sInstance == null) {
             return false;
@@ -250,6 +257,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
     }
 
+    @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(Context context)
     {
         return Location.getInstance(context).runDiagostics();
@@ -311,16 +319,15 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         this.mGoogleApiClient = null;
     }
 
+    @SuppressLint("TrulyRandom")
     @Override
     public void onLocationChanged(android.location.Location location) {
         if (location == null)
             return;
-
-        long now = System.currentTimeMillis();
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         int selected = prefs.getInt(Location.ACCURACY_MODE, Location.ACCURACY_BEST);
@@ -398,6 +405,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         Generators.getInstance(this.mContext).notifyGeneratorUpdated(Location.GENERATOR_IDENTIFIER, updated);
     }
 
+    @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
         long timestamp = 0;
 
@@ -414,6 +422,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return timestamp;
     }
 
+    @SuppressWarnings({"UnusedAssignment", "unused"})
     public static void bindViewHolder(DataPointViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
@@ -449,9 +458,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         } else {
             dateLabel.setText(R.string.label_never_pdk);
         }
-
-        final double finalLatitude = lastLatitude;
-        final double finalLongitude = lastLongitude;
 
         final DisplayMetrics metrics = new DisplayMetrics();
         ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
@@ -550,8 +556,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                         }
                     }
 
-                    DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-
                     for (LatLng latLng : locations) {
                         googleMap.addMarker(new MarkerOptions()
                                 .position(latLng)
@@ -571,9 +575,10 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     @Override
     public List<Bundle> fetchPayloads() {
-        return new ArrayList<Bundle>();
+        return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         if (Location.useKindleLocationServices())
@@ -592,10 +597,12 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static String getGeneratorTitle(Context context) {
         return context.getString(R.string.generator_location);
     }
 
+    @SuppressWarnings("unused")
     public static List<DataDisclosureDetailActivity.Action> getDisclosureActions(final Context context) {
         List<DataDisclosureDetailActivity.Action> actions = new ArrayList<>();
 
@@ -620,7 +627,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         final ListView listView = new ListView(context);
 
         final ArrayAdapter<Integer> accuracyAdapter = new ArrayAdapter<Integer>(context, R.layout.row_disclosure_location_accuracy_pdk, options) {
-            public View getView (final int position, View convertView, ViewGroup parent) {
+            @NonNull
+            @SuppressLint("InflateParams")
+            public View getView (final int position, View convertView, @NonNull ViewGroup parent) {
                 if (convertView == null) {
                     convertView = LayoutInflater.from(context).inflate(R.layout.row_disclosure_location_accuracy_pdk, null);
                 }
@@ -661,6 +670,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                 final ArrayAdapter<Integer> meAdapter = this;
 
                 checked.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @SuppressLint("SetTextI18n")
                     @Override
                     public void onCheckedChanged(final CompoundButton compoundButton, final boolean checked) {
                         final CompoundButton.OnCheckedChangeListener me = this;
@@ -686,7 +696,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                             AlertDialog.Builder builder = new AlertDialog.Builder(context);
                             builder.setTitle(R.string.title_location_accuracy_randomized);
 
-                            View body = LayoutInflater.from(context).inflate(R.layout.dialog_location_randomized, null);
+                            @SuppressLint("InflateParams") View body = LayoutInflater.from(context).inflate(R.layout.dialog_location_randomized, null);
                             builder.setView(body);
 
                             final EditText rangeField = (EditText) body.findViewById(R.id.random_range);
@@ -716,7 +726,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                             AlertDialog.Builder builder = new AlertDialog.Builder(context);
                             builder.setTitle(R.string.title_location_accuracy_user);
 
-                            View body = LayoutInflater.from(context).inflate(R.layout.dialog_location_user, null);
+                            @SuppressLint("InflateParams") View body = LayoutInflater.from(context).inflate(R.layout.dialog_location_user, null);
                             builder.setView(body);
 
                             final EditText locationField = (EditText) body.findViewById(R.id.user_location);
@@ -794,6 +804,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return actions;
     }
 
+    @SuppressWarnings("unused")
     public static View getDisclosureDataView(final GeneratorViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
@@ -827,6 +838,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             final Bitmap bitmap = iconGen.makeIcon();
 
             mapView.getMapAsync(new OnMapReadyCallback() {
+                @SuppressWarnings("UnusedAssignment")
                 public void onMapReady(GoogleMap googleMap) {
                     if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -848,7 +860,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
                     double lastLatitude = 0.0;
                     double lastLongitude = 0.0;
-                    long timestamp = 0;
 
                     final List<LatLng> locations = new ArrayList<>();
 
@@ -900,16 +911,15 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
     }
 
+    @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        Class currentClass = new Object() { }.getClass().getEnclosingClass();
-
-        String identifier = currentClass.getCanonicalName();
-
         TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(Location.getGeneratorTitle(holder.itemView.getContext()));
     }
 
+    @SuppressWarnings("unused")
+    @SuppressLint("TrulyRandom")
     public android.location.Location getLastKnownLocation() {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         int selected = prefs.getInt(Location.ACCURACY_MODE, Location.ACCURACY_BEST);
@@ -964,7 +974,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             }
         }
 
-        if (selected == Location.ACCURACY_RANDOMIZED) {
+        if (last != null && selected == Location.ACCURACY_RANDOMIZED) {
             // http://gis.stackexchange.com/a/68275/10230
 
             double latitude = last.getLatitude();
