@@ -21,6 +21,7 @@ import com.audacious_software.pdk.passivedatakit.R;
 import java.util.ArrayList;
 
 public class DiagnosticsActivity extends AppCompatActivity {
+    @SuppressWarnings("SameParameterValue")
     @SuppressLint("AlwaysShowAction")
     public static void setUpDiagnositicsItem(Activity activity, Menu menu, boolean showAction) {
         final ArrayList<DiagnosticAction> actions = PassiveDataKit.diagnostics(activity);

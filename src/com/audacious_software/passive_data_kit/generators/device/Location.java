@@ -1005,6 +1005,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return last;
     }
 
+    @SuppressWarnings("SameParameterValue")
     public void setUpdateInterval(long interval) {
         this.mUpdateInterval = interval;
 

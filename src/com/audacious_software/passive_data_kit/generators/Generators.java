@@ -227,6 +227,7 @@ public class Generators {
         return active;
     }
 
+    @SuppressWarnings("SameParameterValue")
     public void notifyGeneratorUpdated(String identifier, long timestamp, Bundle bundle) {
         for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
             listener.onGeneratorUpdated(identifier, timestamp, bundle);
