@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.generators.diagnostics;
 
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -43,6 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @SuppressWarnings("SimplifiableIfStatement")
+@SuppressLint("NewApi")
 public class SystemStatus extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-system-status";
 

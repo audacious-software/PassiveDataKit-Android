@@ -4,7 +4,7 @@ import android.content.Context;
 
 import java.util.HashMap;
 
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class Transmitter {
     @SuppressWarnings("unused")
     public abstract void initialize(Context context, HashMap<String, String> options);

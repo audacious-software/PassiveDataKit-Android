@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class Generators {
     private Context mContext = null;
     private boolean mStarted = false;

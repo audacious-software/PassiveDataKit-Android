@@ -20,6 +20,7 @@ import com.audacious_software.pdk.passivedatakit.R;
 
 import java.util.ArrayList;
 
+@SuppressWarnings("unused")
 public class DiagnosticsActivity extends AppCompatActivity {
     @SuppressWarnings("SameParameterValue")
     @SuppressLint("AlwaysShowAction")

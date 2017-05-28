@@ -51,7 +51,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-@SuppressWarnings("PointlessBooleanExpression")
+@SuppressWarnings({"PointlessBooleanExpression", "unused"})
 public class HttpTransmitter extends Transmitter implements Generators.GeneratorUpdatedListener {
     public static final String UPLOAD_URI = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.UPLOAD_URI";
     public static final String USER_ID = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.USER_ID";
@@ -686,6 +686,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         this.mUserId = userId;
     }
 
+    @SuppressWarnings("unused")
     public static class IncompleteConfigurationException extends RuntimeException {
         public IncompleteConfigurationException(String message) {
             super(message);

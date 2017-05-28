@@ -120,8 +120,11 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final int DATABASE_VERSION = 1;
 
     private static final String TABLE_HISTORY = "history";
+    @SuppressWarnings("WeakerAccess")
     public static final String HISTORY_OBSERVED = "observed";
+    @SuppressWarnings("WeakerAccess")
     public static final String HISTORY_LATITUDE = "latitude";
+    @SuppressWarnings("WeakerAccess")
     public static final String HISTORY_LONGITUDE = "longitude";
     private static final String HISTORY_ALTITUDE = "altitude";
     private static final String HISTORY_BEARING = "bearing";
@@ -1005,7 +1008,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return last;
     }
 
-    @SuppressWarnings("SameParameterValue")
+    @SuppressWarnings({"SameParameterValue", "unused"})
     public void setUpdateInterval(long interval) {
         this.mUpdateInterval = interval;
 
