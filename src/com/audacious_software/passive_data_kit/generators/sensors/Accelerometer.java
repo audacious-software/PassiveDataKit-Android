@@ -111,6 +111,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         return Accelerometer.GENERATOR_IDENTIFIER;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static Accelerometer getInstance(Context context) {
         if (Accelerometer.sInstance == null) {
             Accelerometer.sInstance = new Accelerometer(context.getApplicationContext());
@@ -140,6 +141,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         this.startGenerator();
     }
 
+    @SuppressWarnings("unused")
     public void setRefreshInterval(long interval) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -151,6 +153,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         this.startGenerator();
     }
 
+    @SuppressWarnings("unused")
     public void setRefreshDuration(long duration) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();

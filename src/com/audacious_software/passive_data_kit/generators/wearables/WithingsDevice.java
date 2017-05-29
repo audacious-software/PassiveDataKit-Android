@@ -211,8 +211,11 @@ public class WithingsDevice extends Generator {
     private static final String SERVER_FETCH_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.SERVER_FETCH_ENABLED";
     private static final boolean SERVER_FETCH_ENABLED_DEFAULT = false;
 
+    @SuppressWarnings("WeakerAccess")
     public static final String OPTION_OAUTH_CALLBACK_URL = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.OPTION_CALLBACK_URL";
+    @SuppressWarnings("WeakerAccess")
     public static final String OPTION_OAUTH_CONSUMER_KEY = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.OPTION_OAUTH_CONSUMER_KEY";
+    @SuppressWarnings("WeakerAccess")
     public static final String OPTION_OAUTH_CONSUMER_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.OPTION_OAUTH_CONSUMER_SECRET";
     private static final String OPTION_OAUTH_ACCESS_TOKEN = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.OPTION_OAUTH_ACCESS_TOKEN";
     private static final String OPTION_OAUTH_ACCESS_TOKEN_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.OPTION_OAUTH_ACCESS_TOKEN_SECRET";
@@ -1501,6 +1504,7 @@ public class WithingsDevice extends Generator {
         return timestamp;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public void setProperty(String key, String value) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
@@ -1793,6 +1797,7 @@ public class WithingsDevice extends Generator {
         return "" + card.getTag();
     }
 
+    @SuppressWarnings("unused")
     public void enableActivityMeasures(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1802,6 +1807,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableBodyMeasures(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1811,6 +1817,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableIntradayActivity(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1820,6 +1827,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableSleepMeasures(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1829,6 +1837,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableSleepSummary(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1838,6 +1847,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableWorkouts(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1847,6 +1857,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void enableServerFetch(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();

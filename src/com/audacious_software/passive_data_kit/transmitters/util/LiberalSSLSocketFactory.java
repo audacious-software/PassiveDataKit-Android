@@ -17,6 +17,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+@SuppressWarnings("unused")
 public class LiberalSSLSocketFactory extends SSLSocketFactory
 {
     private final SSLContext sslContext = SSLContext.getInstance("TLS");

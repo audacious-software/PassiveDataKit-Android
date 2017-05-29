@@ -11,6 +11,7 @@ import java.util.Map;
 public class Logger {
     private Context mContext = null;
 
+    @SuppressWarnings("SameParameterValue")
     public void log(String event, Map<String, ?> details) {
         if (details == null) {
             details = new HashMap<>();

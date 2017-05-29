@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -59,6 +60,7 @@ public class DeviceInformation {
         return DeviceInformation.sWifiAvailable;
     }
 
+    @SuppressLint("InlinedApi")
     @SuppressWarnings("ConstantConditions")
     public static boolean isPluggedIn(Context context) {
         Intent intent = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
