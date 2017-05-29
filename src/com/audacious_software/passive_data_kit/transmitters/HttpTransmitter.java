@@ -395,32 +395,34 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             return;
         }
 
-        final File pendingFolder = this.getPendingFolder();
+        synchronized (this) {
+            final File pendingFolder = this.getPendingFolder();
 
-        this.mJsonGenerator.writeEndArray();
-        this.mJsonGenerator.flush();
-        this.mJsonGenerator.close();
+            this.mJsonGenerator.writeEndArray();
+            this.mJsonGenerator.flush();
+            this.mJsonGenerator.close();
 
-        String finalFile = tempFile.getAbsolutePath().replace(HttpTransmitter.TEMP_EXTENSION, HttpTransmitter.JSON_EXTENSION);
+            String finalFile = tempFile.getAbsolutePath().replace(HttpTransmitter.TEMP_EXTENSION, HttpTransmitter.JSON_EXTENSION);
 
-        this.mCurrentFile = null;
-        this.mJsonGenerator = null;
+            this.mCurrentFile = null;
+            this.mJsonGenerator = null;
 
-        FileUtils.moveFile(tempFile, new File(finalFile));
+            FileUtils.moveFile(tempFile, new File(finalFile));
 
-        String[] filenames = pendingFolder.list(new FilenameFilter() {
-            public boolean accept(File dir, String filename) {
-                return filename.endsWith(HttpTransmitter.TEMP_EXTENSION);
+            String[] filenames = pendingFolder.list(new FilenameFilter() {
+                public boolean accept(File dir, String filename) {
+                    return filename.endsWith(HttpTransmitter.TEMP_EXTENSION);
+                }
+            });
+
+            if (filenames == null) {
+                filenames = new String[0];
             }
-        });
 
-        if (filenames == null) {
-            filenames = new String[0];
-        }
-
-        for (String filename : filenames) {
-            File toDelete = new File(pendingFolder, filename);
-            toDelete.delete();
+            for (String filename : filenames) {
+                File toDelete = new File(pendingFolder, filename);
+                toDelete.delete();
+            }
         }
     }
 
@@ -518,19 +520,21 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             metadata.putString(Generator.SOURCE, this.mUserId);
             data.putBundle(Generator.PDK_METADATA, metadata);
 
-            if (this.mJsonGenerator == null) {
-                this.mCurrentFile = new File(this.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
+            synchronized (this) {
+                if (this.mJsonGenerator == null) {
+                    this.mCurrentFile = new File(this.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
 
-                try {
-                    JsonFactory factory = new JsonFactory();
-                    this.mJsonGenerator = factory.createGenerator(this.mCurrentFile, JsonEncoding.UTF8);
-                    this.mJsonGenerator.writeStartArray();
-                } catch (IOException e) {
-                    Logger.getInstance(this.mContext).logThrowable(e);
+                    try {
+                        JsonFactory factory = new JsonFactory();
+                        this.mJsonGenerator = factory.createGenerator(this.mCurrentFile, JsonEncoding.UTF8);
+                        this.mJsonGenerator.writeStartArray();
+                    } catch (IOException e) {
+                        Logger.getInstance(this.mContext).logThrowable(e);
+                    }
                 }
-            }
 
-            HttpTransmitter.writeBundle(this.mContext, this.mJsonGenerator, data);
+                HttpTransmitter.writeBundle(this.mContext, this.mJsonGenerator, data);
+            }
         }
     }
 
