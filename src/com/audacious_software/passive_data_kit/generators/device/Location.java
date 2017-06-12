@@ -98,10 +98,10 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     private static final String ACCURACY_MODE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE";
 
-    private static final int ACCURACY_BEST = 0;
-    private static final int ACCURACY_RANDOMIZED = 1;
-    private static final int ACCURACY_USER = 2;
-    private static final int ACCURACY_DISABLED = 3;
+    public static final int ACCURACY_BEST = 0;
+    public static final int ACCURACY_RANDOMIZED = 1;
+    public static final int ACCURACY_USER = 2;
+    public static final int ACCURACY_DISABLED = 3;
 
     private static final String ACCURACY_MODE_RANDOMIZED_RANGE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_RANDOMIZED_RANGE";
     private static final long ACCURACY_MODE_RANDOMIZED_RANGE_DEFAULT = 100;
@@ -1020,5 +1020,23 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
         return this.mDatabase.query(Location.TABLE_HISTORY, cols, where, args, null, null, orderBy);
+    }
+
+    public void setAccuracyMode(int accuracyMode) {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putInt(Location.ACCURACY_MODE, accuracyMode);
+
+        e.apply();
+    }
+
+    public void setRandomizationRange(long meters) {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(Location.ACCURACY_MODE_RANDOMIZED_RANGE, meters);
+
+        e.apply();
     }
 }

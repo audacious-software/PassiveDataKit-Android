@@ -93,6 +93,22 @@ public class Battery extends Generator {
     private long mCleanupInterval = (24 * 60 * 60 * 1000);
     private long mLastCleanup = 0;
 
+    private boolean mMonitorsVoltage = false;
+    private boolean mMonitorsHealth = false;
+    private boolean mMonitorsPlugged = false;
+    private boolean mMonitorsTemperature= false;
+
+    private long mMinUpdateInterval = (5 * 60 * 1000);
+
+    private int mLastLevel = -1;
+    private int mLastStatus = BatteryManager.BATTERY_STATUS_UNKNOWN;
+
+    private int mLastHealth = BatteryManager.BATTERY_HEALTH_UNKNOWN;
+    private int mLastPlugged = -1;
+    private int mLastVoltage = -1;
+    private int mLastTemperature = -1;
+    public long mLastUpdate = 0;
+
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return Battery.GENERATOR_IDENTIFIER;
@@ -121,6 +137,7 @@ public class Battery extends Generator {
         final Battery me = this;
 
         this.mReceiver = new BroadcastReceiver() {
+
             @Override
             public void onReceive(final Context context, Intent intent) {
                 if (me.mDatabase == null) {
@@ -133,116 +150,168 @@ public class Battery extends Generator {
 
                 me.mLastTimestamp = now;
 
-                ContentValues values = new ContentValues();
-                values.put(Battery.HISTORY_OBSERVED, now);
+                boolean emitUpdate = false;
 
-                Bundle update = new Bundle();
-                update.putLong(Battery.HISTORY_OBSERVED, now);
+                int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
 
-                switch (intent.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN)) {
-                    case BatteryManager.BATTERY_HEALTH_COLD:
-                        values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_COLD);
-                        update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_COLD);
-                        break;
-                    case BatteryManager.BATTERY_HEALTH_DEAD:
-                        values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_DEAD);
-                        update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_DEAD);
-                        break;
-                    case BatteryManager.BATTERY_HEALTH_GOOD:
-                        values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_GOOD);
-                        update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_GOOD);
-                        break;
-                    case BatteryManager.BATTERY_HEALTH_OVERHEAT:
-                        values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_OVERHEAT);
-                        update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_OVERHEAT);
-                        break;
-                    case BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE:
-                        values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_OVER_VOLTAGE);
-                        update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_OVER_VOLTAGE);
-                        break;
-                    case BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE:
-                        values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_UNSPECIFIED_FAILURE);
-                        update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_UNSPECIFIED_FAILURE);
-                        break;
-                    default:
-                        values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_UNKNOWN);
-                        update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_UNKNOWN);
-                        break;
+                if (level != me.mLastLevel) {
+                    emitUpdate = true;
                 }
 
-                switch (intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)) {
-                    case BatteryManager.BATTERY_PLUGGED_AC:
-                        values.put(Battery.HISTORY_PLUGGED, Battery.PLUGGED_AC);
-                        update.putString(Battery.HISTORY_PLUGGED, Battery.PLUGGED_AC);
-                        break;
-                    case BatteryManager.BATTERY_PLUGGED_USB:
-                        values.put(Battery.HISTORY_PLUGGED, Battery.PLUGGED_USB);
-                        update.putString(Battery.HISTORY_PLUGGED, Battery.PLUGGED_USB);
-                        break;
-                    case BatteryManager.BATTERY_PLUGGED_WIRELESS:
-                        values.put(Battery.HISTORY_PLUGGED, Battery.PLUGGED_WIRELESS);
-                        update.putString(Battery.HISTORY_PLUGGED, Battery.PLUGGED_WIRELESS);
-                        break;
-                    default:
-                        values.put(Battery.HISTORY_PLUGGED, Battery.PLUGGED_UNKNOWN);
-                        update.putString(Battery.HISTORY_PLUGGED, Battery.PLUGGED_UNKNOWN);
-                        break;
+                int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN);
+
+                if (status != me.mLastStatus) {
+                    emitUpdate = true;
                 }
 
-                switch (intent.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN)) {
-                    case BatteryManager.BATTERY_STATUS_CHARGING:
-                        values.put(Battery.HISTORY_STATUS, Battery.STATUS_CHARGING);
-                        update.putString(Battery.HISTORY_STATUS, Battery.STATUS_CHARGING);
-                        break;
-                    case BatteryManager.BATTERY_STATUS_DISCHARGING:
-                        values.put(Battery.HISTORY_STATUS, Battery.STATUS_DISCHARGING);
-                        update.putString(Battery.HISTORY_STATUS, Battery.STATUS_DISCHARGING);
-                        break;
-                    case BatteryManager.BATTERY_STATUS_FULL:
-                        values.put(Battery.HISTORY_STATUS, Battery.STATUS_FULL);
-                        update.putString(Battery.HISTORY_STATUS, Battery.STATUS_FULL);
-                        break;
-                    case BatteryManager.BATTERY_STATUS_NOT_CHARGING:
-                        values.put(Battery.HISTORY_STATUS, Battery.STATUS_NOT_CHARGING);
-                        update.putString(Battery.HISTORY_STATUS, Battery.STATUS_NOT_CHARGING);
-                        break;
-                    default:
-                        values.put(Battery.HISTORY_STATUS, Battery.STATUS_UNKNOWN);
-                        update.putString(Battery.HISTORY_STATUS, Battery.STATUS_UNKNOWN);
-                        break;
+                if (now - me.mLastUpdate > me.mMinUpdateInterval) {
+                    emitUpdate = true;
                 }
 
-                values.put(Battery.HISTORY_PRESENT, intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false));
-                update.putBoolean(Battery.HISTORY_PRESENT, intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false));
+                int health = intent.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN);
 
-                values.put(Battery.HISTORY_LEVEL, intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1));
-                update.putInt(Battery.HISTORY_LEVEL, intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1));
+                if (me.mMonitorsHealth && health != me.mLastHealth) {
+                    emitUpdate = true;
+                }
 
-                values.put(Battery.HISTORY_SCALE, intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1));
-                update.putInt(Battery.HISTORY_SCALE, intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1));
+                int plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
 
-                values.put(Battery.HISTORY_TEMPERATURE, intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1));
-                update.putInt(Battery.HISTORY_TEMPERATURE, intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1));
+                if (me.mMonitorsPlugged && plugged != me.mLastPlugged) {
+                    emitUpdate = true;
+                }
 
-                values.put(Battery.HISTORY_VOLTAGE, intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1));
-                update.putInt(Battery.HISTORY_VOLTAGE, intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1));
+                int voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);
 
-                values.put(Battery.HISTORY_TECHNOLOGY, Battery.TECHNOLOGY_UNKNOWN);
-                update.putString(Battery.HISTORY_TECHNOLOGY, Battery.TECHNOLOGY_UNKNOWN);
+                if (me.mMonitorsVoltage && voltage != me.mLastVoltage) {
+                    emitUpdate = true;
+                }
 
-                me.mDatabase.insert(Battery.TABLE_HISTORY, null, values);
+                int temperature = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1);
 
-                Generators.getInstance(context).notifyGeneratorUpdated(Battery.GENERATOR_IDENTIFIER, update);
+                if (me.mMonitorsTemperature && temperature != me.mLastTemperature) {
+                    emitUpdate = true;
+                }
 
-                if (now - me.mLastCleanup > me.mCleanupInterval) {
-                    me.mLastCleanup = now;
+                if (emitUpdate) {
+                    ContentValues values = new ContentValues();
+                    values.put(Battery.HISTORY_OBSERVED, now);
 
-                    long start = now - (24 * 60 * 60 * 1000);
+                    Bundle update = new Bundle();
+                    update.putLong(Battery.HISTORY_OBSERVED, now);
 
-                    String where = Battery.HISTORY_OBSERVED + " < ?";
-                    String[] args = { "" + start };
+                    switch (health) {
+                        case BatteryManager.BATTERY_HEALTH_COLD:
+                            values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_COLD);
+                            update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_COLD);
+                            break;
+                        case BatteryManager.BATTERY_HEALTH_DEAD:
+                            values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_DEAD);
+                            update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_DEAD);
+                            break;
+                        case BatteryManager.BATTERY_HEALTH_GOOD:
+                            values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_GOOD);
+                            update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_GOOD);
+                            break;
+                        case BatteryManager.BATTERY_HEALTH_OVERHEAT:
+                            values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_OVERHEAT);
+                            update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_OVERHEAT);
+                            break;
+                        case BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE:
+                            values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_OVER_VOLTAGE);
+                            update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_OVER_VOLTAGE);
+                            break;
+                        case BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE:
+                            values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_UNSPECIFIED_FAILURE);
+                            update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_UNSPECIFIED_FAILURE);
+                            break;
+                        default:
+                            values.put(Battery.HISTORY_HEALTH, Battery.HEALTH_UNKNOWN);
+                            update.putString(Battery.HISTORY_HEALTH, Battery.HEALTH_UNKNOWN);
+                            break;
+                    }
 
-                    me.mDatabase.delete(Battery.TABLE_HISTORY, where, args);
+                    switch (plugged) {
+                        case BatteryManager.BATTERY_PLUGGED_AC:
+                            values.put(Battery.HISTORY_PLUGGED, Battery.PLUGGED_AC);
+                            update.putString(Battery.HISTORY_PLUGGED, Battery.PLUGGED_AC);
+                            break;
+                        case BatteryManager.BATTERY_PLUGGED_USB:
+                            values.put(Battery.HISTORY_PLUGGED, Battery.PLUGGED_USB);
+                            update.putString(Battery.HISTORY_PLUGGED, Battery.PLUGGED_USB);
+                            break;
+                        case BatteryManager.BATTERY_PLUGGED_WIRELESS:
+                            values.put(Battery.HISTORY_PLUGGED, Battery.PLUGGED_WIRELESS);
+                            update.putString(Battery.HISTORY_PLUGGED, Battery.PLUGGED_WIRELESS);
+                            break;
+                        default:
+                            values.put(Battery.HISTORY_PLUGGED, Battery.PLUGGED_UNKNOWN);
+                            update.putString(Battery.HISTORY_PLUGGED, Battery.PLUGGED_UNKNOWN);
+                            break;
+                    }
+
+                    switch (status) {
+                        case BatteryManager.BATTERY_STATUS_CHARGING:
+                            values.put(Battery.HISTORY_STATUS, Battery.STATUS_CHARGING);
+                            update.putString(Battery.HISTORY_STATUS, Battery.STATUS_CHARGING);
+                            break;
+                        case BatteryManager.BATTERY_STATUS_DISCHARGING:
+                            values.put(Battery.HISTORY_STATUS, Battery.STATUS_DISCHARGING);
+                            update.putString(Battery.HISTORY_STATUS, Battery.STATUS_DISCHARGING);
+                            break;
+                        case BatteryManager.BATTERY_STATUS_FULL:
+                            values.put(Battery.HISTORY_STATUS, Battery.STATUS_FULL);
+                            update.putString(Battery.HISTORY_STATUS, Battery.STATUS_FULL);
+                            break;
+                        case BatteryManager.BATTERY_STATUS_NOT_CHARGING:
+                            values.put(Battery.HISTORY_STATUS, Battery.STATUS_NOT_CHARGING);
+                            update.putString(Battery.HISTORY_STATUS, Battery.STATUS_NOT_CHARGING);
+                            break;
+                        default:
+                            values.put(Battery.HISTORY_STATUS, Battery.STATUS_UNKNOWN);
+                            update.putString(Battery.HISTORY_STATUS, Battery.STATUS_UNKNOWN);
+                            break;
+                    }
+
+                    values.put(Battery.HISTORY_PRESENT, intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false));
+                    update.putBoolean(Battery.HISTORY_PRESENT, intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false));
+
+                    values.put(Battery.HISTORY_LEVEL, level);
+                    update.putInt(Battery.HISTORY_LEVEL, level);
+
+                    values.put(Battery.HISTORY_SCALE, intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1));
+                    update.putInt(Battery.HISTORY_SCALE, intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1));
+
+                    values.put(Battery.HISTORY_TEMPERATURE, temperature);
+                    update.putInt(Battery.HISTORY_TEMPERATURE, temperature);
+
+                    values.put(Battery.HISTORY_VOLTAGE, voltage);
+                    update.putInt(Battery.HISTORY_VOLTAGE, voltage);
+
+                    values.put(Battery.HISTORY_TECHNOLOGY, Battery.TECHNOLOGY_UNKNOWN);
+                    update.putString(Battery.HISTORY_TECHNOLOGY, Battery.TECHNOLOGY_UNKNOWN);
+
+                    me.mDatabase.insert(Battery.TABLE_HISTORY, null, values);
+
+                    Generators.getInstance(context).notifyGeneratorUpdated(Battery.GENERATOR_IDENTIFIER, update);
+
+                    if (now - me.mLastCleanup > me.mCleanupInterval) {
+                        me.mLastCleanup = now;
+
+                        long start = now - (24 * 60 * 60 * 1000);
+
+                        String where = Battery.HISTORY_OBSERVED + " < ?";
+                        String[] args = {"" + start};
+
+                        me.mDatabase.delete(Battery.TABLE_HISTORY, where, args);
+                    }
+
+                    me.mLastLevel = level;
+                    me.mLastStatus = status;
+                    me.mLastHealth = health;
+                    me.mLastPlugged = plugged;
+                    me.mLastVoltage = voltage;
+                    me.mLastTemperature = temperature;
+                    me.mLastUpdate = now;
                 }
             }
         };
@@ -416,8 +485,7 @@ public class Battery extends Generator {
     }
 
     @SuppressWarnings("unused")
-    public static View fetchView(ViewGroup parent)
-    {
+    public static View fetchView(ViewGroup parent) {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_device_battery, parent, false);
     }
 
@@ -445,5 +513,25 @@ public class Battery extends Generator {
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
         return this.mDatabase.query(Battery.TABLE_HISTORY, cols, where, args, null, null, orderBy);
+    }
+
+    public void setMonitorsVoltage(boolean monitorVoltage) {
+        this.mMonitorsVoltage = monitorVoltage;
+    }
+
+    public void setMonitorsHealth(boolean monitorHealth) {
+        this.mMonitorsHealth = monitorHealth;
+    }
+
+    public void setMonitorsPlugged(boolean monitorPlugged) {
+        this.mMonitorsPlugged = monitorPlugged;
+    }
+
+    public void setMonitorsTemperature(boolean monitorTemperature) {
+        this.mMonitorsTemperature = monitorTemperature;
+    }
+
+    public void setMinUpdateInterval(long updateInterval) {
+        this.mMinUpdateInterval = updateInterval;
     }
 }

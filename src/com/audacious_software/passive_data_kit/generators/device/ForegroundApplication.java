@@ -13,6 +13,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -125,6 +126,9 @@ public class ForegroundApplication extends Generator{
                 update.putLong(ForegroundApplication.HISTORY_OBSERVED, now);
                 update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
                 update.putLong(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
+                update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
+
+                Log.e("SLEEP-SIGHT", "TRANSMIT BUNDLE: " + update);
 
                 Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
             }
