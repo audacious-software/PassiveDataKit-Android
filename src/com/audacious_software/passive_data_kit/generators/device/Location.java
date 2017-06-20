@@ -106,6 +106,15 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final String ACCURACY_MODE_RANDOMIZED_RANGE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_RANDOMIZED_RANGE";
     private static final long ACCURACY_MODE_RANDOMIZED_RANGE_DEFAULT = 100;
 
+    private static final String ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED";
+    private static final boolean ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED_DEFAULT = false;
+
+    private static final String ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE";
+    private static final float ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE_DEFAULT = 0;
+
+    private static final String ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE";
+    private static final float ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE_DEFAULT = 0;
+
     private static final String ACCURACY_MODE_USER_LOCATION = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_USER_LOCATION";
     private static final String ACCURACY_MODE_USER_LOCATION_DEFAULT = "Chicago, Illinois";
 
@@ -345,10 +354,30 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
             double radiusInDegrees = radius / 111000;
 
-            Random r = new SecureRandom();
+            double u = (double) Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE_DEFAULT;
+            double v = (double) Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE_DEFAULT;
 
-            double u = r.nextDouble();
-            double v = r.nextDouble();
+            boolean preserveVector = prefs.getBoolean(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED, Location.ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED_DEFAULT);
+
+            if (preserveVector) {
+                u = (double) prefs.getFloat(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE, Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE_DEFAULT);
+                v = (double) prefs.getFloat(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE, Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE_DEFAULT);
+            }
+
+            if (u == Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE_DEFAULT && v == Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE_DEFAULT) {
+                Random r = new SecureRandom();
+
+                u = r.nextDouble();
+                v = r.nextDouble();
+
+                if (preserveVector) {
+                    SharedPreferences.Editor e = prefs.edit();
+                    e.putFloat(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE, (float) u);
+                    e.putFloat(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE, (float) v);
+
+                    e.apply();
+                }
+            }
 
             double w = radiusInDegrees * Math.sqrt(u);
             double t = 2 * Math.PI * v;
@@ -1036,6 +1065,16 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         SharedPreferences.Editor e = prefs.edit();
 
         e.putLong(Location.ACCURACY_MODE_RANDOMIZED_RANGE, meters);
+
+        e.apply();
+    }
+
+    public void setPreservesRandomVector(boolean preservesVector) {
+
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putBoolean(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED, preservesVector);
 
         e.apply();
     }
