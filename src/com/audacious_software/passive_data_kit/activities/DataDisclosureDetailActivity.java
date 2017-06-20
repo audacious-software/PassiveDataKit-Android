@@ -39,6 +39,14 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        String generatorClassName = this.getIntent().getStringExtra(DataDisclosureDetailActivity.GENERATOR_CLASS_NAME);
+
+        if (generatorClassName == null) {
+            this.finish();
+
+            return;
+        }
+
         final DataDisclosureDetailActivity me = this;
 
         this.setContentView(R.layout.layout_data_disclosure_detail_pdk);
@@ -46,7 +54,7 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
         this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         try {
-            this.mGeneratorClass = (Class<? extends Generator>) Class.forName(this.getIntent().getStringExtra(DataDisclosureDetailActivity.GENERATOR_CLASS_NAME));
+            this.mGeneratorClass = (Class<? extends Generator>) Class.forName(generatorClassName);
         } catch (ClassNotFoundException e) {
 //            e.printStackTrace();
         }
