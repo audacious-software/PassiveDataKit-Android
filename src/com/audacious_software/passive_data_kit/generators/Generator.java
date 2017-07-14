@@ -22,7 +22,7 @@ import java.util.List;
 public abstract class Generator
 {
     public static final String PDK_METADATA = "passive-data-metadata";
-    public static final java.lang.String IDENTIFIER = "generator-id";
+    public static final String IDENTIFIER = "generator-id";
     public static final String TIMESTAMP = "timestamp";
     public static final String GENERATOR = "generator";
     public static final String SOURCE = "source";
@@ -184,4 +184,7 @@ public abstract class Generator
             db.insert(Generator.TABLE_METADATA, null, values);
         }
     }
+
+    protected abstract void flushCachedData();
+    public abstract void setCachedDataRetentionPeriod(long period);
 }

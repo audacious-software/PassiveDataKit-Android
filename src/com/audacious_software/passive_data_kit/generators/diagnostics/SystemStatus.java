@@ -14,6 +14,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StatFs;
+import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,6 +51,9 @@ public class SystemStatus extends Generator {
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
 
     private static final String ACTION_HEARTBEAT = "com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus.ACTION_HEARTBEAT";
 
@@ -186,6 +190,8 @@ public class SystemStatus extends Generator {
 
         IntentFilter filter = new IntentFilter(SystemStatus.ACTION_HEARTBEAT);
         this.mContext.registerReceiver(this.mReceiver, filter);
+
+        this.flushCachedData();
     }
 
     @SuppressWarnings("unused")
@@ -487,5 +493,29 @@ public class SystemStatus extends Generator {
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
         return this.mDatabase.query(SystemStatus.TABLE_HISTORY, cols, where, args, null, null, orderBy);
+    }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(SystemStatus.DATA_RETENTION_PERIOD, SystemStatus.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = SystemStatus.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(SystemStatus.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(SystemStatus.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
     }
 }

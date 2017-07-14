@@ -6,7 +6,9 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -71,9 +73,13 @@ import java.util.List;
 @SuppressWarnings("SimplifiableIfStatement")
 public class MicrosoftBand extends Generator
 {
+    private static final String GENERATOR_IDENTIFIER = "pdk-microsoft-band";
+
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
-    private static final String GENERATOR_IDENTIFIER = "pdk-microsoft-band";
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
 
     private static final String TIMESTAMP_KEY = "timestamps";
     private static final String X_KEY = "xs";
@@ -1445,4 +1451,31 @@ public class MicrosoftBand extends Generator
     public List<Bundle> fetchPayloads() {
         return new ArrayList<>();
     }
+
+    @Override
+    protected void flushCachedData() {
+        Log.e("PDK", "TODO: Implement data cache flush in MicrosoftBand!");
+
+//        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+//
+//        long retentionPeriod = prefs.getLong(MicrosoftBand.DATA_RETENTION_PERIOD, MicrosoftBand.DATA_RETENTION_PERIOD_DEFAULT);
+//
+//        long start = System.currentTimeMillis() - retentionPeriod;
+//
+//        String where = MicrosoftBand.HISTORY_OBSERVED + " < ?";
+//        String[] args = { "" + start };
+//
+//        this.mDatabase.delete(MicrosoftBand.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(MicrosoftBand.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
+    }
+
 }

@@ -80,6 +80,9 @@ public class WithingsDevice extends Generator {
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+
     private static final String DATASTREAM = "datastream";
     private static final String DATASTREAM_ACTIVITY_MEASURES = "activity-measures";
     private static final String DATASTREAM_INTRADAY_ACTIVITY = "intraday-activity";
@@ -386,6 +389,8 @@ public class WithingsDevice extends Generator {
         me.mHandler.post(fetchData);
 
         Generators.getInstance(this.mContext).registerCustomViewClass(WithingsDevice.GENERATOR_IDENTIFIER, WithingsDevice.class);
+
+        this.flushCachedData();
     }
 
     private String getProperty(String key) {
@@ -1866,4 +1871,34 @@ public class WithingsDevice extends Generator {
 
         e.apply();
     }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(WithingsDevice.DATA_RETENTION_PERIOD, WithingsDevice.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = WithingsDevice.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(WithingsDevice.TABLE_ACTIVITY_MEASURE_HISTORY, where, args);
+        this.mDatabase.delete(WithingsDevice.TABLE_SLEEP_MEASURE_HISTORY, where, args);
+        this.mDatabase.delete(WithingsDevice.TABLE_BODY_MEASURE_HISTORY, where, args);
+        this.mDatabase.delete(WithingsDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, where, args);
+        this.mDatabase.delete(WithingsDevice.TABLE_SLEEP_SUMMARY_HISTORY, where, args);
+        this.mDatabase.delete(WithingsDevice.TABLE_WORKOUT_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(WithingsDevice.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
+    }
 }
+

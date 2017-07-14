@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,6 +46,8 @@ public class Battery extends Generator {
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.Battery.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.Battery.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
 
     private static final String DATABASE_PATH = "pdk-device-battery.sqlite";
     private static final int DATABASE_VERSION = 1;
@@ -102,6 +105,7 @@ public class Battery extends Generator {
 
     private int mLastLevel = -1;
     private int mLastStatus = BatteryManager.BATTERY_STATUS_UNKNOWN;
+    private int mLastScale = -1;
 
     private int mLastHealth = BatteryManager.BATTERY_HEALTH_UNKNOWN;
     private int mLastPlugged = -1;
@@ -278,8 +282,9 @@ public class Battery extends Generator {
                     values.put(Battery.HISTORY_LEVEL, level);
                     update.putInt(Battery.HISTORY_LEVEL, level);
 
-                    values.put(Battery.HISTORY_SCALE, intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1));
-                    update.putInt(Battery.HISTORY_SCALE, intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1));
+                    int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+                    values.put(Battery.HISTORY_SCALE, scale);
+                    update.putInt(Battery.HISTORY_SCALE, scale);
 
                     values.put(Battery.HISTORY_TEMPERATURE, temperature);
                     update.putInt(Battery.HISTORY_TEMPERATURE, temperature);
@@ -306,6 +311,7 @@ public class Battery extends Generator {
                     }
 
                     me.mLastLevel = level;
+                    me.mLastScale = scale;
                     me.mLastStatus = status;
                     me.mLastHealth = health;
                     me.mLastPlugged = plugged;
@@ -335,6 +341,8 @@ public class Battery extends Generator {
 
         IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         this.mContext.registerReceiver(this.mReceiver, filter);
+
+        this.flushCachedData();
     }
 
     @SuppressWarnings("unused")
@@ -533,5 +541,37 @@ public class Battery extends Generator {
 
     public void setMinUpdateInterval(long updateInterval) {
         this.mMinUpdateInterval = updateInterval;
+    }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(Battery.DATA_RETENTION_PERIOD, Battery.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = Battery.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(Battery.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(Battery.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
+    }
+
+    public int getLastLevel() {
+        return this.mLastLevel;
+    }
+
+    public int getLastScale() {
+        return this.mLastScale;
     }
 }

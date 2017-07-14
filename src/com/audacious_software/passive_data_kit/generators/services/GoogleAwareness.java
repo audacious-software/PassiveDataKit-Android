@@ -8,9 +8,11 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 import com.audacious_software.passive_data_kit.activities.generators.RequestPermissionActivity;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
@@ -32,6 +34,10 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.services.GoogleAwareness.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.services.GoogleAwareness.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+
     private static final long SENSING_INTERVAL = 60 * 1000;
 
     private static GoogleAwareness sInstance = null;
@@ -81,6 +87,8 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
         t.start();
 
         Generators.getInstance(this.mContext).registerCustomViewClass(GoogleAwareness.GENERATOR_IDENTIFIER, GoogleAwareness.class);
+
+        this.flushCachedData();
     }
 
     @SuppressWarnings("unused")
@@ -203,5 +211,31 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
     @Override
     public List<Bundle> fetchPayloads() {
         return new ArrayList<>();
+    }
+
+    @Override
+    protected void flushCachedData() {
+        Log.e("PDK", "TODO: Implement data cache flush in GoogleAwareness!");
+
+//        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+//
+//        long retentionPeriod = prefs.getLong(GoogleAwareness.DATA_RETENTION_PERIOD, GoogleAwareness.DATA_RETENTION_PERIOD_DEFAULT);
+//
+//        long start = System.currentTimeMillis() - retentionPeriod;
+//
+//        String where = GoogleAwareness.HISTORY_OBSERVED + " < ?";
+//        String[] args = { "" + start };
+//
+//        this.mDatabase.delete(GoogleAwareness.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(GoogleAwareness.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
     }
 }

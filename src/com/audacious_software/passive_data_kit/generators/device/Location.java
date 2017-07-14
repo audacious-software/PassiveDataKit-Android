@@ -81,6 +81,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.Location.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.Location.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+
     private static final String USE_GOOGLE_SERVICES = "com.audacious_software.passive_data_kit.generators.device.Location.USE_GOOGLE_SERVICES";
     private static final boolean USE_GOOGLE_SERVICES_DEFAULT = true;
 
@@ -435,6 +438,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         this.mDatabase.insert(Location.TABLE_HISTORY, null, values);
 
         Generators.getInstance(this.mContext).notifyGeneratorUpdated(Location.GENERATOR_IDENTIFIER, updated);
+
+        this.flushCachedData();
     }
 
     @SuppressWarnings("unused")
@@ -1075,6 +1080,30 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         SharedPreferences.Editor e = prefs.edit();
 
         e.putBoolean(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED, preservesVector);
+
+        e.apply();
+    }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(Location.DATA_RETENTION_PERIOD, Location.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = Location.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(Location.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(Location.DATA_RETENTION_PERIOD, period);
 
         e.apply();
     }

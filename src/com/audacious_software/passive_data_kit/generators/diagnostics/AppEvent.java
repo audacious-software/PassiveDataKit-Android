@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
@@ -40,6 +41,9 @@ public class AppEvent extends Generator{
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
 
     private static final String DATABASE_PATH = "pdk-app-event.sqlite";
     private static final int DATABASE_VERSION = 1;
@@ -107,6 +111,8 @@ public class AppEvent extends Generator{
         }
 
         this.setDatabaseVersion(this.mDatabase, AppEvent.DATABASE_VERSION);
+
+        this.flushCachedData();
     }
 
     @SuppressWarnings("unused")
@@ -440,5 +446,29 @@ public class AppEvent extends Generator{
         disclosureView.loadUrl("file:///android_asset/html/passive_data_kit/generator_app_events_disclosure.html");
 
         return disclosureView;
+    }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(AppEvent.DATA_RETENTION_PERIOD, AppEvent.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = AppEvent.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(AppEvent.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(AppEvent.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
     }
 }

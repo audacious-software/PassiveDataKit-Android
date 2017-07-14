@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +27,9 @@ public class DaydreamViewController extends Generator  {
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.vr.DaydreamViewController.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.vr.DaydreamViewController.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
 
     private static DaydreamViewController sInstance = null;
 
@@ -84,6 +89,8 @@ public class DaydreamViewController extends Generator  {
 
     private void startGenerator() {
         Generators.getInstance(this.mContext).registerCustomViewClass(DaydreamViewController.GENERATOR_IDENTIFIER, DaydreamViewController.class);
+
+        this.flushCachedData();
     }
 
     @SuppressWarnings("unused")
@@ -187,4 +194,31 @@ public class DaydreamViewController extends Generator  {
     public static void broadcastLatestDataPoint(Context context) {
 //        Generators.getInstance(context).transmitData(DaydreamViewController.GENERATOR_IDENTIFIER, new Bundle());
     }
+
+    @Override
+    protected void flushCachedData() {
+        Log.e("PDK", "TODO: Implement data cache flush in DaydreamViewController!");
+
+//        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+//
+//        long retentionPeriod = prefs.getLong(GoogleAwareness.DATA_RETENTION_PERIOD, GoogleAwareness.DATA_RETENTION_PERIOD_DEFAULT);
+//
+//        long start = System.currentTimeMillis() - retentionPeriod;
+//
+//        String where = GoogleAwareness.HISTORY_OBSERVED + " < ?";
+//        String[] args = { "" + start };
+//
+//        this.mDatabase.delete(GoogleAwareness.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(DaydreamViewController.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
+    }
+
 }

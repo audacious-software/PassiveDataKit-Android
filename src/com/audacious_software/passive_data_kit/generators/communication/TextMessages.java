@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -53,6 +54,9 @@ public class TextMessages extends Generator {
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.communication.TextMessages.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.communication.TextMessages.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
 
     private static final Uri SMS_INBOX_URI = Uri.parse("content://sms/inbox");
     private static final Uri SMS_SENT_URI = Uri.parse("content://sms/sent");
@@ -301,6 +305,8 @@ public class TextMessages extends Generator {
         me.mHandler.post(checkLogs);
 
         Generators.getInstance(this.mContext).registerCustomViewClass(TextMessages.GENERATOR_IDENTIFIER, TextMessages.class);
+
+        this.flushCachedData();
     }
 
     @SuppressWarnings("unused")
@@ -456,6 +462,30 @@ public class TextMessages extends Generator {
 
             dateLabel.setText(R.string.label_never_pdk);
         }
+    }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(TextMessages.DATA_RETENTION_PERIOD, TextMessages.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = TextMessages.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(TextMessages.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(TextMessages.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
     }
 
     @Override

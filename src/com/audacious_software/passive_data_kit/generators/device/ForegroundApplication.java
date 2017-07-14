@@ -12,8 +12,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,6 +46,9 @@ public class ForegroundApplication extends Generator{
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
 
     private static final int DATABASE_VERSION = 3;
 
@@ -128,8 +131,6 @@ public class ForegroundApplication extends Generator{
                 update.putLong(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
                 update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
 
-                Log.e("SLEEP-SIGHT", "TRANSMIT BUNDLE: " + update);
-
                 Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
             }
         });
@@ -157,6 +158,8 @@ public class ForegroundApplication extends Generator{
         this.setDatabaseVersion(this.mDatabase, ForegroundApplication.DATABASE_VERSION);
 
         Generators.getInstance(this.mContext).registerCustomViewClass(ForegroundApplication.GENERATOR_IDENTIFIER, ForegroundApplication.class);
+
+        this.flushCachedData();
     }
 
     @SuppressWarnings("unused")
@@ -212,15 +215,17 @@ public class ForegroundApplication extends Generator{
 
     @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder) {
+        long start = System.currentTimeMillis();
+
         final Context context = holder.itemView.getContext();
 
         long lastTimestamp = 0;
 
         ForegroundApplication generator = ForegroundApplication.getInstance(holder.itemView.getContext());
 
-        Cursor c = generator.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, null, null, null, null, ForegroundApplication.HISTORY_OBSERVED + " DESC");
+        Cursor c = generator.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, null, null, null, null, ForegroundApplication.HISTORY_OBSERVED + " DESC", "1");
 
-        while (c.moveToNext()) {
+        if (c.moveToNext()) {
             if (lastTimestamp == 0) {
                 lastTimestamp = c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_OBSERVED));
             }
@@ -407,11 +412,35 @@ public class ForegroundApplication extends Generator{
 
             dateLabel.setText(R.string.label_never_pdk);
         }
-    }
+   }
 
     @Override
     public List<Bundle> fetchPayloads() {
         return new ArrayList<>();
+    }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(ForegroundApplication.DATA_RETENTION_PERIOD, ForegroundApplication.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = ForegroundApplication.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(ForegroundApplication.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(ForegroundApplication.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
     }
 
     @SuppressWarnings("unused")

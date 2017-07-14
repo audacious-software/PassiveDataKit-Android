@@ -54,6 +54,9 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.Accelerometer.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.sensors.Accelerometer.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+
     private static final String IGNORE_POWER_MANAGEMENT = "com.audacious_software.passive_data_kit.generators.sensors.Accelerometer.IGNORE_POWER_MANAGEMENT";
     private static final boolean IGNORE_POWER_MANAGEMENT_DEFAULT = true;
 
@@ -270,6 +273,8 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         } else {
             this.stopGenerator();
         }
+
+        this.flushCachedData();
     }
 
     private void stopGenerator() {
@@ -777,5 +782,29 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
     @Override
     public void onAccuracyChanged(Sensor sensor, int newAccuracy) {
         // Do nothing...
+    }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(Accelerometer.DATA_RETENTION_PERIOD, Accelerometer.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = Accelerometer.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(Accelerometer.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(Accelerometer.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
     }
 }

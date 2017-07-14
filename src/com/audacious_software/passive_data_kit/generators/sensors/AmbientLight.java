@@ -54,6 +54,9 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.AmbientLight.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.sensors.AmbientLight.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+
     private static final String IGNORE_POWER_MANAGEMENT = "com.audacious_software.passive_data_kit.generators.sensors.AmbientLight.IGNORE_POWER_MANAGEMENT";
     private static final boolean IGNORE_POWER_MANAGEMENT_DEFAULT = true;
 
@@ -191,6 +194,8 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         } else {
             this.stopGenerator();
         }
+
+        this.flushCachedData();
     }
 
     private void stopGenerator() {
@@ -609,5 +614,29 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     @Override
     public void onAccuracyChanged(Sensor sensor, int newAccuracy) {
         // Do nothing...
+    }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(AmbientLight.DATA_RETENTION_PERIOD, AmbientLight.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = AmbientLight.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(AmbientLight.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(AmbientLight.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
     }
 }

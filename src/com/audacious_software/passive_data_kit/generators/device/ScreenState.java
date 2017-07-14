@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,6 +39,9 @@ public class ScreenState extends Generator{
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.ScreenState.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.ScreenState.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
 
     @SuppressWarnings("WeakerAccess")
     public static final String STATE_DOZE = "doze";
@@ -172,6 +176,8 @@ public class ScreenState extends Generator{
         }
 
         this.setDatabaseVersion(this.mDatabase, ScreenState.DATABASE_VERSION);
+
+        this.flushCachedData();
     }
 
     @SuppressWarnings("unused")
@@ -475,5 +481,29 @@ public class ScreenState extends Generator{
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
         return this.mDatabase.query(ScreenState.TABLE_HISTORY, cols, where, args, null, null, orderBy);
+    }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(ScreenState.DATA_RETENTION_PERIOD, ScreenState.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = ScreenState.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(ScreenState.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(ScreenState.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
     }
 }

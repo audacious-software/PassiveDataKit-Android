@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.provider.CallLog;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -52,6 +53,9 @@ public class PhoneCalls extends Generator {
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.communication.PhoneCalls.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.communication.PhoneCalls.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
 
     private static final String CALL_DATE_KEY = "call_timestamp";
     private static final String CALL_DURATION_KEY = "duration";
@@ -355,6 +359,8 @@ public class PhoneCalls extends Generator {
         me.mHandler.post(checkLogs);
 
         Generators.getInstance(this.mContext).registerCustomViewClass(PhoneCalls.GENERATOR_IDENTIFIER, PhoneCalls.class);
+
+        this.flushCachedData();
     }
 
     @SuppressWarnings("unused")
@@ -533,6 +539,30 @@ public class PhoneCalls extends Generator {
     @Override
     public List<Bundle> fetchPayloads() {
         return new ArrayList<>();
+    }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(PhoneCalls.DATA_RETENTION_PERIOD, PhoneCalls.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = PhoneCalls.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(PhoneCalls.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(PhoneCalls.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
     }
 
     @SuppressWarnings("unused")
