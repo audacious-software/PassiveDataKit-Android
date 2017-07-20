@@ -1001,7 +1001,7 @@ public class WithingsDevice extends Generator {
                         values.put(WithingsDevice.SLEEP_MEASURE_STATE, state);
                         values.put(WithingsDevice.SLEEP_MEASURE_MEASUREMENT_DEVICE, model);
 
-                        String where = WithingsDevice.SLEEP_MEASURE_START_DATE + " ? AND " +
+                        String where = WithingsDevice.SLEEP_MEASURE_START_DATE + " = ? AND " +
                                 WithingsDevice.SLEEP_MEASURE_END_DATE + " = ? AND " +
                                 WithingsDevice.SLEEP_MEASURE_STATE + " = ? AND " +
                                 WithingsDevice.SLEEP_MEASURE_MEASUREMENT_DEVICE + " = ?";
@@ -1091,7 +1091,7 @@ public class WithingsDevice extends Generator {
                             values.put(WithingsDevice.SLEEP_SUMMARY_TO_WAKE_DURATION, data.getDouble("durationtowakeup"));
                         }
 
-                        String where = WithingsDevice.SLEEP_SUMMARY_START_DATE + " ? AND " +
+                        String where = WithingsDevice.SLEEP_SUMMARY_START_DATE + " = ? AND " +
                                 WithingsDevice.SLEEP_SUMMARY_END_DATE + " = ? AND " +
                                 WithingsDevice.SLEEP_SUMMARY_TIMEZONE + " = ? AND " +
                                 WithingsDevice.SLEEP_SUMMARY_MEASUREMENT_DEVICE + " = ? AND " +
