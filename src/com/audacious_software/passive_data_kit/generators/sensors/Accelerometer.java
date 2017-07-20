@@ -211,10 +211,11 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
                     Accelerometer.sHandler = new Handler();
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, 0, Accelerometer.sHandler);
-                    else
+                    } else {
                         sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, Accelerometer.sHandler);
+                    }
 
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 

@@ -172,10 +172,11 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
                     AmbientLight.sHandler = new Handler();
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_FASTEST, 0, AmbientLight.sHandler);
-                    else
+                    } else {
                         sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_FASTEST, AmbientLight.sHandler);
+                    }
 
                     Looper.loop();
                 }
