@@ -225,6 +225,16 @@ public class WithingsDevice extends Generator {
     private static final String OPTION_OAUTH_REQUEST_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.OPTION_OAUTH_REQUEST_SECRET";
     private static final String OPTION_OAUTH_ACCESS_USER_ID = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.OPTION_OAUTH_ACCESS_USER_ID";
 
+    private static final String API_SCAN_DAYS = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.API_SCAN_DAYS";
+    private static final long API_SCAN_DAYS_DEFAULT = 0;
+
+    private static final String API_ACTION_ACTIVITY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.API_ACTION_ACTIVITY_URL_LAST_FETCH";
+    private static final String API_ACTION_BODY_MEASURES_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.API_ACTION_BODY_MEASURES_URL_LAST_FETCH";
+    private static final String API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH";
+    private static final String API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH";
+    private static final String API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH";
+    private static final String API_ACTION_WORKOUTS_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.API_ACTION_WORKOUTS_URL_LAST_FETCH";
+
     private static final String API_ACTION_ACTIVITY_URL = "https://wbsapi.withings.net/v2/measure?action=getactivity";
     private static final String API_ACTION_BODY_MEASURES_URL = "https://wbsapi.withings.net/measure?action=getmeas";
     private static final String API_ACTION_INTRADAY_ACTIVITY_URL = "https://wbsapi.withings.net/v2/measure?action=getintradayactivity";
@@ -409,7 +419,7 @@ public class WithingsDevice extends Generator {
 
     @SuppressWarnings("TryWithIdenticalCatches")
     @SuppressLint("SimpleDateFormat")
-    private JSONObject queryApi(String apiUrl) {
+    private JSONObject queryApi(final String apiUrl) {
         final WithingsDevice me = this;
 
         String apiKey = this.getProperty(WithingsDevice.OPTION_OAUTH_CONSUMER_KEY);
@@ -417,7 +427,7 @@ public class WithingsDevice extends Generator {
         String token = this.getProperty(WithingsDevice.OPTION_OAUTH_ACCESS_TOKEN);
         String tokenSecret = this.getProperty(WithingsDevice.OPTION_OAUTH_ACCESS_TOKEN_SECRET);
 
-        Calendar cal = Calendar.getInstance();
+        final Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
@@ -430,6 +440,36 @@ public class WithingsDevice extends Generator {
         long endTime = 0;
 
         if (apiKey != null && apiSecret != null && token != null && tokenSecret != null) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+            final long scanDays = prefs.getLong(WithingsDevice.API_SCAN_DAYS, WithingsDevice.API_SCAN_DAYS_DEFAULT);
+
+            if (scanDays > 0) {
+                long lastFetch = 0;
+
+                if (WithingsDevice.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                    lastFetch = prefs.getLong(WithingsDevice.API_ACTION_ACTIVITY_URL_LAST_FETCH, 0);
+                } else if (WithingsDevice.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
+                    lastFetch = prefs.getLong(WithingsDevice.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, 0);
+                } else if (WithingsDevice.API_ACTION_WORKOUTS_URL.equals(apiUrl)) {
+                    lastFetch = prefs.getLong(WithingsDevice.API_ACTION_WORKOUTS_URL_LAST_FETCH, 0);
+                } else if (WithingsDevice.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
+                    lastFetch = prefs.getLong(WithingsDevice.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, 0);
+                } else if (WithingsDevice.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
+                    lastFetch = prefs.getLong(WithingsDevice.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, 0);
+                } else if (WithingsDevice.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
+                    lastFetch = prefs.getLong(WithingsDevice.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, 0);
+                }
+
+                if (lastFetch == 0) {
+                    lastFetch = System.currentTimeMillis() - (scanDays * 24 * 60 * 60 * 1000);
+                }
+
+                while (cal.getTimeInMillis() > lastFetch) {
+                    cal.add(Calendar.DATE, -1);
+                }
+            }
+
             if (WithingsDevice.API_ACTION_ACTIVITY_URL.equals(apiUrl) ||
                 WithingsDevice.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl) ||
                 WithingsDevice.API_ACTION_WORKOUTS_URL.equals(apiUrl)) {
@@ -450,6 +490,7 @@ public class WithingsDevice extends Generator {
 
                 endTime = cal.getTimeInMillis() / 1000;
             }
+
             Uri apiUri = Uri.parse(apiUrl);
 
             Uri.Builder builder = new Uri.Builder();
@@ -517,8 +558,35 @@ public class WithingsDevice extends Generator {
                 Response response = client.newCall(request).execute();
 
                 if (response.isSuccessful()) {
+                    if (scanDays > 0) {
+                        long fetchTime = cal.getTimeInMillis();
+
+                        if (fetchTime > System.currentTimeMillis()) {
+                            fetchTime = 0;
+                        }
+
+                        SharedPreferences.Editor e = prefs.edit();
+
+                        if (WithingsDevice.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                            e.putLong(WithingsDevice.API_ACTION_ACTIVITY_URL_LAST_FETCH, fetchTime);
+                        } else if (WithingsDevice.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
+                            e.putLong(WithingsDevice.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, fetchTime);
+                        } else if (WithingsDevice.API_ACTION_WORKOUTS_URL.equals(apiUrl)) {
+                            e.putLong(WithingsDevice.API_ACTION_WORKOUTS_URL_LAST_FETCH, fetchTime);
+                        } else if (WithingsDevice.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
+                            e.putLong(WithingsDevice.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, fetchTime);
+                        } else if (WithingsDevice.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
+                            e.putLong(WithingsDevice.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, fetchTime);
+                        } else if (WithingsDevice.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
+                            e.putLong(WithingsDevice.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, fetchTime);
+                        }
+
+                        e.apply();
+                    }
+
                     return new JSONObject(response.body().string());
                 }
+
             } catch (NoSuchAlgorithmException e) {
                 AppEvent.getInstance(me.mContext).logThrowable(e);
             } catch (UnsupportedEncodingException e) {
@@ -573,26 +641,56 @@ public class WithingsDevice extends Generator {
                         values.put(WithingsDevice.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION, activity.getDouble("moderate"));
                         values.put(WithingsDevice.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION, activity.getDouble("intense"));
 
-                        this.mDatabase.insert(WithingsDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, values);
+                        String where = WithingsDevice.ACTIVITY_MEASURE_HISTORY_DATE_START + " = ? AND " +
+                                WithingsDevice.ACTIVITY_MEASURE_HISTORY_TIMEZONE + " = ? AND " +
+                                WithingsDevice.ACTIVITY_MEASURE_STEPS + " = ? AND " +
+                                WithingsDevice.ACTIVITY_MEASURE_DISTANCE + " = ? AND " +
+                                WithingsDevice.ACTIVITY_MEASURE_ACTIVE_CALORIES + " = ? AND " +
+                                WithingsDevice.ACTIVITY_MEASURE_TOTAL_CALORIES + " = ? AND " +
+                                WithingsDevice.ACTIVITY_MEASURE_ELEVATION + " = ? AND " +
+                                WithingsDevice.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION + " = ? AND " +
+                                WithingsDevice.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION + " = ? AND " +
+                                WithingsDevice.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION + " = ?";
 
-                        Bundle updated = new Bundle();
+                        String[] args = {
+                                "" + cal.getTimeInMillis(),
+                                "" + activity.getString("timezone"),
+                                "" + activity.getDouble("steps"),
+                                "" + activity.getDouble("distance"),
+                                "" + activity.getDouble("calories"),
+                                "" + activity.getDouble("totalcalories"),
+                                "" + activity.getDouble("elevation"),
+                                "" + activity.getDouble("soft"),
+                                "" + activity.getDouble("moderate"),
+                                "" + activity.getDouble("intense")
+                        };
 
-                        updated.putLong(WithingsDevice.HISTORY_OBSERVED, System.currentTimeMillis());
-                        updated.putLong(WithingsDevice.ACTIVITY_MEASURE_HISTORY_DATE_START, cal.getTimeInMillis());
-                        updated.putString(WithingsDevice.ACTIVITY_MEASURE_HISTORY_TIMEZONE, activity.getString("timezone"));
-                        updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_STEPS, activity.getDouble("steps"));
-                        updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_DISTANCE, activity.getDouble("distance"));
-                        updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_ACTIVE_CALORIES, activity.getDouble("calories"));
-                        updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_TOTAL_CALORIES, activity.getDouble("totalcalories"));
-                        updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_ELEVATION, activity.getDouble("elevation"));
-                        updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION, activity.getDouble("soft"));
-                        updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION, activity.getDouble("moderate"));
-                        updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION, activity.getDouble("intense"));
-                        updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_ACTIVITY_MEASURES);
+                        Cursor c = this.mDatabase.query(WithingsDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, where, args, null, null, null);
 
-                        this.annotateGeneratorReading(updated);
+                        if (c.getCount() == 0) {
+                            this.mDatabase.insert(WithingsDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, values);
 
-                        Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
+                            Bundle updated = new Bundle();
+
+                            updated.putLong(WithingsDevice.HISTORY_OBSERVED, System.currentTimeMillis());
+                            updated.putLong(WithingsDevice.ACTIVITY_MEASURE_HISTORY_DATE_START, cal.getTimeInMillis());
+                            updated.putString(WithingsDevice.ACTIVITY_MEASURE_HISTORY_TIMEZONE, activity.getString("timezone"));
+                            updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_STEPS, activity.getDouble("steps"));
+                            updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_DISTANCE, activity.getDouble("distance"));
+                            updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_ACTIVE_CALORIES, activity.getDouble("calories"));
+                            updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_TOTAL_CALORIES, activity.getDouble("totalcalories"));
+                            updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_ELEVATION, activity.getDouble("elevation"));
+                            updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION, activity.getDouble("soft"));
+                            updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION, activity.getDouble("moderate"));
+                            updated.putDouble(WithingsDevice.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION, activity.getDouble("intense"));
+                            updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_ACTIVITY_MEASURES);
+
+                            this.annotateGeneratorReading(updated);
+
+                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
+                        }
+
+                        c.close();
                     }
                 }
             } catch (JSONException e) {
@@ -720,21 +818,41 @@ public class WithingsDevice extends Generator {
                             values.put(WithingsDevice.BODY_MEASURE_HISTORY_TYPE, type);
                             values.put(WithingsDevice.BODY_MEASURE_HISTORY_VALUE, value);
 
-                            this.mDatabase.insert(WithingsDevice.TABLE_BODY_MEASURE_HISTORY, null, values);
+                            String where = WithingsDevice.BODY_MEASURE_HISTORY_DATE + " = ? AND " +
+                                    WithingsDevice.BODY_MEASURE_HISTORY_STATUS + " = ? AND " +
+                                    WithingsDevice.BODY_MEASURE_HISTORY_CATEGORY + " = ? AND " +
+                                    WithingsDevice.BODY_MEASURE_HISTORY_TYPE + " = ? AND " +
+                                    WithingsDevice.BODY_MEASURE_HISTORY_VALUE + " = ?";
 
-                            Bundle updated = new Bundle();
+                            String[] args = {
+                                    "" + measureDate,
+                                    "" + status,
+                                    "" + category,
+                                    "" + type,
+                                    "" + value
+                            };
 
-                            updated.putLong(WithingsDevice.HISTORY_OBSERVED, System.currentTimeMillis());
-                            updated.putLong(WithingsDevice.BODY_MEASURE_HISTORY_DATE, measureDate);
-                            updated.putString(WithingsDevice.BODY_MEASURE_HISTORY_STATUS, status);
-                            updated.putString(WithingsDevice.BODY_MEASURE_HISTORY_CATEGORY, category);
-                            updated.putString(WithingsDevice.BODY_MEASURE_HISTORY_TYPE, type);
-                            updated.putDouble(WithingsDevice.BODY_MEASURE_HISTORY_VALUE, value);
-                            updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_BODY);
+                            Cursor c = this.mDatabase.query(WithingsDevice.TABLE_BODY_MEASURE_HISTORY, null, where, args, null, null, null);
 
-                            this.annotateGeneratorReading(updated);
+                            if (c.getCount() == 0) {
+                                this.mDatabase.insert(WithingsDevice.TABLE_BODY_MEASURE_HISTORY, null, values);
 
-                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
+                                Bundle updated = new Bundle();
+
+                                updated.putLong(WithingsDevice.HISTORY_OBSERVED, System.currentTimeMillis());
+                                updated.putLong(WithingsDevice.BODY_MEASURE_HISTORY_DATE, measureDate);
+                                updated.putString(WithingsDevice.BODY_MEASURE_HISTORY_STATUS, status);
+                                updated.putString(WithingsDevice.BODY_MEASURE_HISTORY_CATEGORY, category);
+                                updated.putString(WithingsDevice.BODY_MEASURE_HISTORY_TYPE, type);
+                                updated.putDouble(WithingsDevice.BODY_MEASURE_HISTORY_VALUE, value);
+                                updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_BODY);
+
+                                this.annotateGeneratorReading(updated);
+
+                                Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
+                            }
+
+                            c.close();
                         }
                     }
                 }
@@ -883,20 +1001,38 @@ public class WithingsDevice extends Generator {
                         values.put(WithingsDevice.SLEEP_MEASURE_STATE, state);
                         values.put(WithingsDevice.SLEEP_MEASURE_MEASUREMENT_DEVICE, model);
 
-                        this.mDatabase.insert(WithingsDevice.TABLE_SLEEP_MEASURE_HISTORY, null, values);
+                        String where = WithingsDevice.SLEEP_MEASURE_START_DATE + " ? AND " +
+                                WithingsDevice.SLEEP_MEASURE_END_DATE + " = ? AND " +
+                                WithingsDevice.SLEEP_MEASURE_STATE + " = ? AND " +
+                                WithingsDevice.SLEEP_MEASURE_MEASUREMENT_DEVICE + " = ?";
 
-                        Bundle updated = new Bundle();
-                        updated.putLong(WithingsDevice.HISTORY_OBSERVED, System.currentTimeMillis());
-                        updated.putLong(WithingsDevice.SLEEP_MEASURE_START_DATE, item.getLong("startdate"));
-                        updated.putLong(WithingsDevice.SLEEP_MEASURE_END_DATE, item.getLong("enddate"));
-                        updated.putString(WithingsDevice.SLEEP_MEASURE_STATE, state);
-                        updated.putString(WithingsDevice.SLEEP_MEASURE_MEASUREMENT_DEVICE, model);
+                        String[] args = {
+                                "" + item.getLong("startdate"),
+                                "" + item.getLong("enddate"),
+                                "" + state,
+                                "" + model
+                        };
 
-                        this.annotateGeneratorReading(updated);
+                        Cursor c = this.mDatabase.query(WithingsDevice.TABLE_SLEEP_MEASURE_HISTORY, null, where, args, null, null, null);
 
-                        updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_SLEEP_MEASURES);
+                        if (c.getCount() == 0) {
+                            this.mDatabase.insert(WithingsDevice.TABLE_SLEEP_MEASURE_HISTORY, null, values);
 
-                        Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
+                            Bundle updated = new Bundle();
+                            updated.putLong(WithingsDevice.HISTORY_OBSERVED, System.currentTimeMillis());
+                            updated.putLong(WithingsDevice.SLEEP_MEASURE_START_DATE, item.getLong("startdate"));
+                            updated.putLong(WithingsDevice.SLEEP_MEASURE_END_DATE, item.getLong("enddate"));
+                            updated.putString(WithingsDevice.SLEEP_MEASURE_STATE, state);
+                            updated.putString(WithingsDevice.SLEEP_MEASURE_MEASUREMENT_DEVICE, model);
+
+                            this.annotateGeneratorReading(updated);
+
+                            updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_SLEEP_MEASURES);
+
+                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
+                        }
+
+                        c.close();
                     }
                 }
             } catch (JSONException e) {
@@ -955,33 +1091,61 @@ public class WithingsDevice extends Generator {
                             values.put(WithingsDevice.SLEEP_SUMMARY_TO_WAKE_DURATION, data.getDouble("durationtowakeup"));
                         }
 
-                        this.mDatabase.insert(WithingsDevice.TABLE_SLEEP_MEASURE_HISTORY, null, values);
+                        String where = WithingsDevice.SLEEP_SUMMARY_START_DATE + " ? AND " +
+                                WithingsDevice.SLEEP_SUMMARY_END_DATE + " = ? AND " +
+                                WithingsDevice.SLEEP_SUMMARY_TIMEZONE + " = ? AND " +
+                                WithingsDevice.SLEEP_SUMMARY_MEASUREMENT_DEVICE + " = ? AND " +
+                                WithingsDevice.SLEEP_SUMMARY_WAKE_DURATION + " = ? AND " +
+                                WithingsDevice.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION + " = ? AND " +
+                                WithingsDevice.SLEEP_SUMMARY_DEEP_SLEEP_DURATION + " = ? AND " +
+                                WithingsDevice.SLEEP_SUMMARY_TO_SLEEP_DURATION + " = ? AND " +
+                                WithingsDevice.SLEEP_SUMMARY_WAKE_COUNT + " = ?";
 
-                        Bundle updated = new Bundle();
-                        updated.putLong(WithingsDevice.HISTORY_OBSERVED, now);
-                        updated.putLong(WithingsDevice.SLEEP_SUMMARY_START_DATE, item.getLong("startdate"));
-                        updated.putLong(WithingsDevice.SLEEP_SUMMARY_END_DATE, item.getLong("enddate"));
-                        updated.putString(WithingsDevice.SLEEP_SUMMARY_TIMEZONE, timezone);
-                        updated.putString(WithingsDevice.SLEEP_SUMMARY_MEASUREMENT_DEVICE, model);
-                        updated.putDouble(WithingsDevice.SLEEP_SUMMARY_WAKE_DURATION, data.getDouble("wakeupduration"));
-                        updated.putDouble(WithingsDevice.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION, data.getDouble("lightsleepduration"));
-                        updated.putDouble(WithingsDevice.SLEEP_SUMMARY_DEEP_SLEEP_DURATION, data.getDouble("deepsleepduration"));
-                        updated.putDouble(WithingsDevice.SLEEP_SUMMARY_TO_SLEEP_DURATION, data.getDouble("durationtosleep"));
-                        updated.putDouble(WithingsDevice.SLEEP_SUMMARY_WAKE_COUNT, data.getDouble("wakeupcount"));
+                        String[] args = {
+                                "" + item.getLong("startdate"),
+                                "" + item.getLong("enddate"),
+                                "" + timezone,
+                                "" + model,
+                                "" + data.getDouble("wakeupduration"),
+                                "" + data.getDouble("lightsleepduration"),
+                                "" + data.getDouble("deepsleepduration"),
+                                "" + data.getDouble("durationtosleep"),
+                                "" + data.getDouble("wakeupcount")
+                        };
 
-                        if (data.has("remsleepduration")) {
-                            updated.putDouble(WithingsDevice.SLEEP_SUMMARY_REM_SLEEP_DURATION, data.getDouble("remsleepduration"));
+                        Cursor c = this.mDatabase.query(WithingsDevice.TABLE_SLEEP_MEASURE_HISTORY, null, where, args, null, null, null);
+
+                        if (c.getCount() == 0) {
+                            this.mDatabase.insert(WithingsDevice.TABLE_SLEEP_MEASURE_HISTORY, null, values);
+
+                            Bundle updated = new Bundle();
+                            updated.putLong(WithingsDevice.HISTORY_OBSERVED, now);
+                            updated.putLong(WithingsDevice.SLEEP_SUMMARY_START_DATE, item.getLong("startdate"));
+                            updated.putLong(WithingsDevice.SLEEP_SUMMARY_END_DATE, item.getLong("enddate"));
+                            updated.putString(WithingsDevice.SLEEP_SUMMARY_TIMEZONE, timezone);
+                            updated.putString(WithingsDevice.SLEEP_SUMMARY_MEASUREMENT_DEVICE, model);
+                            updated.putDouble(WithingsDevice.SLEEP_SUMMARY_WAKE_DURATION, data.getDouble("wakeupduration"));
+                            updated.putDouble(WithingsDevice.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION, data.getDouble("lightsleepduration"));
+                            updated.putDouble(WithingsDevice.SLEEP_SUMMARY_DEEP_SLEEP_DURATION, data.getDouble("deepsleepduration"));
+                            updated.putDouble(WithingsDevice.SLEEP_SUMMARY_TO_SLEEP_DURATION, data.getDouble("durationtosleep"));
+                            updated.putDouble(WithingsDevice.SLEEP_SUMMARY_WAKE_COUNT, data.getDouble("wakeupcount"));
+
+                            if (data.has("remsleepduration")) {
+                                updated.putDouble(WithingsDevice.SLEEP_SUMMARY_REM_SLEEP_DURATION, data.getDouble("remsleepduration"));
+                            }
+
+                            if (data.has("durationtowakeup")) {
+                                updated.putDouble(WithingsDevice.SLEEP_SUMMARY_TO_WAKE_DURATION, data.getDouble("durationtowakeup"));
+                            }
+
+                            this.annotateGeneratorReading(updated);
+
+                            updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_SLEEP_SUMMARY);
+
+                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
                         }
 
-                        if (data.has("durationtowakeup")) {
-                            updated.putDouble(WithingsDevice.SLEEP_SUMMARY_TO_WAKE_DURATION, data.getDouble("durationtowakeup"));
-                        }
-
-                        this.annotateGeneratorReading(updated);
-
-                        updated.putString(WithingsDevice.DATASTREAM, WithingsDevice.DATASTREAM_SLEEP_SUMMARY);
-
-                        Generators.getInstance(this.mContext).notifyGeneratorUpdated(WithingsDevice.GENERATOR_IDENTIFIER, updated);
+                        c.close();
                     }
                 }
             } catch (JSONException e) {
@@ -1899,6 +2063,16 @@ public class WithingsDevice extends Generator {
         e.putLong(WithingsDevice.DATA_RETENTION_PERIOD, period);
 
         e.apply();
+    }
+
+    public void setScanDays(long days) {
+        if (days >= 0) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+            SharedPreferences.Editor e = prefs.edit();
+
+            e.putLong(WithingsDevice.API_SCAN_DAYS, days);
+            e.apply();
+        }
     }
 }
 
