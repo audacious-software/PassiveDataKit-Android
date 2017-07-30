@@ -16,7 +16,7 @@
     <!-- App Events Generator -->
     <string name="pdk_generator_app_events_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, event_name TEXT, event_details TEXT);</string>
 
-    <!-- Withings Device Generator -->
+    <!-- Withings/Nokia Device Generator -->
     <string name="pdk_generator_withings_create_activity_measure_history_table">CREATE TABLE activity_measure_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, date_start INTEGER, timezone TEXT, steps REAL, distance REAL, active_calories REAL, total_calories REAL, elevation REAL, soft_activity_duration REAL, moderate_activity_duration REAL, intense_activity_duration REAL);</string>
     <string name="pdk_generator_withings_create_body_measure_history_table">CREATE TABLE body_measure_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, measure_date INTEGER, measure_status TEXT, measure_category TEXT, measure_type TEXT, measure_value REAL);</string>
     <string name="pdk_generator_withings_create_intraday_activity_history_table">CREATE TABLE intraday_activity_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, activity_start REAL, activity_duration REAL, calories REAL, distance REAL, elevation_climbed REAL, steps REAL, swim_strokes REAL, pool_laps REAL);</string>

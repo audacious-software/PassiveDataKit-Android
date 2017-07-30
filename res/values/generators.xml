@@ -134,8 +134,8 @@
 
     <string name="message_generator_phone_calls_empty">No phone calls have been made or received on this device.</string>
 
-    <!-- Withings Device Resources -->
-    <string name="generator_withings_device">Withings Device</string>
+    <!-- Withings/Nokia Device Resources -->
+    <string name="generator_withings_device">Nokia Device</string>
     <string name="generator_withings_soft_activities_label">Soft Activities</string>
     <string name="generator_withings_moderate_activities_label">Moderate Activities</string>
     <string name="generator_withings_intense_activities_label">Intense Activities</string>
