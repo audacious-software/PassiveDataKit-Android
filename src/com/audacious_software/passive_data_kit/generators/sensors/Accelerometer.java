@@ -248,7 +248,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
                                     sensors.unregisterListener(me, me.mSensor);
                                 } catch (InterruptedException e) {
-                                    e.printStackTrace();
+                                    // e.printStackTrace();
                                 }
                             }
                         };

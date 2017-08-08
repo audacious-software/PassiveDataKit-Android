@@ -458,7 +458,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
                                 if (placesResult.getStatus().isSuccess()) {
                                     List<PlaceLikelihood> places = placesResult.getPlaceLikelihoods();
 
-                                    if (places.size() > 0) {
+                                    if (places != null && places.size() > 0) {
                                         Collections.sort(places, new Comparator<PlaceLikelihood>() {
                                             @Override
                                             public int compare(PlaceLikelihood one, PlaceLikelihood two) {
