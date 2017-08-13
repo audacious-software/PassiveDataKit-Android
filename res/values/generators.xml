@@ -14,6 +14,7 @@
         <item>com.audacious_software.passive_data_kit.generators.device.ForegroundApplication</item>
         <item>com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice</item>
         <item>com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus</item>
+        <item>com.audacious_software.passive_data_kit.generators.environment.TimeOfDay</item>
     </string-array>
 
     <string-array name="pdk_app_generators" tools:ignore="InconsistentArrays"></string-array>
@@ -210,5 +211,15 @@
     <!-- <color name="generator_system_status_other">#757575</color> -->
     <string name="generator_system_status_runtime">Continuous Runtime: %1$s</string>
     <string name="generator_system_status_runtime_formatted">%1$dd %2$s:%3$s:%4$s.%5$s</string>
+
+    <!-- Time of Day -->
+    <string name="generator_time_of_day">Time Of Day</string>
+    <string name="label_time_night">Night</string>
+    <string name="label_time_morning">Morning</string>
+    <string name="label_time_afternoon">Afternoon</string>
+    <string name="label_time_evening">Evening</string>
+
+    <string name="label_sunrise">Sunrise:</string>
+    <string name="label_sunset">Sunset:</string>
 </resources>
 

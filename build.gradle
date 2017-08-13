@@ -71,6 +71,7 @@ android {
         compile 'com.fasterxml.jackson.core:jackson-core:2.8.8'
         compile 'com.github.philjay:mpandroidchart:v3.0.1'
         compile 'com.rvalerio:fgchecker:1.0.1'
+        compile 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
     }
 
     buildTypes {
