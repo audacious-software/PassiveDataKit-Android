@@ -355,7 +355,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
             double radius = prefs.getLong(Location.ACCURACY_MODE_RANDOMIZED_RANGE, Location.ACCURACY_MODE_RANDOMIZED_RANGE_DEFAULT);
 
-            double radiusInDegrees = radius / 111000;
+            double radiusInDegrees = radius / 111300;
 
             double u = (double) Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE_DEFAULT;
             double v = (double) Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE_DEFAULT;
@@ -388,7 +388,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             double y = w * Math.sin(t);
 
             // Adjust the x-coordinate for the shrinking of the east-west distances
-            longitude = longitude + (x / Math.cos(latitude));
+            longitude = x + longitude; //  + (x / Math.cos(latitude));
             latitude = y + latitude;
 
             location.setLongitude(longitude);

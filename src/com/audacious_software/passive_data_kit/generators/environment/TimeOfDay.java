@@ -294,6 +294,10 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         Calendar sunrise = calculator.getOfficialSunriseCalendarForDate(now);
         Calendar sunset = calculator.getOfficialSunsetCalendarForDate(now);
 
+        if (sunrise.getTimeInMillis() > sunset.getTimeInMillis()) {
+            sunset.add(Calendar.DATE, 1);
+        }
+
         ContentValues values = new ContentValues();
         values.put(TimeOfDay.HISTORY_OBSERVED, System.currentTimeMillis());
         values.put(TimeOfDay.HISTORY_LATITUDE, location.getLatitude());
@@ -384,9 +388,9 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
             return TimeOfDay.TIME_OF_DAY_NIGHT;
         } else if (now < noon.getTimeInMillis()) {
             return TimeOfDay.TIME_OF_DAY_MORNING;
-        } else if (now < this.mSunrise - (60 * 60 * 1000)) {
+        } else if (now < this.mSunset - (60 * 60 * 1000)) {
             return TimeOfDay.TIME_OF_DAY_AFTERNOON;
-        } else if (now < this.mSunrise + (60 * 60 * 1000)) {
+        } else if (now < this.mSunset + (60 * 60 * 1000)) {
             return TimeOfDay.TIME_OF_DAY_EVENING;
         }
 
