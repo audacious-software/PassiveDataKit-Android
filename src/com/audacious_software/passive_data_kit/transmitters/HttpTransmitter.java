@@ -690,9 +690,14 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             }
 
             generator.writeEndObject();
-        }
-        catch (IOException e) {
+        } catch (Exception e) {
             Logger.getInstance(context).logThrowable(e);
+
+            HashMap<String, Object> payload = new HashMap<>();
+            payload.put("bundle_string", bundle.toString());
+            payload.put("exception_type", e.getClass().getName());
+
+            Logger.getInstance(context).log("pdk_http_transmitter_write_bundle_error", payload);
         }
     }
 
