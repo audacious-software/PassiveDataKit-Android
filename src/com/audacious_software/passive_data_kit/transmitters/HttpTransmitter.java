@@ -501,41 +501,51 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    public void onGeneratorUpdated(String identifier, long timestamp, Bundle data) {
-        if (data.keySet().size() > 1) {  // Only transmit non-empty bundles...
-            timestamp = timestamp / 1000; // Convert to seconds...
+    public void onGeneratorUpdated(final String identifier, final long timestamp, final Bundle data) {
+        final HttpTransmitter me = this;
 
-            Generators generators = Generators.getInstance(this.mContext);
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                if (data.keySet().size() > 1) {  // Only transmit non-empty bundles...
+                    long generatorTimestamp = timestamp / 1000; // Convert to seconds...
 
-            Bundle metadata = new Bundle();
+                    Generators generators = Generators.getInstance(me.mContext);
 
-            if (data.containsKey(Generator.PDK_METADATA)) {
-                metadata = data.getBundle(Generator.PDK_METADATA);
-            }
+                    Bundle metadata = new Bundle();
 
-            metadata.putString(Generator.IDENTIFIER, identifier);
-            metadata.putDouble(Generator.TIMESTAMP, timestamp);
-            metadata.putString(Generator.GENERATOR, generators.getGeneratorFullName(identifier));
-            metadata.putString(Generator.SOURCE, generators.getSource());
-            metadata.putString(Generator.SOURCE, this.mUserId);
-            data.putBundle(Generator.PDK_METADATA, metadata);
+                    if (data.containsKey(Generator.PDK_METADATA)) {
+                        metadata = data.getBundle(Generator.PDK_METADATA);
+                    }
 
-            synchronized (this) {
-                if (this.mJsonGenerator == null) {
-                    this.mCurrentFile = new File(this.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
+                    metadata.putString(Generator.IDENTIFIER, identifier);
+                    metadata.putDouble(Generator.TIMESTAMP, generatorTimestamp);
+                    metadata.putString(Generator.GENERATOR, generators.getGeneratorFullName(identifier));
+                    metadata.putString(Generator.SOURCE, generators.getSource());
+                    metadata.putString(Generator.SOURCE, me.mUserId);
+                    data.putBundle(Generator.PDK_METADATA, metadata);
 
-                    try {
-                        JsonFactory factory = new JsonFactory();
-                        this.mJsonGenerator = factory.createGenerator(this.mCurrentFile, JsonEncoding.UTF8);
-                        this.mJsonGenerator.writeStartArray();
-                    } catch (IOException e) {
-                        Logger.getInstance(this.mContext).logThrowable(e);
+                    synchronized (this) {
+                        if (me.mJsonGenerator == null) {
+                            me.mCurrentFile = new File(me.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
+
+                            try {
+                                JsonFactory factory = new JsonFactory();
+                                me.mJsonGenerator = factory.createGenerator(me.mCurrentFile, JsonEncoding.UTF8);
+                                me.mJsonGenerator.writeStartArray();
+                            } catch (IOException e) {
+                                Logger.getInstance(me.mContext).logThrowable(e);
+                            }
+                        }
+
+                        HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, data);
                     }
                 }
-
-                HttpTransmitter.writeBundle(this.mContext, this.mJsonGenerator, data);
             }
-        }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
     }
 
     private static Map<String, Object> getValues(Context context, final Bundle bundle) {
