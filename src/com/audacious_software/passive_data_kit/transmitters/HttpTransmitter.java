@@ -5,6 +5,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.BadParcelableException;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.util.Log;
 
 import com.audacious_software.passive_data_kit.DeviceInformation;
@@ -501,21 +502,27 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    public void onGeneratorUpdated(final String identifier, final long timestamp, final Bundle data) {
+    public void onGeneratorUpdated(final String identifier, final long timestamp, Bundle data) {
         final HttpTransmitter me = this;
+
+        final Parcel p = Parcel.obtain();
+        p.writeBundle(data);
+        p.setDataPosition(0);
 
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                if (data.keySet().size() > 1) {  // Only transmit non-empty bundles...
+                Bundle clonedData = p.readBundle();
+
+                if (clonedData.keySet().size() > 1) {  // Only transmit non-empty bundles...
                     long generatorTimestamp = timestamp / 1000; // Convert to seconds...
 
                     Generators generators = Generators.getInstance(me.mContext);
 
                     Bundle metadata = new Bundle();
 
-                    if (data.containsKey(Generator.PDK_METADATA)) {
-                        metadata = data.getBundle(Generator.PDK_METADATA);
+                    if (clonedData.containsKey(Generator.PDK_METADATA)) {
+                        metadata = clonedData.getBundle(Generator.PDK_METADATA);
                     }
 
                     metadata.putString(Generator.IDENTIFIER, identifier);
@@ -523,7 +530,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                     metadata.putString(Generator.GENERATOR, generators.getGeneratorFullName(identifier));
                     metadata.putString(Generator.SOURCE, generators.getSource());
                     metadata.putString(Generator.SOURCE, me.mUserId);
-                    data.putBundle(Generator.PDK_METADATA, metadata);
+                    clonedData.putBundle(Generator.PDK_METADATA, metadata);
 
                     synchronized (this) {
                         if (me.mJsonGenerator == null) {
@@ -538,7 +545,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                             }
                         }
 
-                        HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, data);
+                        HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
                     }
                 }
             }
