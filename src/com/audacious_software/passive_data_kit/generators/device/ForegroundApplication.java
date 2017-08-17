@@ -103,35 +103,43 @@ public class ForegroundApplication extends Generator{
         this.mAppChecker = new AppChecker();
         this.mAppChecker.other(new AppChecker.Listener() {
             @Override
-            public void onForeground(String process) {
-                long now = System.currentTimeMillis();
+            public void onForeground(final String process) {
+                final long now = System.currentTimeMillis();
 
                 WindowManager window = (WindowManager) me.mContext.getSystemService(Context.WINDOW_SERVICE);
-                Display display = window.getDefaultDisplay();
+                final Display display = window.getDefaultDisplay();
 
-                boolean screenActive = true;
+                Runnable r = new Runnable() {
+                    @Override
+                    public void run() {
+                        boolean screenActive = true;
 
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                    if (display.getState() != Display.STATE_ON) {
-                        screenActive = false;
+                        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                            if (display.getState() != Display.STATE_ON) {
+                                screenActive = false;
+                            }
+                        }
+
+                        ContentValues values = new ContentValues();
+                        values.put(ForegroundApplication.HISTORY_OBSERVED, now);
+                        values.put(ForegroundApplication.HISTORY_APPLICATION, process);
+                        values.put(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
+                        values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
+
+                        me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
+
+                        Bundle update = new Bundle();
+                        update.putLong(ForegroundApplication.HISTORY_OBSERVED, now);
+                        update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
+                        update.putLong(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
+                        update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
+
+                        Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
                     }
-                }
+                };
 
-                ContentValues values = new ContentValues();
-                values.put(ForegroundApplication.HISTORY_OBSERVED, now);
-                values.put(ForegroundApplication.HISTORY_APPLICATION, process);
-                values.put(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
-                values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
-
-                me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
-
-                Bundle update = new Bundle();
-                update.putLong(ForegroundApplication.HISTORY_OBSERVED, now);
-                update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
-                update.putLong(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
-                update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
-
-                Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
+                Thread t = new Thread(r);
+                t.start();
             }
         });
 

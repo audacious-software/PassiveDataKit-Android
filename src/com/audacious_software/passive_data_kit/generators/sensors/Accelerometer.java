@@ -685,6 +685,10 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
+        if (sensorEvent.values == null) {
+            return;
+        }
+
         long rawTimestamp = sensorEvent.timestamp;
 
         if (this.mBaseTimestamp == 0) {
