@@ -169,113 +169,121 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
     }
 
     private void startGenerator() {
-        final SensorManager sensors = (SensorManager) this.mContext.getSystemService(Context.SENSOR_SERVICE);
-
         final Accelerometer me = this;
 
-        Generators.getInstance(this.mContext).registerCustomViewClass(Accelerometer.GENERATOR_IDENTIFIER, Accelerometer.class);
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                final SensorManager sensors = (SensorManager) me.mContext.getSystemService(Context.SENSOR_SERVICE);
 
-        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+                Generators.getInstance(me.mContext).registerCustomViewClass(Accelerometer.GENERATOR_IDENTIFIER, Accelerometer.class);
 
-        path = new File(path, Accelerometer.DATABASE_PATH);
+                File path = PassiveDataKit.getGeneratorsStorage(me.mContext);
 
-        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+                path = new File(path, Accelerometer.DATABASE_PATH);
 
-        int version = this.getDatabaseVersion(this.mDatabase);
+                me.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
 
-        switch (version) {
-            case 0:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_accelerometer_create_history_table));
-        }
+                int version = me.getDatabaseVersion(me.mDatabase);
 
-        this.setDatabaseVersion(this.mDatabase, Accelerometer.DATABASE_VERSION);
+                switch (version) {
+                    case 0:
+                        me.mDatabase.execSQL(me.mContext.getString(R.string.pdk_generator_accelerometer_create_history_table));
+                }
 
-        if (Accelerometer.isEnabled(this.mContext)) {
-            this.mSensor = sensors.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+                me.setDatabaseVersion(me.mDatabase, Accelerometer.DATABASE_VERSION);
 
-            Runnable r = new Runnable()
-            {
-                public void run()
-                {
-                    Looper.prepare();
+                if (Accelerometer.isEnabled(me.mContext)) {
+                    me.mSensor = sensors.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
-                    me.mXValueBuffers = new float[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
-                    me.mYValueBuffers = new float[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
-                    me.mZValueBuffers = new float[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
-                    me.mAccuracyBuffers = new int[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
-                    me.mRawTimestampBuffers = new long[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
-                    me.mTimestampBuffers = new long[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
+                    Runnable r = new Runnable()
+                    {
+                        public void run()
+                        {
+                            Looper.prepare();
 
-                    me.mActiveBuffersIndex = 0;
-                    me.mCurrentBufferIndex = 0;
+                            me.mXValueBuffers = new float[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
+                            me.mYValueBuffers = new float[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
+                            me.mZValueBuffers = new float[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
+                            me.mAccuracyBuffers = new int[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
+                            me.mRawTimestampBuffers = new long[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
+                            me.mTimestampBuffers = new long[Accelerometer.NUM_BUFFERS][Accelerometer.BUFFER_SIZE];
 
-                    Accelerometer.sHandler = new Handler();
+                            me.mActiveBuffersIndex = 0;
+                            me.mCurrentBufferIndex = 0;
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, 0, Accelerometer.sHandler);
-                    } else {
-                        sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, Accelerometer.sHandler);
-                    }
+                            Accelerometer.sHandler = new Handler();
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                                sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, 0, Accelerometer.sHandler);
+                            } else {
+                                sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, Accelerometer.sHandler);
+                            }
+
+                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+
+                            final long refreshInterval = prefs.getLong(Accelerometer.REFRESH_INTERVAL, Accelerometer.REFRESH_INTERVAL_DEFAULT);
+
+                            if (refreshInterval > 0) {
+                                final long refreshDuration = prefs.getLong(Accelerometer.REFRESH_DURATION, Accelerometer.REFRESH_DURATION_DEFAULT);
+
+                                if (me.mIntervalThread != null) {
+                                    me.mIntervalThread.interrupt();
+                                    me.mIntervalThread = null;
+                                }
+
+                                Runnable managerRunnable = new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            while (Accelerometer.isEnabled(me.mContext)) {
+                                                Thread.sleep(refreshDuration);
+
+                                                sensors.unregisterListener(me, me.mSensor);
+
+                                                Thread.sleep(refreshInterval - refreshDuration);
+
+                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+                                                    sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, 0, Accelerometer.sHandler);
+                                                else
+                                                    sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, Accelerometer.sHandler);
+                                            }
+
+                                            sensors.unregisterListener(me, me.mSensor);
+                                        } catch (InterruptedException e) {
+                                            // e.printStackTrace();
+                                        }
+                                    }
+                                };
+
+                                me.mIntervalThread = new Thread(managerRunnable, "accelerometer-interval");
+                                me.mIntervalThread.start();
+                            }
+
+                            Looper.loop();
+                        }
+                    };
+
+                    Thread t = new Thread(r, "accelerometer");
+                    t.start();
 
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
-                    final long refreshInterval = prefs.getLong(Accelerometer.REFRESH_INTERVAL, Accelerometer.REFRESH_INTERVAL_DEFAULT);
-
-                    if (refreshInterval > 0) {
-                        final long refreshDuration = prefs.getLong(Accelerometer.REFRESH_DURATION, Accelerometer.REFRESH_DURATION_DEFAULT);
-
-                        if (me.mIntervalThread != null) {
-                            me.mIntervalThread.interrupt();
-                            me.mIntervalThread = null;
-                        }
-
-                        Runnable managerRunnable = new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    while (Accelerometer.isEnabled(me.mContext)) {
-                                        Thread.sleep(refreshDuration);
-
-                                        sensors.unregisterListener(me, me.mSensor);
-
-                                        Thread.sleep(refreshInterval - refreshDuration);
-
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
-                                            sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, 0, Accelerometer.sHandler);
-                                        else
-                                            sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, Accelerometer.sHandler);
-                                    }
-
-                                    sensors.unregisterListener(me, me.mSensor);
-                                } catch (InterruptedException e) {
-                                    // e.printStackTrace();
-                                }
-                            }
-                        };
-
-                        me.mIntervalThread = new Thread(managerRunnable, "accelerometer-interval");
-                        me.mIntervalThread.start();
+                    if (prefs.getBoolean(Accelerometer.IGNORE_POWER_MANAGEMENT, Accelerometer.IGNORE_POWER_MANAGEMENT_DEFAULT)) {
+                        Generators.getInstance(me.mContext).acquireWakeLock(Accelerometer.IDENTIFIER, PowerManager.PARTIAL_WAKE_LOCK);
+                    } else {
+                        Generators.getInstance(me.mContext).releaseWakeLock(Accelerometer.IDENTIFIER);
                     }
-
-                    Looper.loop();
+                } else {
+                    me.stopGenerator();
                 }
-            };
 
-            Thread t = new Thread(r, "accelerometer");
-            t.start();
-
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
-
-            if (prefs.getBoolean(Accelerometer.IGNORE_POWER_MANAGEMENT, Accelerometer.IGNORE_POWER_MANAGEMENT_DEFAULT)) {
-                Generators.getInstance(this.mContext).acquireWakeLock(Accelerometer.IDENTIFIER, PowerManager.PARTIAL_WAKE_LOCK);
-            } else {
-                Generators.getInstance(this.mContext).releaseWakeLock(Accelerometer.IDENTIFIER);
+                me.flushCachedData();
             }
-        } else {
-            this.stopGenerator();
-        }
+        };
 
-        this.flushCachedData();
+        Thread t = new Thread(r, "accelerometer-start");
+        t.start();
     }
 
     private void stopGenerator() {
@@ -791,16 +799,26 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
     @Override
     protected void flushCachedData() {
+        final Accelerometer me = this;
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
         long retentionPeriod = prefs.getLong(Accelerometer.DATA_RETENTION_PERIOD, Accelerometer.DATA_RETENTION_PERIOD_DEFAULT);
 
         long start = System.currentTimeMillis() - retentionPeriod;
 
-        String where = Accelerometer.HISTORY_OBSERVED + " < ?";
-        String[] args = { "" + start };
+        final String where = Accelerometer.HISTORY_OBSERVED + " < ?";
+        final String[] args = { "" + start };
 
-        this.mDatabase.delete(Accelerometer.TABLE_HISTORY, where, args);
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                me.mDatabase.delete(Accelerometer.TABLE_HISTORY, where, args);
+            }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
     }
 
     @Override
