@@ -18,8 +18,15 @@ buildscript {
 
 repositories {
     jcenter()
-    maven { url "https://jitpack.io" }
-    maven { url 'https://dl.bintray.com/rvalerio/maven' }
+    maven {
+        url "https://jitpack.io"
+    }
+    maven {
+        url 'https://dl.bintray.com/rvalerio/maven'
+    }
+    maven {
+        url "https://maven.google.com"
+    }
     flatDir{
         dirs 'libs'
     }
