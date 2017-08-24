@@ -8,7 +8,6 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -70,8 +69,6 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
 
     @Override
     public void onGeneratorUpdated(final String identifier, long timestamp, Bundle data) {
-        Log.e("PDK", "GENERATOR UPDATED: " + identifier);
-
         final DataStreamActivity me = this;
 
         if (me.mIsUpdating) {

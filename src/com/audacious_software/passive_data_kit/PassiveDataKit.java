@@ -22,8 +22,18 @@ public class PassiveDataKit {
             if (!this.mStarted) {
                 this.mStarted = true;
 
-                Generators.getInstance(this.mContext).start();
-                Logger.getInstance(this.mContext);
+                final PassiveDataKit me = this;
+
+                Runnable r = new Runnable() {
+                    @Override
+                    public void run() {
+                        Generators.getInstance(me.mContext).start();
+                        Logger.getInstance(me.mContext);
+                    }
+                };
+
+                Thread t = new Thread(r);
+                t.start();
             }
         }
     }

@@ -36,6 +36,8 @@ public class Generators {
     private final SparseArray<Class<? extends Generator>> mViewTypeMap = new SparseArray<>();
     private final HashSet<GeneratorUpdatedListener> mGeneratorUpdatedListeners = new HashSet<>();
     private final HashMap<String, PowerManager.WakeLock> mWakeLocks = new HashMap<>();
+    private final HashMap<String, String> mGeneratorIdentifierMap = new HashMap<>();
+    private String mUserAgent = null;
 
     @SuppressWarnings("unchecked")
     public void start() {
@@ -89,13 +91,12 @@ public class Generators {
             if (running) {
                 this.stopGenerator(className);
             }
-            else {
-                Method start = generatorClass.getDeclaredMethod("start", Context.class);
 
-                start.invoke(null, this.mContext);
+            Method start = generatorClass.getDeclaredMethod("start", Context.class);
 
-                this.mActiveGenerators.add(className);
-            }
+            start.invoke(null, this.mContext);
+
+            this.mActiveGenerators.add(className);
         }
     }
 
@@ -150,21 +151,33 @@ public class Generators {
     }
 
     public String getGeneratorFullName(String identifier) {
-        String pdkName = this.mContext.getString(R.string.pdk_name);
-        String pdkVersion = this.mContext.getString(R.string.pdk_version);
-        String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
-
-        String version = this.mContext.getString(R.string.unknown_version);
-
-        try {
-            PackageInfo pInfo = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0);
-
-            version = pInfo.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            Logger.getInstance(this.mContext).logThrowable(e);
+        if (this.mGeneratorIdentifierMap.containsKey(identifier)) {
+            return this.mGeneratorIdentifierMap.get(identifier);
         }
 
-        return identifier + ": " + appName + "/" + version + " " + pdkName + "/" + pdkVersion;
+        if (this.mUserAgent == null) {
+            String pdkName = this.mContext.getString(R.string.pdk_name);
+            String pdkVersion = this.mContext.getString(R.string.pdk_version);
+            String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
+
+            String version = this.mContext.getString(R.string.unknown_version);
+
+            try {
+                PackageInfo pInfo = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0);
+
+                version = pInfo.versionName;
+            } catch (PackageManager.NameNotFoundException e) {
+                Logger.getInstance(this.mContext).logThrowable(e);
+            } catch (RuntimeException e) {
+                Logger.getInstance(this.mContext).logThrowable(e);
+            }
+
+            this.mUserAgent = appName + "/" + version + " " + pdkName + "/" + pdkVersion;
+        }
+
+        this.mGeneratorIdentifierMap.put(identifier, identifier + ": " + this.mUserAgent);
+
+        return this.mGeneratorIdentifierMap.get(identifier);
     }
 
     public void registerCustomViewClass(String identifier, Class<? extends Generator> generatorClass) {

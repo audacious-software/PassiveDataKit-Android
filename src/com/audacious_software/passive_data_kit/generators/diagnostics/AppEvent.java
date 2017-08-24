@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.generators.diagnostics;
 
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -66,6 +67,7 @@ public class AppEvent extends Generator{
     private SQLiteDatabase mDatabase = null;
 
     private int mPage = 0;
+    private long mLastTimestamp = -1;
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -140,167 +142,176 @@ public class AppEvent extends Generator{
     }
 
     @SuppressWarnings("unused")
-    public static void bindViewHolder(DataPointViewHolder holder) {
-        final Context context = holder.itemView.getContext();
+    public static void bindViewHolder(final DataPointViewHolder holder) {
+        final Activity activity = (Activity) holder.itemView.getContext();
+        final AppEvent generator = AppEvent.getInstance(activity);
 
-        final AppEvent generator = AppEvent.getInstance(context);
+        final View cardContent = holder.itemView.findViewById(R.id.card_content);
+        final View cardSizer = holder.itemView.findViewById(R.id.card_sizer);
+        final View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
+        final TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
 
-        final ArrayList<Object[]> events = new ArrayList<>();
+        cardContent.setVisibility(View.GONE);
+        cardEmpty.setVisibility(View.VISIBLE);
+        cardSizer.setVisibility(View.INVISIBLE);
 
-        Cursor c = generator.mDatabase.query(AppEvent.TABLE_HISTORY, null, null, null, null, null, AppEvent.HISTORY_OBSERVED + " DESC");
+        dateLabel.setText(R.string.label_never_pdk);
 
-        View cardContent = holder.itemView.findViewById(R.id.card_content);
-        View cardSizer = holder.itemView.findViewById(R.id.card_sizer);
-        View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
-
-        int eventCount = c.getCount();
-
-        if (c.moveToNext()) {
-            cardContent.setVisibility(View.VISIBLE);
-            cardEmpty.setVisibility(View.GONE);
-            cardSizer.setVisibility(View.INVISIBLE);
-
-            long timestamp = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED)) / 1000;
-
-            dateLabel.setText(Generator.formatTimestamp(context, timestamp));
-        } else {
-            cardContent.setVisibility(View.GONE);
-            cardEmpty.setVisibility(View.VISIBLE);
-            cardSizer.setVisibility(View.INVISIBLE);
-
-            dateLabel.setText(R.string.label_never_pdk);
-        }
-
-        c.moveToPrevious();
-
-        while (c.moveToNext()) {
-            String event = c.getString(c.getColumnIndex(AppEvent.HISTORY_EVENT_NAME));
-            long timestamp = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED));
-
-            Object[] values = { event, timestamp };
-
-            events.add(values);
-        }
-
-        c.close();
-
-        if (eventCount > AppEvent.CARD_PAGE_SIZE * AppEvent.CARD_MAX_PAGES) {
-            eventCount = AppEvent.CARD_PAGE_SIZE * AppEvent.CARD_MAX_PAGES;
-        }
-
-        final int pages = (int) Math.ceil(((double) eventCount) / AppEvent.CARD_PAGE_SIZE);
-
-        final AppEvent appEvent = AppEvent.getInstance(holder.itemView.getContext());
-
-        ViewPager pager = (ViewPager) holder.itemView.findViewById(R.id.content_pager);
-
-        PagerAdapter adapter = new PagerAdapter() {
+        Runnable r = new Runnable() {
             @Override
-            public int getCount() {
-                return pages;
-            }
+            public void run() {
+                final ArrayList<Object[]> events = new ArrayList<>();
 
-            @Override
-            public boolean isViewFromObject(View view, Object content) {
-                return view.getTag().equals(content);
-            }
+                Cursor c = generator.mDatabase.query(AppEvent.TABLE_HISTORY, null, null, null, null, null, AppEvent.HISTORY_OBSERVED + " DESC", "" + (AppEvent.CARD_PAGE_SIZE * AppEvent.CARD_MAX_PAGES));
 
-            public void destroyItem(ViewGroup container, int position, Object content) {
-                int toRemove = -1;
+                while (c.moveToNext()) {
+                    String event = c.getString(c.getColumnIndex(AppEvent.HISTORY_EVENT_NAME));
+                    long timestamp = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED));
 
-                for (int i = 0; i < container.getChildCount(); i++) {
-                    View child = container.getChildAt(i);
+                    Object[] values = { event, timestamp };
 
-                    if (this.isViewFromObject(child, content))
-                        toRemove = i;
+                    events.add(values);
                 }
 
-                if (toRemove >= 0)
-                    container.removeViewAt(toRemove);
-            }
+                c.close();
 
-            @SuppressWarnings("UnusedAssignment")
-            public Object instantiateItem(ViewGroup container, int position) {
-                LinearLayout list = (LinearLayout) LayoutInflater.from(container.getContext()).inflate(R.layout.card_generator_app_event_page, container, false);
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (events.size() > 0) {
+                            cardContent.setVisibility(View.VISIBLE);
+                            cardEmpty.setVisibility(View.GONE);
+                            cardSizer.setVisibility(View.INVISIBLE);
 
-                int listPosition = AppEvent.CARD_PAGE_SIZE * position;
+                            Object[] values = events.get(0);
 
-                for (int i = 0; i < AppEvent.CARD_PAGE_SIZE && listPosition + i < events.size(); i++) {
-                    Object[] values = events.get(listPosition + i);
+                            dateLabel.setText(Generator.formatTimestamp(activity, ((long) values[1]) / 1000));
 
-                    String event = (String) values[0];
-                    long timestamp = (long) values[1];
+                            final int pages = (int) Math.ceil(((double) events.size()) / AppEvent.CARD_PAGE_SIZE);
 
-                    LinearLayout row = null;
+                            final AppEvent appEvent = AppEvent.getInstance(holder.itemView.getContext());
 
-                    switch (i) {
-                        case 0:
-                            row = (LinearLayout) list.findViewById(R.id.app_event_row_0);
-                            break;
-                        case 1:
-                            row = (LinearLayout) list.findViewById(R.id.app_event_row_1);
-                            break;
-                        case 2:
-                            row = (LinearLayout) list.findViewById(R.id.app_event_row_2);
-                            break;
-                        case 3:
-                            row = (LinearLayout) list.findViewById(R.id.app_event_row_3);
-                            break;
-                        case 4:
-                            row = (LinearLayout) list.findViewById(R.id.app_event_row_4);
-                            break;
-                        case 5:
-                            row = (LinearLayout) list.findViewById(R.id.app_event_row_5);
-                            break;
-                        case 6:
-                            row = (LinearLayout) list.findViewById(R.id.app_event_row_6);
-                            break;
-                        default:
-                            row = (LinearLayout) list.findViewById(R.id.app_event_row_7);
-                            break;
+                            ViewPager pager = (ViewPager) holder.itemView.findViewById(R.id.content_pager);
+
+                            PagerAdapter adapter = new PagerAdapter() {
+                                @Override
+                                public int getCount() {
+                                    return pages;
+                                }
+
+                                @Override
+                                public boolean isViewFromObject(View view, Object content) {
+                                    return view.getTag().equals(content);
+                                }
+
+                                public void destroyItem(ViewGroup container, int position, Object content) {
+                                    int toRemove = -1;
+
+                                    for (int i = 0; i < container.getChildCount(); i++) {
+                                        View child = container.getChildAt(i);
+
+                                        if (this.isViewFromObject(child, content))
+                                            toRemove = i;
+                                    }
+
+                                    if (toRemove >= 0)
+                                        container.removeViewAt(toRemove);
+                                }
+
+                                @SuppressWarnings("UnusedAssignment")
+                                public Object instantiateItem(ViewGroup container, int position) {
+                                    LinearLayout list = (LinearLayout) LayoutInflater.from(container.getContext()).inflate(R.layout.card_generator_app_event_page, container, false);
+
+                                    int listPosition = AppEvent.CARD_PAGE_SIZE * position;
+
+                                    for (int i = 0; i < AppEvent.CARD_PAGE_SIZE && listPosition + i < events.size(); i++) {
+                                        Object[] values = events.get(listPosition + i);
+
+                                        String event = (String) values[0];
+                                        long timestamp = (long) values[1];
+
+                                        LinearLayout row = null;
+
+                                        switch (i) {
+                                            case 0:
+                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_0);
+                                                break;
+                                            case 1:
+                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_1);
+                                                break;
+                                            case 2:
+                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_2);
+                                                break;
+                                            case 3:
+                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_3);
+                                                break;
+                                            case 4:
+                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_4);
+                                                break;
+                                            case 5:
+                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_5);
+                                                break;
+                                            case 6:
+                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_6);
+                                                break;
+                                            default:
+                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_7);
+                                                break;
+                                        }
+
+                                        TextView eventName = (TextView) row.findViewById(R.id.app_event_row_event_name);
+                                        TextView eventWhen = (TextView) row.findViewById(R.id.app_event_row_event_when);
+
+                                        eventName.setText(event);
+                                        eventWhen.setText(Generator.formatTimestamp(activity, timestamp / 1000));
+                                    }
+
+                                    list.setTag("" + position);
+
+                                    container.addView(list);
+
+                                    return "" + list.getTag();
+                                }
+                            };
+
+                            pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                                @Override
+                                public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+                                }
+
+                                @Override
+                                public void onPageSelected(int position) {
+                                    appEvent.mPage = position;
+                                }
+
+                                @Override
+                                public void onPageScrollStateChanged(int state) {
+
+                                }
+                            });
+
+                            pager.setAdapter(adapter);
+
+                            pager.setCurrentItem(appEvent.mPage);
+                        } else {
+                            cardContent.setVisibility(View.GONE);
+                            cardEmpty.setVisibility(View.VISIBLE);
+                            cardSizer.setVisibility(View.INVISIBLE);
+
+                            dateLabel.setText(R.string.label_never_pdk);
+                        }
                     }
-
-                    TextView eventName = (TextView) row.findViewById(R.id.app_event_row_event_name);
-                    TextView eventWhen = (TextView) row.findViewById(R.id.app_event_row_event_when);
-
-                    eventName.setText(event);
-                    eventWhen.setText(Generator.formatTimestamp(context, timestamp / 1000));
-                }
-
-                list.setTag("" + position);
-
-                container.addView(list);
-
-                return "" + list.getTag();
+                });
             }
         };
 
-        pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-                appEvent.mPage = position;
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-
-            }
-        });
-
-        pager.setAdapter(adapter);
-
-        pager.setCurrentItem(appEvent.mPage);
+        Thread t = new Thread(r);
+        t.start();
     }
 
     @SuppressWarnings("unused")
-    public static View fetchView(ViewGroup parent)
-    {
+    public static View fetchView(ViewGroup parent) {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_app_event, parent, false);
     }
 
@@ -311,19 +322,21 @@ public class AppEvent extends Generator{
 
     @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
-        long timestamp = 0;
-
         AppEvent me = AppEvent.getInstance(context);
+
+        if (me.mLastTimestamp != -1) {
+            return me.mLastTimestamp;
+        }
 
         Cursor c = me.mDatabase.query(AppEvent.TABLE_HISTORY, null, null, null, null, null, AppEvent.HISTORY_OBSERVED + " DESC");
 
         if (c.moveToNext()) {
-            timestamp = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED));
+            me.mLastTimestamp = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED));
         }
 
         c.close();
 
-        return timestamp;
+        return me.mLastTimestamp;
     }
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
@@ -331,68 +344,90 @@ public class AppEvent extends Generator{
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public boolean logEvent(String eventName, Map<String, ?> eventDetails) {
-        try {
-            long now = System.currentTimeMillis();
+    public boolean logEvent(final String eventName, final Map<String, ?> eventDetails) {
+        final AppEvent me = this;
 
-            ContentValues values = new ContentValues();
-            values.put(AppEvent.HISTORY_OBSERVED, now);
-            values.put(AppEvent.HISTORY_EVENT_NAME, eventName);
+        me.mLastTimestamp = System.currentTimeMillis();
 
-            Bundle detailsBundle = new Bundle();
-            JSONObject detailsJson = new JSONObject();
+        if (this.mDatabase == null) {
+            Runnable r = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(250);
 
-            for (String key : eventDetails.keySet()) {
-                Object value = eventDetails.get(key);
-
-                if (value instanceof Double) {
-                    Double doubleValue = ((Double) value);
-
-                    detailsBundle.putDouble(key, doubleValue);
-                    detailsJson.put(key, doubleValue.doubleValue());
-                } else if (value instanceof  Float) {
-                    Float floatValue = ((Float) value);
-
-                    detailsBundle.putDouble(key, floatValue.doubleValue());
-                    detailsJson.put(key, floatValue.doubleValue());
-                } else if (value instanceof  Long) {
-                    Long longValue = ((Long) value);
-
-                    detailsBundle.putLong(key, longValue);
-                    detailsJson.put(key, longValue.longValue());
-                } else if (value instanceof  Integer) {
-                    Integer intValue = ((Integer) value);
-
-                    detailsBundle.putLong(key, intValue.longValue());
-                    detailsJson.put(key, intValue.longValue());
-                } else if (value instanceof String) {
-                    detailsBundle.putString(key, value.toString());
-                    detailsJson.put(key, value.toString());
-                } else if (value instanceof Boolean) {
-                    detailsBundle.putBoolean(key, ((Boolean) value));
-                    detailsJson.put(key, ((Boolean) value).booleanValue());
-                } else if (value == null) {
-                    throw new NullPointerException("Value is null.");
-                } else {
-                    detailsBundle.putString(key, "Unknown Class: " + value.getClass().getCanonicalName());
-                    detailsJson.put(key, "Unknown Class: " + value.getClass().getCanonicalName());
+                        me.logEvent(eventName, eventDetails);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
+            };
+
+            Thread t = new Thread(r);
+            t.start();
+        } else {
+            try {
+                long now = System.currentTimeMillis();
+
+                ContentValues values = new ContentValues();
+                values.put(AppEvent.HISTORY_OBSERVED, now);
+                values.put(AppEvent.HISTORY_EVENT_NAME, eventName);
+
+                Bundle detailsBundle = new Bundle();
+                JSONObject detailsJson = new JSONObject();
+
+                for (String key : eventDetails.keySet()) {
+                    Object value = eventDetails.get(key);
+
+                    if (value instanceof Double) {
+                        Double doubleValue = ((Double) value);
+
+                        detailsBundle.putDouble(key, doubleValue);
+                        detailsJson.put(key, doubleValue.doubleValue());
+                    } else if (value instanceof Float) {
+                        Float floatValue = ((Float) value);
+
+                        detailsBundle.putDouble(key, floatValue.doubleValue());
+                        detailsJson.put(key, floatValue.doubleValue());
+                    } else if (value instanceof Long) {
+                        Long longValue = ((Long) value);
+
+                        detailsBundle.putLong(key, longValue);
+                        detailsJson.put(key, longValue.longValue());
+                    } else if (value instanceof Integer) {
+                        Integer intValue = ((Integer) value);
+
+                        detailsBundle.putLong(key, intValue.longValue());
+                        detailsJson.put(key, intValue.longValue());
+                    } else if (value instanceof String) {
+                        detailsBundle.putString(key, value.toString());
+                        detailsJson.put(key, value.toString());
+                    } else if (value instanceof Boolean) {
+                        detailsBundle.putBoolean(key, ((Boolean) value));
+                        detailsJson.put(key, ((Boolean) value).booleanValue());
+                    } else if (value == null) {
+                        throw new NullPointerException("Value is null.");
+                    } else {
+                        detailsBundle.putString(key, "Unknown Class: " + value.getClass().getCanonicalName());
+                        detailsJson.put(key, "Unknown Class: " + value.getClass().getCanonicalName());
+                    }
+                }
+
+                values.put(AppEvent.HISTORY_EVENT_DETAILS, detailsJson.toString(2));
+
+                this.mDatabase.insert(AppEvent.TABLE_HISTORY, null, values);
+
+                Bundle update = new Bundle();
+                update.putLong(AppEvent.HISTORY_OBSERVED, now);
+                update.putString(AppEvent.HISTORY_EVENT_NAME, values.getAsString(AppEvent.HISTORY_EVENT_NAME));
+                update.putBundle(AppEvent.HISTORY_EVENT_DETAILS, detailsBundle);
+
+                Generators.getInstance(this.mContext).notifyGeneratorUpdated(AppEvent.GENERATOR_IDENTIFIER, update);
+
+                return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-
-            values.put(AppEvent.HISTORY_EVENT_DETAILS, detailsJson.toString(2));
-
-            this.mDatabase.insert(AppEvent.TABLE_HISTORY, null, values);
-
-            Bundle update = new Bundle();
-            update.putLong(AppEvent.HISTORY_OBSERVED, now);
-            update.putString(AppEvent.HISTORY_EVENT_NAME, values.getAsString(AppEvent.HISTORY_EVENT_NAME));
-            update.putBundle(AppEvent.HISTORY_EVENT_DETAILS, detailsBundle);
-
-            Generators.getInstance(this.mContext).notifyGeneratorUpdated(AppEvent.GENERATOR_IDENTIFIER, update);
-
-            return true;
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
 
         return false;
@@ -450,16 +485,26 @@ public class AppEvent extends Generator{
 
     @Override
     protected void flushCachedData() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        final AppEvent me = this;
 
-        long retentionPeriod = prefs.getLong(AppEvent.DATA_RETENTION_PERIOD, AppEvent.DATA_RETENTION_PERIOD_DEFAULT);
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
-        long start = System.currentTimeMillis() - retentionPeriod;
+                long retentionPeriod = prefs.getLong(AppEvent.DATA_RETENTION_PERIOD, AppEvent.DATA_RETENTION_PERIOD_DEFAULT);
 
-        String where = AppEvent.HISTORY_OBSERVED + " < ?";
-        String[] args = { "" + start };
+                long start = System.currentTimeMillis() - retentionPeriod;
 
-        this.mDatabase.delete(AppEvent.TABLE_HISTORY, where, args);
+                String where = AppEvent.HISTORY_OBSERVED + " < ?";
+                String[] args = { "" + start };
+
+                me.mDatabase.delete(AppEvent.TABLE_HISTORY, where, args);
+            }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
     }
 
     @Override

@@ -144,6 +144,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final String HISTORY_PROVIDER = "provider";
     private static final String HISTORY_LOCATION_TIMESTAMP = "location_timestamp";
     private static final String HISTORY_ACCURACY = "accuracy";
+    private long mLatestTimestamp = -1;
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -347,6 +348,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         int selected = prefs.getInt(Location.ACCURACY_MODE, Location.ACCURACY_BEST);
 
+        this.mLatestTimestamp = System.currentTimeMillis();
+
         if (selected == Location.ACCURACY_RANDOMIZED) {
             // http://gis.stackexchange.com/a/68275/10230
 
@@ -444,19 +447,21 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
-        long timestamp = 0;
-
         Location me = Location.getInstance(context);
+
+        if (me.mLatestTimestamp != -1) {
+            return me.mLatestTimestamp;
+        }
 
         Cursor c = me.mDatabase.query(Location.TABLE_HISTORY, null, null, null, null, null, Location.HISTORY_OBSERVED + " DESC");
 
         if (c.moveToNext()) {
-            timestamp = c.getLong(c.getColumnIndex(Location.HISTORY_OBSERVED));
+            me.mLatestTimestamp = c.getLong(c.getColumnIndex(Location.HISTORY_OBSERVED));
         }
 
         c.close();
 
-        return timestamp;
+        return me.mLatestTimestamp;
     }
 
     @SuppressWarnings({"UnusedAssignment", "unused"})

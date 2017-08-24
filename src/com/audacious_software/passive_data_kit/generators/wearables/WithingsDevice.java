@@ -256,6 +256,8 @@ public class WithingsDevice extends Generator {
 
     private int mPage = 0;
 
+    private long mLatestTimestamp = -1;
+
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return WithingsDevice.GENERATOR_IDENTIFIER;
@@ -583,6 +585,8 @@ public class WithingsDevice extends Generator {
 
                         e.apply();
                     }
+
+                    me.mLatestTimestamp = System.currentTimeMillis();
 
                     return new JSONObject(response.body().string());
                 }
@@ -1658,19 +1662,25 @@ public class WithingsDevice extends Generator {
 
     @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
-        long timestamp = 0;
-
         WithingsDevice me = WithingsDevice.getInstance(context);
 
-        Cursor c = me.mDatabase.query(WithingsDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, WithingsDevice.HISTORY_OBSERVED + " DESC");
-
-        if (c.moveToNext()) {
-            timestamp = c.getLong(c.getColumnIndex(WithingsDevice.HISTORY_OBSERVED));
+        if (me.mLatestTimestamp != -1) {
+            return me.mLatestTimestamp;
         }
 
-        c.close();
+        if (me.mDatabase != null) {
+            Cursor c = me.mDatabase.query(WithingsDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, WithingsDevice.HISTORY_OBSERVED + " DESC");
 
-        return timestamp;
+            if (c.moveToNext()) {
+                me.mLatestTimestamp = c.getLong(c.getColumnIndex(WithingsDevice.HISTORY_OBSERVED));
+            }
+
+            c.close();
+        } else {
+            me.mLatestTimestamp = -1;
+        }
+
+        return me.mLatestTimestamp;
     }
 
     @SuppressWarnings("WeakerAccess")

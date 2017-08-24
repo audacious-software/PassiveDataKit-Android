@@ -17,7 +17,6 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.CallLog;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -156,7 +155,6 @@ public class PhoneCalls extends Generator {
         final Runnable checkLogs = new Runnable() {
             @Override
             public void run() {
-                Log.e("PDK", "CHECK PHONE LOGS");
                 boolean approved = false;
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -166,8 +164,6 @@ public class PhoneCalls extends Generator {
                 } else {
                     approved = true;
                 }
-
-                Log.e("PDK", "TODO: Fetch Call Logs...");
 
                 if (approved) {
                     long lastObserved = 0;

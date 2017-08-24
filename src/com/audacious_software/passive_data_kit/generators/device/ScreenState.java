@@ -73,6 +73,8 @@ public class ScreenState extends Generator{
 
     private SQLiteDatabase mDatabase = null;
 
+    private long mLatestTimestamp = -1;
+
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return ScreenState.GENERATOR_IDENTIFIER;
@@ -104,6 +106,8 @@ public class ScreenState extends Generator{
             @Override
             public void onReceive(final Context context, Intent intent) {
                 long now = System.currentTimeMillis();
+
+                me.mLatestTimestamp = now;
 
                 ContentValues values = new ContentValues();
                 values.put(ScreenState.HISTORY_OBSERVED, now);
@@ -464,19 +468,21 @@ public class ScreenState extends Generator{
 
     @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
-        long timestamp = 0;
-
         ScreenState me = ScreenState.getInstance(context);
+
+        if (me.mLatestTimestamp != -1) {
+            return me.mLatestTimestamp;
+        }
 
         Cursor c = me.mDatabase.query(ScreenState.TABLE_HISTORY, null, null, null, null, null, ScreenState.HISTORY_OBSERVED + " DESC");
 
         if (c.moveToNext()) {
-            timestamp = c.getLong(c.getColumnIndex(ScreenState.HISTORY_OBSERVED));
+            me.mLatestTimestamp = c.getLong(c.getColumnIndex(ScreenState.HISTORY_OBSERVED));
         }
 
         c.close();
 
-        return timestamp;
+        return me.mLatestTimestamp;
     }
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {

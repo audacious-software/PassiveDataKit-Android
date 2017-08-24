@@ -497,16 +497,26 @@ public class SystemStatus extends Generator {
 
     @Override
     protected void flushCachedData() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        final SystemStatus me = this;
 
-        long retentionPeriod = prefs.getLong(SystemStatus.DATA_RETENTION_PERIOD, SystemStatus.DATA_RETENTION_PERIOD_DEFAULT);
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
-        long start = System.currentTimeMillis() - retentionPeriod;
+                long retentionPeriod = prefs.getLong(SystemStatus.DATA_RETENTION_PERIOD, SystemStatus.DATA_RETENTION_PERIOD_DEFAULT);
 
-        String where = SystemStatus.HISTORY_OBSERVED + " < ?";
-        String[] args = { "" + start };
+                long start = System.currentTimeMillis() - retentionPeriod;
 
-        this.mDatabase.delete(SystemStatus.TABLE_HISTORY, where, args);
+                String where = SystemStatus.HISTORY_OBSERVED + " < ?";
+                String[] args = { "" + start };
+
+                me.mDatabase.delete(SystemStatus.TABLE_HISTORY, where, args);
+            }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
     }
 
     @Override

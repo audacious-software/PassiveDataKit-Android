@@ -14,7 +14,6 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -83,6 +82,8 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
 
     private long mSunrise = 0;
     private long mSunset = 0;
+
+    private long mLatestTimestamp = -1;
 
     public static String generatorIdentifier() {
         return TimeOfDay.GENERATOR_IDENTIFIER;
@@ -284,6 +285,8 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         if (location == null)
             return;
 
+        this.mLatestTimestamp = System.currentTimeMillis();
+
         com.luckycatlabs.sunrisesunset.dto.Location calcLocation = new com.luckycatlabs.sunrisesunset.dto.Location("" + location.getLatitude(), "" + location.getLongitude());
         TimeZone timezone = TimeZone.getDefault();
 
@@ -326,8 +329,6 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
 
         this.mDatabase.insert(TimeOfDay.TABLE_HISTORY, null, values);
 
-        Log.e("PDK", "TIME OF DAY BUNDLE: " + updated);
-
         Generators.getInstance(this.mContext).notifyGeneratorUpdated(TimeOfDay.GENERATOR_IDENTIFIER, updated);
 
         this.mSunrise = sunrise.getTimeInMillis();
@@ -338,19 +339,21 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
 
     @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
-        long timestamp = 0;
-
         TimeOfDay me = TimeOfDay.getInstance(context);
+
+        if (me.mLatestTimestamp != -1) {
+            return me.mLatestTimestamp;
+        }
 
         Cursor c = me.mDatabase.query(TimeOfDay.TABLE_HISTORY, null, null, null, null, null, TimeOfDay.HISTORY_OBSERVED + " DESC");
 
         if (c.moveToNext()) {
-            timestamp = c.getLong(c.getColumnIndex(TimeOfDay.HISTORY_OBSERVED));
+            me.mLatestTimestamp = c.getLong(c.getColumnIndex(TimeOfDay.HISTORY_OBSERVED));
         }
 
         c.close();
 
-        return timestamp;
+        return me.mLatestTimestamp;
     }
 
     public void setIncludeLocation(boolean include) {
