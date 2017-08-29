@@ -175,7 +175,7 @@
 
     <!-- App Event History -->
     <string name="generator_app_events">App Events History</string>
-    <string name="message_generator_device_app_event_empty">No app events have been logged yet.</string>
+    <string name="message_generator_device_app_event_empty">Loading app events&#8230;</string>
 
     <!-- Foreground Application -->
     <string name="generator_foreground_application">Foreground Applications</string>
