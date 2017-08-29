@@ -112,7 +112,9 @@ public class AppEvent extends Generator{
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_app_events_create_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, AppEvent.DATABASE_VERSION);
+        if (version != AppEvent.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, AppEvent.DATABASE_VERSION);
+        }
 
         this.flushCachedData();
     }

@@ -151,7 +151,9 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_ambient_light_create_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, AmbientLight.DATABASE_VERSION);
+        if (version != AmbientLight.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, AmbientLight.DATABASE_VERSION);
+        }
 
         if (AmbientLight.isEnabled(this.mContext)) {
             this.mSensor = sensors.getDefaultSensor(Sensor.TYPE_LIGHT);

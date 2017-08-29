@@ -345,7 +345,9 @@ public class Battery extends Generator {
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_device_battery_create_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, Battery.DATABASE_VERSION);
+        if (version != Battery.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, Battery.DATABASE_VERSION);
+        }
 
         IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         this.mContext.registerReceiver(this.mReceiver, filter);

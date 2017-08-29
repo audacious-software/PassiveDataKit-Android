@@ -330,7 +330,9 @@ public class PhoneCalls extends Generator {
                 this.mDatabase.delete(PhoneCalls.TABLE_HISTORY, null, null);
         }
 
-        this.setDatabaseVersion(this.mDatabase, PhoneCalls.DATABASE_VERSION);
+        if (version != PhoneCalls.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, PhoneCalls.DATABASE_VERSION);
+        }
 
         Runnable r = new Runnable() {
             @Override

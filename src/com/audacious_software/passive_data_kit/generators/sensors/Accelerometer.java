@@ -191,7 +191,9 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                         me.mDatabase.execSQL(me.mContext.getString(R.string.pdk_generator_accelerometer_create_history_table));
                 }
 
-                me.setDatabaseVersion(me.mDatabase, Accelerometer.DATABASE_VERSION);
+                if (version != Accelerometer.DATABASE_VERSION) {
+                    me.setDatabaseVersion(me.mDatabase, Accelerometer.DATABASE_VERSION);
+                }
 
                 if (Accelerometer.isEnabled(me.mContext)) {
                     me.mSensor = sensors.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);

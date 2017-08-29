@@ -122,7 +122,9 @@ public class SystemStatus extends Generator {
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_system_status_create_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, SystemStatus.DATABASE_VERSION);
+        if (version != SystemStatus.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, SystemStatus.DATABASE_VERSION);
+        }
 
         this.mReceiver = new BroadcastReceiver() {
             @Override

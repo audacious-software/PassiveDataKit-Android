@@ -163,7 +163,9 @@ public class ForegroundApplication extends Generator{
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_screen_active));
         }
 
-        this.setDatabaseVersion(this.mDatabase, ForegroundApplication.DATABASE_VERSION);
+        if (version != ForegroundApplication.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, ForegroundApplication.DATABASE_VERSION);
+        }
 
         Generators.getInstance(this.mContext).registerCustomViewClass(ForegroundApplication.GENERATOR_IDENTIFIER, ForegroundApplication.class);
 

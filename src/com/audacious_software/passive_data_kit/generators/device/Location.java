@@ -219,7 +219,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_location_create_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, Location.DATABASE_VERSION);
+        if (version != Location.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, Location.DATABASE_VERSION);
+        }
     }
 
     private void stopGenerator() {

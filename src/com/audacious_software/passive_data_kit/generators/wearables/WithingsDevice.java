@@ -376,7 +376,9 @@ public class WithingsDevice extends Generator {
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_withings_create_workout_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, WithingsDevice.DATABASE_VERSION);
+        if (version != WithingsDevice.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, WithingsDevice.DATABASE_VERSION);
+        }
 
         Runnable r = new Runnable() {
             @Override

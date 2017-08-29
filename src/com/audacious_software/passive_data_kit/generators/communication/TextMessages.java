@@ -276,7 +276,9 @@ public class TextMessages extends Generator {
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_text_messages_create_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, TextMessages.DATABASE_VERSION);
+        if (version != TextMessages.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, TextMessages.DATABASE_VERSION);
+        }
 
         Runnable r = new Runnable() {
             @Override

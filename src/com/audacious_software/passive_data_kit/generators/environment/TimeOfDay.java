@@ -165,7 +165,9 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_time_of_day_create_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, TimeOfDay.DATABASE_VERSION);
+        if (version != TimeOfDay.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, TimeOfDay.DATABASE_VERSION);
+        }
     }
 
     private void stopGenerator() {

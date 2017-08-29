@@ -179,7 +179,9 @@ public class ScreenState extends Generator{
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_screen_state_create_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, ScreenState.DATABASE_VERSION);
+        if (version != ScreenState.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, ScreenState.DATABASE_VERSION);
+        }
 
         this.flushCachedData();
     }
