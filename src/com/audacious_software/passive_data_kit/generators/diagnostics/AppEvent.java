@@ -61,10 +61,12 @@ public class AppEvent extends Generator{
     private static final String DETAILS_THROWABLE_MESSAGE = "message";
     private static final String EVENT_LOG_THROWABLE = "log_throwable";
 
-
     private static AppEvent sInstance = null;
 
     private SQLiteDatabase mDatabase = null;
+
+    private boolean mWorking = false;
+    private List<HashMap<String, Map<String, ?>>> mPending = new ArrayList<>();
 
     private int mPage = 0;
     private long mLastTimestamp = -1;
@@ -103,6 +105,8 @@ public class AppEvent extends Generator{
 
         path = new File(path, AppEvent.DATABASE_PATH);
 
+        this.mWorking = true;
+
         this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
 
         int version = this.getDatabaseVersion(this.mDatabase);
@@ -115,6 +119,8 @@ public class AppEvent extends Generator{
         if (version != AppEvent.DATABASE_VERSION) {
             this.setDatabaseVersion(this.mDatabase, AppEvent.DATABASE_VERSION);
         }
+
+        this.mWorking = false;
 
         this.flushCachedData();
     }
@@ -346,93 +352,94 @@ public class AppEvent extends Generator{
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public boolean logEvent(final String eventName, final Map<String, ?> eventDetails) {
-        final AppEvent me = this;
+    public boolean logEvent(String eventName, Map<String, ?> eventDetails) {
+        HashMap<String, Map<String, ?>> item = new HashMap<>();
+        item.put(eventName, eventDetails);
 
-        me.mLastTimestamp = System.currentTimeMillis();
+        this.mPending.add(item);
 
-        if (this.mDatabase == null) {
-            Runnable r = new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        Thread.sleep(250);
+        if (this.mWorking) {
+            return true;
+        }
 
-                        me.logEvent(eventName, eventDetails);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+        this.mWorking = true;
+
+        while (this.mPending.size() > 0) {
+            HashMap<String, Map<String, ?>> savedItem = this.mPending.remove(0);
+
+            for (String savedEventName : savedItem.keySet()) {
+                Map<String, ?> savedEventDetails = savedItem.get(savedEventName);
+
+                try {
+                    long now = System.currentTimeMillis();
+
+                    ContentValues values = new ContentValues();
+                    values.put(AppEvent.HISTORY_OBSERVED, now);
+                    values.put(AppEvent.HISTORY_EVENT_NAME, savedEventName);
+
+                    Bundle detailsBundle = new Bundle();
+                    JSONObject detailsJson = new JSONObject();
+
+                    for (String key : savedEventDetails.keySet()) {
+                        Object value = savedEventDetails.get(key);
+
+                        if (value instanceof Double) {
+                            Double doubleValue = ((Double) value);
+
+                            detailsBundle.putDouble(key, doubleValue);
+                            detailsJson.put(key, doubleValue.doubleValue());
+                        } else if (value instanceof Float) {
+                            Float floatValue = ((Float) value);
+
+                            detailsBundle.putDouble(key, floatValue.doubleValue());
+                            detailsJson.put(key, floatValue.doubleValue());
+                        } else if (value instanceof Long) {
+                            Long longValue = ((Long) value);
+
+                            detailsBundle.putLong(key, longValue);
+                            detailsJson.put(key, longValue.longValue());
+                        } else if (value instanceof Integer) {
+                            Integer intValue = ((Integer) value);
+
+                            detailsBundle.putLong(key, intValue.longValue());
+                            detailsJson.put(key, intValue.longValue());
+                        } else if (value instanceof String) {
+                            detailsBundle.putString(key, value.toString());
+                            detailsJson.put(key, value.toString());
+                        } else if (value instanceof Boolean) {
+                            detailsBundle.putBoolean(key, ((Boolean) value));
+                            detailsJson.put(key, ((Boolean) value).booleanValue());
+                        } else if (value == null) {
+                            throw new NullPointerException("Value is null.");
+                        } else {
+                            detailsBundle.putString(key, "Unknown Class: " + value.getClass().getCanonicalName());
+                            detailsJson.put(key, "Unknown Class: " + value.getClass().getCanonicalName());
+                        }
                     }
+
+                    values.put(AppEvent.HISTORY_EVENT_DETAILS, detailsJson.toString(2));
+
+                    this.mDatabase.insert(AppEvent.TABLE_HISTORY, null, values);
+
+                    Bundle update = new Bundle();
+                    update.putLong(AppEvent.HISTORY_OBSERVED, now);
+                    update.putString(AppEvent.HISTORY_EVENT_NAME, values.getAsString(AppEvent.HISTORY_EVENT_NAME));
+                    update.putBundle(AppEvent.HISTORY_EVENT_DETAILS, detailsBundle);
+
+                    Generators.getInstance(this.mContext).notifyGeneratorUpdated(AppEvent.GENERATOR_IDENTIFIER, update);
+
+                    this.mWorking = false;
+
+                    return true;
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            };
-
-            Thread t = new Thread(r);
-            t.start();
-        } else {
-            try {
-                long now = System.currentTimeMillis();
-
-                ContentValues values = new ContentValues();
-                values.put(AppEvent.HISTORY_OBSERVED, now);
-                values.put(AppEvent.HISTORY_EVENT_NAME, eventName);
-
-                Bundle detailsBundle = new Bundle();
-                JSONObject detailsJson = new JSONObject();
-
-                for (String key : eventDetails.keySet()) {
-                    Object value = eventDetails.get(key);
-
-                    if (value instanceof Double) {
-                        Double doubleValue = ((Double) value);
-
-                        detailsBundle.putDouble(key, doubleValue);
-                        detailsJson.put(key, doubleValue.doubleValue());
-                    } else if (value instanceof Float) {
-                        Float floatValue = ((Float) value);
-
-                        detailsBundle.putDouble(key, floatValue.doubleValue());
-                        detailsJson.put(key, floatValue.doubleValue());
-                    } else if (value instanceof Long) {
-                        Long longValue = ((Long) value);
-
-                        detailsBundle.putLong(key, longValue);
-                        detailsJson.put(key, longValue.longValue());
-                    } else if (value instanceof Integer) {
-                        Integer intValue = ((Integer) value);
-
-                        detailsBundle.putLong(key, intValue.longValue());
-                        detailsJson.put(key, intValue.longValue());
-                    } else if (value instanceof String) {
-                        detailsBundle.putString(key, value.toString());
-                        detailsJson.put(key, value.toString());
-                    } else if (value instanceof Boolean) {
-                        detailsBundle.putBoolean(key, ((Boolean) value));
-                        detailsJson.put(key, ((Boolean) value).booleanValue());
-                    } else if (value == null) {
-                        throw new NullPointerException("Value is null.");
-                    } else {
-                        detailsBundle.putString(key, "Unknown Class: " + value.getClass().getCanonicalName());
-                        detailsJson.put(key, "Unknown Class: " + value.getClass().getCanonicalName());
-                    }
-                }
-
-                values.put(AppEvent.HISTORY_EVENT_DETAILS, detailsJson.toString(2));
-
-                this.mDatabase.insert(AppEvent.TABLE_HISTORY, null, values);
-
-                Bundle update = new Bundle();
-                update.putLong(AppEvent.HISTORY_OBSERVED, now);
-                update.putString(AppEvent.HISTORY_EVENT_NAME, values.getAsString(AppEvent.HISTORY_EVENT_NAME));
-                update.putBundle(AppEvent.HISTORY_EVENT_DETAILS, detailsBundle);
-
-                Generators.getInstance(this.mContext).notifyGeneratorUpdated(AppEvent.GENERATOR_IDENTIFIER, update);
-
-                return true;
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
         }
 
-        return false;
+        this.mWorking = false;
+
+        return true;
     }
 
     public void logThrowable(Throwable t) {
@@ -487,6 +494,8 @@ public class AppEvent extends Generator{
 
     @Override
     protected void flushCachedData() {
+        this.mWorking = true;
+
         final AppEvent me = this;
 
         Runnable r = new Runnable() {
@@ -502,6 +511,8 @@ public class AppEvent extends Generator{
                 String[] args = { "" + start };
 
                 me.mDatabase.delete(AppEvent.TABLE_HISTORY, where, args);
+
+                me.mWorking = false;
             }
         };
 
