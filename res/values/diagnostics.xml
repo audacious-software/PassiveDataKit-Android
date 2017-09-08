@@ -17,7 +17,7 @@
     <string name="diagnostic_missing_location_permission_title">Location Permission Required</string>
     <string name="diagnostic_missing_location_permission">Please grant the app permission to access location services on this device.</string>
 
-    <string name="diagnostic_withings_auth_required_title" tools:ignore="Typos">Access to Withing Account Required</string>
+    <string name="diagnostic_withings_auth_required_title" tools:ignore="Typos">Access to Nokia Health Account Required</string>
     <string name="diagnostic_withings_auth_required">Permission is required to fetch data from the Nokia server. Please grant this application the requested permissions.</string>
 
     <string name="diagnostic_usage_stats_permission_required_title">App Usage Data Permission Required</string>

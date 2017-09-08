@@ -235,12 +235,12 @@ public class WithingsDevice extends Generator {
     private static final String API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH";
     private static final String API_ACTION_WORKOUTS_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.API_ACTION_WORKOUTS_URL_LAST_FETCH";
 
-    private static final String API_ACTION_ACTIVITY_URL = "https://wbsapi.withings.net/v2/measure?action=getactivity";
-    private static final String API_ACTION_BODY_MEASURES_URL = "https://wbsapi.withings.net/measure?action=getmeas";
-    private static final String API_ACTION_INTRADAY_ACTIVITY_URL = "https://wbsapi.withings.net/v2/measure?action=getintradayactivity";
-    private static final String API_ACTION_SLEEP_MEASURES_URL = "https://wbsapi.withings.net/v2/sleep?action=get";
-    private static final String API_ACTION_SLEEP_SUMMARY_URL = "https://wbsapi.withings.net/v2/sleep?action=getsummary";
-    private static final String API_ACTION_WORKOUTS_URL = "https://wbsapi.withings.net/v2/measure?action=getworkouts";
+    private static final String API_ACTION_ACTIVITY_URL = "https://api.health.nokia.com/v2/measure?action=getactivity";
+    private static final String API_ACTION_BODY_MEASURES_URL = "https://api.health.nokia.com/measure?action=getmeas";
+    private static final String API_ACTION_INTRADAY_ACTIVITY_URL = "https://api.health.nokia.com/v2/measure?action=getintradayactivity";
+    private static final String API_ACTION_SLEEP_MEASURES_URL = "https://api.health.nokia.com/v2/sleep?action=get";
+    private static final String API_ACTION_SLEEP_SUMMARY_URL = "https://api.health.nokia.com/v2/sleep?action=getsummary";
+    private static final String API_ACTION_WORKOUTS_URL = "https://api.health.nokia.com/v2/measure?action=getworkouts";
     public static final String API_OAUTH_CALLBACK_PATH = "/oauth/withings";
 
     private static final String OAUTH_CONSUMER_KEY = "oauth_consumer_key";
@@ -1222,7 +1222,7 @@ public class WithingsDevice extends Generator {
                         @Override
                         public void run() {
                             try {
-                                String requestUrl = "https://oauth.withings.com/account/request_token";
+                                String requestUrl = "https://developer.health.nokia.com/account/request_token";
 
                                 Uri apiUri = Uri.parse(requestUrl);
 
@@ -1295,7 +1295,7 @@ public class WithingsDevice extends Generator {
 
                                 builder = new Uri.Builder();
                                 builder.scheme("https");
-                                builder.authority("oauth.withings.com");
+                                builder.authority("developer.health.nokia.com");
                                 builder.path("/account/authorize");
 
                                 signature = "GET&" + URLEncoder.encode(builder.build().toString(), "UTF-8");
@@ -1355,7 +1355,7 @@ public class WithingsDevice extends Generator {
             @Override
             public void run() {
                 try {
-                    String requestUrl = "https://oauth.withings.com/account/access_token";
+                    String requestUrl = "https://developer.health.nokia.com/account/access_token";
 
                     Uri apiUri = Uri.parse(requestUrl);
 
