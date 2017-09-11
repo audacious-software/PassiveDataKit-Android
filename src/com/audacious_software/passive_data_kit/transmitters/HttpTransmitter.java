@@ -540,12 +540,12 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                 JsonFactory factory = new JsonFactory();
                                 me.mJsonGenerator = factory.createGenerator(me.mCurrentFile, JsonEncoding.UTF8);
                                 me.mJsonGenerator.writeStartArray();
+
+                                HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
                             } catch (IOException e) {
                                 Logger.getInstance(me.mContext).logThrowable(e);
                             }
                         }
-
-                        HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
                     }
                 }
             }

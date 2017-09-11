@@ -96,7 +96,9 @@ public class Generators {
 
             start.invoke(null, this.mContext);
 
-            this.mActiveGenerators.add(className);
+            synchronized (this.mActiveGenerators) {
+                this.mActiveGenerators.add(className);
+            }
         }
     }
 
@@ -108,7 +110,9 @@ public class Generators {
             Method stop = probeClass.getDeclaredMethod("stop", probeClass);
             stop.invoke(null, this.mContext);
 
-            this.mActiveGenerators.remove(className);
+            synchronized (this.mActiveGenerators) {
+                this.mActiveGenerators.remove(className);
+            }
         }
     }
 
@@ -123,22 +127,24 @@ public class Generators {
     public ArrayList<DiagnosticAction> diagnostics() {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
-        for (String className : this.mActiveGenerators) {
-            try {
-                Class<Generator> generatorClass = (Class<Generator>) Class.forName(className);
+        synchronized (this.mActiveGenerators) {
+            for (String className : this.mActiveGenerators) {
+                try {
+                    Class<Generator> generatorClass = (Class<Generator>) Class.forName(className);
 
-                Method diagnostics = generatorClass.getDeclaredMethod("diagnostics", Context.class);
-                Collection<DiagnosticAction> generatorActions = (Collection<DiagnosticAction>) diagnostics.invoke(null, this.mContext);
+                    Method diagnostics = generatorClass.getDeclaredMethod("diagnostics", Context.class);
+                    Collection<DiagnosticAction> generatorActions = (Collection<DiagnosticAction>) diagnostics.invoke(null, this.mContext);
 
-                actions.addAll(generatorActions);
-            } catch (ClassNotFoundException e) {
+                    actions.addAll(generatorActions);
+                } catch (ClassNotFoundException e) {
 //                e.printStackTrace();
-            } catch (InvocationTargetException e) {
+                } catch (InvocationTargetException e) {
 //                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
+                } catch (NoSuchMethodException e) {
 //                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+                } catch (IllegalAccessException e) {
 //                e.printStackTrace();
+                }
             }
         }
 
@@ -230,11 +236,13 @@ public class Generators {
     public List<Class<? extends Generator>> activeGenerators() {
         ArrayList<Class<? extends Generator>> active = new ArrayList<>();
 
-        for (String className : this.mActiveGenerators) {
-            try {
-                active.add((Class<? extends Generator>) Class.forName(className));
-            } catch (ClassNotFoundException e) {
+        synchronized (this.mActiveGenerators) {
+            for (String className : this.mActiveGenerators) {
+                try {
+                    active.add((Class<? extends Generator>) Class.forName(className));
+                } catch (ClassNotFoundException e) {
 //                e.printStackTrace();
+                }
             }
         }
 
