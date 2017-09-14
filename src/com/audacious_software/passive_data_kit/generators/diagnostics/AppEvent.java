@@ -358,7 +358,7 @@ public class AppEvent extends Generator{
 
         this.mPending.add(item);
 
-        if (this.mWorking) {
+        if (this.mWorking || this.mDatabase == null) {
             return true;
         }
 

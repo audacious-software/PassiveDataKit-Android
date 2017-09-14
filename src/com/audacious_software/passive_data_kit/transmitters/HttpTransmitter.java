@@ -264,8 +264,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
                             me.mLastAttempt = 0;
                             me.transmit(true);
-                        }
-                        else {
+                        } else {
                             try {
                                 new JSONArray(payload);
 
@@ -282,6 +281,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                 details.put("size", payloadFile.length());
 
                                 Logger.getInstance(me.mContext).log("corrupted_file", details);
+
+                                me.transmit(true);
                             }
                         }
                     } catch (IOException e) {
@@ -354,7 +355,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 }
             }
 
-            builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, payload));
+            builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, (new JSONArray(payload)).toString(2)));
 
             RequestBody requestBody = builder.build();
 
@@ -374,7 +375,11 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() >= 200 && response.code() < 300) {
+            int code = response.code();
+
+            response.body().close();
+
+            if (code >= 200 && code < 300) {
                 for (File f : toDelete) {
                     f.delete();
                 }
@@ -390,13 +395,17 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private void closeOpenSession() throws IOException {
-        File tempFile = this.mCurrentFile;
+        synchronized(this) {
+            if (this.mCurrentFile == null) {
+                return;
+            }
 
-        if (this.mJsonGenerator == null || tempFile == null) {
-            return;
-        }
+            File tempFile = this.mCurrentFile;
 
-        synchronized (this) {
+            if (this.mJsonGenerator == null || tempFile == null) {
+                return;
+            }
+
             final File pendingFolder = this.getPendingFolder();
 
             this.mJsonGenerator.writeEndArray();
@@ -532,20 +541,22 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                     metadata.putString(Generator.SOURCE, me.mUserId);
                     clonedData.putBundle(Generator.PDK_METADATA, metadata);
 
-                    synchronized (this) {
-                        if (me.mJsonGenerator == null) {
+                    synchronized(me) {
+                        if (me.mJsonGenerator == null || me.mCurrentFile == null) {
                             me.mCurrentFile = new File(me.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
 
                             try {
                                 JsonFactory factory = new JsonFactory();
                                 me.mJsonGenerator = factory.createGenerator(me.mCurrentFile, JsonEncoding.UTF8);
                                 me.mJsonGenerator.writeStartArray();
-
-                                HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
                             } catch (IOException e) {
                                 Logger.getInstance(me.mContext).logThrowable(e);
+
+                                me.mCurrentFile = null;
                             }
                         }
+
+                        HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
                     }
                 }
             }
@@ -698,6 +709,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
             generator.writeEndObject();
         } catch (Exception e) {
+            e.printStackTrace();
+
             Logger.getInstance(context).logThrowable(e);
 
             HashMap<String, Object> payload = new HashMap<>();
