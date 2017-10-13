@@ -400,14 +400,14 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             location.setLatitude(latitude);
         }
 
-        ContentValues values = new ContentValues();
+        final ContentValues values = new ContentValues();
         values.put(Location.HISTORY_OBSERVED, System.currentTimeMillis());
         values.put(Location.HISTORY_LATITUDE, location.getLatitude());
         values.put(Location.HISTORY_LONGITUDE, location.getLongitude());
         values.put(Location.HISTORY_PROVIDER, location.getProvider());
         values.put(Location.HISTORY_LOCATION_TIMESTAMP, location.getTime());
 
-        Bundle updated = new Bundle();
+        final Bundle updated = new Bundle();
         updated.putLong(Location.HISTORY_OBSERVED, System.currentTimeMillis());
         updated.putDouble(Location.HISTORY_LATITUDE, location.getLatitude());
         updated.putDouble(Location.HISTORY_LONGITUDE, location.getLongitude());
@@ -440,11 +440,23 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             updated.putDouble(Location.HISTORY_ACCURACY, location.getAccuracy());
         }
 
-        this.mDatabase.insert(Location.TABLE_HISTORY, null, values);
+        final Location me = this;
 
-        Generators.getInstance(this.mContext).notifyGeneratorUpdated(Location.GENERATOR_IDENTIFIER, updated);
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                if (me.mDatabase != null) {
+                    me.mDatabase.insert(Location.TABLE_HISTORY, null, values);
+                }
 
-        this.flushCachedData();
+                Generators.getInstance(me.mContext).notifyGeneratorUpdated(Location.GENERATOR_IDENTIFIER, updated);
+
+                me.flushCachedData();
+            }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
     }
 
     @SuppressWarnings("unused")

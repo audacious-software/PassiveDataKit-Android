@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -819,7 +820,11 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
             @Override
             public void run() {
                 synchronized(me.mDatabase) {
-                    me.mDatabase.delete(Accelerometer.TABLE_HISTORY, where, args);
+                    try {
+                        me.mDatabase.delete(Accelerometer.TABLE_HISTORY, where, args);
+                    } catch (SQLiteDatabaseLockedException e) {
+
+                    }
                 }
             }
         };
