@@ -459,7 +459,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     private static long getFileSize(final File file)
     {
-        if (file == null||!file.exists()) {
+        if (file == null || !file.exists()) {
             return 0;
         }
 
@@ -471,9 +471,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
         dirs.add(file);
 
-        long result=0;
+        long result = 0;
 
-        while(!dirs.isEmpty()) {
+        while (!dirs.isEmpty()) {
             final File dir = dirs.remove(0);
 
             if (!dir.exists()) {
@@ -482,7 +482,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
             final File[] listFiles = dir.listFiles();
 
-            if (listFiles==null||listFiles.length==0) {
+            if (listFiles == null || listFiles.length == 0) {
                 continue;
             }
 
@@ -521,7 +521,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                Bundle clonedData = p.readBundle();
+                Bundle clonedData = p.readBundle(getClass().getClassLoader());
 
                 if (clonedData.keySet().size() > 1) {  // Only transmit non-empty bundles...
                     long generatorTimestamp = timestamp / 1000; // Convert to seconds...

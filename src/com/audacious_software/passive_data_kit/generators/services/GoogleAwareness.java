@@ -1,6 +1,7 @@
 package com.audacious_software.passive_data_kit.generators.services;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -275,6 +276,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
         Runnable r = new Runnable() {
 
+            @SuppressLint("MissingPermission")
             @Override
             public void run() {
                 if (me.mIncludeHeadphone) {

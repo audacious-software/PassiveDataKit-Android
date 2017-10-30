@@ -179,7 +179,7 @@ public class PhoneCalls extends Generator {
                     String where = CallLog.Calls.DATE + " > ?";
                     String[] args = {"" + lastObserved};
 
-                    Cursor c = me.mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null, where, args, CallLog.Calls.DATE);
+                    @SuppressLint("MissingPermission") Cursor c = me.mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null, where, args, CallLog.Calls.DATE);
 
                     if (c != null) {
                         while (c.moveToNext()) {

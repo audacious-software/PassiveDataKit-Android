@@ -453,6 +453,8 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
             timestamp = c.getLong(c.getColumnIndex(TimeOfDay.HISTORY_OBSERVED));
         }
 
+        c.close();
+
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
         View cardContent = holder.itemView.findViewById(R.id.card_content);
 
