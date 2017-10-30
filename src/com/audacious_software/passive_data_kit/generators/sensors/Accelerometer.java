@@ -263,7 +263,12 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                                     };
 
                                     me.mIntervalThread = new Thread(managerRunnable, "accelerometer-interval");
-                                    me.mIntervalThread.start();
+
+                                    try {
+                                        me.mIntervalThread.start();
+                                    } catch (IllegalThreadStateException e) {
+                                        // Thread already started...
+                                    }
                                 }
 
                                 Looper.loop();
@@ -765,7 +770,9 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
                         me.mDatabase.setTransactionSuccessful();
                     } finally {
-                        me.mDatabase.endTransaction();
+                        if (me.mDatabase.inTransaction()) {
+                            me.mDatabase.endTransaction();
+                        }
                     }
                 }
 

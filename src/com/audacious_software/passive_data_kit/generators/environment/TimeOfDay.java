@@ -117,6 +117,23 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
     private void startGenerator() {
         final TimeOfDay me = this;
 
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, TimeOfDay.DATABASE_PATH);
+
+        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+
+        int version = this.getDatabaseVersion(this.mDatabase);
+
+        switch (version) {
+            case 0:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_time_of_day_create_history_table));
+        }
+
+        if (version != TimeOfDay.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, TimeOfDay.DATABASE_VERSION);
+        }
+
         Runnable r = new Runnable()
         {
 
@@ -151,23 +168,6 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         t.start();
 
         Generators.getInstance(this.mContext).registerCustomViewClass(TimeOfDay.GENERATOR_IDENTIFIER, TimeOfDay.class);
-
-        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
-
-        path = new File(path, TimeOfDay.DATABASE_PATH);
-
-        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
-
-        int version = this.getDatabaseVersion(this.mDatabase);
-
-        switch (version) {
-            case 0:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_time_of_day_create_history_table));
-        }
-
-        if (version != TimeOfDay.DATABASE_VERSION) {
-            this.setDatabaseVersion(this.mDatabase, TimeOfDay.DATABASE_VERSION);
-        }
     }
 
     private void stopGenerator() {

@@ -28,6 +28,7 @@ import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -1105,6 +1106,10 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     @Override
     protected void flushCachedData() {
+        if (this.mDatabase == null) {
+            return;
+        }
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
         long retentionPeriod = prefs.getLong(Location.DATA_RETENTION_PERIOD, Location.DATA_RETENTION_PERIOD_DEFAULT);
