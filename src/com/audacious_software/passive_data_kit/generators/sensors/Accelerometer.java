@@ -769,6 +769,8 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                         }
 
                         me.mDatabase.setTransactionSuccessful();
+                    } catch (SQLiteDatabaseLockedException e) {
+                        // Skip storing this value and move onto next one...
                     } finally {
                         if (me.mDatabase.inTransaction()) {
                             me.mDatabase.endTransaction();

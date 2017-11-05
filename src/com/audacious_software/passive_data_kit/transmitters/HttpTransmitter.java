@@ -27,7 +27,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -253,7 +255,18 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
                         File payloadFile = new File(pendingFolder, filename);
 
-                        String payload = FileUtils.readFileToString(payloadFile, "UTF-8");
+                        BufferedReader reader = new BufferedReader(new FileReader(payloadFile));
+
+                        StringBuilder builder = new StringBuilder();
+                        String line = null;
+
+                        while ((line = reader.readLine()) != null) {
+                            builder.append(line).append("\n");
+                        }
+
+                        reader.close();
+
+                        String payload = builder.toString(); // FileUtils.readFileToString(payloadFile, "UTF-8");
 
                         int result = me.transmitHttpPayload(payload);
 
