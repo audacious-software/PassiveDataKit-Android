@@ -357,6 +357,7 @@ public class MicrosoftBand extends Generator
 
                                 if (me.canAccessSensor(sensors, MicrosoftBand.GalvanicSkinResponseDataPoint.class)) {
                                     try {
+                                        //noinspection deprecation
                                         sensors.registerGsrEventListener(new BandGsrEventListener() {
                                             @Override
                                             public void onBandGsrChanged(BandGsrEvent event) {

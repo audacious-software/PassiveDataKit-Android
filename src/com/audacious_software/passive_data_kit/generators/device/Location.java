@@ -28,7 +28,6 @@ import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -326,6 +325,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected()) {
             if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                //noinspection deprecation
                 LocationServices.FusedLocationApi.requestLocationUpdates(this.mGoogleApiClient, request, this, this.mContext.getMainLooper());
             }
         }
@@ -334,6 +334,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     @Override
     public void onConnectionSuspended(int i) {
         if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected())
+            //noinspection deprecation
             LocationServices.FusedLocationApi.removeLocationUpdates(this.mGoogleApiClient, this);
     }
 

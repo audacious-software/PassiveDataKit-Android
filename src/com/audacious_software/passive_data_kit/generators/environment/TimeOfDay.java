@@ -266,6 +266,7 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
 
         if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected()) {
             if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                //noinspection deprecation
                 LocationServices.FusedLocationApi.requestLocationUpdates(this.mGoogleApiClient, request, this, this.mContext.getMainLooper());
             }
         }
@@ -274,6 +275,7 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
     @Override
     public void onConnectionSuspended(int i) {
         if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected())
+            //noinspection deprecation
             LocationServices.FusedLocationApi.removeLocationUpdates(this.mGoogleApiClient, this);
     }
 
