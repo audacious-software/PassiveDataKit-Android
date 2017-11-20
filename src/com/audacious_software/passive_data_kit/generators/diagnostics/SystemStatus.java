@@ -128,52 +128,57 @@ public class SystemStatus extends Generator {
 
         this.mReceiver = new BroadcastReceiver() {
             @Override
-            public void onReceive(Context context, Intent intent) {
-                File path = PassiveDataKit.getGeneratorsStorage(context);
+            public void onReceive(final Context context, Intent intent) {
+                final long now = System.currentTimeMillis();
 
-                context = context.getApplicationContext();
+                Runnable r = new Runnable() {
+                    @Override
+                    public void run() {
+                        File path = PassiveDataKit.getGeneratorsStorage(context);
 
-                long now = System.currentTimeMillis();
+                        me.mLastTimestamp = now;
 
-                me.mLastTimestamp = now;
+                        PassiveDataKit.getInstance(context).start();
 
-                PassiveDataKit.getInstance(context).start();
+                        StatFs fsInfo = new StatFs(path.getAbsolutePath());
 
-                StatFs fsInfo = new StatFs(path.getAbsolutePath());
+                        String storagePath = path.getAbsolutePath();
 
-                String storagePath = path.getAbsolutePath();
+                        long bytesTotal = fsInfo.getTotalBytes();
+                        long bytesAvailable = fsInfo.getBlockSizeLong() * fsInfo.getAvailableBlocksLong();
 
-                long bytesTotal = fsInfo.getTotalBytes();
-                long bytesAvailable = fsInfo.getBlockSizeLong() * fsInfo.getAvailableBlocksLong();
+                        long bytesAppUsed = SystemStatus.getFileSize(context.getFilesDir());
+                        bytesAppUsed += SystemStatus.getFileSize(context.getExternalFilesDir(null));
+                        bytesAppUsed += SystemStatus.getFileSize(context.getCacheDir());
+                        bytesAppUsed += SystemStatus.getFileSize(context.getExternalCacheDir());
 
-                long bytesAppUsed = SystemStatus.getFileSize(context.getFilesDir());
-                bytesAppUsed += SystemStatus.getFileSize(context.getExternalFilesDir(null));
-                bytesAppUsed += SystemStatus.getFileSize(context.getCacheDir());
-                bytesAppUsed += SystemStatus.getFileSize(context.getExternalCacheDir());
+                        long bytesOtherUsed = bytesTotal - bytesAvailable - bytesAppUsed;
 
-                long bytesOtherUsed = bytesTotal - bytesAvailable - bytesAppUsed;
+                        ContentValues values = new ContentValues();
+                        values.put(SystemStatus.HISTORY_OBSERVED, now);
+                        values.put(SystemStatus.HISTORY_RUNTIME, now - runtimeStart);
+                        values.put(SystemStatus.HISTORY_STORAGE_PATH, storagePath);
+                        values.put(SystemStatus.HISTORY_STORAGE_TOTAL, bytesTotal);
+                        values.put(SystemStatus.HISTORY_STORAGE_AVAILABLE, bytesAvailable);
+                        values.put(SystemStatus.HISTORY_STORAGE_USED_APP, bytesAppUsed);
+                        values.put(SystemStatus.HISTORY_STORAGE_USED_OTHER, bytesOtherUsed);
 
-                ContentValues values = new ContentValues();
-                values.put(SystemStatus.HISTORY_OBSERVED, now);
-                values.put(SystemStatus.HISTORY_RUNTIME, now - runtimeStart);
-                values.put(SystemStatus.HISTORY_STORAGE_PATH, storagePath);
-                values.put(SystemStatus.HISTORY_STORAGE_TOTAL, bytesTotal);
-                values.put(SystemStatus.HISTORY_STORAGE_AVAILABLE, bytesAvailable);
-                values.put(SystemStatus.HISTORY_STORAGE_USED_APP, bytesAppUsed);
-                values.put(SystemStatus.HISTORY_STORAGE_USED_OTHER, bytesOtherUsed);
+                        Bundle update = new Bundle();
+                        update.putLong(SystemStatus.HISTORY_OBSERVED, now);
+                        update.putLong(SystemStatus.HISTORY_RUNTIME, now - runtimeStart);
+                        update.putString(SystemStatus.HISTORY_STORAGE_PATH, storagePath);
+                        update.putLong(SystemStatus.HISTORY_STORAGE_TOTAL, bytesTotal);
+                        update.putLong(SystemStatus.HISTORY_STORAGE_AVAILABLE, bytesAvailable);
+                        update.putLong(SystemStatus.HISTORY_STORAGE_USED_APP, bytesAppUsed);
+                        update.putLong(SystemStatus.HISTORY_STORAGE_USED_OTHER, bytesOtherUsed);
 
-                Bundle update = new Bundle();
-                update.putLong(SystemStatus.HISTORY_OBSERVED, now);
-                update.putLong(SystemStatus.HISTORY_RUNTIME, now - runtimeStart);
-                update.putString(SystemStatus.HISTORY_STORAGE_PATH, storagePath);
-                update.putLong(SystemStatus.HISTORY_STORAGE_TOTAL, bytesTotal);
-                update.putLong(SystemStatus.HISTORY_STORAGE_AVAILABLE, bytesAvailable);
-                update.putLong(SystemStatus.HISTORY_STORAGE_USED_APP, bytesAppUsed);
-                update.putLong(SystemStatus.HISTORY_STORAGE_USED_OTHER, bytesOtherUsed);
+                        me.mDatabase.insert(SystemStatus.TABLE_HISTORY, null, values);
 
-                me.mDatabase.insert(SystemStatus.TABLE_HISTORY, null, values);
+                        Generators.getInstance(context).notifyGeneratorUpdated(SystemStatus.GENERATOR_IDENTIFIER, update);                    }
+                };
 
-                Generators.getInstance(context).notifyGeneratorUpdated(SystemStatus.GENERATOR_IDENTIFIER, update);
+                Thread t = new Thread(r);
+                t.start();
 
                 AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                 PendingIntent pi = PendingIntent.getBroadcast(context, 0, new Intent(SystemStatus.ACTION_HEARTBEAT), PendingIntent.FLAG_UPDATE_CURRENT);

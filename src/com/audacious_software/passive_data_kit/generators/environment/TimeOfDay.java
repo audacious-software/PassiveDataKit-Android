@@ -285,60 +285,71 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
     }
 
     @Override
-    public void onLocationChanged(android.location.Location location) {
+    public void onLocationChanged(final android.location.Location location) {
         if (location == null)
             return;
 
-        this.mLatestTimestamp = System.currentTimeMillis();
+        final TimeOfDay me = this;
 
-        com.luckycatlabs.sunrisesunset.dto.Location calcLocation = new com.luckycatlabs.sunrisesunset.dto.Location("" + location.getLatitude(), "" + location.getLongitude());
-        TimeZone timezone = TimeZone.getDefault();
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
 
-        SunriseSunsetCalculator calculator = new SunriseSunsetCalculator(calcLocation, timezone.getDisplayName());
+                com.luckycatlabs.sunrisesunset.dto.Location calcLocation = new com.luckycatlabs.sunrisesunset.dto.Location("" + location.getLatitude(), "" + location.getLongitude());
+                TimeZone timezone = TimeZone.getDefault();
 
-        Calendar now = Calendar.getInstance();
+                SunriseSunsetCalculator calculator = new SunriseSunsetCalculator(calcLocation, timezone.getDisplayName());
 
-        Calendar sunrise = calculator.getOfficialSunriseCalendarForDate(now);
-        Calendar sunset = calculator.getOfficialSunsetCalendarForDate(now);
+                Calendar now = Calendar.getInstance();
 
-        if (sunrise.getTimeInMillis() > sunset.getTimeInMillis()) {
-            sunset.add(Calendar.DATE, 1);
-        }
+                Calendar sunrise = calculator.getOfficialSunriseCalendarForDate(now);
+                Calendar sunset = calculator.getOfficialSunsetCalendarForDate(now);
 
-        ContentValues values = new ContentValues();
-        values.put(TimeOfDay.HISTORY_OBSERVED, System.currentTimeMillis());
-        values.put(TimeOfDay.HISTORY_LATITUDE, location.getLatitude());
-        values.put(TimeOfDay.HISTORY_LONGITUDE, location.getLongitude());
-        values.put(TimeOfDay.HISTORY_TIMEZONE, timezone.getDisplayName());
-        values.put(TimeOfDay.HISTORY_SUNRISE, sunrise.getTimeInMillis());
-        values.put(TimeOfDay.HISTORY_SUNSET, sunset.getTimeInMillis());
+                if (sunrise.getTimeInMillis() > sunset.getTimeInMillis()) {
+                    sunset.add(Calendar.DATE, 1);
+                }
 
-        Bundle updated = new Bundle();
-        updated.putLong(TimeOfDay.HISTORY_OBSERVED, System.currentTimeMillis());
+                ContentValues values = new ContentValues();
+                values.put(TimeOfDay.HISTORY_OBSERVED, System.currentTimeMillis());
+                values.put(TimeOfDay.HISTORY_LATITUDE, location.getLatitude());
+                values.put(TimeOfDay.HISTORY_LONGITUDE, location.getLongitude());
+                values.put(TimeOfDay.HISTORY_TIMEZONE, timezone.getDisplayName());
+                values.put(TimeOfDay.HISTORY_SUNRISE, sunrise.getTimeInMillis());
+                values.put(TimeOfDay.HISTORY_SUNSET, sunset.getTimeInMillis());
 
-        if (this.mIncludeLocation) {
-            updated.putDouble(TimeOfDay.HISTORY_LATITUDE, location.getLatitude());
-            updated.putDouble(TimeOfDay.HISTORY_LONGITUDE, location.getLongitude());
+                Bundle updated = new Bundle();
+                updated.putLong(TimeOfDay.HISTORY_OBSERVED, System.currentTimeMillis());
 
-            Bundle metadata = new Bundle();
-            metadata.putDouble(Generator.LATITUDE, location.getLatitude());
-            metadata.putDouble(Generator.LONGITUDE, location.getLongitude());
+                if (me.mIncludeLocation) {
+                    updated.putDouble(TimeOfDay.HISTORY_LATITUDE, location.getLatitude());
+                    updated.putDouble(TimeOfDay.HISTORY_LONGITUDE, location.getLongitude());
 
-            updated.putBundle(Generator.PDK_METADATA, metadata);
-        }
+                    Bundle metadata = new Bundle();
+                    metadata.putDouble(Generator.LATITUDE, location.getLatitude());
+                    metadata.putDouble(Generator.LONGITUDE, location.getLongitude());
 
-        updated.putString(TimeOfDay.HISTORY_TIMEZONE, timezone.getDisplayName());
-        updated.putLong(TimeOfDay.HISTORY_SUNRISE, sunrise.getTimeInMillis());
-        updated.putLong(TimeOfDay.HISTORY_SUNSET, sunset.getTimeInMillis());
+                    updated.putBundle(Generator.PDK_METADATA, metadata);
+                }
 
-        this.mDatabase.insert(TimeOfDay.TABLE_HISTORY, null, values);
+                updated.putString(TimeOfDay.HISTORY_TIMEZONE, timezone.getDisplayName());
+                updated.putLong(TimeOfDay.HISTORY_SUNRISE, sunrise.getTimeInMillis());
+                updated.putLong(TimeOfDay.HISTORY_SUNSET, sunset.getTimeInMillis());
 
-        Generators.getInstance(this.mContext).notifyGeneratorUpdated(TimeOfDay.GENERATOR_IDENTIFIER, updated);
+                me.mDatabase.insert(TimeOfDay.TABLE_HISTORY, null, values);
 
-        this.mSunrise = sunrise.getTimeInMillis();
-        this.mSunset = sunset.getTimeInMillis();
+                Generators.getInstance(me.mContext).notifyGeneratorUpdated(TimeOfDay.GENERATOR_IDENTIFIER, updated);
 
-        this.flushCachedData();
+                me.mSunrise = sunrise.getTimeInMillis();
+                me.mSunset = sunset.getTimeInMillis();
+
+                me.flushCachedData();
+
+                me.mLatestTimestamp = System.currentTimeMillis();
+            }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
     }
 
     @SuppressWarnings("unused")
