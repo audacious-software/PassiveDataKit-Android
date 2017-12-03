@@ -572,6 +572,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                         HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
                     }
                 }
+
+                p.recycle();
             }
         };
 

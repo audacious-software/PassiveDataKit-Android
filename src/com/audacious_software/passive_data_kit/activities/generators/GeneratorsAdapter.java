@@ -73,10 +73,13 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
                     dataView = (View) bindViewHolder.invoke(null, holder);
                 } catch (NoSuchMethodException e1) {
                     Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
+                    e1.printStackTrace();
                 } catch (InvocationTargetException e1) {
                     Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
+                    e1.printStackTrace();
                 } catch (IllegalAccessException e1) {
                     Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
+                    e1.printStackTrace();
                 }
 
                 me.mDataView.addView(dataView);

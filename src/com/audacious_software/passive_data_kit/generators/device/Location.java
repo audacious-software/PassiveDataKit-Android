@@ -15,6 +15,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -22,6 +23,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
@@ -41,6 +43,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amazon.geo.mapsv2.AmazonMap;
 import com.audacious_software.passive_data_kit.DeviceInformation;
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.DataDisclosureDetailActivity;
@@ -74,7 +77,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Location extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+public class Location extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, android.location.LocationListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-location";
     private static final String DATABASE_PATH = "pdk-location.sqlite";
 
@@ -127,6 +130,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static Location sInstance = null;
     private GoogleApiClient mGoogleApiClient = null;
     private long mUpdateInterval = 60000;
+    private float mMinimumDistance = 400;
 
     private SQLiteDatabase mDatabase = null;
     private static final int DATABASE_VERSION = 1;
@@ -171,15 +175,19 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private void startGenerator() {
         final Location me = this;
 
-        Runnable r = new Runnable()
-        {
+        Runnable r = new Runnable() {
 
             @Override
             public void run() {
-                if (Location.useKindleLocationServices())
-                {
-                    // TODO
-                    throw new RuntimeException("Throw rocks at developer to implement Kindle support.");
+                if (Location.useKindleLocationServices()) {
+                    if (ActivityCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        LocationManager locations = (LocationManager) me.mContext.getSystemService(Context.LOCATION_SERVICE);
+
+                        Criteria criteria = new Criteria();
+                        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+
+                        locations.requestLocationUpdates(me.mUpdateInterval, me.mMinimumDistance, criteria, me, Looper.getMainLooper());
+                    }
                 }
                 else if (Location.useGoogleLocationServices(me.mContext))
                 {
@@ -346,8 +354,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     @SuppressLint("TrulyRandom")
     @Override
     public void onLocationChanged(android.location.Location location) {
-        if (location == null)
+        if (location == null) {
             return;
+        }
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         int selected = prefs.getInt(Location.ACCURACY_MODE, Location.ACCURACY_BEST);
@@ -459,6 +468,21 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         Thread t = new Thread(r);
         t.start();
+    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
     }
 
     @SuppressWarnings("unused")
@@ -868,8 +892,94 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         if (Location.useKindleLocationServices())
         {
-            // TODO
-            throw new RuntimeException("Throw rocks at developer to implement Kindle support.");
+            final com.amazon.geo.mapsv2.MapView mapView = new com.amazon.geo.mapsv2.MapView(context);
+
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            mapView.setLayoutParams(params);
+
+            mapView.onCreate(null);
+
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+            final boolean useHybrid = prefs.getBoolean(Location.SETTING_DISPLAY_HYBRID_MAP, Location.SETTING_DISPLAY_HYBRID_MAP_DEFAULT);
+
+            IconGenerator iconGen = new IconGenerator(context);
+
+            Drawable shapeDrawable = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_location_heatmap_marker, null);
+            iconGen.setBackground(shapeDrawable);
+
+            View view = new View(context);
+            view.setLayoutParams(new ViewGroup.LayoutParams(8, 8));
+            iconGen.setContentView(view);
+
+            final Bitmap bitmap = iconGen.makeIcon();
+
+            mapView.getMapAsync(new com.amazon.geo.mapsv2.OnMapReadyCallback() {
+                @SuppressWarnings("UnusedAssignment")
+                public void onMapReady(AmazonMap amazonMap) {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        amazonMap.setMyLocationEnabled(true);
+                    }
+
+                    if (useHybrid) {
+                        amazonMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                    } else {
+                        amazonMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                    }
+
+                    amazonMap.getUiSettings().setZoomControlsEnabled(true);
+                    amazonMap.getUiSettings().setMyLocationButtonEnabled(false);
+                    amazonMap.getUiSettings().setMapToolbarEnabled(false);
+                    amazonMap.getUiSettings().setAllGesturesEnabled(false);
+
+                    Location me = Location.getInstance(context);
+
+                    double lastLatitude = 0.0;
+                    double lastLongitude = 0.0;
+
+                    final List<com.amazon.geo.mapsv2.model.LatLng> locations = new ArrayList<>();
+
+                    String where = Location.HISTORY_OBSERVED + " > ?";
+                    String[] args = { "" + (System.currentTimeMillis() - (1000 * 60 * 60 * 24)) };
+
+                    Cursor c = me.mDatabase.query(Location.TABLE_HISTORY, null, where, args, null, null, Location.HISTORY_OBSERVED);
+
+                    while (c.moveToNext()) {
+                        lastLatitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LATITUDE));
+                        lastLongitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LONGITUDE));
+
+                        com.amazon.geo.mapsv2.model.LatLng location = new com.amazon.geo.mapsv2.model.LatLng(lastLatitude, lastLongitude);
+
+                        locations.add(location);
+                    }
+
+                    c.close();
+
+                    com.amazon.geo.mapsv2.model.LatLngBounds.Builder builder = new com.amazon.geo.mapsv2.model.LatLngBounds.Builder();
+
+                    for (com.amazon.geo.mapsv2.model.LatLng latlng : locations) {
+                        builder.include(latlng);
+                    }
+
+                    final DisplayMetrics metrics = new DisplayMetrics();
+                    ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+                    if (locations.size() > 0) {
+                        amazonMap.moveCamera(com.amazon.geo.mapsv2.CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
+                    }
+
+                    for (com.amazon.geo.mapsv2.model.LatLng latLng : locations) {
+                        amazonMap.addMarker(new com.amazon.geo.mapsv2.model.MarkerOptions()
+                                .position(latLng)
+                                .icon(com.amazon.geo.mapsv2.model.BitmapDescriptorFactory.fromBitmap(bitmap)));
+                    }
+
+                    mapView.onResume();
+                }
+            });
+
+            return mapView;
         }
         else if (Location.useGoogleLocationServices(holder.itemView.getContext()))
         {
