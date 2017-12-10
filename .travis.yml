@@ -7,7 +7,7 @@ before_install:
   - unzip gradle-4.1-bin.zip
   - export GRADLE_HOME=$PWD/gradle-4.1
   - export PATH=$GRADLE_HOME/bin:$PATH
-  - - yes | sdkmanager "platforms;android-27"
+  - yes | sdkmanager "platforms;android-27"
   - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-27.0.2
 
 script:
