@@ -41,7 +41,7 @@ public class ScreenState extends Generator{
     private static final boolean ENABLED_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.ScreenState.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     @SuppressWarnings("WeakerAccess")
     public static final String STATE_DOZE = "doze";
@@ -214,7 +214,7 @@ public class ScreenState extends Generator{
 
     @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(ForegroundApplication.getGeneratorTitle(holder.itemView.getContext()));
     }
@@ -232,20 +232,20 @@ public class ScreenState extends Generator{
         long zeroStart = cal.getTimeInMillis();
         cal.add(Calendar.DATE, -1);
 
-        LinearLayout zeroTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_zero_value);
+        LinearLayout zeroTimeline = holder.itemView.findViewById(R.id.day_zero_value);
 
         ScreenState.populateTimeline(context, zeroTimeline, zeroStart);
 
         long oneStart = cal.getTimeInMillis();
         cal.add(Calendar.DATE, -1);
 
-        LinearLayout oneTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_one_value);
+        LinearLayout oneTimeline = holder.itemView.findViewById(R.id.day_one_value);
 
         ScreenState.populateTimeline(context, oneTimeline, oneStart);
 
         long twoStart = cal.getTimeInMillis();
 
-        LinearLayout twoTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_two_value);
+        LinearLayout twoTimeline = holder.itemView.findViewById(R.id.day_two_value);
 
         ScreenState.populateTimeline(context, twoTimeline, twoStart);
 
@@ -255,7 +255,7 @@ public class ScreenState extends Generator{
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (c.moveToNext()) {
             cardContent.setVisibility(View.VISIBLE);
@@ -268,17 +268,17 @@ public class ScreenState extends Generator{
             cal = Calendar.getInstance();
             DateFormat format = android.text.format.DateFormat.getDateFormat(context);
 
-            TextView zeroDayLabel = (TextView) holder.itemView.findViewById(R.id.day_zero_label);
+            TextView zeroDayLabel = holder.itemView.findViewById(R.id.day_zero_label);
             zeroDayLabel.setText(format.format(cal.getTime()));
 
             cal.add(Calendar.DATE, -1);
 
-            TextView oneDayLabel = (TextView) holder.itemView.findViewById(R.id.day_one_label);
+            TextView oneDayLabel = holder.itemView.findViewById(R.id.day_one_label);
             oneDayLabel.setText(format.format(cal.getTime()));
 
             cal.add(Calendar.DATE, -1);
 
-            TextView twoDayLabel = (TextView) holder.itemView.findViewById(R.id.day_two_label);
+            TextView twoDayLabel = holder.itemView.findViewById(R.id.day_two_label);
             twoDayLabel.setText(format.format(cal.getTime()));
         } else {
             cardContent.setVisibility(View.GONE);

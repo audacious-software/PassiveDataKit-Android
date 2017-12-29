@@ -49,7 +49,7 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
     private static final boolean ENABLED_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.environment.TimeOfDay.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String USE_GOOGLE_SERVICES = "com.audacious_software.passive_data_kit.generators.environment.TimeOfDay.USE_GOOGLE_SERVICES";
     private static final boolean USE_GOOGLE_SERVICES_DEFAULT = true;
@@ -471,7 +471,7 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
         View cardContent = holder.itemView.findViewById(R.id.card_content);
 
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (timestamp > 0) {
             dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000));
@@ -514,14 +514,14 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
 
             DateFormat format = android.text.format.DateFormat.getTimeFormat(context);
 
-            TextView sunrise = (TextView) cardContent.findViewById(R.id.label_sunrise);
+            TextView sunrise = cardContent.findViewById(R.id.label_sunrise);
 
             Calendar sunriseCalendar = Calendar.getInstance();
             sunriseCalendar.setTimeInMillis(me.mSunrise);
 
             sunrise.setText(format.format(sunriseCalendar.getTime()));
 
-            TextView sunset = (TextView) cardContent.findViewById(R.id.label_sunset);
+            TextView sunset = cardContent.findViewById(R.id.label_sunset);
 
             Calendar sunsetCalendar = Calendar.getInstance();
             sunsetCalendar.setTimeInMillis(me.mSunset);
@@ -532,5 +532,9 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
             cardEmpty.setVisibility(View.VISIBLE);
             cardContent.setVisibility(View.GONE);
         }
+    }
+
+    public void setUpdateInterval(long interval) {
+        this.mUpdateInterval = interval;
     }
 }

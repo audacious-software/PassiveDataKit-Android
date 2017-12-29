@@ -79,7 +79,7 @@ public class MicrosoftBand extends Generator
     private static final boolean ENABLED_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String TIMESTAMP_KEY = "timestamps";
     private static final String X_KEY = "xs";
@@ -1312,12 +1312,12 @@ public class MicrosoftBand extends Generator
 
         double timestamp = dataPoint.getBundle(Generator.PDK_METADATA).getDouble(Generator.TIMESTAMP);
 
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         dateLabel.setText(Generator.formatTimestamp(context, timestamp));
 
         // Heart rate...
-        TextView heartRateField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_heart_rate);
+        TextView heartRateField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_heart_rate);
         int[] heartRates = dataPoint.getBundle(HeartRateDataPoint.KEY).getIntArray(MicrosoftBand.HEART_RATE_KEY);
 
         if (heartRates.length > 0) {
@@ -1327,7 +1327,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Band contact state...
-        TextView bandStateField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_contact_state);
+        TextView bandStateField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_contact_state);
         short[] bandStates = dataPoint.getBundle(ContactDataPoint.KEY).getShortArray(MicrosoftBand.CONTACT_STATE_KEY);
 
         if (bandStates.length > 0) {
@@ -1348,7 +1348,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Steps...
-        TextView stepsField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_steps_today);
+        TextView stepsField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_steps_today);
         long[] steps = dataPoint.getBundle(PedometerDataPoint.KEY).getLongArray(MicrosoftBand.TODAY_STEPS_KEY);
 
         if (steps.length > 0) {
@@ -1358,7 +1358,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Motion type...
-        TextView motionsField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_distance_motion_type);
+        TextView motionsField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_distance_motion_type);
         String[] motions = dataPoint.getBundle(DistanceDataPoint.KEY).getStringArray(MicrosoftBand.MOTION_TYPE_KEY);
 
         if (motions.length > 0) {
@@ -1368,7 +1368,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Speed...
-        TextView speedField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_distance_speed);
+        TextView speedField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_distance_speed);
         float[] speeds = dataPoint.getBundle(DistanceDataPoint.KEY).getFloatArray(MicrosoftBand.SPEED_KEY);
 
         if (speeds.length > 0) {
@@ -1378,7 +1378,7 @@ public class MicrosoftBand extends Generator
         }
 
         // GSR...
-        TextView gsrField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_galavanic_skin_resistance);
+        TextView gsrField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_galavanic_skin_resistance);
         int[] gsrs = dataPoint.getBundle(GalvanicSkinResponseDataPoint.KEY).getIntArray(MicrosoftBand.RESISTANCE_KEY);
 
         if (gsrs.length > 0) {
@@ -1388,7 +1388,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Skin temperature...
-        TextView skinTempField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_skin_temperature);
+        TextView skinTempField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_skin_temperature);
         float[] skinTemps = dataPoint.getBundle(SkinTemperatureDataPoint.KEY).getFloatArray(MicrosoftBand.TEMPERATURE_KEY);
 
         if (skinTemps.length > 0) {
@@ -1398,7 +1398,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Altimiter...
-        TextView flightsAscended = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_altimeter_flights_ascended_today);
+        TextView flightsAscended = holder.itemView.findViewById(R.id.generator_microsoft_band_value_altimeter_flights_ascended_today);
         long[] flights = dataPoint.getBundle(AltimiterDataPoint.KEY).getLongArray(MicrosoftBand.FLIGHTS_ASCENDED_TODAY_KEY);
 
         if (flights.length > 0) {
@@ -1408,7 +1408,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Barometric pressure...
-        TextView barometricPressure = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_barometer_pressure);
+        TextView barometricPressure = holder.itemView.findViewById(R.id.generator_microsoft_band_value_barometer_pressure);
         double[] pressures = dataPoint.getBundle(BarometerDataPoint.KEY).getDoubleArray(MicrosoftBand.PRESSURE_KEY);
 
         if (pressures.length > 0) {
@@ -1418,7 +1418,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Air temperature...
-        TextView airTemperature = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_barometer_temperature);
+        TextView airTemperature = holder.itemView.findViewById(R.id.generator_microsoft_band_value_barometer_temperature);
         double[] airTemps = dataPoint.getBundle(BarometerDataPoint.KEY).getDoubleArray(MicrosoftBand.TEMPERATURE_KEY);
 
         if (airTemps.length > 0) {
@@ -1428,7 +1428,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Ambient brightness...
-        TextView brightness = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_ambient_light_brightness);
+        TextView brightness = holder.itemView.findViewById(R.id.generator_microsoft_band_value_ambient_light_brightness);
         int[] brights = dataPoint.getBundle(AmbientLightDataPoint.KEY).getIntArray(MicrosoftBand.BRIGHTNESS_KEY);
 
         if (brights.length > 0) {
@@ -1438,7 +1438,7 @@ public class MicrosoftBand extends Generator
         }
 
         // UV level...
-        TextView uvLevel = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_uv_level);
+        TextView uvLevel = holder.itemView.findViewById(R.id.generator_microsoft_band_value_uv_level);
         String[] uvs = dataPoint.getBundle(UltravioletLightDataPoint.KEY).getStringArray(MicrosoftBand.INDEX_LEVEL_KEY);
 
         if (uvs.length > 0) {

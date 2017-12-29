@@ -65,7 +65,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
     private static final boolean INCLUDE_ACTIVITY_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.services.GoogleAwareness.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final long SENSING_INTERVAL = 60 * 1000;
 

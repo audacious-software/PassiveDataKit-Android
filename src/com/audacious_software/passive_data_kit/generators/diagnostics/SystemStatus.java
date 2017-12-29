@@ -53,7 +53,7 @@ public class SystemStatus extends Generator {
     private static final boolean ENABLED_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String ACTION_HEARTBEAT = "com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus.ACTION_HEARTBEAT";
 
@@ -229,7 +229,7 @@ public class SystemStatus extends Generator {
 
     @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(SystemStatus.getGeneratorTitle(holder.itemView.getContext()));
     }
@@ -250,7 +250,7 @@ public class SystemStatus extends Generator {
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (c.moveToNext()) {
             cardContent.setVisibility(View.VISIBLE);
@@ -262,7 +262,7 @@ public class SystemStatus extends Generator {
 
             c.moveToPrevious();
 
-            final LineChart chart = (LineChart) holder.itemView.findViewById(R.id.system_status_chart);
+            final LineChart chart = holder.itemView.findViewById(R.id.system_status_chart);
             chart.setViewPortOffsets(0,0,0,0);
             chart.setHighlightPerDragEnabled(false);
             chart.setHighlightPerTapEnabled(false);
@@ -376,7 +376,7 @@ public class SystemStatus extends Generator {
 
             chart.setData(sets);
 
-            TextView runtimeLabel = (TextView) holder.itemView.findViewById(R.id.system_status_runtime);
+            TextView runtimeLabel = holder.itemView.findViewById(R.id.system_status_runtime);
             runtimeLabel.setText(context.getString(R.string.generator_system_status_runtime, SystemStatus.formatRuntime(context, runtime)));
        } else {
             cardContent.setVisibility(View.GONE);
@@ -388,6 +388,7 @@ public class SystemStatus extends Generator {
         c.close();
     }
 
+    @SuppressWarnings("StringConcatenationInLoop")
     private static String formatRuntime(Context context, long runtime) {
         long days = runtime / (24 * 60 * 60 * 1000);
         runtime -= (24 * 60 * 60 * 1000) * days;
@@ -423,7 +424,6 @@ public class SystemStatus extends Generator {
 
         while (msString.length() < 3) {
             msString = "0" + msString;
-
         }
 
         return context.getString(R.string.generator_system_status_runtime_formatted, days, hourString, minuteString, secondString, msString);

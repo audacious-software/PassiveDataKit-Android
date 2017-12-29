@@ -82,7 +82,7 @@ public abstract class Generator
 
         String identifier = currentClass.getCanonicalName();
 
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(identifier);
     }
@@ -97,7 +97,7 @@ public abstract class Generator
 
         String identifier = currentClass.getCanonicalName();
 
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(identifier);
     }

@@ -70,7 +70,7 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
 
                 final List<Action> actions = (List<Action>) getDisclosureActions.invoke(null, this);
 
-                ListView actionsList = (ListView) this.findViewById(R.id.disclosure_actions);
+                ListView actionsList = this.findViewById(R.id.disclosure_actions);
                 ArrayAdapter<Action> adapter = new ArrayAdapter<Action>(this, R.layout.row_disclosure_action_pdk, actions) {
                     @NonNull
                     @SuppressLint("InflateParams")
@@ -81,10 +81,10 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
 
                         Action action = actions.get(position);
 
-                        TextView title = (TextView) convertView.findViewById(R.id.action_title);
+                        TextView title = convertView.findViewById(R.id.action_title);
                         title.setText(action.title);
 
-                        TextView description = (TextView) convertView.findViewById(R.id.action_description);
+                        TextView description = convertView.findViewById(R.id.action_description);
                         description.setText(action.subtitle);
 
                         return convertView;
@@ -98,7 +98,7 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
                     public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                         Action action = actions.get(position);
 
-                        FrameLayout dataView = (FrameLayout) me.findViewById(R.id.data_view);
+                        FrameLayout dataView = me.findViewById(R.id.data_view);
                         dataView.removeAllViews();
 
                         if (action.view != null) {

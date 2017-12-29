@@ -85,7 +85,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final boolean ENABLED_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.Location.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String USE_GOOGLE_SERVICES = "com.audacious_software.passive_data_kit.generators.device.Location.USE_GOOGLE_SERVICES";
     private static final boolean USE_GOOGLE_SERVICES_DEFAULT = true;
@@ -533,7 +533,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         c.close();
 
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (timestamp > 0) {
             dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000));
@@ -551,14 +551,14 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
         else if (Location.useGoogleLocationServices(holder.itemView.getContext()))
         {
-            final MapView mapView = (MapView) holder.itemView.findViewById(R.id.map_view);
+            final MapView mapView = holder.itemView.findViewById(R.id.map_view);
             mapView.onCreate(null);
 
             final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
             final boolean useHybrid = prefs.getBoolean(Location.SETTING_DISPLAY_HYBRID_MAP, Location.SETTING_DISPLAY_HYBRID_MAP_DEFAULT);
 
-            SwitchCompat hybridSwitch = (SwitchCompat) holder.itemView.findViewById(R.id.pdk_google_location_map_type_hybrid);
+            SwitchCompat hybridSwitch = holder.itemView.findViewById(R.id.pdk_google_location_map_type_hybrid);
             hybridSwitch.setChecked(useHybrid);
 
             hybridSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -721,7 +721,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                 final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
                 int selected = prefs.getInt(Location.ACCURACY_MODE, Location.ACCURACY_BEST);
 
-                CheckBox checked = (CheckBox) convertView.findViewById(R.id.action_checked);
+                CheckBox checked = convertView.findViewById(R.id.action_checked);
 
                 checked.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
@@ -732,8 +732,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
                 checked.setChecked(selected == option);
 
-                TextView title = (TextView) convertView.findViewById(R.id.action_title);
-                TextView description = (TextView) convertView.findViewById(R.id.action_description);
+                TextView title = convertView.findViewById(R.id.action_title);
+                TextView description = convertView.findViewById(R.id.action_description);
 
                 if (option == Location.ACCURACY_BEST) {
                     title.setText(R.string.label_data_collection_location_accuracy_best);
@@ -781,7 +781,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                             @SuppressLint("InflateParams") View body = LayoutInflater.from(context).inflate(R.layout.dialog_location_randomized, null);
                             builder.setView(body);
 
-                            final EditText rangeField = (EditText) body.findViewById(R.id.random_range);
+                            final EditText rangeField = body.findViewById(R.id.random_range);
 
                             long existingRange = prefs.getLong(Location.ACCURACY_MODE_RANDOMIZED_RANGE, Location.ACCURACY_MODE_RANDOMIZED_RANGE_DEFAULT);
 
@@ -811,7 +811,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                             @SuppressLint("InflateParams") View body = LayoutInflater.from(context).inflate(R.layout.dialog_location_user, null);
                             builder.setView(body);
 
-                            final EditText locationField = (EditText) body.findViewById(R.id.user_location);
+                            final EditText locationField = body.findViewById(R.id.user_location);
 
                             String existingLocation = prefs.getString(Location.ACCURACY_MODE_USER_LOCATION, Location.ACCURACY_MODE_USER_LOCATION_DEFAULT);
 
@@ -1081,7 +1081,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(Location.getGeneratorTitle(holder.itemView.getContext()));
     }

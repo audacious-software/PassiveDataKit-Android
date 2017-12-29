@@ -136,8 +136,6 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
                     long twoUpdated = 0;
 
-                    start = System.currentTimeMillis();
-
                     try {
                         Method twoGenerated = two.getDeclaredMethod("latestPointGenerated", Context.class);
 

@@ -34,7 +34,7 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
         this.mAdapter.setContext(this.getApplicationContext());
         this.mAdapter.sortGenerators(true);
 
-        RecyclerView listView = (RecyclerView) this.findViewById(R.id.list_view);
+        RecyclerView listView = this.findViewById(R.id.list_view);
 
         listView.setLayoutManager(new LinearLayoutManager(this));
 

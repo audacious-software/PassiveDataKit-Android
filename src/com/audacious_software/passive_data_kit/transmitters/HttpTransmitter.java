@@ -93,7 +93,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     private File mCurrentFile = null;
     private long mTransmitted = 0;
 
-    @SuppressWarnings("TryWithIdenticalCatches")
+    @SuppressWarnings({"TryWithIdenticalCatches", "StringConcatenationInLoop"})
     @Override
     public void initialize(Context context, HashMap<String, String> options) {
         if (!options.containsKey(HttpTransmitter.UPLOAD_URI)) {

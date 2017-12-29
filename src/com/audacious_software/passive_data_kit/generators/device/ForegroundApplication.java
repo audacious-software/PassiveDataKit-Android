@@ -48,7 +48,7 @@ public class ForegroundApplication extends Generator{
     private static final boolean ENABLED_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final int DATABASE_VERSION = 3;
 
@@ -218,7 +218,7 @@ public class ForegroundApplication extends Generator{
 
     @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(ForegroundApplication.getGeneratorTitle(holder.itemView.getContext()));
     }
@@ -245,7 +245,7 @@ public class ForegroundApplication extends Generator{
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         long now = System.currentTimeMillis();
         long yesterday = now - (24 * 60 * 60 * 1000);
@@ -342,8 +342,8 @@ public class ForegroundApplication extends Generator{
                 View row = cardContent.findViewById(appRowId);
                 row.setVisibility(View.VISIBLE);
 
-                TextView appName = (TextView) row.findViewById(R.id.app_name);
-                ImageView appIcon = (ImageView) row.findViewById(R.id.application_icon);
+                TextView appName = row.findViewById(R.id.app_name);
+                ImageView appIcon = row.findViewById(R.id.application_icon);
 
                 View usedDuration = row.findViewById(R.id.app_used_duration);
                 View remainderDuration = row.findViewById(R.id.app_remaining_duration);
@@ -393,8 +393,8 @@ public class ForegroundApplication extends Generator{
                     View row = cardContent.findViewById(appRowId);
                     row.setVisibility(View.VISIBLE);
 
-                    TextView appName = (TextView) row.findViewById(R.id.app_name);
-                    ImageView appIcon = (ImageView) row.findViewById(R.id.application_icon);
+                    TextView appName = row.findViewById(R.id.app_name);
+                    ImageView appIcon = row.findViewById(R.id.application_icon);
 
                     try {
                         String name = packageManager.getApplicationLabel(packageManager.getApplicationInfo(appPackage, PackageManager.GET_META_DATA)).toString();
@@ -407,7 +407,7 @@ public class ForegroundApplication extends Generator{
                         appIcon.setImageDrawable(null);
                     }
 
-                    TextView appWhen = (TextView) row.findViewById(R.id.app_last_used);
+                    TextView appWhen = row.findViewById(R.id.app_last_used);
                     appWhen.setText(Generator.formatTimestamp(context, appWhens.get(appPackage) / 1000));
                 }
             }

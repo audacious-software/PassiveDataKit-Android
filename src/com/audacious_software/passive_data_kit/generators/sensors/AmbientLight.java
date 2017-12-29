@@ -55,7 +55,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     private static final boolean ENABLED_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.sensors.AmbientLight.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String IGNORE_POWER_MANAGEMENT = "com.audacious_software.passive_data_kit.generators.sensors.AmbientLight.IGNORE_POWER_MANAGEMENT";
     private static final boolean IGNORE_POWER_MANAGEMENT_DEFAULT = true;
@@ -282,7 +282,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
     @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(AmbientLight.getGeneratorTitle(holder.itemView.getContext()));
     }
@@ -304,7 +304,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (context instanceof Activity) {
             cardContent.setVisibility(View.VISIBLE);
@@ -312,7 +312,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
             dateLabel.setText(Generator.formatTimestamp(context, AmbientLight.latestPointGenerated(context) / 1000));
 
-            final LineChart chart = (LineChart) holder.itemView.findViewById(R.id.light_chart);
+            final LineChart chart = holder.itemView.findViewById(R.id.light_chart);
             chart.setNoDataText(context.getString(R.string.pdk_generator_chart_loading_data));
             chart.setNoDataTextColor(0xFFE0E0E0);
 

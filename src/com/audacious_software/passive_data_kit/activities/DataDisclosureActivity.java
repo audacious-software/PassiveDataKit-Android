@@ -18,13 +18,13 @@ public class DataDisclosureActivity extends AppCompatActivity {
         this.getSupportActionBar().setTitle(R.string.title_data_disclosure);
         this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        FrameLayout dataView = (FrameLayout) this.findViewById(R.id.data_view);
+        FrameLayout dataView = this.findViewById(R.id.data_view);
 
         GeneratorsAdapter adapter = new GeneratorsAdapter();
         adapter.setContext(this.getApplicationContext());
         adapter.setDataView(dataView);
 
-        RecyclerView listView = (RecyclerView) this.findViewById(R.id.list_view);
+        RecyclerView listView = this.findViewById(R.id.list_view);
 
         listView.setLayoutManager(new LinearLayoutManager(this));
 

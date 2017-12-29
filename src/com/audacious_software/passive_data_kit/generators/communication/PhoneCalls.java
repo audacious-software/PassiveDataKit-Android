@@ -54,7 +54,7 @@ public class PhoneCalls extends Generator {
     private static final boolean ENABLED_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.communication.PhoneCalls.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String CALL_DATE_KEY = "call_timestamp";
     private static final String CALL_DURATION_KEY = "duration";
@@ -452,7 +452,7 @@ public class PhoneCalls extends Generator {
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (total > 0) {
             cardContent.setVisibility(View.VISIBLE);
@@ -460,7 +460,7 @@ public class PhoneCalls extends Generator {
 
             dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp));
 
-            PieChart pieChart = (PieChart) holder.itemView.findViewById(R.id.chart_phone_calls);
+            PieChart pieChart = holder.itemView.findViewById(R.id.chart_phone_calls);
             pieChart.getLegend().setEnabled(false);
 
             pieChart.setEntryLabelColor(android.R.color.transparent);
@@ -513,9 +513,9 @@ public class PhoneCalls extends Generator {
             pieChart.setData(data);
             pieChart.invalidate();
 
-            TextView latestField = (TextView) holder.itemView.findViewById(R.id.field_latest_call);
-            TextView durationField = (TextView) holder.itemView.findViewById(R.id.field_duration);
-            TextView directionField = (TextView) holder.itemView.findViewById(R.id.field_direction);
+            TextView latestField = holder.itemView.findViewById(R.id.field_latest_call);
+            TextView durationField = holder.itemView.findViewById(R.id.field_duration);
+            TextView directionField = holder.itemView.findViewById(R.id.field_direction);
 
             Date lateDate = new Date(lastTimestamp);
             String day = android.text.format.DateFormat.getMediumDateFormat(context).format(lateDate);

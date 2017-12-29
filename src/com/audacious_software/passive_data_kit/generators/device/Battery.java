@@ -47,7 +47,7 @@ public class Battery extends Generator {
     private static final boolean ENABLED_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.Battery.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String DATABASE_PATH = "pdk-device-battery.sqlite";
     private static final int DATABASE_VERSION = 1;
@@ -383,7 +383,7 @@ public class Battery extends Generator {
 
     @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(Battery.getGeneratorTitle(holder.itemView.getContext()));
     }
@@ -404,7 +404,7 @@ public class Battery extends Generator {
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (c.moveToNext()) {
             cardContent.setVisibility(View.VISIBLE);
@@ -416,7 +416,7 @@ public class Battery extends Generator {
 
             c.moveToPrevious();
 
-            final LineChart chart = (LineChart) holder.itemView.findViewById(R.id.battery_level_chart);
+            final LineChart chart = holder.itemView.findViewById(R.id.battery_level_chart);
             chart.setViewPortOffsets(0,0,0,0);
             chart.setHighlightPerDragEnabled(false);
             chart.setHighlightPerTapEnabled(false);

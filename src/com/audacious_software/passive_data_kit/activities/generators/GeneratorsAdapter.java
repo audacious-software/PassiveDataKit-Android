@@ -51,7 +51,7 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
             Method bindViewHolder = generatorClass.getDeclaredMethod("bindDisclosureViewHolder", GeneratorViewHolder.class);
             bindViewHolder.invoke(null, holder);
         } catch (Exception e) {
-            TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+            TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
             String[] tokens = generatorClass.getName().split(Pattern.quote("."));
             generatorLabel.setText(tokens[tokens.length - 1] + "*");
@@ -86,7 +86,7 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
             }
         });
 
-        ImageView settingsButton = (ImageView) holder.itemView.findViewById(R.id.button_disclosure_item);
+        ImageView settingsButton = holder.itemView.findViewById(R.id.button_disclosure_item);
 
         settingsButton.setVisibility(View.GONE);
 

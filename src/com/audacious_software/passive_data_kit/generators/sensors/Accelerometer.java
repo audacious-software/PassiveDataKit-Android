@@ -385,7 +385,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
     @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(Accelerometer.getGeneratorTitle(holder.itemView.getContext()));
     }
@@ -416,7 +416,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
         final View cardContent = itemView.findViewById(R.id.card_content);
         final View cardEmpty = itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = itemView.findViewById(R.id.generator_data_point_date);
 
         if (context instanceof Activity) {
             cardContent.setVisibility(View.VISIBLE);
@@ -424,7 +424,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
             dateLabel.setText(Generator.formatTimestamp(context, Accelerometer.latestPointGenerated(generator.mContext) / 1000));
 
-            final LineChart chart = (LineChart) holder.itemView.findViewById(R.id.accelerometer_chart);
+            final LineChart chart = holder.itemView.findViewById(R.id.accelerometer_chart);
             chart.setNoDataText(context.getString(R.string.pdk_generator_chart_loading_data));
             chart.setNoDataTextColor(0xFFE0E0E0);
 

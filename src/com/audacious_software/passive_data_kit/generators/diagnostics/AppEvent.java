@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
@@ -44,7 +45,7 @@ public class AppEvent extends Generator{
     private static final boolean ENABLED_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String DATABASE_PATH = "pdk-app-event.sqlite";
     private static final int DATABASE_VERSION = 1;
@@ -66,7 +67,7 @@ public class AppEvent extends Generator{
     private SQLiteDatabase mDatabase = null;
 
     private boolean mWorking = false;
-    private List<HashMap<String, Map<String, ?>>> mPending = new ArrayList<>();
+    final private List<HashMap<String, Map<String, ?>>> mPending = new ArrayList<>();
 
     private int mPage = 0;
     private long mLastTimestamp = -1;
@@ -144,7 +145,7 @@ public class AppEvent extends Generator{
 
     @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(AppEvent.getGeneratorTitle(holder.itemView.getContext()));
     }
@@ -157,7 +158,7 @@ public class AppEvent extends Generator{
         final View cardContent = holder.itemView.findViewById(R.id.card_content);
         final View cardSizer = holder.itemView.findViewById(R.id.card_sizer);
         final View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
-        final TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        final TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         cardContent.setVisibility(View.GONE);
         cardEmpty.setVisibility(View.VISIBLE);
@@ -199,7 +200,7 @@ public class AppEvent extends Generator{
 
                             final AppEvent appEvent = AppEvent.getInstance(holder.itemView.getContext());
 
-                            ViewPager pager = (ViewPager) holder.itemView.findViewById(R.id.content_pager);
+                            ViewPager pager = holder.itemView.findViewById(R.id.content_pager);
 
                             PagerAdapter adapter = new PagerAdapter() {
                                 @Override
@@ -208,11 +209,11 @@ public class AppEvent extends Generator{
                                 }
 
                                 @Override
-                                public boolean isViewFromObject(View view, Object content) {
+                                public boolean isViewFromObject(@NonNull View view, @NonNull Object content) {
                                     return view.getTag().equals(content);
                                 }
 
-                                public void destroyItem(ViewGroup container, int position, Object content) {
+                                public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object content) {
                                     int toRemove = -1;
 
                                     for (int i = 0; i < container.getChildCount(); i++) {
@@ -227,7 +228,7 @@ public class AppEvent extends Generator{
                                 }
 
                                 @SuppressWarnings("UnusedAssignment")
-                                public Object instantiateItem(ViewGroup container, int position) {
+                                public Object instantiateItem(@NonNull ViewGroup container, int position) {
                                     LinearLayout list = (LinearLayout) LayoutInflater.from(container.getContext()).inflate(R.layout.card_generator_app_event_page, container, false);
 
                                     int listPosition = AppEvent.CARD_PAGE_SIZE * position;
@@ -242,33 +243,33 @@ public class AppEvent extends Generator{
 
                                         switch (i) {
                                             case 0:
-                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_0);
+                                                row = list.findViewById(R.id.app_event_row_0);
                                                 break;
                                             case 1:
-                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_1);
+                                                row = list.findViewById(R.id.app_event_row_1);
                                                 break;
                                             case 2:
-                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_2);
+                                                row = list.findViewById(R.id.app_event_row_2);
                                                 break;
                                             case 3:
-                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_3);
+                                                row = list.findViewById(R.id.app_event_row_3);
                                                 break;
                                             case 4:
-                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_4);
+                                                row = list.findViewById(R.id.app_event_row_4);
                                                 break;
                                             case 5:
-                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_5);
+                                                row = list.findViewById(R.id.app_event_row_5);
                                                 break;
                                             case 6:
-                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_6);
+                                                row = list.findViewById(R.id.app_event_row_6);
                                                 break;
                                             default:
-                                                row = (LinearLayout) list.findViewById(R.id.app_event_row_7);
+                                                row = list.findViewById(R.id.app_event_row_7);
                                                 break;
                                         }
 
-                                        TextView eventName = (TextView) row.findViewById(R.id.app_event_row_event_name);
-                                        TextView eventWhen = (TextView) row.findViewById(R.id.app_event_row_event_when);
+                                        TextView eventName = row.findViewById(R.id.app_event_row_event_name);
+                                        TextView eventWhen = row.findViewById(R.id.app_event_row_event_when);
 
                                         eventName.setText(event);
                                         eventWhen.setText(Generator.formatTimestamp(activity, timestamp / 1000));
@@ -360,7 +361,7 @@ public class AppEvent extends Generator{
             this.mPending.add(item);
 
             if (this.mWorking || this.mDatabase == null) {
-                return true;
+                return false;
             }
 
             this.mWorking = true;

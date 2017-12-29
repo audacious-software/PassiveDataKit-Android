@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -81,7 +82,7 @@ public class WithingsDevice extends Generator {
     private static final boolean ENABLED_DEFAULT = true;
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice.DATA_RETENTION_PERIOD";
-    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60 * 24 * 60 * 60 * 1000);
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String DATASTREAM = "datastream";
     private static final String DATASTREAM_ACTIVITY_MEASURES = "activity-measures";
@@ -1446,7 +1447,7 @@ public class WithingsDevice extends Generator {
 
     @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(WithingsDevice.getGeneratorTitle(holder.itemView.getContext()));
     }
@@ -1455,7 +1456,7 @@ public class WithingsDevice extends Generator {
     public static void bindViewHolder(final DataPointViewHolder holder) {
         final WithingsDevice withings = WithingsDevice.getInstance(holder.itemView.getContext());
 
-        ViewPager pager = (ViewPager) holder.itemView.findViewById(R.id.content_pager);
+        ViewPager pager = holder.itemView.findViewById(R.id.content_pager);
 
         PagerAdapter adapter = new PagerAdapter() {
             @Override
@@ -1464,11 +1465,11 @@ public class WithingsDevice extends Generator {
             }
 
             @Override
-            public boolean isViewFromObject(View view, Object content) {
+            public boolean isViewFromObject(@NonNull View view, @NonNull Object content) {
                 return view.getTag().equals(content);
             }
 
-            public void destroyItem(ViewGroup container, int position, Object content) {
+            public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object content) {
                 int toRemove = -1;
 
                 for (int i = 0; i < container.getChildCount(); i++) {
@@ -1482,7 +1483,8 @@ public class WithingsDevice extends Generator {
                     container.removeViewAt(toRemove);
             }
 
-            public Object instantiateItem(ViewGroup container, int position) {
+            @NonNull
+            public Object instantiateItem(@NonNull ViewGroup container, int position) {
                 switch (position) {
                     case 0:
                         return WithingsDevice.bindActivityPage(container, holder, position);
@@ -1572,7 +1574,7 @@ public class WithingsDevice extends Generator {
 
         View cardContent = card.findViewById(R.id.content_activity);
         View cardEmpty = card.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (lastTimestamp > 0) {
             cardContent.setVisibility(View.VISIBLE);
@@ -1580,7 +1582,7 @@ public class WithingsDevice extends Generator {
 
             dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp));
 
-            PieChart pieChart = (PieChart) card.findViewById(R.id.chart_phone_calls);
+            PieChart pieChart = card.findViewById(R.id.chart_phone_calls);
             pieChart.getLegend().setEnabled(false);
 
             pieChart.setEntryLabelColor(android.R.color.transparent);
@@ -1632,13 +1634,13 @@ public class WithingsDevice extends Generator {
 
             dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
 
-            TextView stepsValue = (TextView) card.findViewById(R.id.field_steps);
+            TextView stepsValue = card.findViewById(R.id.field_steps);
             stepsValue.setText(context.getResources().getQuantityString(R.plurals.generator_withings_steps_value, (int) steps, (int) steps));
 
-            TextView distanceValue = (TextView) card.findViewById(R.id.field_distance);
+            TextView distanceValue = card.findViewById(R.id.field_distance);
             distanceValue.setText(context.getString(R.string.generator_withings_distance_value, (distance / 1000)));
 
-            TextView elevationValue = (TextView) card.findViewById(R.id.field_elevation);
+            TextView elevationValue = card.findViewById(R.id.field_elevation);
             elevationValue.setText(context.getString(R.string.generator_withings_elevation_value, elevation));
         } else {
             cardContent.setVisibility(View.GONE);
@@ -1717,10 +1719,10 @@ public class WithingsDevice extends Generator {
         @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_withings_intraday_page, null);
         card.setTag("" + position);
 
-        LineChart stepsChart = (LineChart) card.findViewById(R.id.chart_steps);
-        LineChart distanceChart = (LineChart) card.findViewById(R.id.chart_distance);
-        LineChart elevationChart = (LineChart) card.findViewById(R.id.chart_elevation);
-        LineChart caloriesChart = (LineChart) card.findViewById(R.id.chart_calories);
+        LineChart stepsChart = card.findViewById(R.id.chart_steps);
+        LineChart distanceChart = card.findViewById(R.id.chart_distance);
+        LineChart elevationChart = card.findViewById(R.id.chart_elevation);
+        LineChart caloriesChart = card.findViewById(R.id.chart_calories);
 
         ArrayList<Entry> steps = new ArrayList<>();
         ArrayList<Entry> distance = new ArrayList<>();
@@ -1928,12 +1930,12 @@ public class WithingsDevice extends Generator {
         for (int i = 0; i < keys.size() && i < labels.length; i++) {
             String label = keys.get(i);
 
-            TextView labelView = (TextView) card.findViewById(labels[i]);
+            TextView labelView = card.findViewById(labels[i]);
             labelView.setText(label.substring(0, 1).toUpperCase(Locale.getDefault()) + label.substring(1) + ":");
 
             Double value = bodyValues.get(label);
 
-            TextView valueView = (TextView) card.findViewById(values[i]);
+            TextView valueView = card.findViewById(values[i]);
             valueView.setText(String.format(Locale.getDefault(), "%f", value));
         }
 

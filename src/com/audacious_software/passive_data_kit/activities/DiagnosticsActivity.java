@@ -83,10 +83,10 @@ public class DiagnosticsActivity extends AppCompatActivity {
         {
             this.mAction = action;
 
-            TextView title = (TextView) this.mView.findViewById(R.id.action_title);
+            TextView title = this.mView.findViewById(R.id.action_title);
             title.setText(action.getTitle());
 
-            TextView message = (TextView) this.mView.findViewById(R.id.action_message);
+            TextView message = this.mView.findViewById(R.id.action_message);
             message.setText(action.getMessage());
         }
     }
@@ -103,8 +103,8 @@ public class DiagnosticsActivity extends AppCompatActivity {
 
         final ArrayList<DiagnosticAction> actions = PassiveDataKit.diagnostics(this);
 
-        RecyclerView listView = (RecyclerView) this.findViewById(R.id.list_view);
-        TextView emptyMessage = (TextView) this.findViewById(R.id.message_no_diagnostics);
+        RecyclerView listView = this.findViewById(R.id.list_view);
+        TextView emptyMessage = this.findViewById(R.id.message_no_diagnostics);
 
         if (actions.size() > 0) {
             listView.setVisibility(View.VISIBLE);
