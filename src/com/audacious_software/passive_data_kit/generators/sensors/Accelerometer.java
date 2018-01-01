@@ -731,14 +731,18 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
             }
         }
 
-        this.mXValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[0];
-        this.mYValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[1];
-        this.mZValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[2];
-        this.mAccuracyBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = accuracy;
-        this.mRawTimestampBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = rawTimestamp;
-        this.mTimestampBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = normalizedTimestamp;
+        try {
+            this.mXValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[0];
+            this.mYValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[1];
+            this.mZValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[2];
+            this.mAccuracyBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = accuracy;
+            this.mRawTimestampBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = rawTimestamp;
+            this.mTimestampBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = normalizedTimestamp;
 
-        this.mCurrentBufferIndex += 1;
+            this.mCurrentBufferIndex += 1;
+        } catch (NullPointerException e) {
+            // Null buffer - try again next time.
+        }
     }
 
     private void saveBuffer(final int bufferIndex, final int bufferSize) {

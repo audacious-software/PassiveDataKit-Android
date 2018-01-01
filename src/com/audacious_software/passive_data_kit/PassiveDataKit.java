@@ -2,6 +2,9 @@ package com.audacious_software.passive_data_kit;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.support.v4.content.ContextCompat;
 
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -13,9 +16,16 @@ import java.util.ArrayList;
 public class PassiveDataKit {
     private static final String STORAGE_PATH = "passive-data-kit";
     private static final String GENERATORS_PATH = "generators";
+    public static final String NOTIFICATION_CHANNEL_ID = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_CHANNEL_ID";
+    public static final String NOTIFICATION_ICON_ID = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_ICON_ID";
+    public static final String NOTIFICATION_COLOR = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_COLOR";
 
     private Context mContext = null;
     private boolean mStarted = false;
+    private boolean mStartForegroundService = false;
+    private String mForegroundChannelId = null;
+    private int mForegroundIconId = 0;
+    private int mForegroundColor = 0;
 
     public void start() {
         synchronized (this) {
@@ -34,6 +44,26 @@ public class PassiveDataKit {
 
                 Thread t = new Thread(r);
                 t.start();
+
+                if (this.mStartForegroundService) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        Intent intent = new Intent(ForegroundService.ACTION_START_SERVICE, null, this.mContext, ForegroundService.class);
+
+                        if (this.mForegroundChannelId != null) {
+                            intent.putExtra(PassiveDataKit.NOTIFICATION_CHANNEL_ID, this.mForegroundChannelId);
+                        }
+
+                        if (this.mForegroundIconId != 0) {
+                            intent.putExtra(PassiveDataKit.NOTIFICATION_ICON_ID, this.mForegroundIconId);
+                        }
+
+                        if (this.mForegroundColor != 0) {
+                            intent.putExtra(PassiveDataKit.NOTIFICATION_COLOR, this.mForegroundColor);
+                        }
+
+                        ContextCompat.startForegroundService(this.mContext, intent);
+                    }
+                }
             }
         }
     }
@@ -57,6 +87,22 @@ public class PassiveDataKit {
         }
 
         return path;
+    }
+
+    public void setStartForegroundService(boolean startService) {
+        this.mStartForegroundService = startService;
+    }
+
+    public void setForegroundServiceChannelId(String channelId) {
+        this.mForegroundChannelId = channelId;
+    }
+
+    public void setForegroundServiceIcon(int resourceId) {
+        this.mForegroundIconId = resourceId;
+    }
+
+    public void setForegroundServiceColor(int color) {
+        this.mForegroundColor = color;
     }
 
     private static class PassiveDataKitHolder {

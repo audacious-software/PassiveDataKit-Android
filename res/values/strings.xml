@@ -31,5 +31,8 @@
     <string name="pdk_generator_chart_loading_data">Waiting for chart data&#8230;</string>
 
     <string name="pdk_placeholder_disclosure_not_implemented">A disclosure view is not implemented for this generator.\n\nContact the app developer for assistance&#8230;</string>
+
+    <string name="foreground_service_title">Background Data Collection Active</string>
+    <string name="foreground_service_message">This app is collecting data in the background&#8230;</string>
 </resources>
 
