@@ -6,7 +6,7 @@
         <item>com.audacious_software.passive_data_kit.generators.communication.PhoneCalls</item>
         <item>com.audacious_software.passive_data_kit.generators.communication.TextMessages</item>
         <!-- <item>com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand</item> -->
-        <!-- <item>com.audacious_software.passive_data_kit.generators.services.GoogleAwareness</item> -->
+        <item>com.audacious_software.passive_data_kit.generators.services.GoogleAwareness</item>
         <!-- <item>com.audacious_software.passive_data_kit.generators.vr.DaydreamViewController</item> -->
         <item>com.audacious_software.passive_data_kit.generators.device.Battery</item>
         <item>com.audacious_software.passive_data_kit.generators.sensors.Accelerometer</item>

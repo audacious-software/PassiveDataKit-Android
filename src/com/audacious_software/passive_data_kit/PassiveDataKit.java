@@ -89,18 +89,22 @@ public class PassiveDataKit {
         return path;
     }
 
+    @SuppressWarnings("unused")
     public void setStartForegroundService(boolean startService) {
         this.mStartForegroundService = startService;
     }
 
+    @SuppressWarnings("unused")
     public void setForegroundServiceChannelId(String channelId) {
         this.mForegroundChannelId = channelId;
     }
 
+    @SuppressWarnings("unused")
     public void setForegroundServiceIcon(int resourceId) {
         this.mForegroundIconId = resourceId;
     }
 
+    @SuppressWarnings("unused")
     public void setForegroundServiceColor(int color) {
         this.mForegroundColor = color;
     }

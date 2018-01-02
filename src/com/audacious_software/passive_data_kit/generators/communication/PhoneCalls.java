@@ -139,6 +139,7 @@ public class PhoneCalls extends Generator {
         PhoneCalls.getInstance(context).startGenerator();
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     private void startGenerator() {
         final PhoneCalls me = this;
 

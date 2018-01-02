@@ -185,6 +185,9 @@ public abstract class Generator
         }
     }
 
+    @SuppressWarnings("unused")
     protected abstract void flushCachedData();
+
+    @SuppressWarnings("unused")
     public abstract void setCachedDataRetentionPeriod(long period);
 }

@@ -1,6 +1,7 @@
 package com.audacious_software.passive_data_kit.generators.communication;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -115,6 +116,7 @@ public class TextMessages extends Generator {
         TextMessages.getInstance(context).startGenerator();
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     private void startGenerator() {
         final TextMessages me = this;
 

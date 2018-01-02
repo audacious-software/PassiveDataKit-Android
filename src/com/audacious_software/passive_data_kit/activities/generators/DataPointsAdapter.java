@@ -120,8 +120,6 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
                 public int compare(Class<? extends Generator> one, Class<? extends Generator> two) {
                     long oneUpdated = 0;
 
-                    long start = System.currentTimeMillis();
-
                     try {
                         Method oneGenerated = one.getDeclaredMethod("latestPointGenerated", Context.class);
 

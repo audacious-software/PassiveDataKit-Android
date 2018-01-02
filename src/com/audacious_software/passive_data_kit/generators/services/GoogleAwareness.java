@@ -11,7 +11,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
@@ -21,21 +20,21 @@ import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.google.android.gms.awareness.Awareness;
+import com.google.android.gms.awareness.SnapshotClient;
 import com.google.android.gms.awareness.fence.TimeFence;
-import com.google.android.gms.awareness.snapshot.DetectedActivityResult;
-import com.google.android.gms.awareness.snapshot.HeadphoneStateResult;
-import com.google.android.gms.awareness.snapshot.PlacesResult;
-import com.google.android.gms.awareness.snapshot.TimeIntervalsResult;
-import com.google.android.gms.awareness.snapshot.WeatherResult;
+import com.google.android.gms.awareness.snapshot.DetectedActivityResponse;
+import com.google.android.gms.awareness.snapshot.HeadphoneStateResponse;
+import com.google.android.gms.awareness.snapshot.PlacesResponse;
+import com.google.android.gms.awareness.snapshot.TimeIntervalsResponse;
+import com.google.android.gms.awareness.snapshot.WeatherResponse;
 import com.google.android.gms.awareness.state.HeadphoneState;
 import com.google.android.gms.awareness.state.TimeIntervals;
 import com.google.android.gms.awareness.state.Weather;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceLikelihood;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +42,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @SuppressWarnings("SimplifiableIfStatement")
-public class GoogleAwareness extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
+public class GoogleAwareness extends Generator {
     private static final String GENERATOR_IDENTIFIER = "google-awareness";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.services.GoogleAwareness.ENABLED";
@@ -99,7 +98,6 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
     private static GoogleAwareness sInstance = null;
 
-    private GoogleApiClient mGoogleApiClient = null;
     private Handler mSensingHandler = null;
 
     private boolean mIncludeHeadphone = GoogleAwareness.INCLUDE_HEADPHONES_DEFAULT;
@@ -135,6 +133,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
     private float mPlaceLikelihood = 0.0f;
     private Place mPlace = null;
+    private long mRefreshInterval = (60 * 1000);
 
     @SuppressWarnings("WeakerAccess")
     public static GoogleAwareness getInstance(Context context) {
@@ -166,29 +165,11 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
     private void startGenerator() {
         final GoogleAwareness me = this;
 
-        Runnable r = new Runnable()
-        {
-
-            @Override
-            public void run() {
-                if (me.mGoogleApiClient == null) {
-                    GoogleApiClient.Builder builder = new GoogleApiClient.Builder(me.mContext);
-                    builder.addConnectionCallbacks(me);
-                    builder.addOnConnectionFailedListener(me);
-                    builder.addApi(Awareness.API);
-
-                    me.mGoogleApiClient = builder.build();
-                    me.mGoogleApiClient.connect();
-                }
-            }
-        };
-
-        Thread t = new Thread(r);
-        t.start();
-
         Generators.getInstance(this.mContext).registerCustomViewClass(GoogleAwareness.GENERATOR_IDENTIFIER, GoogleAwareness.class);
 
         this.flushCachedData();
+
+        this.refresh();
     }
 
     @SuppressWarnings("unused")
@@ -256,11 +237,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
 
     @SuppressWarnings("unused")
     public static boolean isRunning(Context context) {
-        if (GoogleAwareness.sInstance == null) {
-            return false;
-        }
-
-        return (GoogleAwareness.sInstance.mGoogleApiClient != null);
+        return (GoogleAwareness.sInstance != null);
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -270,8 +247,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
         return prefs.getBoolean(GoogleAwareness.ENABLED, GoogleAwareness.ENABLED_DEFAULT);
     }
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
+    public void refresh() {
         final GoogleAwareness me = this;
 
         Runnable r = new Runnable() {
@@ -279,12 +255,16 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
             @SuppressLint("MissingPermission")
             @Override
             public void run() {
+                SnapshotClient client = Awareness.getSnapshotClient(me.mContext);
+
                 if (me.mIncludeHeadphone) {
-                    Awareness.SnapshotApi.getHeadphoneState(mGoogleApiClient).setResultCallback(new ResultCallback<HeadphoneStateResult>() {
+                    client.getHeadphoneState().addOnCompleteListener(new OnCompleteListener<HeadphoneStateResponse>() {
                         @Override
-                        public void onResult(@NonNull HeadphoneStateResult headphoneStateResult) {
-                            if (headphoneStateResult.getStatus().isSuccess()) {
-                                HeadphoneState headphone = headphoneStateResult.getHeadphoneState();
+                        public void onComplete(@NonNull Task<HeadphoneStateResponse> task) {
+                            if (task.isSuccessful()) {
+                                HeadphoneState headphone =  task.getResult().getHeadphoneState();
+
+                                Log.e("PDK", "HEADPHONE: " + headphone);
 
                                 if (headphone.getState() == HeadphoneState.PLUGGED_IN) {
                                     me.mHeadphoneState = GoogleAwareness.HEADPHONE_STATE_PLUGGED_IN;
@@ -302,11 +282,13 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
                     int permissionCheck = ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION);
 
                     if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                        Awareness.SnapshotApi.getTimeIntervals(mGoogleApiClient).setResultCallback(new ResultCallback<TimeIntervalsResult>() {
+                        client.getTimeIntervals().addOnCompleteListener(new OnCompleteListener<TimeIntervalsResponse>() {
                             @Override
-                            public void onResult(@NonNull TimeIntervalsResult timeIntervalStateResult) {
-                                if (timeIntervalStateResult.getStatus().isSuccess()) {
-                                    TimeIntervals intervals = timeIntervalStateResult.getTimeIntervals();
+                            public void onComplete(@NonNull Task<TimeIntervalsResponse> task) {
+                                if (task.isSuccessful()) {
+                                    TimeIntervals intervals = task.getResult().getTimeIntervals();
+
+                                    Log.e("PDK", "TIME INTERVALS: " + intervals);
 
                                     if (intervals.hasTimeInterval(TimeFence.TIME_INTERVAL_WEEKDAY)) {
                                         me.mDayState = GoogleAwareness.DAY_STATE_WEEKDAY;
@@ -345,11 +327,13 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
                     int permissionCheck = ContextCompat.checkSelfPermission(me.mContext, "com.google.android.gms.permission.ACTIVITY_RECOGNITION");
 
                     if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                        Awareness.SnapshotApi.getDetectedActivity(mGoogleApiClient).setResultCallback(new ResultCallback<DetectedActivityResult>() {
+                        client.getDetectedActivity().addOnCompleteListener(new OnCompleteListener<DetectedActivityResponse>() {
                             @Override
-                            public void onResult(@NonNull DetectedActivityResult activityResult) {
-                                if (activityResult.getStatus().isSuccess()) {
-                                    DetectedActivity activity = activityResult.getActivityRecognitionResult().getMostProbableActivity();
+                            public void onComplete(@NonNull Task<DetectedActivityResponse> task) {
+                                if (task.isSuccessful()) {
+                                    DetectedActivity activity = task.getResult().getActivityRecognitionResult().getMostProbableActivity();
+
+                                    Log.e("PDK", "ACTIVITY: " + activity);
 
                                     switch(activity.getType()) {
                                         case DetectedActivity.IN_VEHICLE:
@@ -392,11 +376,13 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
                     int permissionCheck = ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION);
 
                     if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                        Awareness.SnapshotApi.getWeather(mGoogleApiClient).setResultCallback(new ResultCallback<WeatherResult>() {
+                        client.getWeather().addOnCompleteListener(new OnCompleteListener<WeatherResponse>() {
                             @Override
-                            public void onResult(@NonNull WeatherResult weatherResult) {
-                                if (weatherResult.getStatus().isSuccess()) {
-                                    Weather weather = weatherResult.getWeather();
+                            public void onComplete(@NonNull Task<WeatherResponse> task) {
+                                if (task.isSuccessful()) {
+                                    Weather weather = task.getResult().getWeather();
+
+                                    Log.e("PDK", "WEATHER: " + weather);
 
                                     for (int condition : weather.getConditions()) {
                                         switch (condition) {
@@ -445,6 +431,7 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
                                     me.mTemperature = Float.NaN;
                                     me.mHumidity = -1;
                                 }
+
                             }
                         });
                     }
@@ -454,11 +441,11 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
                     int permissionCheck = ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION);
 
                     if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                        Awareness.SnapshotApi.getPlaces(mGoogleApiClient).setResultCallback(new ResultCallback<PlacesResult>() {
+                        client.getPlaces().addOnCompleteListener(new OnCompleteListener<PlacesResponse>() {
                             @Override
-                            public void onResult(@NonNull PlacesResult placesResult) {
-                                if (placesResult.getStatus().isSuccess()) {
-                                    List<PlaceLikelihood> places = placesResult.getPlaceLikelihoods();
+                            public void onComplete(@NonNull Task<PlacesResponse> task) {
+                                if (task.isSuccessful()) {
+                                    List<PlaceLikelihood> places = task.getResult().getPlaceLikelihoods();
 
                                     if (places != null && places.size() > 0) {
                                         Collections.sort(places, new Comparator<PlaceLikelihood>() {
@@ -472,6 +459,8 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
                                         });
 
                                         PlaceLikelihood mostLikely = places.get(0);
+
+                                        Log.e("PDK", "MOST LIKELY PLACE: " + mostLikely);
 
                                         me.mPlaceLikelihood = mostLikely.getLikelihood();
                                         me.mPlace = mostLikely.getPlace();
@@ -490,25 +479,19 @@ public class GoogleAwareness extends Generator implements GoogleApiClient.Connec
                 if (me.mSensingHandler != null) {
                     me.mSensingHandler.postDelayed(this, GoogleAwareness.SENSING_INTERVAL);
                 }
+
+                try {
+                    Thread.sleep(me.mRefreshInterval);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                me.refresh();
             }
         };
 
-        this.mSensingHandler = new Handler();
-        this.mSensingHandler.post(r);
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected()) {
-            this.mGoogleApiClient.disconnect();
-        }
-
-        this.mSensingHandler = null;
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        this.mGoogleApiClient = null;
+        Thread t = new Thread(r);
+        t.start();
     }
 
     @Override

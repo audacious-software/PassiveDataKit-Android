@@ -533,22 +533,27 @@ public class Battery extends Generator {
         return this.mDatabase.query(Battery.TABLE_HISTORY, cols, where, args, null, null, orderBy);
     }
 
+    @SuppressWarnings("unused")
     public void setMonitorsVoltage(boolean monitorVoltage) {
         this.mMonitorsVoltage = monitorVoltage;
     }
 
+    @SuppressWarnings("unused")
     public void setMonitorsHealth(boolean monitorHealth) {
         this.mMonitorsHealth = monitorHealth;
     }
 
+    @SuppressWarnings("unused")
     public void setMonitorsPlugged(boolean monitorPlugged) {
         this.mMonitorsPlugged = monitorPlugged;
     }
 
+    @SuppressWarnings("unused")
     public void setMonitorsTemperature(boolean monitorTemperature) {
         this.mMonitorsTemperature = monitorTemperature;
     }
 
+    @SuppressWarnings("unused")
     public void setMinUpdateInterval(long updateInterval) {
         this.mMinUpdateInterval = updateInterval;
     }
@@ -577,10 +582,12 @@ public class Battery extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public int getLastLevel() {
         return this.mLastLevel;
     }
 
+    @SuppressWarnings("unused")
     public int getLastScale() {
         return this.mLastScale;
     }

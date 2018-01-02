@@ -290,6 +290,7 @@ public class WithingsDevice extends Generator {
         WithingsDevice.getInstance(context).startGenerator();
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     private void startGenerator() {
         final WithingsDevice me = this;
 
@@ -2079,6 +2080,7 @@ public class WithingsDevice extends Generator {
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void setScanDays(long days) {
         if (days >= 0) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);

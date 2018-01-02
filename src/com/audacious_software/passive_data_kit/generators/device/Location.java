@@ -90,15 +90,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final String USE_GOOGLE_SERVICES = "com.audacious_software.passive_data_kit.generators.device.Location.USE_GOOGLE_SERVICES";
     private static final boolean USE_GOOGLE_SERVICES_DEFAULT = true;
 
-    private static final String ACCURACY_KEY = "accuracy";
-    private static final String LATITUDE_KEY = "latitude";
-    private static final String LONGITUDE_KEY = "longitude";
-    private static final String FIX_TIMESTAMP_KEY = "fix-timestamp";
-    private static final String PROVIDER_KEY = "provider";
-    private static final String ALTITUDE_KEY = "altitude";
-    private static final String BEARING_KEY = "bearing";
-    private static final String SPEED_KEY = "speed";
-    private static final String EXTRAS_KEY = "extras";
     private static final String SETTING_DISPLAY_HYBRID_MAP = "com.audacious_software.passive_data_kit.generators.device.Location.SETTING_DISPLAY_HYBRID_MAP";
     private static final boolean SETTING_DISPLAY_HYBRID_MAP_DEFAULT = true;
 
@@ -1187,6 +1178,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return this.mDatabase.query(Location.TABLE_HISTORY, cols, where, args, null, null, orderBy);
     }
 
+    @SuppressWarnings("unused")
     public void setAccuracyMode(int accuracyMode) {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1196,6 +1188,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void setRandomizationRange(long meters) {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -1205,6 +1198,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         e.apply();
     }
 
+    @SuppressWarnings("unused")
     public void setPreservesRandomVector(boolean preservesVector) {
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
