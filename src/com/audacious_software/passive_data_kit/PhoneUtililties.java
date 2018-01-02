@@ -1,12 +1,7 @@
 package com.audacious_software.passive_data_kit;
 
-import android.content.Context;
-
-/**
- * Created by cjkarr on 12/13/2016.
- */
-
 public class PhoneUtililties {
+    @SuppressWarnings("StringConcatenationInLoop")
     public static String normalizedPhoneNumber(String phoneNumber)
     {
         if (phoneNumber == null) {
@@ -22,7 +17,6 @@ public class PhoneUtililties {
         while (phoneNumber.length() < 10) {
             phoneNumber += "0";
         }
-
 
         return phoneNumber;
     }

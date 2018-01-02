@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="diagnostic_missing_msft_band_client_title">Microsoft Band App Not Installed</string>
     <string name="diagnostic_missing_msft_band_client">Unable to connect to Microsoft Band. Please install the app and try again.</string>
 
@@ -17,7 +17,12 @@
     <string name="diagnostic_missing_location_permission_title">Location Permission Required</string>
     <string name="diagnostic_missing_location_permission">Please grant the app permission to access location services on this device.</string>
 
-    <string name="diagnostic_withings_auth_required_title">Access to Withing Account Required</string>
-    <string name="diagnostic_withings_auth_required">Permission is required to fetch data from the Withings server. Please grant this application the requested permissions.</string>
+    <string name="diagnostic_withings_auth_required_title" tools:ignore="Typos">Access to Nokia Health Account Required</string>
+    <string name="diagnostic_withings_auth_required">Permission is required to fetch data from the Nokia server. Please grant this application the requested permissions.</string>
 
+    <string name="diagnostic_usage_stats_permission_required_title">App Usage Data Permission Required</string>
+    <string name="diagnostic_usage_stats_permission_required">This app requires access to app usage data from your device\'s settings.</string>
+
+    <string name="diagnostic_battery_optimization_exempt_title">Battery Optimization Enabled</string>
+    <string name="diagnostic_battery_optimization_exempt">This app uses device features that do not function consistently while the app is subject to battery optimizations. Please grant a battery optimization exemption to ensure full and consistent functioning.</string>
 </resources>

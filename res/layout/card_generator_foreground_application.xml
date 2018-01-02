@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="DuplicateIds,ContentDescription,SpUsage"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <android.support.v7.widget.CardView
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        card_view:cardCornerRadius="4dp"
+        android:layout_margin="8dp"
+        tools:ignore="UnusedIds">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <LinearLayout android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#0097A7"
+                android:padding="8dp"
+                android:baselineAligned="false">
+                <ImageView android:src="@drawable/ic_foreground_apps"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginRight="8dp" />
+                <TextView android:text="@string/generator_foreground_application"
+                    android:gravity="center_vertical|start"
+                    android:layout_width="0dp"
+                    android:layout_height="24dp"
+                    android:layout_weight="1"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white" />
+                <TextView android:id="@+id/generator_data_point_date"
+                    android:gravity="center_vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/white"
+                    android:layout_marginRight="8dp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/card_content"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:padding="8dp">
+                <LinearLayout android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="8dp">
+                    <TextView android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/generator_foreground_application_top_apps"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <LinearLayout android:id="@+id/application_one"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+                        <ImageView android:id="@+id/application_icon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginRight="4dp"/>
+                        <LinearLayout android:orientation="vertical"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="32dp">
+                            <LinearLayout android:orientation="horizontal"
+                                android:layout_width="match_parent"
+                                android:layout_height="12dp">
+                                <View android:id="@+id/app_used_duration"
+                                    android:layout_height="match_parent"
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:background="#9e9e9e" />
+                                <View android:id="@+id/app_remaining_duration"
+                                    android:layout_height="match_parent"
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:background="#e0e0e0" />
+                            </LinearLayout>
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:id="@+id/app_name"
+                                android:lines="1" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/application_two"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+                        <ImageView android:id="@+id/application_icon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginRight="4dp"/>
+                        <LinearLayout android:orientation="vertical"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="32dp">
+                            <LinearLayout android:orientation="horizontal"
+                                android:layout_width="match_parent"
+                                android:layout_height="12dp">
+                                <View android:id="@+id/app_used_duration"
+                                    android:layout_height="match_parent"
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:background="#9e9e9e" />
+                                <View android:id="@+id/app_remaining_duration"
+                                    android:layout_height="match_parent"
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:background="#e0e0e0" />
+                            </LinearLayout>
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:id="@+id/app_name"
+                                android:lines="1" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/application_three"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+                        <ImageView android:id="@+id/application_icon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginRight="4dp"/>
+                        <LinearLayout android:orientation="vertical"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="32dp">
+                            <LinearLayout android:orientation="horizontal"
+                                android:layout_width="match_parent"
+                                android:layout_height="12dp">
+                                <View android:id="@+id/app_used_duration"
+                                    android:layout_height="match_parent"
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:background="#9e9e9e" />
+                                <View android:id="@+id/app_remaining_duration"
+                                    android:layout_height="match_parent"
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:background="#e0e0e0" />
+                            </LinearLayout>
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:id="@+id/app_name"
+                                android:lines="1" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/application_four"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+                        <ImageView android:id="@+id/application_icon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginRight="4dp"/>
+                        <LinearLayout android:orientation="vertical"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="32dp">
+                            <LinearLayout android:orientation="horizontal"
+                                android:layout_width="match_parent"
+                                android:layout_height="12dp">
+                                <View android:id="@+id/app_used_duration"
+                                    android:layout_height="match_parent"
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:background="#9e9e9e" />
+                                <View android:id="@+id/app_remaining_duration"
+                                    android:layout_height="match_parent"
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:background="#e0e0e0" />
+                            </LinearLayout>
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:id="@+id/app_name"
+                                android:lines="1" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+                <LinearLayout android:orientation="vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="4dp">
+                    <TextView android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/generator_foreground_application_recent_apps"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <LinearLayout android:id="@+id/application_recent_one"
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+                        <ImageView android:id="@+id/application_icon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginRight="4dp"/>
+                        <LinearLayout android:orientation="vertical"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textStyle="bold"
+                                android:id="@+id/app_last_used"
+                                android:textSize="11dp"
+                                android:lines="1" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:id="@+id/app_name"
+                                android:textSize="13dp"
+                                android:lines="1" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+
+                    <LinearLayout android:id="@+id/application_recent_two"
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+                        <ImageView android:id="@+id/application_icon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginRight="4dp"/>
+                        <LinearLayout android:orientation="vertical"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textStyle="bold"
+                                android:id="@+id/app_last_used"
+                                android:textSize="11dp"
+                                android:lines="1" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:id="@+id/app_name"
+                                android:textSize="13dp"
+                                android:lines="1" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/application_recent_three"
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+                        <ImageView android:id="@+id/application_icon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginRight="4dp"/>
+                        <LinearLayout android:orientation="vertical"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textStyle="bold"
+                                android:id="@+id/app_last_used"
+                                android:textSize="11dp"
+                                android:lines="1" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:id="@+id/app_name"
+                                android:textSize="13dp"
+                                android:lines="1" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/application_recent_four"
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+                        <ImageView android:id="@+id/application_icon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginRight="4dp"/>
+                        <LinearLayout android:orientation="vertical"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textStyle="bold"
+                                android:id="@+id/app_last_used"
+                                android:textSize="11dp"
+                                android:lines="1" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:id="@+id/app_name"
+                                android:textSize="13dp"
+                                android:lines="1" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </LinearLayout>
+            <TextView android:id="@+id/card_empty"
+                android:text="@string/message_generator_foreground_applications_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="16dp" />
+        </LinearLayout>
+    </android.support.v7.widget.CardView>
+</LinearLayout>

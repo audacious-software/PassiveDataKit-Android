@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,15 +21,15 @@ import com.audacious_software.pdk.passivedatakit.R;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by cjkarr on 11/20/2016.
- */
-
+@SuppressWarnings("SimplifiableIfStatement")
 public class DaydreamViewController extends Generator  {
     private static final String GENERATOR_IDENTIFIER = "pdk-daydream-vr-controller";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.vr.DaydreamViewController.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.vr.DaydreamViewController.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static DaydreamViewController sInstance = null;
 
@@ -36,6 +37,7 @@ public class DaydreamViewController extends Generator  {
 //    private ControllerManager mControllerManager = null;
 //    private Controller mController = null;
 
+    @SuppressWarnings("WeakerAccess")
     public static DaydreamViewController getInstance(Context context) {
         if (DaydreamViewController.sInstance == null) {
             DaydreamViewController.sInstance = new DaydreamViewController(context.getApplicationContext());
@@ -44,10 +46,12 @@ public class DaydreamViewController extends Generator  {
         return DaydreamViewController.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public DaydreamViewController(Context context) {
         super(context);
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         DaydreamViewController.getInstance(context).startGenerator();
 /*
@@ -85,14 +89,18 @@ public class DaydreamViewController extends Generator  {
 
     private void startGenerator() {
         Generators.getInstance(this.mContext).registerCustomViewClass(DaydreamViewController.GENERATOR_IDENTIFIER, DaydreamViewController.class);
+
+        this.flushCachedData();
     }
 
+    @SuppressWarnings("unused")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(DaydreamViewController.ENABLED, DaydreamViewController.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings("unused")
     public static boolean isRunning(Context context) {
         if (DaydreamViewController.sInstance == null) {
             return false;
@@ -101,10 +109,12 @@ public class DaydreamViewController extends Generator  {
         return DaydreamViewController.sInstance.mReceiver != null;
     }
 
+    @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder, final Bundle dataPoint) {
         /*
         final Context context = holder.itemView.getContext();
@@ -169,6 +179,7 @@ public class DaydreamViewController extends Generator  {
         */
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_daydream_vr_controller, parent, false);
@@ -179,7 +190,35 @@ public class DaydreamViewController extends Generator  {
         return null;
     }
 
+    @SuppressWarnings("unused")
     public static void broadcastLatestDataPoint(Context context) {
 //        Generators.getInstance(context).transmitData(DaydreamViewController.GENERATOR_IDENTIFIER, new Bundle());
     }
+
+    @Override
+    protected void flushCachedData() {
+        Log.e("PDK", "TODO: Implement data cache flush in DaydreamViewController!");
+
+//        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+//
+//        long retentionPeriod = prefs.getLong(GoogleAwareness.DATA_RETENTION_PERIOD, GoogleAwareness.DATA_RETENTION_PERIOD_DEFAULT);
+//
+//        long start = System.currentTimeMillis() - retentionPeriod;
+//
+//        String where = GoogleAwareness.HISTORY_OBSERVED + " < ?";
+//        String[] args = { "" + start };
+//
+//        this.mDatabase.delete(GoogleAwareness.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(DaydreamViewController.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
+    }
+
 }

@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +21,7 @@ import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
+import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -31,24 +33,39 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+@SuppressWarnings("SimplifiableIfStatement")
 public class ScreenState extends Generator{
     private static final String GENERATOR_IDENTIFIER = "pdk-screen-state";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.ScreenState.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.ScreenState.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
+
+    @SuppressWarnings("WeakerAccess")
     public static final String STATE_DOZE = "doze";
+
+    @SuppressWarnings("WeakerAccess")
     public static final String STATE_DOZE_SUSPEND = "doze_suspend";
+
+    @SuppressWarnings("WeakerAccess")
     public static final String STATE_ON = "on";
+
+    @SuppressWarnings("WeakerAccess")
     public static final String STATE_OFF = "off";
+
+    @SuppressWarnings("WeakerAccess")
     public static final String STATE_UNKNOWN = "unknown";
 
     private static final String DATABASE_PATH = "pdk-screen-state.sqlite";
     private static final int DATABASE_VERSION = 2;
 
+    @SuppressWarnings("WeakerAccess")
     public static final String HISTORY_OBSERVED = "observed";
+    @SuppressWarnings("WeakerAccess")
     public static final String HISTORY_STATE = "state";
-    public static final String TABLE_HISTORY = "history";
+    private static final String TABLE_HISTORY = "history";
 
     private static ScreenState sInstance = null;
 
@@ -56,6 +73,14 @@ public class ScreenState extends Generator{
 
     private SQLiteDatabase mDatabase = null;
 
+    private long mLatestTimestamp = -1;
+
+    @SuppressWarnings("unused")
+    public static String generatorIdentifier() {
+        return ScreenState.GENERATOR_IDENTIFIER;
+    }
+
+    @SuppressWarnings("WeakerAccess")
     public static ScreenState getInstance(Context context) {
         if (ScreenState.sInstance == null) {
             ScreenState.sInstance = new ScreenState(context.getApplicationContext());
@@ -64,10 +89,12 @@ public class ScreenState extends Generator{
         return ScreenState.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public ScreenState(Context context) {
         super(context);
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         ScreenState.getInstance(context).startGenerator();
     }
@@ -79,6 +106,8 @@ public class ScreenState extends Generator{
             @Override
             public void onReceive(final Context context, Intent intent) {
                 long now = System.currentTimeMillis();
+
+                me.mLatestTimestamp = now;
 
                 ContentValues values = new ContentValues();
                 values.put(ScreenState.HISTORY_OBSERVED, now);
@@ -150,15 +179,21 @@ public class ScreenState extends Generator{
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_screen_state_create_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, ScreenState.DATABASE_VERSION);
+        if (version != ScreenState.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, ScreenState.DATABASE_VERSION);
+        }
+
+        this.flushCachedData();
     }
 
+    @SuppressWarnings("unused")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(ScreenState.ENABLED, ScreenState.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static boolean isRunning(Context context) {
         if (ScreenState.sInstance == null) {
             return false;
@@ -167,10 +202,24 @@ public class ScreenState extends Generator{
         return ScreenState.sInstance.mReceiver != null;
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
+    public static String getGeneratorTitle(Context context) {
+        return context.getString(R.string.generator_screen_state);
+    }
+
+    @SuppressWarnings("unused")
+    public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
+
+        generatorLabel.setText(ForegroundApplication.getGeneratorTitle(holder.itemView.getContext()));
+    }
+
+    @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
@@ -183,20 +232,20 @@ public class ScreenState extends Generator{
         long zeroStart = cal.getTimeInMillis();
         cal.add(Calendar.DATE, -1);
 
-        LinearLayout zeroTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_zero_value);
+        LinearLayout zeroTimeline = holder.itemView.findViewById(R.id.day_zero_value);
 
         ScreenState.populateTimeline(context, zeroTimeline, zeroStart);
 
         long oneStart = cal.getTimeInMillis();
         cal.add(Calendar.DATE, -1);
 
-        LinearLayout oneTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_one_value);
+        LinearLayout oneTimeline = holder.itemView.findViewById(R.id.day_one_value);
 
         ScreenState.populateTimeline(context, oneTimeline, oneStart);
 
         long twoStart = cal.getTimeInMillis();
 
-        LinearLayout twoTimeline = (LinearLayout) holder.itemView.findViewById(R.id.day_two_value);
+        LinearLayout twoTimeline = holder.itemView.findViewById(R.id.day_two_value);
 
         ScreenState.populateTimeline(context, twoTimeline, twoStart);
 
@@ -206,7 +255,7 @@ public class ScreenState extends Generator{
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (c.moveToNext()) {
             cardContent.setVisibility(View.VISIBLE);
@@ -219,17 +268,17 @@ public class ScreenState extends Generator{
             cal = Calendar.getInstance();
             DateFormat format = android.text.format.DateFormat.getDateFormat(context);
 
-            TextView zeroDayLabel = (TextView) holder.itemView.findViewById(R.id.day_zero_label);
+            TextView zeroDayLabel = holder.itemView.findViewById(R.id.day_zero_label);
             zeroDayLabel.setText(format.format(cal.getTime()));
 
             cal.add(Calendar.DATE, -1);
 
-            TextView oneDayLabel = (TextView) holder.itemView.findViewById(R.id.day_one_label);
+            TextView oneDayLabel = holder.itemView.findViewById(R.id.day_one_label);
             oneDayLabel.setText(format.format(cal.getTime()));
 
             cal.add(Calendar.DATE, -1);
 
-            TextView twoDayLabel = (TextView) holder.itemView.findViewById(R.id.day_two_label);
+            TextView twoDayLabel = holder.itemView.findViewById(R.id.day_two_label);
             twoDayLabel.setText(format.format(cal.getTime()));
         } else {
             cardContent.setVisibility(View.GONE);
@@ -280,14 +329,12 @@ public class ScreenState extends Generator{
 
         if (activeStates.size() > 0) {
             long firstTimestamp = activeTimestamps.get(0);
-            long firstState = activeTimestamps.get(0);
+            String firstState = activeStates.get(0);
 
             View startView = new View(context);
 
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                if (ScreenState.STATE_UNKNOWN.equals(lastState)) {
-
-                } else if (ScreenState.STATE_ON.equals(lastState)) {
+                if (ScreenState.STATE_ON.equals(lastState)) {
                     startView.setBackgroundColor(0xff4CAF50);
                 } else if (ScreenState.STATE_OFF.equals(lastState)) {
                     startView.setBackgroundColor(0xff263238);
@@ -297,9 +344,7 @@ public class ScreenState extends Generator{
                     startView.setBackgroundColor(0xff1b5e20);
                 }
             } else {
-                if (ScreenState.STATE_UNKNOWN.equals(lastState)) {
-
-                } else if (ScreenState.STATE_ON.equals(lastState)) {
+                if (ScreenState.STATE_ON.equals(lastState)) {
                     startView.setBackgroundColor(0xff4CAF50);
                 } else if (ScreenState.STATE_OFF.equals(lastState)) {
                     startView.setBackgroundColor(0xff263238);
@@ -410,13 +455,11 @@ public class ScreenState extends Generator{
 
                 timeline.addView(v);
             }
-        } else {
-
         }
     }
 
-    public static View fetchView(ViewGroup parent)
-    {
+    @SuppressWarnings("unused")
+    public static View fetchView(ViewGroup parent) {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_screen_state, parent, false);
     }
 
@@ -425,23 +468,50 @@ public class ScreenState extends Generator{
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
-        long timestamp = 0;
-
         ScreenState me = ScreenState.getInstance(context);
+
+        if (me.mLatestTimestamp != -1) {
+            return me.mLatestTimestamp;
+        }
 
         Cursor c = me.mDatabase.query(ScreenState.TABLE_HISTORY, null, null, null, null, null, ScreenState.HISTORY_OBSERVED + " DESC");
 
         if (c.moveToNext()) {
-            timestamp = c.getLong(c.getColumnIndex(ScreenState.HISTORY_OBSERVED));
+            me.mLatestTimestamp = c.getLong(c.getColumnIndex(ScreenState.HISTORY_OBSERVED));
         }
 
         c.close();
 
-        return timestamp;
+        return me.mLatestTimestamp;
     }
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
         return this.mDatabase.query(ScreenState.TABLE_HISTORY, cols, where, args, null, null, orderBy);
+    }
+
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(ScreenState.DATA_RETENTION_PERIOD, ScreenState.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = ScreenState.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(ScreenState.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(ScreenState.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
     }
 }

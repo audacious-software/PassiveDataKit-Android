@@ -1,5 +1,6 @@
-<resources>
-    <string-array name="pdk_available_generators">
+<!--suppress CheckTagEmptyBody -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string-array name="pdk_available_generators" tools:ignore="InconsistentArrays">
         <item>com.audacious_software.passive_data_kit.generators.device.Location</item>
         <item>com.audacious_software.passive_data_kit.generators.device.ScreenState</item>
         <item>com.audacious_software.passive_data_kit.generators.communication.PhoneCalls</item>
@@ -7,10 +8,16 @@
         <!-- <item>com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand</item> -->
         <!-- <item>com.audacious_software.passive_data_kit.generators.services.GoogleAwareness</item> -->
         <!-- <item>com.audacious_software.passive_data_kit.generators.vr.DaydreamViewController</item> -->
+        <item>com.audacious_software.passive_data_kit.generators.device.Battery</item>
+        <item>com.audacious_software.passive_data_kit.generators.sensors.Accelerometer</item>
+        <item>com.audacious_software.passive_data_kit.generators.sensors.AmbientLight</item>
+        <item>com.audacious_software.passive_data_kit.generators.device.ForegroundApplication</item>
         <item>com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice</item>
+        <item>com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus</item>
+        <item>com.audacious_software.passive_data_kit.generators.environment.TimeOfDay</item>
     </string-array>
 
-    <string-array name="pdk_app_generators"></string-array>
+    <string-array name="pdk_app_generators" tools:ignore="InconsistentArrays"></string-array>
 
     <string name="generator_value_not_applicable">n/a</string>
 
@@ -40,11 +47,16 @@
     <string name="generator_microsoft_band_value_altimeter_flights_ascended_today">%1$d</string>
     <string name="generator_microsoft_band_value_barometer_pressure">%1$.2f hPa</string>
     <string name="generator_microsoft_band_value_barometer_temperature">%1$.2f&#8451;</string>
-    <string name="generator_microsoft_band_value_ambient_light_brightness">%1$d lux</string>
+
+    <!-- <string name="generator_microsoft_band_value_ambient_light_brightness">%1$d lux</string> -->
+    <plurals name="generator_microsoft_band_value_ambient_light_brightness">
+        <item quantity="zero">0 lux</item>
+        <item quantity="one">1 lux</item>
+        <item quantity="other">%d lux</item>
+    </plurals>
 
     <!-- Location Resources -->
     <string name="generator_location">Device Location</string>
-    <string name="generator_location_value">Coordinates: %1$.4f, %2$.4f</string>
     <string name="label_data_collection_location_accuracy">Location Accuracy</string>
     <string name="label_data_collection_location_accuracy_more">Tap here to update the accuracy of your data.</string>
 
@@ -79,23 +91,28 @@
     <string name="legend_screen_state_off_pdk">Off</string>
     <string name="legend_screen_state_doze_pdk">Doze</string>
     <string name="legend_screen_state_unknown_pdk">Unknown</string>
-    <string name="label_legend_pdk">Legend: </string>
     <string name="message_generator_screen_state_empty">No screen state changes have been observed yet.</string>
 
     <!-- Phone Call Resources -->
     <string name="generator_text_messages">SMS Text Messages</string>
     <string name="generator_text_messages_incoming_label">Incoming</string>
     <string name="generator_text_messages_outgoing_label">Outgoing</string>
-    <string name="generator_text_messages_other_label">Other</string>
+    <!-- <string name="generator_text_messages_other_label">Other</string> -->
 
     <color name="generator_text_messages_incoming">#3F51B5</color>
     <color name="generator_text_messages_outgoing">#4CAF50</color>
-    <color name="generator_text_messages_other">#9E9E9E</color>
+    <!-- <color name="generator_text_messages_other">#9E9E9E</color> -->
 
     <string name="generator_text_messages_latest_text_message_label">Latest Text Message</string>
     <string name="generator_text_messages_length_label">Length</string>
     <string name="generator_text_messages_direction_label">Direction</string>
-    <string name="generator_text_messages_length_format">%1$d chars.</string>
+
+    <!-- <string name="generator_text_messages_length_format">%1$d chars.</string> -->
+    <plurals name="generator_text_messages_length_format">
+        <item quantity="zero">0 chars.</item>
+        <item quantity="one">1 char.</item>
+        <item quantity="other">%d chars.</item>
+    </plurals>
 
     <string name="message_generator_text_messages_empty">No text messages have been sent or received on this device.</string>
 
@@ -118,6 +135,91 @@
 
     <string name="message_generator_phone_calls_empty">No phone calls have been made or received on this device.</string>
 
-    <!-- Withings Device Resources -->
-    <string name="generator_withings_device">Withings Device</string>
+    <!-- Withings/Nokia Device Resources -->
+    <string name="generator_withings_device">Nokia Device</string>
+    <string name="generator_withings_soft_activities_label">Soft Activities</string>
+    <string name="generator_withings_moderate_activities_label">Moderate Activities</string>
+    <string name="generator_withings_intense_activities_label">Intense Activities</string>
+    <color name="generator_withings_soft_activities">#757575</color>
+    <color name="generator_withings_moderate_activities">#039BE5</color>
+    <color name="generator_withings_intense_activities">#43A047</color>
+    <string name="message_generator_withings_empty">No activity data has been downloaded yet.</string>
+    <string name="message_generator_withings_info_todo">Info coming soon&#8230;</string>
+    <string name="label_withings_steps">Steps</string>
+    <string name="label_withings_distance">Distance</string>
+    <string name="label_withings_elevation">Elevation</string>
+    <string name="label_withings_calories">Calories</string>
+
+    <string name="generator_withings_steps_label">Steps</string>
+    <!-- <string name="generator_withings_steps_value">%1$d steps</string> -->
+    <plurals name="generator_withings_steps_value">
+        <item quantity="zero">0 steps</item>
+        <item quantity="one">1 step</item>
+        <item quantity="other">%d steps</item>
+    </plurals>
+
+    <string name="generator_withings_distance_label">Distance</string>
+    <string name="generator_withings_distance_value">%1$.2f km</string>
+
+    <string name="generator_withings_elevation_label">Elevation</string>
+    <string name="generator_withings_elevation_value">%1$.2f m</string>
+
+    <string name="generator_withings_body_placeholder">-</string>
+    <string name="generator_withings_body_title">Body Measures</string>
+
+    <!-- Device Battery -->
+    <string name="generator_device_battery">Device Battery</string>
+    <string name="message_generator_device_battery_empty">No battery levels have been reported yet.</string>
+    <color name="generator_battery_plot">#66BB6A</color>
+    <color name="generator_battery_header">#1B5E20</color>
+
+    <!-- App Event History -->
+    <string name="generator_app_events">App Events History</string>
+    <string name="message_generator_device_app_event_empty">Loading app events&#8230;</string>
+
+    <!-- Foreground Application -->
+    <string name="generator_foreground_application">Foreground Applications</string>
+    <string name="message_generator_foreground_applications_empty">No application launches have been logged yet.</string>
+    <string name="generator_foreground_application_top_apps">Most Used (Last 24 Hours)</string>
+    <string name="generator_foreground_application_recent_apps">Recently Used</string>
+    <string name="generator_foreground_application_app_name_duration">%1$s: %2$.0fm</string>
+
+    <!-- Ambient Light Sensor -->
+    <string name="generator_sensors_ambient_light">Ambient Light</string>
+    <string name="message_generator_ambient_light_empty">No ambient light levels have been recorded yet.</string>
+    <color name="generator_ambient_light_header">#FFD600</color>
+    <color name="generator_ambient_light_low">#80FFEB3B</color>
+    <color name="generator_ambient_light_high">#ffFFEB3B</color>
+
+    <!-- Accelerometer Sensor -->
+    <string name="generator_sensors_accelerometer">Accelerometer</string>
+    <string name="message_generator_accelerometer_empty">No accelerometer readings have been recorded yet.</string>
+    <color name="generator_accelerometer_header">#3F51B5</color>
+    <color name="generator_accelerometer_x_low">#80F44336</color>
+    <color name="generator_accelerometer_x_high">#ffF44336</color>
+    <color name="generator_accelerometer_y_low">#804CAF50</color>
+    <color name="generator_accelerometer_y_high">#ff4CAF50</color>
+    <color name="generator_accelerometer_z_low">#802196F3</color>
+    <color name="generator_accelerometer_z_high">#ff2196F3</color>
+
+    <!-- System Status -->
+    <string name="generator_diagnostics_system_status">System Status</string>
+    <string name="message_generator_diagnostics_system_status_empty">No status information has been collected yet.</string>
+    <color name="generator_system_status_header">#616161</color>
+    <color name="generator_system_status_free">#2E7D32</color>
+    <color name="generator_system_status_app">#FAFAFA</color>
+    <!-- <color name="generator_system_status_other">#757575</color> -->
+    <string name="generator_system_status_runtime">Continuous Runtime: %1$s</string>
+    <string name="generator_system_status_runtime_formatted">%1$dd %2$s:%3$s:%4$s.%5$s</string>
+
+    <!-- Time of Day -->
+    <string name="generator_time_of_day">Time Of Day</string>
+    <string name="label_time_night">Night</string>
+    <string name="label_time_morning">Morning</string>
+    <string name="label_time_afternoon">Afternoon</string>
+    <string name="label_time_evening">Evening</string>
+
+    <string name="label_sunrise">Sunrise:</string>
+    <string name="label_sunset">Sunset:</string>
 </resources>
+

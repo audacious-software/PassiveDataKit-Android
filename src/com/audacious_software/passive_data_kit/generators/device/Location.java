@@ -1,6 +1,7 @@
 package com.audacious_software.passive_data_kit.generators.device;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
@@ -10,24 +11,25 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
-import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +43,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amazon.geo.mapsv2.AmazonMap;
 import com.audacious_software.passive_data_kit.DeviceInformation;
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.DataDisclosureDetailActivity;
@@ -50,6 +53,7 @@ import com.audacious_software.passive_data_kit.activities.generators.RequestPerm
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -73,13 +77,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-@SuppressWarnings("unused")
-public class Location extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+public class Location extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, android.location.LocationListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-location";
     private static final String DATABASE_PATH = "pdk-location.sqlite";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.Location.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.Location.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String USE_GOOGLE_SERVICES = "com.audacious_software.passive_data_kit.generators.device.Location.USE_GOOGLE_SERVICES";
     private static final boolean USE_GOOGLE_SERVICES_DEFAULT = true;
@@ -96,15 +102,24 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final String SETTING_DISPLAY_HYBRID_MAP = "com.audacious_software.passive_data_kit.generators.device.Location.SETTING_DISPLAY_HYBRID_MAP";
     private static final boolean SETTING_DISPLAY_HYBRID_MAP_DEFAULT = true;
 
-    private static String ACCURACY_MODE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE";
+    private static final String ACCURACY_MODE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE";
 
-    private static int ACCURACY_BEST = 0;
-    private static int ACCURACY_RANDOMIZED = 1;
-    private static int ACCURACY_USER = 2;
-    private static int ACCURACY_DISABLED = 3;
+    public static final int ACCURACY_BEST = 0;
+    public static final int ACCURACY_RANDOMIZED = 1;
+    public static final int ACCURACY_USER = 2;
+    public static final int ACCURACY_DISABLED = 3;
 
     private static final String ACCURACY_MODE_RANDOMIZED_RANGE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_RANDOMIZED_RANGE";
     private static final long ACCURACY_MODE_RANDOMIZED_RANGE_DEFAULT = 100;
+
+    private static final String ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED";
+    private static final boolean ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED_DEFAULT = false;
+
+    private static final String ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE";
+    private static final float ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE_DEFAULT = 0;
+
+    private static final String ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE";
+    private static final float ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE_DEFAULT = 0;
 
     private static final String ACCURACY_MODE_USER_LOCATION = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_USER_LOCATION";
     private static final String ACCURACY_MODE_USER_LOCATION_DEFAULT = "Chicago, Illinois";
@@ -114,22 +129,31 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     private static Location sInstance = null;
     private GoogleApiClient mGoogleApiClient = null;
-    private android.location.Location mLastLocation = null;
     private long mUpdateInterval = 60000;
+    private float mMinimumDistance = 400;
 
     private SQLiteDatabase mDatabase = null;
-    private static int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 1;
 
     private static final String TABLE_HISTORY = "history";
+    @SuppressWarnings("WeakerAccess")
     public static final String HISTORY_OBSERVED = "observed";
+    @SuppressWarnings("WeakerAccess")
     public static final String HISTORY_LATITUDE = "latitude";
+    @SuppressWarnings("WeakerAccess")
     public static final String HISTORY_LONGITUDE = "longitude";
-    public static final String HISTORY_ALTITUDE = "altitude";
-    public static final String HISTORY_BEARING = "bearing";
-    public static final String HISTORY_SPEED = "speed";
-    public static final String HISTORY_PROVIDER = "provider";
-    public static final String HISTORY_LOCATION_TIMESTAMP = "location_timestamp";
-    public static final String HISTORY_ACCURACY = "accuracy";
+    private static final String HISTORY_ALTITUDE = "altitude";
+    private static final String HISTORY_BEARING = "bearing";
+    private static final String HISTORY_SPEED = "speed";
+    private static final String HISTORY_PROVIDER = "provider";
+    private static final String HISTORY_LOCATION_TIMESTAMP = "location_timestamp";
+    private static final String HISTORY_ACCURACY = "accuracy";
+    private long mLatestTimestamp = -1;
+
+    @SuppressWarnings("unused")
+    public static String generatorIdentifier() {
+        return Location.GENERATOR_IDENTIFIER;
+    }
 
     public static Location getInstance(Context context) {
         if (Location.sInstance == null) {
@@ -139,10 +163,11 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return Location.sInstance;
     }
 
-    public Location(Context context) {
+    private Location(Context context) {
         super(context);
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         Location.getInstance(context).startGenerator();
     }
@@ -150,15 +175,19 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private void startGenerator() {
         final Location me = this;
 
-        Runnable r = new Runnable()
-        {
+        Runnable r = new Runnable() {
 
             @Override
             public void run() {
-                if (Location.useKindleLocationServices())
-                {
-                    // TODO
-                    throw new RuntimeException("Throw rocks at developer to implement Kindle support.");
+                if (Location.useKindleLocationServices()) {
+                    if (ActivityCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        LocationManager locations = (LocationManager) me.mContext.getSystemService(Context.LOCATION_SERVICE);
+
+                        Criteria criteria = new Criteria();
+                        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+
+                        locations.requestLocationUpdates(me.mUpdateInterval, me.mMinimumDistance, criteria, me, Looper.getMainLooper());
+                    }
                 }
                 else if (Location.useGoogleLocationServices(me.mContext))
                 {
@@ -198,7 +227,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_location_create_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, Location.DATABASE_VERSION);
+        if (version != Location.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, Location.DATABASE_VERSION);
+        }
     }
 
     private void stopGenerator() {
@@ -211,22 +242,26 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         this.mDatabase = null;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean useGoogleLocationServices(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(Location.USE_GOOGLE_SERVICES, Location.USE_GOOGLE_SERVICES_DEFAULT);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean useKindleLocationServices() {
         return DeviceInformation.isKindleFire();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(Location.ENABLED, Location.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"Contract", "WeakerAccess"})
     public static boolean isRunning(Context context) {
         if (Location.sInstance == null) {
             return false;
@@ -248,6 +283,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
     }
 
+    @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(Context context)
     {
         return Location.getInstance(context).runDiagostics();
@@ -297,6 +333,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected()) {
             if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                //noinspection deprecation
                 LocationServices.FusedLocationApi.requestLocationUpdates(this.mGoogleApiClient, request, this, this.mContext.getMainLooper());
             }
         }
@@ -305,23 +342,26 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     @Override
     public void onConnectionSuspended(int i) {
         if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected())
+            //noinspection deprecation
             LocationServices.FusedLocationApi.removeLocationUpdates(this.mGoogleApiClient, this);
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         this.mGoogleApiClient = null;
     }
 
+    @SuppressLint("TrulyRandom")
     @Override
     public void onLocationChanged(android.location.Location location) {
-        if (location == null)
+        if (location == null) {
             return;
-
-        long now = System.currentTimeMillis();
+        }
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         int selected = prefs.getInt(Location.ACCURACY_MODE, Location.ACCURACY_BEST);
+
+        this.mLatestTimestamp = System.currentTimeMillis();
 
         if (selected == Location.ACCURACY_RANDOMIZED) {
             // http://gis.stackexchange.com/a/68275/10230
@@ -331,12 +371,32 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
             double radius = prefs.getLong(Location.ACCURACY_MODE_RANDOMIZED_RANGE, Location.ACCURACY_MODE_RANDOMIZED_RANGE_DEFAULT);
 
-            double radiusInDegrees = radius / 111000;
+            double radiusInDegrees = radius / 111300;
 
-            Random r = new SecureRandom();
+            double u = (double) Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE_DEFAULT;
+            double v = (double) Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE_DEFAULT;
 
-            double u = r.nextDouble();
-            double v = r.nextDouble();
+            boolean preserveVector = prefs.getBoolean(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED, Location.ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED_DEFAULT);
+
+            if (preserveVector) {
+                u = (double) prefs.getFloat(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE, Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE_DEFAULT);
+                v = (double) prefs.getFloat(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE, Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE_DEFAULT);
+            }
+
+            if (u == Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE_DEFAULT && v == Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE_DEFAULT) {
+                Random r = new SecureRandom();
+
+                u = r.nextDouble();
+                v = r.nextDouble();
+
+                if (preserveVector) {
+                    SharedPreferences.Editor e = prefs.edit();
+                    e.putFloat(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_DISTANCE, (float) u);
+                    e.putFloat(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_ANGLE, (float) v);
+
+                    e.apply();
+                }
+            }
 
             double w = radiusInDegrees * Math.sqrt(u);
             double t = 2 * Math.PI * v;
@@ -344,21 +404,21 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             double y = w * Math.sin(t);
 
             // Adjust the x-coordinate for the shrinking of the east-west distances
-            longitude = longitude + (x / Math.cos(latitude));
+            longitude = x + longitude; //  + (x / Math.cos(latitude));
             latitude = y + latitude;
 
             location.setLongitude(longitude);
             location.setLatitude(latitude);
         }
 
-        ContentValues values = new ContentValues();
+        final ContentValues values = new ContentValues();
         values.put(Location.HISTORY_OBSERVED, System.currentTimeMillis());
         values.put(Location.HISTORY_LATITUDE, location.getLatitude());
         values.put(Location.HISTORY_LONGITUDE, location.getLongitude());
         values.put(Location.HISTORY_PROVIDER, location.getProvider());
         values.put(Location.HISTORY_LOCATION_TIMESTAMP, location.getTime());
 
-        Bundle updated = new Bundle();
+        final Bundle updated = new Bundle();
         updated.putLong(Location.HISTORY_OBSERVED, System.currentTimeMillis());
         updated.putDouble(Location.HISTORY_LATITUDE, location.getLatitude());
         updated.putDouble(Location.HISTORY_LONGITUDE, location.getLongitude());
@@ -391,27 +451,60 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             updated.putDouble(Location.HISTORY_ACCURACY, location.getAccuracy());
         }
 
-        this.mDatabase.insert(Location.TABLE_HISTORY, null, values);
+        final Location me = this;
 
-        Generators.getInstance(this.mContext).notifyGeneratorUpdated(Location.GENERATOR_IDENTIFIER, updated);
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                if (me.mDatabase != null) {
+                    me.mDatabase.insert(Location.TABLE_HISTORY, null, values);
+                }
+
+                Generators.getInstance(me.mContext).notifyGeneratorUpdated(Location.GENERATOR_IDENTIFIER, updated);
+
+                me.flushCachedData();
+            }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
     }
 
-    public static long latestPointGenerated(Context context) {
-        long timestamp = 0;
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
 
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
+    }
+
+    @SuppressWarnings("unused")
+    public static long latestPointGenerated(Context context) {
         Location me = Location.getInstance(context);
+
+        if (me.mLatestTimestamp != -1) {
+            return me.mLatestTimestamp;
+        }
 
         Cursor c = me.mDatabase.query(Location.TABLE_HISTORY, null, null, null, null, null, Location.HISTORY_OBSERVED + " DESC");
 
         if (c.moveToNext()) {
-            timestamp = c.getLong(c.getColumnIndex(Location.HISTORY_OBSERVED));
+            me.mLatestTimestamp = c.getLong(c.getColumnIndex(Location.HISTORY_OBSERVED));
         }
 
         c.close();
 
-        return timestamp;
+        return me.mLatestTimestamp;
     }
 
+    @SuppressWarnings({"UnusedAssignment", "unused"})
     public static void bindViewHolder(DataPointViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
@@ -440,16 +533,13 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         c.close();
 
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (timestamp > 0) {
             dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000));
         } else {
             dateLabel.setText(R.string.label_never_pdk);
         }
-
-        final double finalLatitude = lastLatitude;
-        final double finalLongitude = lastLongitude;
 
         final DisplayMetrics metrics = new DisplayMetrics();
         ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
@@ -461,14 +551,14 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
         else if (Location.useGoogleLocationServices(holder.itemView.getContext()))
         {
-            final MapView mapView = (MapView) holder.itemView.findViewById(R.id.map_view);
+            final MapView mapView = holder.itemView.findViewById(R.id.map_view);
             mapView.onCreate(null);
 
             final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
             final boolean useHybrid = prefs.getBoolean(Location.SETTING_DISPLAY_HYBRID_MAP, Location.SETTING_DISPLAY_HYBRID_MAP_DEFAULT);
 
-            SwitchCompat hybridSwitch = (SwitchCompat) holder.itemView.findViewById(R.id.pdk_google_location_map_type_hybrid);
+            SwitchCompat hybridSwitch = holder.itemView.findViewById(R.id.pdk_google_location_map_type_hybrid);
             hybridSwitch.setChecked(useHybrid);
 
             hybridSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -541,10 +631,12 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                     }
 
                     if (locations.size() > 0) {
-                        googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
+                        try {
+                            googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
+                        } catch (IllegalStateException e) {
+                            // View not ready to update yet...
+                        }
                     }
-
-                    DisplayMetrics metrics = context.getResources().getDisplayMetrics();
 
                     for (LatLng latLng : locations) {
                         googleMap.addMarker(new MarkerOptions()
@@ -565,9 +657,10 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     @Override
     public List<Bundle> fetchPayloads() {
-        return new ArrayList<Bundle>();
+        return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         if (Location.useKindleLocationServices())
@@ -586,10 +679,12 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static String getGeneratorTitle(Context context) {
         return context.getString(R.string.generator_location);
     }
 
+    @SuppressWarnings("unused")
     public static List<DataDisclosureDetailActivity.Action> getDisclosureActions(final Context context) {
         List<DataDisclosureDetailActivity.Action> actions = new ArrayList<>();
 
@@ -614,7 +709,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         final ListView listView = new ListView(context);
 
         final ArrayAdapter<Integer> accuracyAdapter = new ArrayAdapter<Integer>(context, R.layout.row_disclosure_location_accuracy_pdk, options) {
-            public View getView (final int position, View convertView, ViewGroup parent) {
+            @NonNull
+            @SuppressLint("InflateParams")
+            public View getView (final int position, View convertView, @NonNull ViewGroup parent) {
                 if (convertView == null) {
                     convertView = LayoutInflater.from(context).inflate(R.layout.row_disclosure_location_accuracy_pdk, null);
                 }
@@ -624,7 +721,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                 final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
                 int selected = prefs.getInt(Location.ACCURACY_MODE, Location.ACCURACY_BEST);
 
-                CheckBox checked = (CheckBox) convertView.findViewById(R.id.action_checked);
+                CheckBox checked = convertView.findViewById(R.id.action_checked);
 
                 checked.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
@@ -635,8 +732,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
                 checked.setChecked(selected == option);
 
-                TextView title = (TextView) convertView.findViewById(R.id.action_title);
-                TextView description = (TextView) convertView.findViewById(R.id.action_description);
+                TextView title = convertView.findViewById(R.id.action_title);
+                TextView description = convertView.findViewById(R.id.action_description);
 
                 if (option == Location.ACCURACY_BEST) {
                     title.setText(R.string.label_data_collection_location_accuracy_best);
@@ -655,10 +752,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                 final ArrayAdapter<Integer> meAdapter = this;
 
                 checked.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @SuppressLint("SetTextI18n")
                     @Override
                     public void onCheckedChanged(final CompoundButton compoundButton, final boolean checked) {
-                        Log.e("PDK", "CHECK CHANGE!");
-
                         final CompoundButton.OnCheckedChangeListener me = this;
 
                         if (option == Location.ACCURACY_BEST) {
@@ -682,10 +778,10 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                             AlertDialog.Builder builder = new AlertDialog.Builder(context);
                             builder.setTitle(R.string.title_location_accuracy_randomized);
 
-                            View body = LayoutInflater.from(context).inflate(R.layout.dialog_location_randomized, null);
+                            @SuppressLint("InflateParams") View body = LayoutInflater.from(context).inflate(R.layout.dialog_location_randomized, null);
                             builder.setView(body);
 
-                            final EditText rangeField = (EditText) body.findViewById(R.id.random_range);
+                            final EditText rangeField = body.findViewById(R.id.random_range);
 
                             long existingRange = prefs.getLong(Location.ACCURACY_MODE_RANDOMIZED_RANGE, Location.ACCURACY_MODE_RANDOMIZED_RANGE_DEFAULT);
 
@@ -712,10 +808,10 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                             AlertDialog.Builder builder = new AlertDialog.Builder(context);
                             builder.setTitle(R.string.title_location_accuracy_user);
 
-                            View body = LayoutInflater.from(context).inflate(R.layout.dialog_location_user, null);
+                            @SuppressLint("InflateParams") View body = LayoutInflater.from(context).inflate(R.layout.dialog_location_user, null);
                             builder.setView(body);
 
-                            final EditText locationField = (EditText) body.findViewById(R.id.user_location);
+                            final EditText locationField = body.findViewById(R.id.user_location);
 
                             String existingLocation = prefs.getString(Location.ACCURACY_MODE_USER_LOCATION, Location.ACCURACY_MODE_USER_LOCATION_DEFAULT);
 
@@ -744,7 +840,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                                             me.onCheckedChanged(compoundButton, checked);
                                         }
                                     } catch (IOException e1) {
-                                        e1.printStackTrace();
+                                        AppEvent.getInstance(context).logThrowable(e1);
                                     }
 
                                     e.putInt(Location.ACCURACY_MODE, option);
@@ -790,13 +886,100 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return actions;
     }
 
+    @SuppressWarnings("unused")
     public static View getDisclosureDataView(final GeneratorViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
         if (Location.useKindleLocationServices())
         {
-            // TODO
-            throw new RuntimeException("Throw rocks at developer to implement Kindle support.");
+            final com.amazon.geo.mapsv2.MapView mapView = new com.amazon.geo.mapsv2.MapView(context);
+
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            mapView.setLayoutParams(params);
+
+            mapView.onCreate(null);
+
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+            final boolean useHybrid = prefs.getBoolean(Location.SETTING_DISPLAY_HYBRID_MAP, Location.SETTING_DISPLAY_HYBRID_MAP_DEFAULT);
+
+            IconGenerator iconGen = new IconGenerator(context);
+
+            Drawable shapeDrawable = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_location_heatmap_marker, null);
+            iconGen.setBackground(shapeDrawable);
+
+            View view = new View(context);
+            view.setLayoutParams(new ViewGroup.LayoutParams(8, 8));
+            iconGen.setContentView(view);
+
+            final Bitmap bitmap = iconGen.makeIcon();
+
+            mapView.getMapAsync(new com.amazon.geo.mapsv2.OnMapReadyCallback() {
+                @SuppressWarnings("UnusedAssignment")
+                public void onMapReady(AmazonMap amazonMap) {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        amazonMap.setMyLocationEnabled(true);
+                    }
+
+                    if (useHybrid) {
+                        amazonMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                    } else {
+                        amazonMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                    }
+
+                    amazonMap.getUiSettings().setZoomControlsEnabled(true);
+                    amazonMap.getUiSettings().setMyLocationButtonEnabled(false);
+                    amazonMap.getUiSettings().setMapToolbarEnabled(false);
+                    amazonMap.getUiSettings().setAllGesturesEnabled(false);
+
+                    Location me = Location.getInstance(context);
+
+                    double lastLatitude = 0.0;
+                    double lastLongitude = 0.0;
+
+                    final List<com.amazon.geo.mapsv2.model.LatLng> locations = new ArrayList<>();
+
+                    String where = Location.HISTORY_OBSERVED + " > ?";
+                    String[] args = { "" + (System.currentTimeMillis() - (1000 * 60 * 60 * 24)) };
+
+                    Cursor c = me.mDatabase.query(Location.TABLE_HISTORY, null, where, args, null, null, Location.HISTORY_OBSERVED);
+
+                    while (c.moveToNext()) {
+                        lastLatitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LATITUDE));
+                        lastLongitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LONGITUDE));
+
+                        com.amazon.geo.mapsv2.model.LatLng location = new com.amazon.geo.mapsv2.model.LatLng(lastLatitude, lastLongitude);
+
+                        locations.add(location);
+                    }
+
+                    c.close();
+
+                    com.amazon.geo.mapsv2.model.LatLngBounds.Builder builder = new com.amazon.geo.mapsv2.model.LatLngBounds.Builder();
+
+                    for (com.amazon.geo.mapsv2.model.LatLng latlng : locations) {
+                        builder.include(latlng);
+                    }
+
+                    final DisplayMetrics metrics = new DisplayMetrics();
+                    ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+                    if (locations.size() > 0) {
+                        amazonMap.moveCamera(com.amazon.geo.mapsv2.CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
+                    }
+
+                    for (com.amazon.geo.mapsv2.model.LatLng latLng : locations) {
+                        amazonMap.addMarker(new com.amazon.geo.mapsv2.model.MarkerOptions()
+                                .position(latLng)
+                                .icon(com.amazon.geo.mapsv2.model.BitmapDescriptorFactory.fromBitmap(bitmap)));
+                    }
+
+                    mapView.onResume();
+                }
+            });
+
+            return mapView;
         }
         else if (Location.useGoogleLocationServices(holder.itemView.getContext()))
         {
@@ -823,6 +1006,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             final Bitmap bitmap = iconGen.makeIcon();
 
             mapView.getMapAsync(new OnMapReadyCallback() {
+                @SuppressWarnings("UnusedAssignment")
                 public void onMapReady(GoogleMap googleMap) {
                     if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -844,7 +1028,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
                     double lastLatitude = 0.0;
                     double lastLongitude = 0.0;
-                    long timestamp = 0;
 
                     final List<LatLng> locations = new ArrayList<>();
 
@@ -896,16 +1079,15 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
     }
 
+    @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
-        Class currentClass = new Object() { }.getClass().getEnclosingClass();
-
-        String identifier = currentClass.getCanonicalName();
-
-        TextView generatorLabel = (TextView) holder.itemView.findViewById(R.id.label_generator);
+        TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
         generatorLabel.setText(Location.getGeneratorTitle(holder.itemView.getContext()));
     }
 
+    @SuppressWarnings("unused")
+    @SuppressLint("TrulyRandom")
     public android.location.Location getLastKnownLocation() {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         int selected = prefs.getInt(Location.ACCURACY_MODE, Location.ACCURACY_BEST);
@@ -927,8 +1109,23 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             return location;
         }
 
-        if (this.mLastLocation != null) {
-            return this.mLastLocation;
+        android.location.Location lastLocation = null;
+
+        Cursor c = this.mDatabase.query(Location.TABLE_HISTORY, null, null, null, null, null, Location.HISTORY_OBSERVED + " DESC");
+
+        if (c.moveToNext()) {
+            double latitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LATITUDE));
+            double longitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LONGITUDE));
+
+            lastLocation = new android.location.Location("Passive-Data-Kit");
+            lastLocation.setLatitude(latitude);
+            lastLocation.setLongitude(longitude);
+        }
+
+        c.close();
+
+        if (lastLocation != null) {
+            return lastLocation;
         }
 
         LocationManager locations = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
@@ -945,7 +1142,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             }
         }
 
-        if (selected == Location.ACCURACY_RANDOMIZED) {
+        if (last != null && selected == Location.ACCURACY_RANDOMIZED) {
             // http://gis.stackexchange.com/a/68275/10230
 
             double latitude = last.getLatitude();
@@ -976,14 +1173,73 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return last;
     }
 
+    @SuppressWarnings({"SameParameterValue", "unused"})
     public void setUpdateInterval(long interval) {
         this.mUpdateInterval = interval;
 
-        this.stopGenerator();
-        this.startGenerator();
+        if (Location.isRunning(this.mContext)) {
+            this.stopGenerator();
+            this.startGenerator();
+        }
     }
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
         return this.mDatabase.query(Location.TABLE_HISTORY, cols, where, args, null, null, orderBy);
+    }
+
+    public void setAccuracyMode(int accuracyMode) {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putInt(Location.ACCURACY_MODE, accuracyMode);
+
+        e.apply();
+    }
+
+    public void setRandomizationRange(long meters) {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(Location.ACCURACY_MODE_RANDOMIZED_RANGE, meters);
+
+        e.apply();
+    }
+
+    public void setPreservesRandomVector(boolean preservesVector) {
+
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putBoolean(Location.ACCURACY_MODE_RANDOMIZED_VECTOR_PRESERVED, preservesVector);
+
+        e.apply();
+    }
+
+    @Override
+    protected void flushCachedData() {
+        if (this.mDatabase == null) {
+            return;
+        }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(Location.DATA_RETENTION_PERIOD, Location.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = Location.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(Location.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(Location.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
     }
 }

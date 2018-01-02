@@ -1,9 +1,10 @@
 package com.audacious_software.passive_data_kit.activities;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,8 +35,17 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
 
     private Class<? extends Generator> mGeneratorClass = null;
 
+    @SuppressWarnings({"unchecked", "TryWithIdenticalCatches", "ConstantConditions"})
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        String generatorClassName = this.getIntent().getStringExtra(DataDisclosureDetailActivity.GENERATOR_CLASS_NAME);
+
+        if (generatorClassName == null) {
+            this.finish();
+
+            return;
+        }
 
         final DataDisclosureDetailActivity me = this;
 
@@ -44,9 +54,9 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
         this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         try {
-            this.mGeneratorClass = (Class<? extends Generator>) Class.forName(this.getIntent().getStringExtra(DataDisclosureDetailActivity.GENERATOR_CLASS_NAME));
+            this.mGeneratorClass = (Class<? extends Generator>) Class.forName(generatorClassName);
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         }
 
         if (this.mGeneratorClass != null) {
@@ -60,19 +70,21 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
 
                 final List<Action> actions = (List<Action>) getDisclosureActions.invoke(null, this);
 
-                ListView actionsList = (ListView) this.findViewById(R.id.disclosure_actions);
+                ListView actionsList = this.findViewById(R.id.disclosure_actions);
                 ArrayAdapter<Action> adapter = new ArrayAdapter<Action>(this, R.layout.row_disclosure_action_pdk, actions) {
-                    public View getView (int position, View convertView, ViewGroup parent) {
+                    @NonNull
+                    @SuppressLint("InflateParams")
+                    public View getView (int position, View convertView, @NonNull ViewGroup parent) {
                         if (convertView == null) {
                             convertView = LayoutInflater.from(me).inflate(R.layout.row_disclosure_action_pdk, null);
                         }
 
                         Action action = actions.get(position);
 
-                        TextView title = (TextView) convertView.findViewById(R.id.action_title);
+                        TextView title = convertView.findViewById(R.id.action_title);
                         title.setText(action.title);
 
-                        TextView description = (TextView) convertView.findViewById(R.id.action_description);
+                        TextView description = convertView.findViewById(R.id.action_description);
                         description.setText(action.subtitle);
 
                         return convertView;
@@ -84,11 +96,9 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
                 actionsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                        Log.e("PDK", "TAPPED: " + position);
-
                         Action action = actions.get(position);
 
-                        FrameLayout dataView = (FrameLayout) me.findViewById(R.id.data_view);
+                        FrameLayout dataView = me.findViewById(R.id.data_view);
                         dataView.removeAllViews();
 
                         if (action.view != null) {

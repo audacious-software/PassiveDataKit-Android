@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="DuplicateIds,ContentDescription,SpUsage"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <android.support.v7.widget.CardView
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        card_view:cardCornerRadius="4dp"
+        android:layout_margin="8dp"
+        tools:ignore="UnusedIds">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <LinearLayout android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#0288D1"
+                android:padding="8dp"
+                android:baselineAligned="false">
+                <ImageView android:src="@drawable/ic_time_of_day"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginRight="8dp" />
+                <TextView android:text="@string/generator_time_of_day"
+                    android:gravity="center_vertical|start"
+                    android:layout_width="0dp"
+                    android:layout_height="24dp"
+                    android:layout_weight="1"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white" />
+                <TextView android:id="@+id/generator_data_point_date"
+                    android:gravity="center_vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/white"
+                    android:layout_marginRight="8dp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/card_content"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:baselineAligned="false"
+                    android:padding="16dp">
+
+                    <LinearLayout android:id="@+id/cell_night_morning"
+                        android:orientation="vertical"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="16dp"
+                        android:layout_weight="1">
+                        <ImageView android:layout_gravity="center_horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="64dp"
+                            android:src="@drawable/ic_night_morning"/>
+                        <TextView android:id="@+id/label_first_night"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/label_time_night"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/cell_morning"
+                        android:orientation="vertical"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="16dp"
+                        android:layout_weight="1">
+                        <ImageView android:layout_gravity="center_horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="64dp"
+                            android:src="@drawable/ic_morning"/>
+                        <TextView android:id="@+id/label_first_night"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/label_time_morning"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/cell_afternoon"
+                        android:orientation="vertical"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="16dp"
+                        android:layout_weight="1">
+                        <ImageView android:layout_gravity="center_horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="64dp"
+                            android:src="@drawable/ic_afternoon"/>
+                        <TextView android:id="@+id/label_first_night"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/label_time_afternoon"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/cell_evening"
+                        android:orientation="vertical"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="16dp"
+                        android:layout_weight="1">
+                        <ImageView android:layout_gravity="center_horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="64dp"
+                            android:src="@drawable/ic_evening"/>
+                        <TextView android:id="@+id/label_first_night"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/label_time_evening"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/cell_night_night"
+                        android:orientation="vertical"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+                        <ImageView android:layout_gravity="center_horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="64dp"
+                            android:src="@drawable/ic_night_night"/>
+                        <TextView android:id="@+id/label_first_night"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/label_time_night"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:baselineAligned="false"
+                    android:paddingBottom="16dp">
+                    <TextView android:text="@string/label_sunrise"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="4dp"
+                        android:textSize="16sp"
+                        android:gravity="right"/>
+                    <TextView android:id="@+id/label_sunrise"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:gravity="left"/>
+                    <TextView android:text="@string/label_sunset"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_marginRight="4dp"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:gravity="right"/>
+                    <TextView android:id="@+id/label_sunset"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:gravity="left"/>
+                </LinearLayout>
+            <TextView android:id="@+id/card_empty"
+                android:text="@string/message_generator_foreground_applications_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="16dp" />
+        </LinearLayout>
+        </LinearLayout>
+    </android.support.v7.widget.CardView>
+</LinearLayout>

@@ -16,7 +16,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,11 +47,15 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings("SimplifiableIfStatement")
 public class TextMessages extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-text-messages";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.communication.TextMessages.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.communication.TextMessages.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final Uri SMS_INBOX_URI = Uri.parse("content://sms/inbox");
     private static final Uri SMS_SENT_URI = Uri.parse("content://sms/sent");
@@ -64,7 +67,7 @@ public class TextMessages extends Generator {
     private static final String SMS_LENGTH = "length";
     private static final String SMS_DIRECTION = "direction";
 
-    private static int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 1;
 
     private static final String TABLE_HISTORY = "history";
     private static final String HISTORY_OBSERVED = "observed";
@@ -86,6 +89,12 @@ public class TextMessages extends Generator {
     private SQLiteDatabase mDatabase = null;
     private long mSampleInterval = 60000;
 
+    @SuppressWarnings("unused")
+    public static String generatorIdentifier() {
+        return TextMessages.GENERATOR_IDENTIFIER;
+    }
+
+    @SuppressWarnings("WeakerAccess")
     public static TextMessages getInstance(Context context) {
         if (TextMessages.sInstance == null) {
             TextMessages.sInstance = new TextMessages(context.getApplicationContext());
@@ -94,12 +103,14 @@ public class TextMessages extends Generator {
         return TextMessages.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public TextMessages(Context context) {
         super(context);
 
         this.mContext = context.getApplicationContext();
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         TextMessages.getInstance(context).startGenerator();
     }
@@ -118,11 +129,9 @@ public class TextMessages extends Generator {
         }
 
         final Runnable checkLogs = new Runnable() {
+            @SuppressWarnings("ConstantConditions")
             @Override
             public void run() {
-
-                Log.e("PDK", "CHECK TEXT LOGS");
-
                 boolean approved = false;
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -226,7 +235,7 @@ public class TextMessages extends Generator {
                             if (values.containsKey(field)) {
                                 String value = values.getAsString(field);
 
-                                if (TextMessages.HISTORY_NUMBER.equals(TextMessages.HISTORY_NUMBER)) {
+                                if (field.equals(TextMessages.HISTORY_NUMBER)) {
                                     value = PhoneUtililties.normalizedPhoneNumber(value);
                                 }
 
@@ -267,7 +276,9 @@ public class TextMessages extends Generator {
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_text_messages_create_history_table));
         }
 
-        this.setDatabaseVersion(this.mDatabase, TextMessages.DATABASE_VERSION);
+        if (version != TextMessages.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, TextMessages.DATABASE_VERSION);
+        }
 
         Runnable r = new Runnable() {
             @Override
@@ -292,14 +303,18 @@ public class TextMessages extends Generator {
         me.mHandler.post(checkLogs);
 
         Generators.getInstance(this.mContext).registerCustomViewClass(TextMessages.GENERATOR_IDENTIFIER, TextMessages.class);
+
+        this.flushCachedData();
     }
 
+    @SuppressWarnings("unused")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(TextMessages.ENABLED, TextMessages.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static boolean isRunning(Context context) {
         if (TextMessages.sInstance == null) {
             return false;
@@ -308,6 +323,7 @@ public class TextMessages extends Generator {
         return TextMessages.sInstance.mHandler != null;
     }
 
+    @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(final Context context) {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
@@ -338,6 +354,7 @@ public class TextMessages extends Generator {
         return actions;
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder) {
        final Context context = holder.itemView.getContext();
 
@@ -375,7 +392,7 @@ public class TextMessages extends Generator {
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (total > 0) {
             cardContent.setVisibility(View.VISIBLE);
@@ -383,7 +400,7 @@ public class TextMessages extends Generator {
 
             dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp));
 
-            PieChart pieChart = (PieChart) holder.itemView.findViewById(R.id.chart_text_messages);
+            PieChart pieChart = holder.itemView.findViewById(R.id.chart_text_messages);
             pieChart.getLegend().setEnabled(false);
 
             pieChart.setEntryLabelColor(android.R.color.transparent);
@@ -424,16 +441,16 @@ public class TextMessages extends Generator {
             pieChart.setData(data);
             pieChart.invalidate();
 
-            TextView latestField = (TextView) holder.itemView.findViewById(R.id.field_latest_text_message);
-            TextView lengthField = (TextView) holder.itemView.findViewById(R.id.field_length);
-            TextView directionField = (TextView) holder.itemView.findViewById(R.id.field_direction);
+            TextView latestField = holder.itemView.findViewById(R.id.field_latest_text_message);
+            TextView lengthField = holder.itemView.findViewById(R.id.field_length);
+            TextView directionField = holder.itemView.findViewById(R.id.field_direction);
 
             Date lateDate = new Date(lastTimestamp);
             String day = android.text.format.DateFormat.getMediumDateFormat(context).format(lateDate);
             String time = android.text.format.DateFormat.getTimeFormat(context).format(lateDate);
 
             latestField.setText(context.getString(R.string.format_full_timestamp_pdk, day, time));
-            lengthField.setText(context.getString(R.string.generator_text_messages_length_format, lastLength));
+            lengthField.setText(context.getResources().getQuantityString(R.plurals.generator_text_messages_length_format, lastLength, lastLength));
             directionField.setText(lastDirection);
 
             dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
@@ -446,15 +463,41 @@ public class TextMessages extends Generator {
     }
 
     @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(TextMessages.DATA_RETENTION_PERIOD, TextMessages.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = TextMessages.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(TextMessages.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(TextMessages.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
+    }
+
+    @Override
     public List<Bundle> fetchPayloads() {
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_text_messages, parent, false);
     }
 
+    @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
         long timestamp = 0;
 

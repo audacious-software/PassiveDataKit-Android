@@ -1,12 +1,13 @@
 package com.audacious_software.passive_data_kit.generators;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.util.SparseArray;
 
 import com.audacious_software.passive_data_kit.Logger;
@@ -18,76 +19,68 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class Generators {
     private Context mContext = null;
     private boolean mStarted = false;
 
-    private ArrayList<String> mGenerators = new ArrayList<>();
-    private HashSet<String> mActiveGenerators = new HashSet<>();
+    private final ArrayList<String> mGenerators = new ArrayList<>();
+    private final HashSet<String> mActiveGenerators = new HashSet<>();
     private SharedPreferences mSharedPreferences = null;
-    private HashMap<String, Class<? extends Generator>> mGeneratorMap = new HashMap<>();
-    private SparseArray<Class<? extends Generator>> mViewTypeMap = new SparseArray<>();
-    private HashSet<GeneratorUpdatedListener> mGeneratorUpdatedListeners = new HashSet<>();
+    private final HashMap<String, Class<? extends Generator>> mGeneratorMap = new HashMap<>();
+    private final SparseArray<Class<? extends Generator>> mViewTypeMap = new SparseArray<>();
+    private final HashSet<GeneratorUpdatedListener> mGeneratorUpdatedListeners = new HashSet<>();
+    private final HashMap<String, PowerManager.WakeLock> mWakeLocks = new HashMap<>();
+    private final HashMap<String, String> mGeneratorIdentifierMap = new HashMap<>();
+    private String mUserAgent = null;
 
+    @SuppressWarnings("unchecked")
     public void start() {
-        if (!this.mStarted)
-        {
-            this.mGenerators.clear();
+        synchronized (this) {
+            if (!this.mStarted) {
+                this.mStarted = true;
 
-            this.mGenerators.add(AppEvent.class.getCanonicalName());
+                this.mGenerators.clear();
 
-            for (String className : this.mContext.getResources().getStringArray(R.array.pdk_available_generators))
-            {
-                this.mGenerators.add(className);
-            }
+                this.mGenerators.add(AppEvent.class.getCanonicalName());
 
-            for (String className : this.mContext.getResources().getStringArray(R.array.pdk_app_generators))
-            {
-                this.mGenerators.add(className);
-            }
+                Collections.addAll(this.mGenerators, this.mContext.getResources().getStringArray(R.array.pdk_available_generators));
+                Collections.addAll(this.mGenerators, this.mContext.getResources().getStringArray(R.array.pdk_app_generators));
 
-            for (String className : this.mGenerators)
-            {
-                try {
-                    Log.e("PDK", "TRYING " + className);
+                for (String className : this.mGenerators) {
+                    //noinspection TryWithIdenticalCatches
+                    try {
+                        Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
 
-                    Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
+                        Method isEnabled = probeClass.getDeclaredMethod("isEnabled", Context.class);
 
-                    Method isEnabled = probeClass.getDeclaredMethod("isEnabled", Context.class);
+                        Boolean enabled = (Boolean) isEnabled.invoke(null, this.mContext);
 
-                    Boolean enabled = (Boolean) isEnabled.invoke(null, this.mContext);
-
-                    Log.e("PDK", "GENERATOR ENABLED? " + probeClass + " ==> " + enabled);
-
-                    if (enabled) {
-                        this.startGenerator(className);
+                        if (enabled) {
+                            this.startGenerator(className);
+                        } else {
+                            this.stopGenerator(className);
+                        }
+                    } catch (ClassNotFoundException e) {
+                        Logger.getInstance(this.mContext).logThrowable(e);
+                    } catch (NoSuchMethodException e) {
+                        Logger.getInstance(this.mContext).logThrowable(e);
+                    } catch (InvocationTargetException e) {
+                        Logger.getInstance(this.mContext).logThrowable(e);
+                    } catch (IllegalAccessException e) {
+                        Logger.getInstance(this.mContext).logThrowable(e);
                     }
-                    else {
-                        this.stopGenerator(className);
-                    }
-                } catch (ClassNotFoundException e) {
-                    Log.e("PDK", "ClassNotFoundException " + className);
-                    Logger.getInstance(this.mContext).logThrowable(e);
-                } catch (NoSuchMethodException e) {
-                    Log.e("PDK", "NoSuchMethodException " + className);
-                    Logger.getInstance(this.mContext).logThrowable(e);
-                } catch (InvocationTargetException e) {
-                    Log.e("PDK", "InvocationTargetException " + className);
-                    Logger.getInstance(this.mContext).logThrowable(e);
-                } catch (IllegalAccessException e) {
-                    Log.e("PDK", "IllegalAccessException " + className);
-                    Logger.getInstance(this.mContext).logThrowable(e);
                 }
             }
-
-            this.mStarted = true;
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void startGenerator(String className) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         if (!this.mActiveGenerators.contains(className)) {
             Class<Generator> generatorClass = (Class<Generator>) Class.forName(className);
@@ -98,18 +91,18 @@ public class Generators {
             if (running) {
                 this.stopGenerator(className);
             }
-            else {
-                Method start = generatorClass.getDeclaredMethod("start", Context.class);
 
-                Log.e("PDK", "GOT START METHOD: " + className + " -> " + start);
+            Method start = generatorClass.getDeclaredMethod("start", Context.class);
 
-                start.invoke(null, this.mContext);
+            start.invoke(null, this.mContext);
 
+            synchronized (this.mActiveGenerators) {
                 this.mActiveGenerators.add(className);
             }
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void stopGenerator(String className) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         if (this.mActiveGenerators.contains(className)) {
             Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
@@ -117,7 +110,9 @@ public class Generators {
             Method stop = probeClass.getDeclaredMethod("stop", probeClass);
             stop.invoke(null, this.mContext);
 
-            this.mActiveGenerators.remove(className);
+            synchronized (this.mActiveGenerators) {
+                this.mActiveGenerators.remove(className);
+            }
         }
     }
 
@@ -128,51 +123,67 @@ public class Generators {
         return this.mSharedPreferences;
     }
 
+    @SuppressWarnings({"TryWithIdenticalCatches", "unchecked"})
     public ArrayList<DiagnosticAction> diagnostics() {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
-        for (String className : this.mActiveGenerators) {
-            try {
-                Class<Generator> generatorClass = (Class<Generator>) Class.forName(className);
+        synchronized (this.mActiveGenerators) {
+            for (String className : this.mActiveGenerators) {
+                try {
+                    Class<Generator> generatorClass = (Class<Generator>) Class.forName(className);
 
-                Method diagnostics = generatorClass.getDeclaredMethod("diagnostics", Context.class);
-                Collection<DiagnosticAction> generatorActions = (Collection<DiagnosticAction>) diagnostics.invoke(null, this.mContext);
+                    Method diagnostics = generatorClass.getDeclaredMethod("diagnostics", Context.class);
+                    Collection<DiagnosticAction> generatorActions = (Collection<DiagnosticAction>) diagnostics.invoke(null, this.mContext);
 
-                actions.addAll(generatorActions);
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                    actions.addAll(generatorActions);
+                } catch (ClassNotFoundException e) {
+//                e.printStackTrace();
+                } catch (InvocationTargetException e) {
+//                e.printStackTrace();
+                } catch (NoSuchMethodException e) {
+//                e.printStackTrace();
+                } catch (IllegalAccessException e) {
+//                e.printStackTrace();
+                }
             }
         }
 
         return actions;
     }
 
+    @SuppressWarnings("SameReturnValue")
     public String getSource() {
         return "unknown-user-please-set-me";
     }
 
     public String getGeneratorFullName(String identifier) {
-        String pdkName = this.mContext.getString(R.string.pdk_name);
-        String pdkVersion = this.mContext.getString(R.string.pdk_version);
-        String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
-
-        String version = this.mContext.getString(R.string.unknown_version);
-
-        try {
-            PackageInfo pInfo = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0);
-
-            version = pInfo.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            Logger.getInstance(this.mContext).logThrowable(e);
+        if (this.mGeneratorIdentifierMap.containsKey(identifier)) {
+            return this.mGeneratorIdentifierMap.get(identifier);
         }
 
-        return identifier + ": " + appName + "/" + version + " " + pdkName + "/" + pdkVersion;
+        if (this.mUserAgent == null) {
+            String pdkName = this.mContext.getString(R.string.pdk_name);
+            String pdkVersion = this.mContext.getString(R.string.pdk_version);
+            String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
+
+            String version = this.mContext.getString(R.string.unknown_version);
+
+            try {
+                PackageInfo pInfo = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0);
+
+                version = pInfo.versionName;
+            } catch (PackageManager.NameNotFoundException e) {
+                Logger.getInstance(this.mContext).logThrowable(e);
+            } catch (RuntimeException e) {
+                Logger.getInstance(this.mContext).logThrowable(e);
+            }
+
+            this.mUserAgent = appName + "/" + version + " " + pdkName + "/" + pdkVersion;
+        }
+
+        this.mGeneratorIdentifierMap.put(identifier, identifier + ": " + this.mUserAgent);
+
+        return this.mGeneratorIdentifierMap.get(identifier);
     }
 
     public void registerCustomViewClass(String identifier, Class<? extends Generator> generatorClass) {
@@ -180,10 +191,9 @@ public class Generators {
         this.mViewTypeMap.put(generatorClass.hashCode(), generatorClass);
     }
 
+    @SuppressWarnings("unused")
     public Class<? extends Generator> fetchCustomViewClass(String identifier) {
         Class<? extends Generator> generatorClass = this.mGeneratorMap.get(identifier);
-
-        Log.e("PDK", "FETCH VIEW: " + identifier + " => " + generatorClass);
 
         if (generatorClass == null)
             generatorClass = Generator.class;
@@ -200,13 +210,8 @@ public class Generators {
         return generatorClass;
     }
 
+    @SuppressWarnings({"TryWithIdenticalCatches", "unchecked", "unused"})
     public Generator getGenerator(String className) {
-        Log.e("BB", "GENERATOR FIND START");
-        for (String name : this.mActiveGenerators) {
-            Log.e("BB", "GENERATOR NAME: " + name);
-        }
-        Log.e("BB", "GENERATOR FIND END");
-
         if (this.mActiveGenerators.contains(className)) {
             try {
                 Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
@@ -214,33 +219,37 @@ public class Generators {
                 Method getInstance = probeClass.getDeclaredMethod("getInstance", Context.class);
                 return (Generator) getInstance.invoke(null, this.mContext);
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } catch (InvocationTargetException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
 
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     public List<Class<? extends Generator>> activeGenerators() {
         ArrayList<Class<? extends Generator>> active = new ArrayList<>();
 
-        for (String className : this.mActiveGenerators) {
-            try {
-                active.add((Class<? extends Generator>) Class.forName(className));
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+        synchronized (this.mActiveGenerators) {
+            for (String className : this.mActiveGenerators) {
+                try {
+                    active.add((Class<? extends Generator>) Class.forName(className));
+                } catch (ClassNotFoundException e) {
+//                e.printStackTrace();
+                }
             }
         }
 
         return active;
     }
 
+    @SuppressWarnings("SameParameterValue")
     public void notifyGeneratorUpdated(String identifier, long timestamp, Bundle bundle) {
         for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
             listener.onGeneratorUpdated(identifier, timestamp, bundle);
@@ -250,17 +259,43 @@ public class Generators {
     public void notifyGeneratorUpdated(String identifier, Bundle bundle) {
         long timestamp = System.currentTimeMillis();
 
-        for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
-            listener.onGeneratorUpdated(identifier, timestamp, bundle);
+        synchronized(this.mGeneratorUpdatedListeners) {
+            for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
+                listener.onGeneratorUpdated(identifier, timestamp, bundle);
+            }
+        }
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    public void acquireWakeLock(String tag, int lockType) {
+        this.releaseWakeLock(tag);
+
+        PowerManager power = (PowerManager) this.mContext.getSystemService(Context.POWER_SERVICE);
+
+        PowerManager.WakeLock lock = power.newWakeLock(lockType, tag);
+
+        this.mWakeLocks.put(tag, lock);
+    }
+
+    public void releaseWakeLock(String tag) {
+        if (this.mWakeLocks.containsKey(tag)) {
+            PowerManager.WakeLock lock = this.mWakeLocks.get(tag);
+
+            if (lock.isHeld()) {
+                lock.release();
+            }
+
+            this.mWakeLocks.remove(tag);
         }
     }
 
     private static class GeneratorsHolder {
-        public static Generators instance = new Generators();
+        @SuppressLint("StaticFieldLeak")
+        public static final Generators instance = new Generators();
     }
 
-    public static Generators getInstance(Context context)
-    {
+    @SuppressWarnings("SameReturnValue")
+    public static Generators getInstance(Context context) {
         if (context != null) {
             GeneratorsHolder.instance.setContext(context);
         }
@@ -273,11 +308,15 @@ public class Generators {
     }
 
     public void addNewGeneratorUpdatedListener(Generators.GeneratorUpdatedListener listener) {
-        this.mGeneratorUpdatedListeners.add(listener);
+        synchronized(this.mGeneratorUpdatedListeners) {
+            this.mGeneratorUpdatedListeners.add(listener);
+        }
     }
 
     public void removeGeneratorUpdatedListener(Generators.GeneratorUpdatedListener listener) {
-        this.mGeneratorUpdatedListeners.remove(listener);
+        synchronized (this.mGeneratorUpdatedListeners) {
+            this.mGeneratorUpdatedListeners.remove(listener);
+        }
     }
 
     public interface GeneratorUpdatedListener {

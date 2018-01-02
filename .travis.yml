@@ -3,13 +3,15 @@ language: android
 jdk: oraclejdk8
 
 before_install:
-  - wget http://services.gradle.org/distributions/gradle-3.3-bin.zip
-  - unzip gradle-3.3-bin.zip
-  - export GRADLE_HOME=$PWD/gradle-3.3
+  - wget http://services.gradle.org/distributions/gradle-4.1-bin.zip
+  - unzip gradle-4.1-bin.zip
+  - export GRADLE_HOME=$PWD/gradle-4.1
   - export PATH=$GRADLE_HOME/bin:$PATH
-  - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-25.0.2
+  - yes | sdkmanager "platforms;android-27"
+  - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-27.0.2
 
 script:
+  - gradle lint
   - gradle assembleDebug
 
 android:
@@ -18,16 +20,16 @@ android:
     - tools
 
     # The BuildTools version used by your project
-    - build-tools-25
+    - build-tools-27
 
     # The SDK version used to compile your project
-    - android-25
+    - android-27
 
     # Additional components
     - extra-google-google_play_services
     - extra-google-m2repository
     - extra-android-m2repository
-    - addon-google_apis-google-25
+    - addon-google_apis-google-27
 
     # Specify at least one system image,
     # if you need to run emulator(s) during your tests

@@ -1,6 +1,7 @@
 package com.audacious_software.passive_data_kit.generators.communication;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -16,7 +17,6 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.CallLog;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,11 +45,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings("SimplifiableIfStatement")
+@SuppressLint("InlinedApi")
 public class PhoneCalls extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-phone-calls";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.communication.PhoneCalls.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.communication.PhoneCalls.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String CALL_DATE_KEY = "call_timestamp";
     private static final String CALL_DURATION_KEY = "duration";
@@ -80,7 +85,7 @@ public class PhoneCalls extends Generator {
     private static final String CALL_PRESENTATION_PAYPHONE = "payphone";
     private static final String CALL_PRESENTATION_UNKNOWN = "unknown";
 
-    private static int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE_HISTORY = "history";
     private static final String HISTORY_OBSERVED = "observed";
@@ -108,6 +113,12 @@ public class PhoneCalls extends Generator {
     private SQLiteDatabase mDatabase = null;
     private long mSampleInterval = 60000;
 
+    @SuppressWarnings("unused")
+    public static String generatorIdentifier() {
+        return PhoneCalls.GENERATOR_IDENTIFIER;
+    }
+
+    @SuppressWarnings("WeakerAccess")
     public static PhoneCalls getInstance(Context context) {
         if (PhoneCalls.sInstance == null) {
             PhoneCalls.sInstance = new PhoneCalls(context.getApplicationContext());
@@ -116,12 +127,14 @@ public class PhoneCalls extends Generator {
         return PhoneCalls.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public PhoneCalls(Context context) {
         super(context);
 
         this.mContext = context.getApplicationContext();
     }
 
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         PhoneCalls.getInstance(context).startGenerator();
     }
@@ -142,7 +155,6 @@ public class PhoneCalls extends Generator {
         final Runnable checkLogs = new Runnable() {
             @Override
             public void run() {
-                Log.e("PDK", "CHECK PHONE LOGS");
                 boolean approved = false;
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -152,8 +164,6 @@ public class PhoneCalls extends Generator {
                 } else {
                     approved = true;
                 }
-
-                Log.e("PDK", "TODO: Fetch Call Logs...");
 
                 if (approved) {
                     long lastObserved = 0;
@@ -169,7 +179,7 @@ public class PhoneCalls extends Generator {
                     String where = CallLog.Calls.DATE + " > ?";
                     String[] args = {"" + lastObserved};
 
-                    Cursor c = me.mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null, where, args, CallLog.Calls.DATE);
+                    @SuppressLint("MissingPermission") Cursor c = me.mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null, where, args, CallLog.Calls.DATE);
 
                     if (c != null) {
                         while (c.moveToNext()) {
@@ -320,7 +330,9 @@ public class PhoneCalls extends Generator {
                 this.mDatabase.delete(PhoneCalls.TABLE_HISTORY, null, null);
         }
 
-        this.setDatabaseVersion(this.mDatabase, PhoneCalls.DATABASE_VERSION);
+        if (version != PhoneCalls.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, PhoneCalls.DATABASE_VERSION);
+        }
 
         Runnable r = new Runnable() {
             @Override
@@ -345,14 +357,18 @@ public class PhoneCalls extends Generator {
         me.mHandler.post(checkLogs);
 
         Generators.getInstance(this.mContext).registerCustomViewClass(PhoneCalls.GENERATOR_IDENTIFIER, PhoneCalls.class);
+
+        this.flushCachedData();
     }
 
+    @SuppressWarnings("unused")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(PhoneCalls.ENABLED, PhoneCalls.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings({"UnusedParameters", "unused"})
     public static boolean isRunning(Context context) {
         if (PhoneCalls.sInstance == null) {
             return false;
@@ -361,6 +377,7 @@ public class PhoneCalls extends Generator {
         return PhoneCalls.sInstance.mHandler != null;
     }
 
+    @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(final Context context) {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
@@ -391,10 +408,9 @@ public class PhoneCalls extends Generator {
         return actions;
     }
 
+    @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder) {
-       final Context context = holder.itemView.getContext();
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        final Context context = holder.itemView.getContext();
 
         long lastTimestamp = 0;
         long lastDuration = 0;
@@ -424,7 +440,7 @@ public class PhoneCalls extends Generator {
             } else if (PhoneCalls.CALL_TYPE_OUTGOING.equals(type)) {
                 totalOutgoing += 1;
             } else if (PhoneCalls.CALL_TYPE_MISSED.equals(type)) {
-                totalOutgoing += 1;
+                totalMissed += 1;
             }
 
             if (callType == null) {
@@ -436,7 +452,7 @@ public class PhoneCalls extends Generator {
 
         View cardContent = holder.itemView.findViewById(R.id.card_content);
         View cardEmpty = holder.itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (total > 0) {
             cardContent.setVisibility(View.VISIBLE);
@@ -444,7 +460,7 @@ public class PhoneCalls extends Generator {
 
             dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp));
 
-            PieChart pieChart = (PieChart) holder.itemView.findViewById(R.id.chart_phone_calls);
+            PieChart pieChart = holder.itemView.findViewById(R.id.chart_phone_calls);
             pieChart.getLegend().setEnabled(false);
 
             pieChart.setEntryLabelColor(android.R.color.transparent);
@@ -497,9 +513,9 @@ public class PhoneCalls extends Generator {
             pieChart.setData(data);
             pieChart.invalidate();
 
-            TextView latestField = (TextView) holder.itemView.findViewById(R.id.field_latest_call);
-            TextView durationField = (TextView) holder.itemView.findViewById(R.id.field_duration);
-            TextView directionField = (TextView) holder.itemView.findViewById(R.id.field_direction);
+            TextView latestField = holder.itemView.findViewById(R.id.field_latest_call);
+            TextView durationField = holder.itemView.findViewById(R.id.field_duration);
+            TextView directionField = holder.itemView.findViewById(R.id.field_direction);
 
             Date lateDate = new Date(lastTimestamp);
             String day = android.text.format.DateFormat.getMediumDateFormat(context).format(lateDate);
@@ -523,11 +539,37 @@ public class PhoneCalls extends Generator {
         return new ArrayList<>();
     }
 
+    @Override
+    protected void flushCachedData() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        long retentionPeriod = prefs.getLong(PhoneCalls.DATA_RETENTION_PERIOD, PhoneCalls.DATA_RETENTION_PERIOD_DEFAULT);
+
+        long start = System.currentTimeMillis() - retentionPeriod;
+
+        String where = PhoneCalls.HISTORY_OBSERVED + " < ?";
+        String[] args = { "" + start };
+
+        this.mDatabase.delete(PhoneCalls.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(PhoneCalls.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
+    }
+
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_phone_calls, parent, false);
     }
 
+    @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
         long timestamp = 0;
 

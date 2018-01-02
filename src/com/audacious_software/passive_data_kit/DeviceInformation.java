@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -12,6 +13,7 @@ public class DeviceInformation {
     private static boolean sWifiAvailable = false;
     private static long sLastWifiCheck = 0;
 
+    @SuppressWarnings("UnnecessaryLocalVariable")
     public static boolean isKindleFire()
     {
         boolean isKindle = android.os.Build.MANUFACTURER.equalsIgnoreCase("Amazon")
@@ -28,7 +30,7 @@ public class DeviceInformation {
         if (now - DeviceInformation.sLastWifiCheck > 10000) {
             DeviceInformation.sLastWifiCheck = now;
 
-            WifiManager wifi = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            WifiManager wifi = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
             if (wifi.isWifiEnabled()) {
                 DeviceInformation.sWifiAvailable = true;
@@ -58,6 +60,8 @@ public class DeviceInformation {
         return DeviceInformation.sWifiAvailable;
     }
 
+    @SuppressLint("InlinedApi")
+    @SuppressWarnings("ConstantConditions")
     public static boolean isPluggedIn(Context context) {
         Intent intent = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 

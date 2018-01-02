@@ -6,6 +6,9 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -67,12 +70,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings("unused")
+@SuppressWarnings("SimplifiableIfStatement")
 public class MicrosoftBand extends Generator
 {
+    private static final String GENERATOR_IDENTIFIER = "pdk-microsoft-band";
+
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
-    private static final String GENERATOR_IDENTIFIER = "pdk-microsoft-band";
+
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.DATA_RETENTION_PERIOD";
+    private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String TIMESTAMP_KEY = "timestamps";
     private static final String X_KEY = "xs";
@@ -107,33 +114,33 @@ public class MicrosoftBand extends Generator
     private static final String RESISTANCE_KEY = "resistance";
     private static final String INTERVAL_KEY = "interval";
 
-    private static String ACCELEROMETER_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.ACCELEROMETER_ENABLED";
+    private static final String ACCELEROMETER_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.ACCELEROMETER_ENABLED";
     private static final boolean ACCELEROMETER_ENABLED_DEFAULT = true;
-    private static String HEART_RATE_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.HEART_RATE_ENABLED";
+    private static final String HEART_RATE_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.HEART_RATE_ENABLED";
     private static final boolean HEART_RATE_ENABLED_ENABLED_DEFAULT = true;
-    private static String ALTIMETER_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.ALTIMETER_ENABLED";
+    private static final String ALTIMETER_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.ALTIMETER_ENABLED";
     private static final boolean ALTIMETER_ENABLED_DEFAULT = true;
-    private static String AMBIENT_LIGHT_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.AMBIENT_LIGHT_ENABLED";
+    private static final String AMBIENT_LIGHT_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.AMBIENT_LIGHT_ENABLED";
     private static final boolean AMBIENT_LIGHT_ENABLED_DEFAULT = true;
-    private static String BAROMETER_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.BAROMETER_ENABLED";
+    private static final String BAROMETER_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.BAROMETER_ENABLED";
     private static final boolean BAROMETER_ENABLED_DEFAULT = true;
-    private static String CALORIES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.CALORIES_ENABLED";
+    private static final String CALORIES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.CALORIES_ENABLED";
     private static final boolean CALORIES_ENABLED_DEFAULT = true;
-    private static String CONTACT_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.CONTACT_ENABLED";
+    private static final String CONTACT_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.CONTACT_ENABLED";
     private static final boolean CONTACT_ENABLED_DEFAULT = true;
-    private static String DISTANCE_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.DISTANCE_ENABLED";
+    private static final String DISTANCE_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.DISTANCE_ENABLED";
     private static final boolean DISTANCE_ENABLED_DEFAULT = true;
-    private static String GALVANIC_SKIN_RESPONSE_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.GALVANIC_SKIN_RESPONSE_ENABLED";
+    private static final String GALVANIC_SKIN_RESPONSE_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.GALVANIC_SKIN_RESPONSE_ENABLED";
     private static final boolean GALVANIC_SKIN_RESPONSE_ENABLED_DEFAULT = true;
-    private static String GYROSCOPE_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.GYROSCOPE_ENABLED";
+    private static final String GYROSCOPE_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.GYROSCOPE_ENABLED";
     private static final boolean GYROSCOPE_ENABLED_DEFAULT = true;
-    private static String PEDOMETER_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.PEDOMETER_ENABLED";
+    private static final String PEDOMETER_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.PEDOMETER_ENABLED";
     private static final boolean PEDOMETER_ENABLED_DEFAULT = true;
-    private static String HEART_RATE_VARIABILITY_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.HEART_RATE_VARIABILITY_ENABLED";
+    private static final String HEART_RATE_VARIABILITY_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.HEART_RATE_VARIABILITY_ENABLED";
     private static final boolean HEART_RATE_VARIABILITY_ENABLED_DEFAULT = true;
-    private static String SKIN_TEMPERATURE_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.SKIN_TEMPERATURE_ENABLED";
+    private static final String SKIN_TEMPERATURE_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.SKIN_TEMPERATURE_ENABLED";
     private static final boolean SKIN_TEMPERATURE_ENABLED_DEFAULT = true;
-    private static String ULTRAVIOLET_LIGHT_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.ULTRAVIOLET_LIGHT_ENABLED";
+    private static final String ULTRAVIOLET_LIGHT_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.MicrosoftBand.ULTRAVIOLET_LIGHT_ENABLED";
     private static final boolean ULTRAVIOLET_LIGHT_ENABLED_DEFAULT = true;
 
 
@@ -144,21 +151,27 @@ public class MicrosoftBand extends Generator
     private BandClient mBandClient = null;
     private long mLastTransmission = 0;
 
-    private ArrayList<MicrosoftBand.AccelerometerDataPoint> mAccelerometerDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.AltimiterDataPoint> mAltimiterDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.AmbientLightDataPoint> mAmbientLightDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.BarometerDataPoint> mBarometerDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.CaloriesDataPoint> mCaloriesDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.ContactDataPoint> mContactDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.DistanceDataPoint> mDistanceDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.GalvanicSkinResponseDataPoint> mGalvanicSkinResponseDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.GyroscopeDataPoint> mGyroscopeDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.PedometerDataPoint> mPedometerDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.HeartRateDataPoint> mHeartRateDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.HeartRateVariabilityDataPoint> mHeartRateVariabilityDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.SkinTemperatureDataPoint> mSkinTemperatureDataPoints = new ArrayList<>();
-    private ArrayList<MicrosoftBand.UltravioletLightDataPoint> mUltravioletLightDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.AccelerometerDataPoint> mAccelerometerDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.AltimiterDataPoint> mAltimiterDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.AmbientLightDataPoint> mAmbientLightDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.BarometerDataPoint> mBarometerDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.CaloriesDataPoint> mCaloriesDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.ContactDataPoint> mContactDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.DistanceDataPoint> mDistanceDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.GalvanicSkinResponseDataPoint> mGalvanicSkinResponseDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.GyroscopeDataPoint> mGyroscopeDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.PedometerDataPoint> mPedometerDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.HeartRateDataPoint> mHeartRateDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.HeartRateVariabilityDataPoint> mHeartRateVariabilityDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.SkinTemperatureDataPoint> mSkinTemperatureDataPoints = new ArrayList<>();
+    private final ArrayList<MicrosoftBand.UltravioletLightDataPoint> mUltravioletLightDataPoints = new ArrayList<>();
 
+    @SuppressWarnings("unused")
+    public static String generatorIdentifier() {
+        return MicrosoftBand.GENERATOR_IDENTIFIER;
+    }
+
+    @SuppressWarnings("WeakerAccess")
     public static MicrosoftBand getInstance(Context context) {
         if (MicrosoftBand.sInstance == null) {
             MicrosoftBand.sInstance = new MicrosoftBand(context.getApplicationContext());
@@ -167,6 +180,7 @@ public class MicrosoftBand extends Generator
         return MicrosoftBand.sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public MicrosoftBand(Context context) {
         super(context);
     }
@@ -343,6 +357,7 @@ public class MicrosoftBand extends Generator
 
                                 if (me.canAccessSensor(sensors, MicrosoftBand.GalvanicSkinResponseDataPoint.class)) {
                                     try {
+                                        //noinspection deprecation
                                         sensors.registerGsrEventListener(new BandGsrEventListener() {
                                             @Override
                                             public void onBandGsrChanged(BandGsrEvent event) {
@@ -375,15 +390,13 @@ public class MicrosoftBand extends Generator
                             }
 
                         } else {
-                            // do work on failure
+                            // TODO: Do work on failure
                         }
                     } catch(InterruptedException|BandException e) {
                         Logger.getInstance(me.mContext).logThrowable(e);
                     }
-                }
-                else
-                {
-                    // Log error about being unable to connect to band...
+                } else {
+                    // TODO: Log error about being unable to connect to band...
                 }
             }
         };
@@ -547,6 +560,7 @@ public class MicrosoftBand extends Generator
 //        Generators.getInstance(this.mContext).transmitData(MicrosoftBand.GENERATOR_IDENTIFIER, bundle);
     }
 
+    @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(Context context)
     {
         return MicrosoftBand.getInstance(context).runDiagostics();
@@ -614,6 +628,7 @@ public class MicrosoftBand extends Generator
         return actions;
     }
 
+    @SuppressWarnings("UnusedParameters")
     public static void stop(Context context) {
         if (MicrosoftBand.sInstance != null) {
             if (MicrosoftBand.sInstance.mBandClient != null) {
@@ -629,12 +644,14 @@ public class MicrosoftBand extends Generator
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(MicrosoftBand.ENABLED, MicrosoftBand.ENABLED_DEFAULT);
     }
 
+    @SuppressWarnings("unused")
     public static boolean isRunning(Context context) {
         if (MicrosoftBand.sInstance == null) {
             return false;
@@ -645,10 +662,10 @@ public class MicrosoftBand extends Generator
 
     private static class DataPoint implements Comparable<DataPoint>
     {
-        protected long mTimestamp = -1;
+        long mTimestamp = -1;
 
         @Override
-        public int compareTo(DataPoint another) {
+        public int compareTo(@NonNull DataPoint another) {
             if (this.mTimestamp < another.mTimestamp)
             {
                 return -1;
@@ -1282,25 +1299,25 @@ public class MicrosoftBand extends Generator
         }
     }
 
+    @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_microsoft_band, parent, false);
     }
 
+    @SuppressWarnings({"unused", "ConstantConditions"})
     public static void bindViewHolder(DataPointViewHolder holder, Bundle dataPoint)
     {
         Context context = holder.itemView.getContext();
 
-        String identifier = dataPoint.getBundle(Generator.PDK_METADATA).getString(Generator.IDENTIFIER);
-
         double timestamp = dataPoint.getBundle(Generator.PDK_METADATA).getDouble(Generator.TIMESTAMP);
 
-        TextView dateLabel = (TextView) holder.itemView.findViewById(R.id.generator_data_point_date);
+        TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         dateLabel.setText(Generator.formatTimestamp(context, timestamp));
 
         // Heart rate...
-        TextView heartRateField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_heart_rate);
+        TextView heartRateField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_heart_rate);
         int[] heartRates = dataPoint.getBundle(HeartRateDataPoint.KEY).getIntArray(MicrosoftBand.HEART_RATE_KEY);
 
         if (heartRates.length > 0) {
@@ -1310,7 +1327,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Band contact state...
-        TextView bandStateField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_contact_state);
+        TextView bandStateField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_contact_state);
         short[] bandStates = dataPoint.getBundle(ContactDataPoint.KEY).getShortArray(MicrosoftBand.CONTACT_STATE_KEY);
 
         if (bandStates.length > 0) {
@@ -1331,7 +1348,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Steps...
-        TextView stepsField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_steps_today);
+        TextView stepsField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_steps_today);
         long[] steps = dataPoint.getBundle(PedometerDataPoint.KEY).getLongArray(MicrosoftBand.TODAY_STEPS_KEY);
 
         if (steps.length > 0) {
@@ -1341,7 +1358,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Motion type...
-        TextView motionsField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_distance_motion_type);
+        TextView motionsField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_distance_motion_type);
         String[] motions = dataPoint.getBundle(DistanceDataPoint.KEY).getStringArray(MicrosoftBand.MOTION_TYPE_KEY);
 
         if (motions.length > 0) {
@@ -1351,7 +1368,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Speed...
-        TextView speedField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_distance_speed);
+        TextView speedField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_distance_speed);
         float[] speeds = dataPoint.getBundle(DistanceDataPoint.KEY).getFloatArray(MicrosoftBand.SPEED_KEY);
 
         if (speeds.length > 0) {
@@ -1361,7 +1378,7 @@ public class MicrosoftBand extends Generator
         }
 
         // GSR...
-        TextView gsrField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_galavanic_skin_resistance);
+        TextView gsrField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_galavanic_skin_resistance);
         int[] gsrs = dataPoint.getBundle(GalvanicSkinResponseDataPoint.KEY).getIntArray(MicrosoftBand.RESISTANCE_KEY);
 
         if (gsrs.length > 0) {
@@ -1371,7 +1388,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Skin temperature...
-        TextView skinTempField = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_skin_temperature);
+        TextView skinTempField = holder.itemView.findViewById(R.id.generator_microsoft_band_value_skin_temperature);
         float[] skinTemps = dataPoint.getBundle(SkinTemperatureDataPoint.KEY).getFloatArray(MicrosoftBand.TEMPERATURE_KEY);
 
         if (skinTemps.length > 0) {
@@ -1381,7 +1398,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Altimiter...
-        TextView flightsAscended = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_altimeter_flights_ascended_today);
+        TextView flightsAscended = holder.itemView.findViewById(R.id.generator_microsoft_band_value_altimeter_flights_ascended_today);
         long[] flights = dataPoint.getBundle(AltimiterDataPoint.KEY).getLongArray(MicrosoftBand.FLIGHTS_ASCENDED_TODAY_KEY);
 
         if (flights.length > 0) {
@@ -1391,7 +1408,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Barometric pressure...
-        TextView barometricPressure = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_barometer_pressure);
+        TextView barometricPressure = holder.itemView.findViewById(R.id.generator_microsoft_band_value_barometer_pressure);
         double[] pressures = dataPoint.getBundle(BarometerDataPoint.KEY).getDoubleArray(MicrosoftBand.PRESSURE_KEY);
 
         if (pressures.length > 0) {
@@ -1401,7 +1418,7 @@ public class MicrosoftBand extends Generator
         }
 
         // Air temperature...
-        TextView airTemperature = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_barometer_temperature);
+        TextView airTemperature = holder.itemView.findViewById(R.id.generator_microsoft_band_value_barometer_temperature);
         double[] airTemps = dataPoint.getBundle(BarometerDataPoint.KEY).getDoubleArray(MicrosoftBand.TEMPERATURE_KEY);
 
         if (airTemps.length > 0) {
@@ -1411,17 +1428,17 @@ public class MicrosoftBand extends Generator
         }
 
         // Ambient brightness...
-        TextView brightness = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_ambient_light_brightness);
+        TextView brightness = holder.itemView.findViewById(R.id.generator_microsoft_band_value_ambient_light_brightness);
         int[] brights = dataPoint.getBundle(AmbientLightDataPoint.KEY).getIntArray(MicrosoftBand.BRIGHTNESS_KEY);
 
         if (brights.length > 0) {
-            brightness.setText(context.getString(R.string.generator_microsoft_band_value_ambient_light_brightness, brights[brights.length - 1]));
+            brightness.setText(context.getResources().getQuantityString(R.plurals.generator_microsoft_band_value_ambient_light_brightness, brights[brights.length - 1], brights[brights.length - 1]));
         } else {
             brightness.setText(context.getString(R.string.generator_value_not_applicable));
         }
 
         // UV level...
-        TextView uvLevel = (TextView) holder.itemView.findViewById(R.id.generator_microsoft_band_value_uv_level);
+        TextView uvLevel = holder.itemView.findViewById(R.id.generator_microsoft_band_value_uv_level);
         String[] uvs = dataPoint.getBundle(UltravioletLightDataPoint.KEY).getStringArray(MicrosoftBand.INDEX_LEVEL_KEY);
 
         if (uvs.length > 0) {
@@ -1435,4 +1452,31 @@ public class MicrosoftBand extends Generator
     public List<Bundle> fetchPayloads() {
         return new ArrayList<>();
     }
+
+    @Override
+    protected void flushCachedData() {
+        Log.e("PDK", "TODO: Implement data cache flush in MicrosoftBand!");
+
+//        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+//
+//        long retentionPeriod = prefs.getLong(MicrosoftBand.DATA_RETENTION_PERIOD, MicrosoftBand.DATA_RETENTION_PERIOD_DEFAULT);
+//
+//        long start = System.currentTimeMillis() - retentionPeriod;
+//
+//        String where = MicrosoftBand.HISTORY_OBSERVED + " < ?";
+//        String[] args = { "" + start };
+//
+//        this.mDatabase.delete(MicrosoftBand.TABLE_HISTORY, where, args);
+    }
+
+    @Override
+    public void setCachedDataRetentionPeriod(long period) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(MicrosoftBand.DATA_RETENTION_PERIOD, period);
+
+        e.apply();
+    }
+
 }

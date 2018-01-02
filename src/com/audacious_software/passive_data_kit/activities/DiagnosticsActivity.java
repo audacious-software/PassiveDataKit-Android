@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.activities;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,7 +20,10 @@ import com.audacious_software.pdk.passivedatakit.R;
 
 import java.util.ArrayList;
 
+@SuppressWarnings("unused")
 public class DiagnosticsActivity extends AppCompatActivity {
+    @SuppressWarnings("SameParameterValue")
+    @SuppressLint("AlwaysShowAction")
     public static void setUpDiagnositicsItem(Activity activity, Menu menu, boolean showAction) {
         final ArrayList<DiagnosticAction> actions = PassiveDataKit.diagnostics(activity);
 
@@ -79,14 +83,15 @@ public class DiagnosticsActivity extends AppCompatActivity {
         {
             this.mAction = action;
 
-            TextView title = (TextView) this.mView.findViewById(R.id.action_title);
+            TextView title = this.mView.findViewById(R.id.action_title);
             title.setText(action.getTitle());
 
-            TextView message = (TextView) this.mView.findViewById(R.id.action_message);
+            TextView message = this.mView.findViewById(R.id.action_message);
             message.setText(action.getMessage());
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.layout_diagnostics_pdk);
@@ -98,8 +103,8 @@ public class DiagnosticsActivity extends AppCompatActivity {
 
         final ArrayList<DiagnosticAction> actions = PassiveDataKit.diagnostics(this);
 
-        RecyclerView listView = (RecyclerView) this.findViewById(R.id.list_view);
-        TextView emptyMessage = (TextView) this.findViewById(R.id.message_no_diagnostics);
+        RecyclerView listView = this.findViewById(R.id.list_view);
+        TextView emptyMessage = this.findViewById(R.id.message_no_diagnostics);
 
         if (actions.size() > 0) {
             listView.setVisibility(View.VISIBLE);

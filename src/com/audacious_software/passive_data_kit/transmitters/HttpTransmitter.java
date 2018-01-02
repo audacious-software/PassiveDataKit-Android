@@ -5,6 +5,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.BadParcelableException;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.util.Log;
 
 import com.audacious_software.passive_data_kit.DeviceInformation;
@@ -26,14 +27,22 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.security.KeyStore;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -44,8 +53,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okio.Buffer;
 
+@SuppressWarnings({"PointlessBooleanExpression", "unused"})
 public class HttpTransmitter extends Transmitter implements Generators.GeneratorUpdatedListener {
     public static final String UPLOAD_URI = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.UPLOAD_URI";
     public static final String USER_ID = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.USER_ID";
@@ -69,7 +78,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     private Uri mUploadUri = null;
     private String mUserId = null;
     private String mHashAlgorithm = null;
-    private String mHashPrefix = "";
+    private String mHashPrefix = null;
     private boolean mStrictSsl = true;
     private Context mContext = null;
     private long mUploadInterval = 300000;
@@ -82,7 +91,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     private JsonGenerator mJsonGenerator = null;
     private File mCurrentFile = null;
+    private long mTransmitted = 0;
 
+    @SuppressWarnings({"TryWithIdenticalCatches", "StringConcatenationInLoop"})
     @Override
     public void initialize(Context context, HashMap<String, String> options) {
         if (!options.containsKey(HttpTransmitter.UPLOAD_URI)) {
@@ -103,8 +114,30 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             this.mHashPrefix = options.get(HttpTransmitter.HASH_PREFIX);
         }
 
+        if (this.mHashAlgorithm != null) {
+            try {
+                MessageDigest md = MessageDigest.getInstance(this.mHashAlgorithm);
+
+                if (this.mHashPrefix != null) {
+                    this.mUserId = this.mHashPrefix + this.mUserId;
+                }
+
+                byte[] digest = md.digest(this.mUserId.getBytes("UTF-8"));
+
+                this.mUserId = (new BigInteger(1, digest)).toString(16);
+
+                while (this.mUserId.length() < 64) {
+                    this.mUserId = "0" + this.mUserId;
+                }
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         if (options.containsKey(HttpTransmitter.STRICT_SSL_VERIFICATION)) {
-            this.mStrictSsl = "true".equals(options.get(HttpTransmitter.STRICT_SSL_VERIFICATION).toLowerCase());
+            this.mStrictSsl = "true".equals(options.get(HttpTransmitter.STRICT_SSL_VERIFICATION).toLowerCase(Locale.ENGLISH));
         }
 
         if (options.containsKey(HttpTransmitter.UPLOAD_INTERVAL)) {
@@ -112,15 +145,15 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         }
 
         if (options.containsKey(HttpTransmitter.WIFI_ONLY)) {
-            this.mWifiOnly = "true".equals(options.get(HttpTransmitter.WIFI_ONLY).toLowerCase());
+            this.mWifiOnly = "true".equals(options.get(HttpTransmitter.WIFI_ONLY).toLowerCase(Locale.ENGLISH));
         }
 
         if (options.containsKey(HttpTransmitter.CHARGING_ONLY)) {
-            this.mChargingOnly = "true".equals(options.get(HttpTransmitter.CHARGING_ONLY).toLowerCase());
+            this.mChargingOnly = "true".equals(options.get(HttpTransmitter.CHARGING_ONLY).toLowerCase(Locale.ENGLISH));
         }
 
         if (options.containsKey(HttpTransmitter.USE_EXTERNAL_STORAGE)) {
-            this.mUseExternalStorage = "true".equals(options.get(HttpTransmitter.USE_EXTERNAL_STORAGE).toLowerCase());
+            this.mUseExternalStorage = "true".equals(options.get(HttpTransmitter.USE_EXTERNAL_STORAGE).toLowerCase(Locale.ENGLISH));
         }
 
         if (options.containsKey(HttpTransmitter.STORAGE_FOLDER_NAME)) {
@@ -173,6 +206,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
         Runnable r = new Runnable()
         {
+            @SuppressWarnings("ResultOfMethodCallIgnored")
             @SuppressLint("TrulyRandom")
             public void run()
             {
@@ -221,17 +255,29 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
                         File payloadFile = new File(pendingFolder, filename);
 
-                        String payload = FileUtils.readFileToString(payloadFile, "UTF-8");
+                        BufferedReader reader = new BufferedReader(new FileReader(payloadFile));
+
+                        StringBuilder builder = new StringBuilder();
+                        String line = null;
+
+                        while ((line = reader.readLine()) != null) {
+                            builder.append(line).append("\n");
+                        }
+
+                        reader.close();
+
+                        String payload = builder.toString(); // FileUtils.readFileToString(payloadFile, "UTF-8");
 
                         int result = me.transmitHttpPayload(payload);
 
                         if (result == HttpTransmitter.RESULT_SUCCESS) {
+                            me.mTransmitted += payloadFile.length();
+
                             payloadFile.delete();
 
                             me.mLastAttempt = 0;
                             me.transmit(true);
-                        }
-                        else {
+                        } else {
                             try {
                                 new JSONArray(payload);
 
@@ -248,6 +294,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                 details.put("size", payloadFile.length());
 
                                 Logger.getInstance(me.mContext).log("corrupted_file", details);
+
+                                me.transmit(true);
                             }
                         }
                     } catch (IOException e) {
@@ -261,6 +309,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         t.start();
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private int transmitHttpPayload(String payload) {
         if (payload == null || payload.trim().length() == 0) {
             return HttpTransmitter.RESULT_SUCCESS;
@@ -319,7 +368,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 }
             }
 
-            builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, payload));
+            builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, (new JSONArray(payload)).toString(2)));
 
             RequestBody requestBody = builder.build();
 
@@ -339,7 +388,11 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() >= 200 && response.code() < 300) {
+            int code = response.code();
+
+            response.body().close();
+
+            if (code >= 200 && code < 300) {
                 for (File f : toDelete) {
                     f.delete();
                 }
@@ -353,47 +406,51 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         return HttpTransmitter.RESULT_ERROR;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private void closeOpenSession() throws IOException {
-        String extension = HttpTransmitter.JSON_EXTENSION;
-
-        File tempFile = this.mCurrentFile;
-
-        if (this.mJsonGenerator == null || tempFile == null) {
-            return;
-        }
-
-        final File pendingFolder = this.getPendingFolder();
-
-        this.mJsonGenerator.writeEndArray();
-        this.mJsonGenerator.flush();
-        this.mJsonGenerator.close();
-
-        String finalFile = tempFile.getAbsolutePath().replace(HttpTransmitter.TEMP_EXTENSION, extension);
-
-        this.mCurrentFile = null;
-        this.mJsonGenerator = null;
-
-        FileUtils.moveFile(tempFile, new File(finalFile));
-
-        final String finalTempExtension = HttpTransmitter.TEMP_EXTENSION;
-
-        String[] filenames = pendingFolder.list(new FilenameFilter() {
-            public boolean accept(File dir, String filename) {
-                return filename.endsWith(finalTempExtension);
+        synchronized(this) {
+            if (this.mCurrentFile == null) {
+                return;
             }
-        });
 
-        if (filenames == null) {
-            filenames = new String[0];
-        }
+            File tempFile = this.mCurrentFile;
 
-        for (String filename : filenames) {
-            File toDelete = new File(pendingFolder, filename);
-            toDelete.delete();
+            if (this.mJsonGenerator == null || tempFile == null) {
+                return;
+            }
+
+            final File pendingFolder = this.getPendingFolder();
+
+            this.mJsonGenerator.writeEndArray();
+            this.mJsonGenerator.flush();
+            this.mJsonGenerator.close();
+
+            String finalFile = tempFile.getAbsolutePath().replace(HttpTransmitter.TEMP_EXTENSION, HttpTransmitter.JSON_EXTENSION);
+
+            this.mCurrentFile = null;
+            this.mJsonGenerator = null;
+
+            FileUtils.moveFile(tempFile, new File(finalFile));
+
+            String[] filenames = pendingFolder.list(new FilenameFilter() {
+                public boolean accept(File dir, String filename) {
+                    return filename.endsWith(HttpTransmitter.TEMP_EXTENSION);
+                }
+            });
+
+            if (filenames == null) {
+                filenames = new String[0];
+            }
+
+            for (String filename : filenames) {
+                File toDelete = new File(pendingFolder, filename);
+                toDelete.delete();
+            }
         }
     }
 
-    public File getPendingFolder() {
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private File getPendingFolder() {
         File internalStorage = this.mContext.getFilesDir();
 
         if (this.mUseExternalStorage) {
@@ -413,53 +470,118 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         return pendingFolder;
     }
 
+    private static long getFileSize(final File file)
+    {
+        if (file == null || !file.exists()) {
+            return 0;
+        }
+
+        if (!file.isDirectory()) {
+            return file.length();
+        }
+
+        final List<File> dirs = new LinkedList<>();
+
+        dirs.add(file);
+
+        long result = 0;
+
+        while (!dirs.isEmpty()) {
+            final File dir = dirs.remove(0);
+
+            if (!dir.exists()) {
+                continue;
+            }
+
+            final File[] listFiles = dir.listFiles();
+
+            if (listFiles == null || listFiles.length == 0) {
+                continue;
+            }
+
+            for (final File child : listFiles) {
+                result += child.length();
+
+                if (child.isDirectory()) {
+                    dirs.add(child);
+                }
+            }
+        }
+
+        return result;
+    }
+
+
     @Override
     public long pendingSize() {
-        return 0;
+        return HttpTransmitter.getFileSize(this.getPendingFolder());
     }
 
     @Override
     public long transmittedSize() {
-        return 0;
+        return this.mTransmitted;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
-    public void onGeneratorUpdated(String identifier, long timestamp, Bundle data) {
-        if (data.keySet().size() > 1) {  // Only transmit non-empty bundles...
-            timestamp = timestamp / 1000; // Convert to seconds...
+    public void onGeneratorUpdated(final String identifier, final long timestamp, Bundle data) {
+        final HttpTransmitter me = this;
 
-            Generators generators = Generators.getInstance(this.mContext);
+        final Parcel p = Parcel.obtain();
+        p.writeBundle(data);
+        p.setDataPosition(0);
 
-            Bundle metadata = new Bundle();
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                Bundle clonedData = p.readBundle(getClass().getClassLoader());
 
-            if (data.containsKey(Generator.PDK_METADATA)) {
-                metadata = data.getBundle(Generator.PDK_METADATA);
-            }
+                if (clonedData.keySet().size() > 1) {  // Only transmit non-empty bundles...
+                    long generatorTimestamp = timestamp / 1000; // Convert to seconds...
 
-            metadata.putString(Generator.IDENTIFIER, identifier);
-            metadata.putDouble(Generator.TIMESTAMP, timestamp);
-            metadata.putString(Generator.GENERATOR, generators.getGeneratorFullName(identifier));
-            metadata.putString(Generator.SOURCE, generators.getSource());
-            metadata.putString(Generator.SOURCE, this.mUserId);
-            data.putBundle(Generator.PDK_METADATA, metadata);
+                    Generators generators = Generators.getInstance(me.mContext);
 
-            if (this.mJsonGenerator == null) {
-                this.mCurrentFile = new File(this.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
+                    Bundle metadata = new Bundle();
 
-                try {
-                    JsonFactory factory = new JsonFactory();
-                    this.mJsonGenerator = factory.createGenerator(this.mCurrentFile, JsonEncoding.UTF8);
-                    this.mJsonGenerator.writeStartArray();
-                } catch (IOException e) {
-                    Logger.getInstance(this.mContext).logThrowable(e);
+                    if (clonedData.containsKey(Generator.PDK_METADATA)) {
+                        metadata = clonedData.getBundle(Generator.PDK_METADATA);
+                    }
+
+                    metadata.putString(Generator.IDENTIFIER, identifier);
+                    metadata.putDouble(Generator.TIMESTAMP, generatorTimestamp);
+                    metadata.putString(Generator.GENERATOR, generators.getGeneratorFullName(identifier));
+                    metadata.putString(Generator.SOURCE, generators.getSource());
+                    metadata.putString(Generator.SOURCE, me.mUserId);
+                    clonedData.putBundle(Generator.PDK_METADATA, metadata);
+
+                    synchronized(me) {
+                        if (me.mJsonGenerator == null || me.mCurrentFile == null) {
+                            me.mCurrentFile = new File(me.getPendingFolder(), System.currentTimeMillis() + HttpTransmitter.TEMP_EXTENSION);
+
+                            try {
+                                JsonFactory factory = new JsonFactory();
+                                me.mJsonGenerator = factory.createGenerator(me.mCurrentFile, JsonEncoding.UTF8);
+                                me.mJsonGenerator.writeStartArray();
+                            } catch (IOException e) {
+                                Logger.getInstance(me.mContext).logThrowable(e);
+
+                                me.mCurrentFile = null;
+                            }
+                        }
+
+                        HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
+                    }
                 }
-            }
 
-            HttpTransmitter.writeBundle(this.mContext, this.mJsonGenerator, data);
-        }
+                p.recycle();
+            }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
     }
 
-    public static Map<String, Object> getValues(Context context, final Bundle bundle) {
+    private static Map<String, Object> getValues(Context context, final Bundle bundle) {
         HashMap<String, Object> values = new HashMap<>();
 
         if (bundle == null) {
@@ -478,7 +600,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     }
 
     @SuppressWarnings("unchecked")
-    public static void writeBundle(Context context, JsonGenerator generator, Bundle bundle)
+    private static void writeBundle(Context context, JsonGenerator generator, Bundle bundle)
     {
         try {
             generator.writeStartObject();
@@ -488,10 +610,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             for (String key : values.keySet()) {
                 Object value = values.get(key);
 
-                if (value == null || key == null) {
-                    // Skip
-                }
-                else {
+                if (value != null && key != null) {
                     if (value instanceof String) {
                         generator.writeStringField(key, (String) value);
                     }
@@ -604,9 +723,16 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             }
 
             generator.writeEndObject();
-        }
-        catch (IOException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
+
             Logger.getInstance(context).logThrowable(e);
+
+            HashMap<String, Object> payload = new HashMap<>();
+            payload.put("bundle_string", bundle.toString());
+            payload.put("exception_type", e.getClass().getName());
+
+            Logger.getInstance(context).log("pdk_http_transmitter_write_bundle_error", payload);
         }
     }
 
@@ -614,6 +740,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         this.mUserId = userId;
     }
 
+    @SuppressWarnings("unused")
     public static class IncompleteConfigurationException extends RuntimeException {
         public IncompleteConfigurationException(String message) {
             super(message);
