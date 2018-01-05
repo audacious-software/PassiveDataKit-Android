@@ -53,7 +53,6 @@ public class Generators {
                 Collections.addAll(this.mGenerators, this.mContext.getResources().getStringArray(R.array.pdk_app_generators));
 
                 for (String className : this.mGenerators) {
-                    //noinspection TryWithIdenticalCatches
                     try {
                         Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
 
@@ -123,7 +122,7 @@ public class Generators {
         return this.mSharedPreferences;
     }
 
-    @SuppressWarnings({"TryWithIdenticalCatches", "unchecked"})
+    @SuppressWarnings({"unchecked"})
     public ArrayList<DiagnosticAction> diagnostics() {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
@@ -210,7 +209,7 @@ public class Generators {
         return generatorClass;
     }
 
-    @SuppressWarnings({"TryWithIdenticalCatches", "unchecked", "unused"})
+    @SuppressWarnings({"unchecked", "unused"})
     public Generator getGenerator(String className) {
         if (this.mActiveGenerators.contains(className)) {
             try {

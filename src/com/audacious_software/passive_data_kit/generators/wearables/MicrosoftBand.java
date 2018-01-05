@@ -628,7 +628,6 @@ public class MicrosoftBand extends Generator
         return actions;
     }
 
-    @SuppressWarnings("UnusedParameters")
     public static void stop(Context context) {
         if (MicrosoftBand.sInstance != null) {
             if (MicrosoftBand.sInstance.mBandClient != null) {

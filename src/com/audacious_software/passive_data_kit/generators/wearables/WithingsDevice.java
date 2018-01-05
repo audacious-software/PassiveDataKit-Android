@@ -19,6 +19,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -423,7 +424,6 @@ public class WithingsDevice extends Generator {
         return this.mProperties.get(key);
     }
 
-    @SuppressWarnings("TryWithIdenticalCatches")
     @SuppressLint("SimpleDateFormat")
     private JSONObject queryApi(final String apiUrl) {
         final WithingsDevice me = this;
@@ -1157,6 +1157,12 @@ public class WithingsDevice extends Generator {
                     }
                 }
             } catch (JSONException e) {
+                try {
+                    Log.e("PDK", "WITHINGS SLEEP PAYLOAD: " + response.toString(2));
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+
                 AppEvent.getInstance(this.mContext).logThrowable(e);
             }
         }
@@ -1199,7 +1205,7 @@ public class WithingsDevice extends Generator {
         return prefs.getBoolean(WithingsDevice.ENABLED, WithingsDevice.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static boolean isRunning(Context context) {
         if (WithingsDevice.sInstance == null) {
             return false;
@@ -1220,7 +1226,6 @@ public class WithingsDevice extends Generator {
                 @Override
                 public void run() {
                     Runnable r = new Runnable() {
-                        @SuppressWarnings("TryWithIdenticalCatches")
                         @Override
                         public void run() {
                             try {
@@ -1353,7 +1358,6 @@ public class WithingsDevice extends Generator {
         final WithingsDevice me = this;
 
         Runnable r = new Runnable() {
-            @SuppressWarnings("TryWithIdenticalCatches")
             @Override
             public void run() {
                 try {
@@ -1527,7 +1531,6 @@ public class WithingsDevice extends Generator {
         pager.setCurrentItem(withings.mPage);
     }
 
-    @SuppressWarnings("UnusedParameters")
     private static String bindInformationPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
@@ -1709,7 +1712,6 @@ public class WithingsDevice extends Generator {
         this.mProperties.put(key, value);
     }
 
-    @SuppressWarnings("UnusedParameters")
     private static String bindIntradayPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
@@ -1945,7 +1947,6 @@ public class WithingsDevice extends Generator {
         return "" + card.getTag();
     }
 
-    @SuppressWarnings("UnusedParameters")
     private static String bindSleepPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
@@ -1957,7 +1958,6 @@ public class WithingsDevice extends Generator {
         return "" + card.getTag();
     }
 
-    @SuppressWarnings("UnusedParameters")
     private static String bindSleepSummaryPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
@@ -1969,7 +1969,6 @@ public class WithingsDevice extends Generator {
         return "" + card.getTag();
     }
 
-    @SuppressWarnings("UnusedParameters")
     private static String bindWorkoutsPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 

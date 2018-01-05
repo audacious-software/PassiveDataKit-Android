@@ -21,6 +21,7 @@ import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -187,17 +188,15 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                     if (me.mDatabase == null) {
                         me.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
 
-                        synchronized (me.mDatabase) {
-                            int version = me.getDatabaseVersion(me.mDatabase);
+                        int version = me.getDatabaseVersion(me.mDatabase);
 
-                            switch (version) {
-                                case 0:
-                                    me.mDatabase.execSQL(me.mContext.getString(R.string.pdk_generator_accelerometer_create_history_table));
-                            }
+                        switch (version) {
+                            case 0:
+                                me.mDatabase.execSQL(me.mContext.getString(R.string.pdk_generator_accelerometer_create_history_table));
+                        }
 
-                            if (version != Accelerometer.DATABASE_VERSION) {
-                                me.setDatabaseVersion(me.mDatabase, Accelerometer.DATABASE_VERSION);
-                            }
+                        if (version != Accelerometer.DATABASE_VERSION) {
+                            me.setDatabaseVersion(me.mDatabase, Accelerometer.DATABASE_VERSION);
                         }
                     }
 
@@ -341,7 +340,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         return prefs.getBoolean(Accelerometer.ENABLED, Accelerometer.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static boolean isRunning(Context context) {
         if (Accelerometer.sInstance == null) {
             return false;
@@ -755,7 +754,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
             public void run() {
                 long now = System.currentTimeMillis();
 
-                synchronized (me.mDatabase) {
+                synchronized (me) {
                     try {
                         me.mDatabase.beginTransaction();
 
@@ -832,11 +831,11 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                synchronized(me.mDatabase) {
+                synchronized(me) {
                     try {
                         me.mDatabase.delete(Accelerometer.TABLE_HISTORY, where, args);
                     } catch (SQLiteDatabaseLockedException e) {
-
+                        Log.e("PDK", "Accelerometer database is locked. Will try again later...");
                     }
                 }
             }

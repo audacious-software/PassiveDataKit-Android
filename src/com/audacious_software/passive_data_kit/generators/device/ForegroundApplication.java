@@ -179,7 +179,7 @@ public class ForegroundApplication extends Generator{
         return prefs.getBoolean(ForegroundApplication.ENABLED, ForegroundApplication.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static boolean isRunning(Context context) {
         if (ForegroundApplication.sInstance == null) {
             return false;

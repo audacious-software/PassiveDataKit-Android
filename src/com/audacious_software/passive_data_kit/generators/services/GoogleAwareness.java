@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-@SuppressWarnings("SimplifiableIfStatement")
 public class GoogleAwareness extends Generator {
     private static final String GENERATOR_IDENTIFIER = "google-awareness";
 

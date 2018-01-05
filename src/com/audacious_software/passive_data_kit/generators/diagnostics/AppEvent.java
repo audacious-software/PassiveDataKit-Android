@@ -133,12 +133,12 @@ public class AppEvent extends Generator{
         return prefs.getBoolean(AppEvent.ENABLED, AppEvent.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static boolean isRunning(Context context) {
         return (AppEvent.sInstance != null);
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
     }

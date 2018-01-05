@@ -316,7 +316,7 @@ public class TextMessages extends Generator {
         return prefs.getBoolean(TextMessages.ENABLED, TextMessages.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static boolean isRunning(Context context) {
         if (TextMessages.sInstance == null) {
             return false;

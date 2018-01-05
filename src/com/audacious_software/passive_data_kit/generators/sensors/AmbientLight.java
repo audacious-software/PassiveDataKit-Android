@@ -235,7 +235,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         return prefs.getBoolean(AmbientLight.ENABLED, AmbientLight.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static boolean isRunning(Context context) {
         if (AmbientLight.sInstance == null) {
             return false;

@@ -362,7 +362,7 @@ public class Battery extends Generator {
         return prefs.getBoolean(Battery.ENABLED, Battery.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static boolean isRunning(Context context) {
         if (Battery.sInstance == null) {
             return false;
@@ -371,7 +371,7 @@ public class Battery extends Generator {
         return Battery.sInstance.mReceiver != null;
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
     }

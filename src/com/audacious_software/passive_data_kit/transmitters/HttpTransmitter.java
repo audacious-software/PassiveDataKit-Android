@@ -37,8 +37,9 @@ import java.math.BigInteger;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -93,7 +94,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     private File mCurrentFile = null;
     private long mTransmitted = 0;
 
-    @SuppressWarnings({"TryWithIdenticalCatches", "StringConcatenationInLoop"})
+    @SuppressWarnings({"StringConcatenationInLoop"})
     @Override
     public void initialize(Context context, HashMap<String, String> options) {
         if (!options.containsKey(HttpTransmitter.UPLOAD_URI)) {
@@ -243,59 +244,54 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                             return;
                         }
 
-                        SecureRandom random = new SecureRandom();
+                        List<String> fileList = new ArrayList<>(Arrays.asList(filenames));
 
-                        int index = 0;
+                        Collections.shuffle(fileList);
 
-                        if (filenames.length > 1) {
-                            index = random.nextInt(filenames.length);
-                        }
+                        while (fileList.size() > 0) {
+                            String filename = fileList.remove(0);
 
-                        String filename = filenames[index];
+                            File payloadFile = new File(pendingFolder, filename);
 
-                        File payloadFile = new File(pendingFolder, filename);
+                            if (payloadFile.exists()) {
+                                BufferedReader reader = new BufferedReader(new FileReader(payloadFile));
 
-                        BufferedReader reader = new BufferedReader(new FileReader(payloadFile));
+                                StringBuilder builder = new StringBuilder();
+                                String line = null;
 
-                        StringBuilder builder = new StringBuilder();
-                        String line = null;
+                                while ((line = reader.readLine()) != null) {
+                                    builder.append(line).append("\n");
+                                }
 
-                        while ((line = reader.readLine()) != null) {
-                            builder.append(line).append("\n");
-                        }
+                                reader.close();
 
-                        reader.close();
+                                String payload = builder.toString();
 
-                        String payload = builder.toString(); // FileUtils.readFileToString(payloadFile, "UTF-8");
+                                int result = me.transmitHttpPayload(payload);
 
-                        int result = me.transmitHttpPayload(payload);
+                                if (result == HttpTransmitter.RESULT_SUCCESS) {
+                                    me.mTransmitted += payloadFile.length();
 
-                        if (result == HttpTransmitter.RESULT_SUCCESS) {
-                            me.mTransmitted += payloadFile.length();
+                                    payloadFile.delete();
+                                } else {
+                                    try {
+                                        new JSONArray(payload);
 
-                            payloadFile.delete();
+                                        // JSON is valid
+                                    } catch (JSONException e) {
+                                        // Invalid JSON, log results.
 
-                            me.mLastAttempt = 0;
-                            me.transmit(true);
-                        } else {
-                            try {
-                                new JSONArray(payload);
+                                        Logger.getInstance(me.mContext).logThrowable(e);
 
-                                // JSON is valid
-                            } catch (JSONException e) {
-                                // Invalid JSON, log results.
+                                        HashMap<String, Object> details = new HashMap<>();
+                                        payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
 
-                                Logger.getInstance(me.mContext).logThrowable(e);
+                                        details.put("name", payloadFile.getAbsolutePath());
+                                        details.put("size", payloadFile.length());
 
-                                HashMap<String, Object> details = new HashMap<>();
-                                payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
-
-                                details.put("name", payloadFile.getAbsolutePath());
-                                details.put("size", payloadFile.length());
-
-                                Logger.getInstance(me.mContext).log("corrupted_file", details);
-
-                                me.transmit(true);
+                                        Logger.getInstance(me.mContext).log("corrupted_file", details);
+                                    }
+                                }
                             }
                         }
                     } catch (IOException e) {

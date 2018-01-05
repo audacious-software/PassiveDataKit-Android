@@ -1,10 +1,10 @@
 package com.audacious_software.passive_data_kit;
 
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
 import com.audacious_software.pdk.passivedatakit.R;
 
@@ -33,7 +33,15 @@ public class ForegroundService extends Service {
             builder.setColor(intent.getIntExtra(PassiveDataKit.NOTIFICATION_COLOR, 0));
         }
 
-        Log.e("PDK", "START STICKY SERVICE");
+        PendingIntent pendingIntent = PassiveDataKit.getInstance(this).getForegroundPendingIntent();
+
+        if (pendingIntent == null) {
+            Intent launchIntent = this.getPackageManager().getLaunchIntentForPackage(this.getApplicationContext().getPackageName());
+
+            pendingIntent = PendingIntent.getActivity(this, 0, launchIntent, 0);
+        }
+
+        builder.setContentIntent(pendingIntent);
 
         this.startForeground(ForegroundService.NOTIFICATION_ID, builder.build());
 

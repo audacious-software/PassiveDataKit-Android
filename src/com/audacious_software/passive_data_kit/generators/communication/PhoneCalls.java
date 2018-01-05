@@ -369,7 +369,7 @@ public class PhoneCalls extends Generator {
         return prefs.getBoolean(PhoneCalls.ENABLED, PhoneCalls.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static boolean isRunning(Context context) {
         if (PhoneCalls.sInstance == null) {
             return false;

@@ -252,7 +252,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return prefs.getBoolean(Location.ENABLED, Location.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"Contract", "WeakerAccess"})
+    @SuppressWarnings({"WeakerAccess"})
     public static boolean isRunning(Context context) {
         if (Location.sInstance == null) {
             return false;

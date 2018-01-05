@@ -35,7 +35,7 @@ public class DataDisclosureDetailActivity extends AppCompatActivity {
 
     private Class<? extends Generator> mGeneratorClass = null;
 
-    @SuppressWarnings({"unchecked", "TryWithIdenticalCatches", "ConstantConditions"})
+    @SuppressWarnings({"unchecked", "ConstantConditions"})
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 

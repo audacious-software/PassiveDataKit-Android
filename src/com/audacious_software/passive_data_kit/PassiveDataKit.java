@@ -1,6 +1,7 @@
 package com.audacious_software.passive_data_kit;
 
 import android.annotation.SuppressLint;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -26,6 +27,7 @@ public class PassiveDataKit {
     private String mForegroundChannelId = null;
     private int mForegroundIconId = 0;
     private int mForegroundColor = 0;
+    private PendingIntent mForegroundPendingIntent = null;
 
     public void start() {
         synchronized (this) {
@@ -107,6 +109,14 @@ public class PassiveDataKit {
     @SuppressWarnings("unused")
     public void setForegroundServiceColor(int color) {
         this.mForegroundColor = color;
+    }
+
+    public PendingIntent getForegroundPendingIntent() {
+        return this.mForegroundPendingIntent;
+    }
+
+    public void setForegroundPendingIntent(PendingIntent pendingIntent) {
+        this.mForegroundPendingIntent = pendingIntent;
     }
 
     private static class PassiveDataKitHolder {

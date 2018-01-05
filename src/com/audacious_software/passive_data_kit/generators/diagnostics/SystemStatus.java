@@ -208,7 +208,7 @@ public class SystemStatus extends Generator {
         return prefs.getBoolean(SystemStatus.ENABLED, SystemStatus.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static boolean isRunning(Context context) {
         if (SystemStatus.sInstance == null) {
             return false;
@@ -217,7 +217,7 @@ public class SystemStatus extends Generator {
         return SystemStatus.sInstance.mReceiver != null;
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
     }

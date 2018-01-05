@@ -193,7 +193,7 @@ public class ScreenState extends Generator{
         return prefs.getBoolean(ScreenState.ENABLED, ScreenState.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static boolean isRunning(Context context) {
         if (ScreenState.sInstance == null) {
             return false;
@@ -202,7 +202,7 @@ public class ScreenState extends Generator{
         return ScreenState.sInstance.mReceiver != null;
     }
 
-    @SuppressWarnings({"UnusedParameters", "unused"})
+    @SuppressWarnings({"unused"})
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return new ArrayList<>();
     }

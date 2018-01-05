@@ -66,7 +66,6 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
 
                 @SuppressLint("InflateParams") View dataView = LayoutInflater.from(holder.itemView.getContext()).inflate(R.layout.pdk_placeholder_disclosure_view, null);
 
-                //noinspection TryWithIdenticalCatches
                 try {
                     Method bindViewHolder = finalClass.getDeclaredMethod("getDisclosureDataView", GeneratorViewHolder.class);
 
@@ -118,7 +117,6 @@ public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder>
         return Generators.getInstance(null).activeGenerators().size();
     }
 
-    @SuppressWarnings("UnusedParameters")
     private void sortGenerators(final Context context, List<Class<? extends Generator>> generators) {
         Collections.sort(generators, new Comparator<Class<? extends Generator>>() {
             @Override

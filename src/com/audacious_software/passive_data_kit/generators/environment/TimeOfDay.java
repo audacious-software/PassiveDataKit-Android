@@ -199,7 +199,7 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         return prefs.getBoolean(TimeOfDay.ENABLED, TimeOfDay.ENABLED_DEFAULT);
     }
 
-    @SuppressWarnings({"Contract", "WeakerAccess"})
+    @SuppressWarnings({"WeakerAccess"})
     public static boolean isRunning(Context context) {
         if (TimeOfDay.sInstance == null) {
             return false;
@@ -452,7 +452,7 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         }
     }
 
-    @SuppressWarnings({"UnusedAssignment", "unused"})
+    @SuppressWarnings({"unused"})
     public static void bindViewHolder(DataPointViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
