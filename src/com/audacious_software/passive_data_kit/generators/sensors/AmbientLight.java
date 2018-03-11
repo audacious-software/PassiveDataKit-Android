@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteFullException;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -579,7 +581,11 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
                     me.mDatabase.setTransactionSuccessful();
                 } finally {
-                    me.mDatabase.endTransaction();
+                    try {
+                        me.mDatabase.endTransaction();
+                    } catch (SQLiteException e) {
+                        // No transaction is active...
+                    }
                 }
 
                 Bundle update = new Bundle();
@@ -605,13 +611,24 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                     String where = AmbientLight.HISTORY_OBSERVED + " < ?";
                     String[] args = { "" + start };
 
-                    me.mDatabase.delete(AmbientLight.TABLE_HISTORY, where, args);
+                    try {
+                        me.mDatabase.delete(AmbientLight.TABLE_HISTORY, where, args);
+                    } catch (SQLiteFullException e) {
+                        // Try again later...
+                    }
                 }
             }
         };
 
-        Thread t = new Thread(r, "ambient-light-save-buffer");
-        t.start();
+        try {
+            Thread t = new Thread(r, "ambient-light-save-buffer");
+            t.start();
+        } catch (OutOfMemoryError e) {
+            System.gc();
+
+            Thread t = new Thread(r, "ambient-light-save-buffer");
+            t.start();
+        }
     }
 
     @Override

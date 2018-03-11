@@ -10,6 +10,7 @@ import android.util.Log;
 
 import com.audacious_software.passive_data_kit.DeviceInformation;
 import com.audacious_software.passive_data_kit.Logger;
+import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.transmitters.util.LiberalSSLSocketFactory;
@@ -294,6 +295,10 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                 }
                             }
                         }
+                    } catch (OutOfMemoryError e) {
+                        // Clean up memory and try again later...
+
+                        System.gc();
                     } catch (IOException e) {
                         Logger.getInstance(me.mContext).logThrowable(e);
                     }
@@ -570,11 +575,20 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 }
 
                 p.recycle();
+
+                System.gc();
             }
         };
 
-        Thread t = new Thread(r);
-        t.start();
+        try {
+            Thread t = new Thread(r);
+            t.start();
+        } catch (OutOfMemoryError e) {
+            System.gc();
+
+            Thread t = new Thread(r);
+            t.start();
+        }
     }
 
     private static Map<String, Object> getValues(Context context, final Bundle bundle) {

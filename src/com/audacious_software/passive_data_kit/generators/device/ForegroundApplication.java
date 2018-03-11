@@ -138,8 +138,12 @@ public class ForegroundApplication extends Generator{
                     }
                 };
 
-                Thread t = new Thread(r);
-                t.start();
+                try {
+                    Thread t = new Thread(r);
+                    t.start();
+                } catch (OutOfMemoryError e) {
+                    // Try again later...
+                }
             }
         });
 

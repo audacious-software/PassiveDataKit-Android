@@ -605,6 +605,8 @@ public class WithingsDevice extends Generator {
                 AppEvent.getInstance(me.mContext).logThrowable(e);
             } catch (JSONException e) {
                 AppEvent.getInstance(me.mContext).logThrowable(e);
+            } catch (OutOfMemoryError e) {
+                // Try again next cycle...
             }
         }
 

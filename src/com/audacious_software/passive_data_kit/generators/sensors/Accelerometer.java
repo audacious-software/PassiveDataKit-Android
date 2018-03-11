@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseLockedException;
+import android.database.sqlite.SQLiteException;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -265,6 +266,8 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
                                     try {
                                         me.mIntervalThread.start();
+                                    } catch (NullPointerException e) {
+                                        // Thread not created...
                                     } catch (IllegalThreadStateException e) {
                                         // Thread already started...
                                     }
@@ -415,13 +418,12 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
         final View cardContent = itemView.findViewById(R.id.card_content);
         final View cardEmpty = itemView.findViewById(R.id.card_empty);
-        TextView dateLabel = itemView.findViewById(R.id.generator_data_point_date);
+
+        final TextView dateLabel = itemView.findViewById(R.id.generator_data_point_date);
 
         if (context instanceof Activity) {
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
-
-            dateLabel.setText(Generator.formatTimestamp(context, Accelerometer.latestPointGenerated(generator.mContext) / 1000));
 
             final LineChart chart = holder.itemView.findViewById(R.id.accelerometer_chart);
             chart.setNoDataText(context.getString(R.string.pdk_generator_chart_loading_data));
@@ -431,6 +433,17 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                 @SuppressWarnings({"ConstantConditions", "SuspiciousNameCombination"})
                 @Override
                 public void run() {
+                    Activity activity = (Activity) context;
+
+                    final long lastGenerated = Accelerometer.latestPointGenerated(generator.mContext);
+
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            dateLabel.setText(Generator.formatTimestamp(context, lastGenerated / 1000));
+                        }
+                    });
+
                     final ArrayList<Entry> xLowValues = new ArrayList<>();
                     final ArrayList<Entry> xHighValues = new ArrayList<>();
 
@@ -559,8 +572,6 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                     }
 
                     c.close();
-
-                    Activity activity = (Activity) context;
 
                     final float finalMaxValue = maxValue;
                     final float finalMinValue = minValue;
@@ -774,9 +785,15 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                         me.mDatabase.setTransactionSuccessful();
                     } catch (SQLiteDatabaseLockedException e) {
                         // Skip storing this value and move onto next one...
+                    } catch (NullPointerException e) {
+                        // Skip storing this value and move onto next one...
                     } finally {
                         if (me.mDatabase.inTransaction()) {
-                            me.mDatabase.endTransaction();
+                            try {
+                                me.mDatabase.endTransaction();
+                            } catch (SQLiteException e) {
+                                // No active transaction...
+                            }
                         }
                     }
                 }

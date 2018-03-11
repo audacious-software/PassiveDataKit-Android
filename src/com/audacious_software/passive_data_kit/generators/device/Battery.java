@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteFullException;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -310,7 +311,11 @@ public class Battery extends Generator {
                                 String where = Battery.HISTORY_OBSERVED + " < ?";
                                 String[] args = {"" + start};
 
-                                me.mDatabase.delete(Battery.TABLE_HISTORY, where, args);
+                                try {
+                                    me.mDatabase.delete(Battery.TABLE_HISTORY, where, args);
+                                } catch (SQLiteFullException e) {
+                                    // Cannot delete now - try again later...
+                                }
                             }
 
                             me.mLastLevel = level;
