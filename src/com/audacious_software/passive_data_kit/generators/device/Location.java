@@ -316,7 +316,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     @Override
     public void onConnected(Bundle bundle) {
-        final LocationRequest request = new LocationRequest();
+        final LocationRequest request = LocationRequest.create();
         request.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
         request.setFastestInterval(this.mUpdateInterval);
