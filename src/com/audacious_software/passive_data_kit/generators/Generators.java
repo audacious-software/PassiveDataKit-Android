@@ -123,7 +123,7 @@ public class Generators {
     }
 
     @SuppressWarnings({"unchecked"})
-    public ArrayList<DiagnosticAction> diagnostics() {
+    public ArrayList<DiagnosticAction> diagnostics(final Context context) {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
         synchronized (this.mActiveGenerators) {
@@ -132,7 +132,7 @@ public class Generators {
                     Class<Generator> generatorClass = (Class<Generator>) Class.forName(className);
 
                     Method diagnostics = generatorClass.getDeclaredMethod("diagnostics", Context.class);
-                    Collection<DiagnosticAction> generatorActions = (Collection<DiagnosticAction>) diagnostics.invoke(null, this.mContext);
+                    Collection<DiagnosticAction> generatorActions = (Collection<DiagnosticAction>) diagnostics.invoke(null, context);
 
                     actions.addAll(generatorActions);
                 } catch (ClassNotFoundException e) {

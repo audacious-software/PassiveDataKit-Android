@@ -74,7 +74,7 @@ public class PassiveDataKit {
     {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
-        actions.addAll(Generators.getInstance(context).diagnostics());
+        actions.addAll(Generators.getInstance(context).diagnostics(context));
 
         return actions;
     }
