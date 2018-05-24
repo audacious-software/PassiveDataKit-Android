@@ -18,10 +18,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -97,6 +99,9 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     private long mBaseTimestamp = 0;
     private long mLatestTimestamp = 0;
 
+    private Thread mLooperThread = null;
+    private Handler mHandler = null;
+
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return AmbientLight.GENERATOR_IDENTIFIER;
@@ -114,6 +119,24 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     @SuppressWarnings("WeakerAccess")
     public AmbientLight(Context context) {
         super(context);
+
+        final AmbientLight me = this;
+
+        this.mLooperThread = new Thread() {
+            public void run() {
+                Looper.prepare();
+
+                me.mHandler = new Handler(Looper.myLooper()) {
+                    public void handleMessage(Message message) {
+                        Log.e("PDK", "[AMBIENT-LIGHT] HANDLE MESSAGE: " + message);
+                    }
+                };
+
+                Looper.loop();
+            }
+        };
+
+        this.mLooperThread.start();
     }
 
     @SuppressWarnings("unused")
@@ -482,8 +505,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                 }
             };
 
-            Thread t = new Thread(r, "render-ambient-light-graph");
-            t.start();
+            generator.mHandler.post(r);
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);
@@ -493,8 +515,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     }
 
     @SuppressWarnings("unused")
-    public static View fetchView(ViewGroup parent)
-    {
+    public static View fetchView(ViewGroup parent) {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_sensors_ambient_light, parent, false);
     }
 
@@ -620,15 +641,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             }
         };
 
-        try {
-            Thread t = new Thread(r, "ambient-light-save-buffer");
-            t.start();
-        } catch (OutOfMemoryError e) {
-            System.gc();
-
-            Thread t = new Thread(r, "ambient-light-save-buffer");
-            t.start();
-        }
+        this.mHandler.post(r);
     }
 
     @Override

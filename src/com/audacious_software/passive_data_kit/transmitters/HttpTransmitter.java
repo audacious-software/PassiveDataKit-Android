@@ -5,6 +5,9 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.BadParcelableException;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.os.Parcel;
 import android.util.Log;
 
@@ -94,6 +97,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     private JsonGenerator mJsonGenerator = null;
     private File mCurrentFile = null;
     private long mTransmitted = 0;
+    private Thread mLooperThread = null;
+    private Handler mHandler = null;
 
     @SuppressWarnings({"StringConcatenationInLoop"})
     @Override
@@ -169,6 +174,27 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         this.mContext = context.getApplicationContext();
 
         Generators.getInstance(this.mContext).addNewGeneratorUpdatedListener(this);
+
+        final HttpTransmitter me = this;
+
+        if (this.mLooperThread == null) {
+            this.mLooperThread = new Thread() {
+                public void run() {
+                    Looper.prepare();
+
+                    me.mHandler = new Handler(Looper.myLooper()) {
+                        public void handleMessage(Message message) {
+                            Log.e("PDK", "[HTTP] HANDLE MESSAGE: " + message);
+                            // process incoming messages here
+                        }
+                    };
+
+                    Looper.loop();
+                }
+            };
+        }
+
+        this.mLooperThread.start();
     }
 
     private boolean shouldAttemptUpload(boolean force) {
@@ -306,8 +332,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             }
         };
 
-        Thread t = new Thread(r);
-        t.start();
+        this.mHandler.post(r);
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -580,15 +605,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             }
         };
 
-        try {
-            Thread t = new Thread(r);
-            t.start();
-        } catch (OutOfMemoryError e) {
-            System.gc();
-
-            Thread t = new Thread(r);
-            t.start();
-        }
+        this.mHandler.post(r);
     }
 
     private static Map<String, Object> getValues(Context context, final Bundle bundle) {

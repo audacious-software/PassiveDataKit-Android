@@ -18,6 +18,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -112,6 +113,9 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
     private long mLatestTimestamp = 0;
     private Thread mIntervalThread = null;
 
+    private Thread mLooperThread = null;
+    private Handler mHandler = null;
+
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return Accelerometer.GENERATOR_IDENTIFIER;
@@ -128,6 +132,24 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
     private Accelerometer(Context context) {
         super(context);
+
+        final Accelerometer me = this;
+
+        this.mLooperThread = new Thread() {
+            public void run() {
+                Looper.prepare();
+
+                me.mHandler = new Handler(Looper.myLooper()) {
+                    public void handleMessage(Message message) {
+                        Log.e("PDK", "[ACCELEROMETER] HANDLE MESSAGE: " + message);
+                    }
+                };
+
+                Looper.loop();
+            }
+        };
+
+        this.mLooperThread.start();
     }
 
     @SuppressWarnings("unused")
@@ -823,8 +845,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
             }
         };
 
-        Thread t = new Thread(r, "accelerometer-save-buffer");
-        t.start();
+        this.mHandler.post(r);
     }
 
     @Override
@@ -858,8 +879,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
             }
         };
 
-        Thread t = new Thread(r);
-        t.start();
+        this.mHandler.post(r);
     }
 
     @Override
