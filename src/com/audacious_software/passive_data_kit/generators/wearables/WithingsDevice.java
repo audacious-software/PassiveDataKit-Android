@@ -1160,7 +1160,7 @@ public class WithingsDevice extends Generator {
                 }
             } catch (JSONException e) {
                 try {
-                    Log.e("PDK", "WITHINGS SLEEP PAYLOAD: " + response.toString(2));
+                    response.toString(2);
                 } catch (JSONException e1) {
                     e1.printStackTrace();
                 }
