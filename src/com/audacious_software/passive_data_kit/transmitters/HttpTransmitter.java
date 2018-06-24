@@ -223,7 +223,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             this.mLastAttempt = 0;
         }
 
-        if (now - this.mLastAttempt < this.mUploadInterval || !this.shouldAttemptUpload(force)) {
+        if (this.mHandler == null || now - this.mLastAttempt < this.mUploadInterval || !this.shouldAttemptUpload(force)) {
             return;
         }
 
