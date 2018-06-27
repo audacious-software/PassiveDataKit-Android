@@ -73,6 +73,8 @@ android {
         api 'com.google.android.gms:play-services-nearby:15.0.1'
         api 'com.google.android.gms:play-services-places:15.0.1'
         api 'com.google.android.gms:play-services-awareness:15.0.1'
+        api 'com.google.android.gms:play-services-fitness:15.0.1'
+        api 'com.google.android.gms:play-services-auth:15.0.1'
         api 'com.google.maps.android:android-maps-utils:0.4'
         api 'com.squareup.okhttp3:okhttp:3.10.0'
         api 'commons-io:commons-io:2.6'

@@ -221,5 +221,12 @@
 
     <string name="label_sunrise">Sunrise:</string>
     <string name="label_sunset">Sunset:</string>
+
+    <!-- Google Fit Resources -->
+    <string name="generator_services_google_fit">Google Fit</string>
+    <string name="diagnostic_missing_google_fit_permission_title">Google Fit Permission Required</string>
+    <string name="diagnostic_missing_google_fit_permission">This app requires access to your Google Fit health and fitness data to function properly.</string>
+    <string name="diagnostic_missing_google_fit_app_title">Google Fit Not Installed</string>
+    <string name="diagnostic_missing_google_fit_app">Please install and enable the Google Fit application to continue.</string>
 </resources>
 
