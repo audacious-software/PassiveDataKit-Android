@@ -43,4 +43,11 @@
 
     <!-- Time of Day Status Generator -->
     <string name="pdk_generator_time_of_day_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, sunrise INTEGER, sunset INTEGER);</string>
+
+    <!-- Google Fit -->
+    <string name="pdk_generator_google_fit_step_count_history_table">CREATE TABLE step_count_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, date_start INTEGER, date_end INTEGER, steps REAL);</string>
+    <string name="pdk_generator_google_fit_step_cadence_history_table">CREATE TABLE step_cadence_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, timestamp INTEGER, steps_per_minute REAL);</string>
+    <string name="pdk_generator_google_fit_speed_history_table">CREATE TABLE speed_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, timestamp INTEGER, speed REAL);</string>
+    <string name="pdk_generator_google_fit_calories_expended_history_table">CREATE TABLE calories_expended_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, observed INTEGER, transmitted INTEGER, date_start INTEGER, date_end INTEGER, kcal REAL);</string>
+    <string name="pdk_generator_google_fit_distance_history_table">CREATE TABLE distance_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, date_start INTEGER, date_end INTEGER, distance REAL);</string>
 </resources>
