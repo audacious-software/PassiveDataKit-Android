@@ -29,6 +29,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
@@ -772,14 +773,18 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         }
 
         synchronized (this) {
-            this.mXValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[0];
-            this.mYValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[1];
-            this.mZValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[2];
-            this.mAccuracyBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = accuracy;
-            this.mRawTimestampBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = rawTimestamp;
-            this.mTimestampBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = normalizedTimestamp;
+            try {
+                this.mXValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[0];
+                this.mYValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[1];
+                this.mZValueBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = sensorEvent.values[2];
+                this.mAccuracyBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = accuracy;
+                this.mRawTimestampBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = rawTimestamp;
+                this.mTimestampBuffers[this.mActiveBuffersIndex][this.mCurrentBufferIndex] = normalizedTimestamp;
 
-            this.mCurrentBufferIndex += 1;
+                this.mCurrentBufferIndex += 1;
+            } catch (NullPointerException ex) {
+                Logger.getInstance(this.mContext).logThrowable(ex);
+            }
         }
     }
 
