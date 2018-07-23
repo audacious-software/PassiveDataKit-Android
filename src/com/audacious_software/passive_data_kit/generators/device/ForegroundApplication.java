@@ -126,7 +126,9 @@ public class ForegroundApplication extends Generator{
                         values.put(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
                         values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
 
-                        me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
+                        if (me.mDatabase.isOpen()) {
+                            me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
+                        }
 
                         Bundle update = new Bundle();
                         update.putLong(ForegroundApplication.HISTORY_OBSERVED, now);

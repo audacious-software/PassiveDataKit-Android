@@ -99,6 +99,31 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     private Thread mLooperThread = null;
     private Handler mHandler = null;
 
+    public HttpTransmitter() {
+        super();
+
+        final HttpTransmitter me = this;
+
+        if (this.mLooperThread == null) {
+            this.mLooperThread = new Thread() {
+                public void run() {
+                    Looper.prepare();
+
+                    me.mHandler = new Handler(Looper.myLooper()) {
+                        public void handleMessage(Message message) {
+                            Log.e("PDK", "[HTTP] HANDLE MESSAGE: " + message);
+                            // process incoming messages here
+                        }
+                    };
+
+                    Looper.loop();
+                }
+            };
+        }
+
+        this.mLooperThread.start();
+    }
+
     @SuppressWarnings({"StringConcatenationInLoop"})
     @Override
     public void initialize(Context context, HashMap<String, String> options) {
@@ -173,27 +198,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         this.mContext = context.getApplicationContext();
 
         Generators.getInstance(this.mContext).addNewGeneratorUpdatedListener(this);
-
-        final HttpTransmitter me = this;
-
-        if (this.mLooperThread == null) {
-            this.mLooperThread = new Thread() {
-                public void run() {
-                    Looper.prepare();
-
-                    me.mHandler = new Handler(Looper.myLooper()) {
-                        public void handleMessage(Message message) {
-                            Log.e("PDK", "[HTTP] HANDLE MESSAGE: " + message);
-                            // process incoming messages here
-                        }
-                    };
-
-                    Looper.loop();
-                }
-            };
-        }
-
-        this.mLooperThread.start();
     }
 
     private boolean shouldAttemptUpload(boolean force) {
@@ -568,6 +572,10 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onGeneratorUpdated(final String identifier, final long timestamp, Bundle data) {
+        if (this.mHandler == null) {
+            return;
+        }
+
         final HttpTransmitter me = this;
 
         Log.e("PDK", "HTTP TRANSMITTER: " + identifier);
