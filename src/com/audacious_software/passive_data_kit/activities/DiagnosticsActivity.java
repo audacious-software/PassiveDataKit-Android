@@ -57,7 +57,6 @@ public class DiagnosticsActivity extends AppCompatActivity {
     }
 
     private class DiagnosticViewHolder extends RecyclerView.ViewHolder {
-
         private View mView = null;
         private DiagnosticAction mAction = null;
 

@@ -125,7 +125,7 @@ public class Generators {
 
     @SuppressWarnings({"unchecked"})
     public ArrayList<DiagnosticAction> diagnostics(final Context context) {
-        ArrayList<DiagnosticAction> actions = new ArrayList<>();
+        HashSet<DiagnosticAction> actions = new HashSet<>();
 
         synchronized (this.mActiveGenerators) {
             for (String className : this.mActiveGenerators) {
@@ -134,6 +134,8 @@ public class Generators {
 
                     Method diagnostics = generatorClass.getDeclaredMethod("diagnostics", Context.class);
                     Collection<DiagnosticAction> generatorActions = (Collection<DiagnosticAction>) diagnostics.invoke(null, context);
+
+                    Log.e("PDK", "ADDING " + generatorActions.size() + " ITEMS FROM " + generatorClass);
 
                     actions.addAll(generatorActions);
                 } catch (ClassNotFoundException e) {
@@ -148,7 +150,7 @@ public class Generators {
             }
         }
 
-        return actions;
+        return new ArrayList<>(actions);
     }
 
     @SuppressWarnings("SameReturnValue")

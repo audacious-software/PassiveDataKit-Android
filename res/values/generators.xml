@@ -198,6 +198,9 @@
     <string name="generator_nokia_health_body_placeholder">-</string>
     <string name="generator_nokia_health_body_title">Body Measures</string>
 
+    <string name="title_dialog_nokia_health_auth_unsuccessful">Authorization Unsuccessful</string>
+    <string name="message_dialog_nokia_health_auth_unsuccessful">The app was unable to obtain authorized access to your Nokia Health account.\n\nPlease try again.</string>
+
     <!-- Device Battery -->
     <string name="generator_device_battery">Device Battery</string>
     <string name="message_generator_device_battery_empty">No battery levels have been reported yet.</string>

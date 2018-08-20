@@ -26,4 +26,16 @@ public class DiagnosticAction {
     public String getTitle() {
         return this.mTitle;
     }
+
+    public int hashCode() {
+        return (this.mTitle + this.mMessage).hashCode();
+    }
+
+    public boolean equals(Object obj) {
+        if (obj instanceof DiagnosticAction) {
+            return this.hashCode() == obj.hashCode();
+        }
+
+        return false;
+    }
 }

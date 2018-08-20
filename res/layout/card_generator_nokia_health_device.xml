@@ -19,7 +19,7 @@
             <LinearLayout android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#009BBF"
+                android:background="#134091"
                 android:padding="8dp"
                 android:baselineAligned="false">
                 <ImageView android:src="@drawable/ic_pdk_nokia_health_device"

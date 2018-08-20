@@ -578,8 +578,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
         final HttpTransmitter me = this;
 
-        Log.e("PDK", "HTTP TRANSMITTER: " + identifier);
-
         final Parcel p = Parcel.obtain();
         p.writeBundle(data);
         p.setDataPosition(0);
@@ -623,8 +621,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                         }
 
                         HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
-
-                        Log.e("PDK", "BUNDLE WRITTEN " + identifier);
                     }
                 }
 
