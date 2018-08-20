@@ -76,6 +76,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
+@Deprecated
 public class WithingsDevice extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-withings-device";
 

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="8dp">
+    <LinearLayout android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chart_steps"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginRight="4dp"
+            tools:ignore="NestedWeights" />
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chart_distance"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginRight="4dp"
+            android:layout_marginLeft="4dp"
+            />
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chart_elevation"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginRight="4dp"
+            android:layout_marginLeft="4dp"
+            />
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chart_calories"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginLeft="4dp"
+            />
+    </LinearLayout>
+
+    <LinearLayout android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+        <TextView android:text="@string/label_nokia_health_steps"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_height="wrap_content" />
+        <TextView android:text="@string/label_nokia_health_distance"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_height="wrap_content" />
+        <TextView android:text="@string/label_nokia_health_elevation"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_height="wrap_content" />
+        <TextView android:text="@string/label_nokia_health_calories"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+</LinearLayout>

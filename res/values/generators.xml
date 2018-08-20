@@ -12,7 +12,7 @@
         <item>com.audacious_software.passive_data_kit.generators.sensors.Accelerometer</item>
         <item>com.audacious_software.passive_data_kit.generators.sensors.AmbientLight</item>
         <item>com.audacious_software.passive_data_kit.generators.device.ForegroundApplication</item>
-        <item>com.audacious_software.passive_data_kit.generators.wearables.WithingsDevice</item>
+        <item>com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice</item>
         <item>com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus</item>
         <item>com.audacious_software.passive_data_kit.generators.environment.TimeOfDay</item>
     </string-array>
@@ -166,6 +166,37 @@
 
     <string name="generator_withings_body_placeholder">-</string>
     <string name="generator_withings_body_title">Body Measures</string>
+
+    <!-- Nokia Health Device Resources -->
+    <string name="generator_nokia_health_device">Nokia Health Device</string>
+    <string name="generator_nokia_health_soft_activities_label">Soft Activities</string>
+    <string name="generator_nokia_health_moderate_activities_label">Moderate Activities</string>
+    <string name="generator_nokia_health_intense_activities_label">Intense Activities</string>
+    <color name="generator_nokia_health_soft_activities">#757575</color>
+    <color name="generator_nokia_health_moderate_activities">#039BE5</color>
+    <color name="generator_nokia_health_intense_activities">#43A047</color>
+    <string name="message_generator_nokia_health_empty">No activity data has been downloaded yet.</string>
+    <string name="message_generator_nokia_health_info_todo">Info coming soon&#8230;</string>
+    <string name="label_nokia_health_steps">Steps</string>
+    <string name="label_nokia_health_distance">Distance</string>
+    <string name="label_nokia_health_elevation">Elevation</string>
+    <string name="label_nokia_health_calories">Calories</string>
+
+    <string name="generator_nokia_health_steps_label">Steps</string>
+    <plurals name="generator_nokia_health_steps_value">
+        <item quantity="zero">0 steps</item>
+        <item quantity="one">1 step</item>
+        <item quantity="other">%d steps</item>
+    </plurals>
+
+    <string name="generator_nokia_health_distance_label">Distance</string>
+    <string name="generator_nokia_health_distance_value">%1$.2f km</string>
+
+    <string name="generator_nokia_health_elevation_label">Elevation</string>
+    <string name="generator_nokia_health_elevation_value">%1$.2f m</string>
+
+    <string name="generator_nokia_health_body_placeholder">-</string>
+    <string name="generator_nokia_health_body_title">Body Measures</string>
 
     <!-- Device Battery -->
     <string name="generator_device_battery">Device Battery</string>
