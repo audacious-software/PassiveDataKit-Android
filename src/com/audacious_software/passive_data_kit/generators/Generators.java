@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.util.SparseArray;
 
 import com.audacious_software.passive_data_kit.Logger;
@@ -135,17 +134,15 @@ public class Generators {
                     Method diagnostics = generatorClass.getDeclaredMethod("diagnostics", Context.class);
                     Collection<DiagnosticAction> generatorActions = (Collection<DiagnosticAction>) diagnostics.invoke(null, context);
 
-                    Log.e("PDK", "ADDING " + generatorActions.size() + " ITEMS FROM " + generatorClass);
-
                     actions.addAll(generatorActions);
                 } catch (ClassNotFoundException e) {
-//                e.printStackTrace();
+                e.printStackTrace();
                 } catch (InvocationTargetException e) {
-//                e.printStackTrace();
+                e.printStackTrace();
                 } catch (NoSuchMethodException e) {
-//                e.printStackTrace();
+                e.printStackTrace();
                 } catch (IllegalAccessException e) {
-//                e.printStackTrace();
+                e.printStackTrace();
                 }
             }
         }

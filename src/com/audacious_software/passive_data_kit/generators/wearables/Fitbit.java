@@ -2,6 +2,7 @@ package com.audacious_software.passive_data_kit.generators.wearables;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
@@ -19,10 +20,9 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,14 +35,9 @@ import com.audacious_software.passive_data_kit.activities.generators.GeneratorVi
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.pdk.passivedatakit.R;
-import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
@@ -55,7 +50,8 @@ import net.openid.appauth.AuthorizationRequest;
 import net.openid.appauth.AuthorizationResponse;
 import net.openid.appauth.AuthorizationService;
 import net.openid.appauth.AuthorizationServiceConfiguration;
-import net.openid.appauth.ClientSecretPost;
+import net.openid.appauth.ClientSecretBasic;
+import net.openid.appauth.TokenRequest;
 import net.openid.appauth.TokenResponse;
 
 import org.json.JSONArray;
@@ -64,22 +60,23 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class Fitbit extends Generator {
-    private static final String GENERATOR_IDENTIFIER = "pdk-nokia-health-device";
+    private static final String GENERATOR_IDENTIFIER = "pdk-fitbit";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
@@ -87,167 +84,120 @@ public class Fitbit extends Generator {
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
-    private static final String DATASTREAM = "datastream";
-    private static final String DATASTREAM_ACTIVITY_MEASURES = "activity-measures";
-    private static final String DATASTREAM_INTRADAY_ACTIVITY = "intraday-activity";
-    private static final String DATASTREAM_BODY = "body";
-    private static final String DATASTREAM_SLEEP_MEASURES = "sleep-measures";
-    private static final String DATASTREAM_SLEEP_SUMMARY = "sleep-summary";
-
-    private static final String TABLE_ACTIVITY_MEASURE_HISTORY = "activity_measure_history";
-    private static final String ACTIVITY_MEASURE_HISTORY_DATE_START = "date_start";
-    private static final String ACTIVITY_MEASURE_HISTORY_TIMEZONE = "timezone";
-    private static final String ACTIVITY_MEASURE_STEPS = "steps";
-    private static final String ACTIVITY_MEASURE_DISTANCE = "distance";
-    private static final String ACTIVITY_MEASURE_ACTIVE_CALORIES = "active_calories";
-    private static final String ACTIVITY_MEASURE_TOTAL_CALORIES = "total_calories";
-    private static final String ACTIVITY_MEASURE_ELEVATION = "elevation";
-    private static final String ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION = "soft_activity_duration";
-    private static final String ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION = "moderate_activity_duration";
-    private static final String ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION = "intense_activity_duration";
-
-    private static final String TABLE_BODY_MEASURE_HISTORY = "body_measure_history";
-    private static final String BODY_MEASURE_STATUS_UNKNOWN = "unknown";
-    private static final String BODY_MEASURE_STATUS_USER_DEVICE = "user-device";
-    private static final String BODY_MEASURE_STATUS_SHARED_DEVICE = "shared-device";
-    private static final String BODY_MEASURE_STATUS_MANUAL_ENTRY = "manual-entry";
-    private static final String BODY_MEASURE_STATUS_MANUAL_ENTRY_CREATION = "manual-entry-creation";
-    private static final String BODY_MEASURE_STATUS_AUTO_DEVICE = "auto-device";
-    private static final String BODY_MEASURE_STATUS_MEASURE_CONFIRMED = "measure-confirmed";
-
-    private static final String BODY_MEASURE_CATEGORY_UNKNOWN = "unknown";
-    private static final String BODY_MEASURE_CATEGORY_REAL_MEASUREMENTS = "real-measurements";
-    private static final String BODY_MEASURE_CATEGORY_USER_OBJECTIVES = "user-objectives";
-
-    private static final String BODY_MEASURE_TYPE_UNKNOWN = "unknown";
-    private static final String BODY_MEASURE_TYPE_WEIGHT = "weight";
-    private static final String BODY_MEASURE_TYPE_HEIGHT = "height";
-    private static final String BODY_MEASURE_TYPE_FAT_FREE_MASS = "fat-free-mass";
-    private static final String BODY_MEASURE_TYPE_FAT_RATIO = "fat-ratio";
-    private static final String BODY_MEASURE_TYPE_FAT_MASS_WEIGHT = "fat-mass-weight";
-    private static final String BODY_MEASURE_TYPE_DIASTOLIC_BLOOD_PRESSURE = "diastolic-blood-pressure";
-    private static final String BODY_MEASURE_TYPE_SYSTOLIC_BLOOD_PRESSURE = "systolic-blood-pressure";
-    private static final String BODY_MEASURE_TYPE_HEART_PULSE = "heart-pulse";
-    private static final String BODY_MEASURE_TYPE_TEMPERATURE = "temperature";
-    private static final String BODY_MEASURE_TYPE_OXYGEN_SATURATION = "oxygen-saturation";
-    private static final String BODY_MEASURE_TYPE_BODY_TEMPERATURE = "body-temperature";
-    private static final String BODY_MEASURE_TYPE_SKIN_TEMPERATURE = "skin-temperature";
-    private static final String BODY_MEASURE_TYPE_MUSCLE_MASS = "muscle-mass";
-    private static final String BODY_MEASURE_TYPE_HYDRATION = "hydration";
-    private static final String BODY_MEASURE_TYPE_BONE_MASS = "bone-mass";
-    private static final String BODY_MEASURE_TYPE_PULSE_WAVE_VELOCITY = "pulse-wave-velocity";
-
-    private static final String BODY_MEASURE_HISTORY_DATE = "measure_date";
-    private static final String BODY_MEASURE_HISTORY_STATUS = "measure_status";
-    private static final String BODY_MEASURE_HISTORY_CATEGORY = "measure_category";
-    private static final String BODY_MEASURE_HISTORY_TYPE = "measure_type";
-    private static final String BODY_MEASURE_HISTORY_VALUE = "measure_value";
-
-    private static final String TABLE_INTRADAY_ACTIVITY_HISTORY = "intraday_activity_history";
-    private static final String INTRADAY_ACTIVITY_START = "activity_start";
-    private static final String INTRADAY_ACTIVITY_DURATION = "activity_duration";
-    private static final String INTRADAY_ACTIVITY_CALORIES = "calories";
-    private static final String INTRADAY_ACTIVITY_DISTANCE = "distance";
-    private static final String INTRADAY_ACTIVITY_ELEVATION_CLIMBED = "elevation_climbed";
-    private static final String INTRADAY_ACTIVITY_STEPS = "steps";
-    private static final String INTRADAY_ACTIVITY_SWIM_STROKES = "swim_strokes";
-    private static final String INTRADAY_ACTIVITY_POOL_LAPS = "pool_laps";
-
-    private static final String TABLE_SLEEP_MEASURE_HISTORY = "sleep_measure_history";
-    private static final String SLEEP_MEASURE_MODEL_UNKNOWN = "unknown";
-    private static final String SLEEP_MEASURE_MODEL_ACTIVITY_TRACKER = "activity-tracker";
-    private static final String SLEEP_MEASURE_MODEL_AURA = "aura";
-
-    private static final String SLEEP_MEASURE_STATE_UNKNOWN = "unknown";
-    private static final String SLEEP_MEASURE_STATE_AWAKE = "awake";
-    private static final String SLEEP_MEASURE_STATE_LIGHT_SLEEP = "light-sleep";
-    private static final String SLEEP_MEASURE_STATE_DEEP_SLEEP = "deep-sleep";
-    private static final String SLEEP_MEASURE_STATE_REM_SLEEP = "rem-sleep";
-
-    private static final String SLEEP_MEASURE_START_DATE = "start_date";
-    private static final String SLEEP_MEASURE_END_DATE = "end_date";
-    private static final String SLEEP_MEASURE_STATE = "state";
-    private static final String SLEEP_MEASURE_MEASUREMENT_DEVICE = "measurement_device";
-
-    private static final String TABLE_SLEEP_SUMMARY_HISTORY = "sleep_summary_history";
-    private static final String SLEEP_SUMMARY_MODEL_UNKNOWN = "unknown";
-    private static final String SLEEP_SUMMARY_MODEL_ACTIVITY_TRACKER = "activity-tracker";
-    private static final String SLEEP_SUMMARY_MODEL_AURA = "aura";
-
-    private static final String SLEEP_SUMMARY_START_DATE = "start_date";
-    private static final String SLEEP_SUMMARY_END_DATE = "end_date";
-    private static final String SLEEP_SUMMARY_TIMEZONE = "timezone";
-    private static final String SLEEP_SUMMARY_MEASUREMENT_DEVICE = "measurement_device";
-    private static final String SLEEP_SUMMARY_WAKE_DURATION = "wake_duration";
-    private static final String SLEEP_SUMMARY_LIGHT_SLEEP_DURATION = "light_sleep_duration";
-    private static final String SLEEP_SUMMARY_DEEP_SLEEP_DURATION = "deep_sleep_duration";
-    private static final String SLEEP_SUMMARY_TO_SLEEP_DURATION = "to_sleep_duration";
-    private static final String SLEEP_SUMMARY_WAKE_COUNT = "wake_count";
-    private static final String SLEEP_SUMMARY_REM_SLEEP_DURATION = "rem_sleep_duration";
-    private static final String SLEEP_SUMMARY_TO_WAKE_DURATION = "to_wake_duration";
-
     private static final String HISTORY_OBSERVED = "observed";
-    private static final String DATABASE_PATH = "pdk-nokia-health-device.sqlite";
+    private static final String DATABASE_PATH = "pdk-fitbit.sqlite";
     private static final int DATABASE_VERSION = 1;
 
-    private static final String LAST_DATA_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.LAST_DATA_FETCH";
+    private static final String LAST_DATA_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.LAST_DATA_FETCH";
 
-    private static final String DATA_FETCH_INTERVAL = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.DATA_FETCH_INTERVAL";
+    private static final String DATA_FETCH_INTERVAL = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.DATA_FETCH_INTERVAL";
     private static final long DATA_FETCH_INTERVAL_DEFAULT = (15 * 60 * 1000); // (60 * 60 * 1000);
 
-    private static final String ACTIVITY_MEASURES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.ACTIVITY_MEASURES_ENABLED";
-    private static final boolean ACTIVITY_MEASURES_ENABLED_DEFAULT = true;
+    private static final String ACTIVITY_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.ACTIVITY_ENABLED";
+    private static final boolean ACTIVITY_ENABLED_DEFAULT = true;
 
-    private static final String BODY_MEASURES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.BODY_MEASURES_ENABLED";
-    private static final boolean BODY_MEASURES_ENABLED_DEFAULT = true;
+    private static final String SLEEP_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.SLEEP_ENABLED";
+    private static final boolean SLEEP_ENABLED_DEFAULT = true;
 
-    private static final String INTRADAY_ACTIVITY_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.INTRADAY_ACTIVITY_ENABLED";
-    private static final boolean INTRADAY_ACTIVITY_ENABLED_DEFAULT = false;
+    private static final String HEART_RATE_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.HEART_RATE_ENABLED";
+    private static final boolean HEART_RATE_ENABLED_DEFAULT = true;
 
-    private static final String SLEEP_MEASURES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.SLEEP_MEASURES_ENABLED";
-    private static final boolean SLEEP_MEASURES_ENABLED_DEFAULT = true;
-
-    private static final String SLEEP_SUMMARY_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.SLEEP_SUMMARY_ENABLED";
-    private static final boolean SLEEP_SUMMARY_ENABLED_DEFAULT = true;
-
-    private static final String SERVER_FETCH_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.SERVER_FETCH_ENABLED";
-    private static final boolean SERVER_FETCH_ENABLED_DEFAULT = false;
+    private static final String WEIGHT_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.WEIGHT_ENABLED";
+    private static final boolean WEIGHT_ENABLED_DEFAULT = true;
 
     @SuppressWarnings("WeakerAccess")
-    public static final String OPTION_OAUTH_CALLBACK_URL = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_CALLBACK_URL";
+    public static final String OPTION_OAUTH_CALLBACK_URL = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.OPTION_CALLBACK_URL";
     @SuppressWarnings("WeakerAccess")
-    public static final String OPTION_OAUTH_CLIENT_ID = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_CLIENT_ID";
+    public static final String OPTION_OAUTH_CLIENT_ID = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.OPTION_OAUTH_CLIENT_ID";
     @SuppressWarnings("WeakerAccess")
-    public static final String OPTION_OAUTH_CLIENT_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_CLIENT_SECRET";
-    private static final String OPTION_OAUTH_ACCESS_TOKEN = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN";
-    private static final String OPTION_OAUTH_ACCESS_TOKEN_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN_SECRET";
-    private static final String OPTION_OAUTH_REQUEST_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_REQUEST_SECRET";
-    private static final String OPTION_OAUTH_ACCESS_USER_ID = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_ACCESS_USER_ID";
+    public static final String OPTION_OAUTH_CLIENT_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.OPTION_OAUTH_CLIENT_SECRET";
 
-    private static final String API_SCAN_DAYS = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_SCAN_DAYS";
-    private static final long API_SCAN_DAYS_DEFAULT = 0;
+    private static final String API_ACTION_ACTIVITY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.API_ACTION_ACTIVITY_URL_LAST_FETCH";
+    private static final String API_ACTION_SLEEP_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.API_ACTION_SLEEP_URL_LAST_FETCH";
+    private static final String API_ACTION_HEART_RATE_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.API_ACTION_HEART_RATE_URL_LAST_FETCH";
+    private static final String API_ACTION_WEIGHT_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.API_ACTION_WEIGHT_URL_LAST_FETCH";
 
-    private static final String API_ACTION_ACTIVITY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_ACTION_ACTIVITY_URL_LAST_FETCH";
-    private static final String API_ACTION_BODY_MEASURES_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_ACTION_BODY_MEASURES_URL_LAST_FETCH";
-    private static final String API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH";
-    private static final String API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH";
-    private static final String API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH";
+    private static final String API_ACTION_ACTIVITY_URL = "https://api.fitbit.com/1/user/-/activities/date/today.json";
+    private static final String API_ACTION_SLEEP_URL = "https://api.fitbit.com/1.2/user/-/sleep/date/today.json";
+    private static final String API_ACTION_HEART_RATE_URL = "https://api.fitbit.com/1/user/-/activities/heart/date/today/1d.json";
+    private static final String API_ACTION_WEIGHT_URL = "https://api.fitbit.com/1/user/-/body/log/weight/date/today.json";
 
-    private static final String API_ACTION_ACTIVITY_URL = "https://api.health.nokia.com/v2/measure?action=getactivity";
-    private static final String API_ACTION_BODY_MEASURES_URL = "https://api.health.nokia.com/measure?action=getmeas";
-    private static final String API_ACTION_INTRADAY_ACTIVITY_URL = "https://api.health.nokia.com/v2/measure?action=getintradayactivity";
-    private static final String API_ACTION_SLEEP_MEASURES_URL = "https://api.health.nokia.com/v2/sleep?action=get";
-    private static final String API_ACTION_SLEEP_SUMMARY_URL = "https://api.health.nokia.com/v2/sleep?action=getsummary";
+    private static final String PERSISTED_AUTH = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.PERSISTED_AUTH";
 
-    private static final String OAUTH_CLIENT_ID = "oauth_client_id";
-    private static final String OAUTH_USER_TOKEN = "oauth_user_token";
-    private static final String OAUTH_USER_SECRET = "oauth_user_secret";
-    private static final String OAUTH_USER_ID = "oauth_user_id";
+    private static final Uri OAUTH_AUTHORIZATION_ENDPOINT = Uri.parse("https://www.fitbit.com/oauth2/authorize");
+    private static final Uri OAUTH_TOKEN_ENDPOINT = Uri.parse("https://api.fitbit.com/oauth2/token");
 
-    private static final String PERSISTED_AUTH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.PERSISTED_AUTH";
+    private static final String HISTORY_FETCHED = "fetched";
 
-    private static final Uri OAUTH_AUTHORIZATION_ENDPOINT = Uri.parse("https://account.health.nokia.com/oauth2_user/authorize2");
-    private static final Uri OAUTH_TOKEN_ENDPOINT = Uri.parse("https://account.health.nokia.com/oauth2/token");
+    private static final String TABLE_ACTIVITY_HISTORY = "activity_history";
+    private static final String ACTIVITY_DATE_START = "date_start";
+    private static final String ACTIVITY_STEPS = "steps";
+    private static final String ACTIVITY_DISTANCE = "distance";
+    private static final String ACTIVITY_FLOORS = "floors";
+    private static final String ACTIVITY_ELEVATION = "elevation";
+    private static final String ACTIVITY_CALORIES_ACTIVITY = "calories_activity";
+    private static final String ACTIVITY_CALORIES_BMR = "calories_bmr";
+    private static final String ACTIVITY_CALORIES_MARGINAL = "calories_marginal";
+    private static final String ACTIVITY_MINUTES_VERY_ACTIVE = "minutes_very_active";
+    private static final String ACTIVITY_MINUTES_FAIRLY_ACTIVE = "minutes_fairly_active";
+    private static final String ACTIVITY_MINUTES_LIGHTLY_ACTIVE = "minutes_lightly_active";
+    private static final String ACTIVITY_MINUTES_SEDENTARY = "minutes_sedentary";
+
+    private static final String TABLE_SLEEP_HISTORY = "sleep_history";
+    private static final String SLEEP_START_TIME = "start";
+    private static final String SLEEP_DURATION = "duration";
+    private static final String SLEEP_IS_MAIN_SLEEP = "is_main_sleep";
+    private static final String SLEEP_MINUTES_ASLEEP = "minutes_asleep";
+    private static final String SLEEP_MINUTES_AWAKE = "minutes_awake";
+    private static final String SLEEP_MINUTES_AFTER_WAKE = "minutes_after_wake";
+    private static final String SLEEP_MINUTES_TO_SLEEP = "minutes_to_sleep";
+    private static final String SLEEP_MINUTES_IN_BED = "minutes_in_bed";
+    private static final String SLEEP_TYPE = "sleep_type";
+    private static final String SLEEP_DEEP_PERIODS = "deep_periods";
+    private static final String SLEEP_DEEP_MINUTES = "deep_minutes";
+    private static final String SLEEP_LIGHT_PERIODS = "light_periods";
+    private static final String SLEEP_LIGHT_MINUTES = "light_minutes";
+    private static final String SLEEP_REM_PERIODS = "rem_periods";
+    private static final String SLEEP_REM_MINUTES = "rem_minutes";
+    private static final String SLEEP_WAKE_PERIODS = "wake_periods";
+    private static final String SLEEP_WAKE_MINUTES = "wake_minutes";
+    private static final String SLEEP_ASLEEP_PERIODS = "asleep_periods";
+    private static final String SLEEP_ASLEEP_MINUTES = "asleep_minutes";
+    private static final String SLEEP_AWAKE_PERIODS = "awake_periods";
+    private static final String SLEEP_AWAKE_MINUTES = "awake_minutes";
+    private static final String SLEEP_RESTLESS_PERIODS = "restless_periods";
+    private static final String SLEEP_RESTLESS_MINUTES = "restless_minutes";
+
+    private static final String TABLE_HEART_RATE_HISTORY = "heart_rate_history";
+    private static final String HEART_RATE_OUT_MIN = "out_min";
+    private static final String HEART_RATE_OUT_MAX = "out_max";
+    private static final String HEART_RATE_OUT_MINUTES = "out_minutes";
+    private static final String HEART_RATE_OUT_CALORIES = "out_calories";
+    private static final String HEART_RATE_FAT_MIN = "fat_burn_min";
+    private static final String HEART_RATE_FAT_MAX = "fat_burn_max";
+    private static final String HEART_RATE_FAT_MINUTES = "fat_burn_minutes";
+    private static final String HEART_RATE_FAT_CALORIES = "fat_burn_calories";
+    private static final String HEART_RATE_CARDIO_MIN = "cardio_min";
+    private static final String HEART_RATE_CARDIO_MAX = "cardio_max";
+    private static final String HEART_RATE_CARDIO_MINUTES = "cardio_minutes";
+    private static final String HEART_RATE_CARDIO_CALORIES = "cardio_calories";
+    private static final String HEART_RATE_PEAK_MIN = "peak_min";
+    private static final String HEART_RATE_PEAK_MAX = "peak_max";
+    private static final String HEART_RATE_PEAK_MINUTES = "peak_minutes";
+    private static final String HEART_RATE_PEAK_CALORIES = "peak_calories";
+    private static final String HEART_RATE_RESTING_RATE = "resting_rate";
+
+    private static final String TABLE_WEIGHT_HISTORY = "weight_history";
+    private static final String WEIGHT_LOG_ID = "log_id";
+    private static final String WEIGHT_WEIGHT = "weight";
+    private static final String WEIGHT_BMI = "bmi";
+    private static final String WEIGHT_SOURCE = "source";
+
+    private static final String FITBIT_TYPE = "fitbit_type";
+    private static final String FITBIT_TYPE_ACTIVITY = "activity";
+    private static final String FITBIT_TYPE_SLEEP = "sleep";
+    private static final String FITBIT_TYPE_HEART_RATE = "heart_rate";
+    private static final String FITBIT_TYPE_WEIGHT = "weight";
 
     private static Fitbit sInstance = null;
     private Context mContext = null;
@@ -319,24 +269,20 @@ public class Fitbit extends Generator {
                         Runnable r = new Runnable() {
                             @Override
                             public void run() {
-                                if (prefs.getBoolean(Fitbit.ACTIVITY_MEASURES_ENABLED, Fitbit.ACTIVITY_MEASURES_ENABLED_DEFAULT)) {
-                                    me.fetchActivityMeasures();
+                                if (prefs.getBoolean(Fitbit.ACTIVITY_ENABLED, Fitbit.ACTIVITY_ENABLED_DEFAULT)) {
+                                    me.fetchActivity();
                                 }
 
-                                if (prefs.getBoolean(Fitbit.BODY_MEASURES_ENABLED, Fitbit.BODY_MEASURES_ENABLED_DEFAULT)) {
-                                    me.fetchBodyMeasures();
+                                if (prefs.getBoolean(Fitbit.HEART_RATE_ENABLED, Fitbit.HEART_RATE_ENABLED_DEFAULT)) {
+                                    me.fetchHeartRate();
                                 }
 
-                                if (prefs.getBoolean(Fitbit.INTRADAY_ACTIVITY_ENABLED, Fitbit.INTRADAY_ACTIVITY_ENABLED_DEFAULT)) {
-                                    me.fetchIntradayActivities();
+                                if (prefs.getBoolean(Fitbit.SLEEP_ENABLED, Fitbit.SLEEP_ENABLED_DEFAULT)) {
+                                    me.fetchSleep();
                                 }
 
-                                if (prefs.getBoolean(Fitbit.SLEEP_MEASURES_ENABLED, Fitbit.SLEEP_MEASURES_ENABLED_DEFAULT)) {
-                                    me.fetchSleepMeasures();
-                                }
-
-                                if (prefs.getBoolean(Fitbit.SLEEP_SUMMARY_ENABLED, Fitbit.SLEEP_SUMMARY_ENABLED_DEFAULT)) {
-                                    me.fetchSleepSummary();
+                                if (prefs.getBoolean(Fitbit.WEIGHT_ENABLED, Fitbit.WEIGHT_ENABLED_DEFAULT)) {
+                                    me.fetchWeight();
                                 }
                             }
                         };
@@ -366,11 +312,10 @@ public class Fitbit extends Generator {
 
         switch (version) {
             case 0:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_activity_measure_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_body_measure_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_intraday_activity_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_sleep_measure_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_sleep_summary_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_activity_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_heart_rate_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_sleep_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_weight_history_table));
         }
 
         if (version != Fitbit.DATABASE_VERSION) {
@@ -404,22 +349,8 @@ public class Fitbit extends Generator {
         this.flushCachedData();
     }
 
-    private String getProperty(String key) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-
-        if (Fitbit.OPTION_OAUTH_ACCESS_TOKEN.equals(key)) {
-            return prefs.getString(Fitbit.OPTION_OAUTH_ACCESS_TOKEN, null);
-        } else if (Fitbit.OPTION_OAUTH_ACCESS_TOKEN_SECRET.equals(key)) {
-            return prefs.getString(Fitbit.OPTION_OAUTH_ACCESS_TOKEN_SECRET, null);
-        } else if (Fitbit.OPTION_OAUTH_ACCESS_USER_ID.equals(key)) {
-            return prefs.getString(Fitbit.OPTION_OAUTH_ACCESS_USER_ID, null);
-        }
-
-        return this.mProperties.get(key);
-    }
-
     @SuppressLint("SimpleDateFormat")
-    private JSONObject queryApi(final String apiUrl) {
+    private void queryApi(final String apiUrl) {
         final Fitbit me = this;
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
@@ -427,7 +358,7 @@ public class Fitbit extends Generator {
         String authJson = prefs.getString(Fitbit.PERSISTED_AUTH, null);
 
         if (authJson == null) {
-            return null;
+            return;
         }
 
         try {
@@ -437,729 +368,405 @@ public class Fitbit extends Generator {
 
             authState.performActionWithFreshTokens(service, new AuthState.AuthStateAction() {
                 @Override
-                public void execute(@Nullable String accessToken, @Nullable String idToken, @Nullable AuthorizationException ex) {
-                    final Calendar cal = Calendar.getInstance();
-                    cal.set(Calendar.HOUR_OF_DAY, 0);
-                    cal.set(Calendar.MINUTE, 0);
-                    cal.set(Calendar.SECOND, 0);
-                    cal.set(Calendar.MILLISECOND, 0);
+                public void execute(@Nullable final String accessToken, @Nullable String idToken, @Nullable AuthorizationException ex) {
+                    OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new Interceptor() {
+                        @Override
+                        public Response intercept(Chain chain) throws IOException {
+                            Request newRequest = chain.request().newBuilder()
+                                    .addHeader("Authorization", "Bearer " + accessToken)
+                                    .build();
+                            return chain.proceed(newRequest);
+                        }
+                    }).build();
 
-                    String startDate = null;
-                    String endDate = null;
+                    Request request = new Request.Builder()
+                            .url(apiUrl)
+                            .build();
 
-                    long startTime = 0;
-                    long endTime = 0;
+                    try {
+                        Response response = client.newCall(request).execute();
 
-                    if (accessToken != null) {
-                        final long scanDays = prefs.getLong(Fitbit.API_SCAN_DAYS, Fitbit.API_SCAN_DAYS_DEFAULT);
+                        if (response.isSuccessful()) {
+                            SharedPreferences.Editor e = prefs.edit();
 
-                        if (scanDays > 0) {
-                            long lastFetch = 0;
+                            JSONObject apiResponse = new JSONObject(response.body().string());
 
                             if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(Fitbit.API_ACTION_ACTIVITY_URL_LAST_FETCH, 0);
-                            } else if (Fitbit.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(Fitbit.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, 0);
-                            } else if (Fitbit.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(Fitbit.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, 0);
-                            } else if (Fitbit.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(Fitbit.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, 0);
-                            } else if (Fitbit.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(Fitbit.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, 0);
+                                e.putLong(Fitbit.API_ACTION_ACTIVITY_URL_LAST_FETCH, System.currentTimeMillis());
+                            } else if (Fitbit.API_ACTION_SLEEP_URL.equals(apiUrl)) {
+                                e.putLong(Fitbit.API_ACTION_SLEEP_URL_LAST_FETCH, System.currentTimeMillis());
+                            } else if (Fitbit.API_ACTION_WEIGHT_URL.equals(apiUrl)) {
+                                e.putLong(Fitbit.API_ACTION_WEIGHT_URL_LAST_FETCH, System.currentTimeMillis());
+                            } else if (Fitbit.API_ACTION_HEART_RATE_URL.equals(apiUrl)) {
+                                e.putLong(Fitbit.API_ACTION_HEART_RATE_URL_LAST_FETCH, System.currentTimeMillis());
                             }
 
-                            if (lastFetch == 0) {
-                                lastFetch = System.currentTimeMillis() - (scanDays * 24 * 60 * 60 * 1000);
-                            }
+                            e.apply();
 
-                            while (cal.getTimeInMillis() > lastFetch) {
-                                cal.add(Calendar.DATE, -1);
+                            if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                                me.logActivity(apiResponse);
+                            } else if (Fitbit.API_ACTION_SLEEP_URL.equals(apiUrl)) {
+                                me.logSleep(apiResponse);
+                            } else if (Fitbit.API_ACTION_WEIGHT_URL.equals(apiUrl)) {
+                                me.logWeight(apiResponse);
+                            } else if (Fitbit.API_ACTION_HEART_RATE_URL.equals(apiUrl)) {
+                                me.logHeartRate(apiResponse);
                             }
                         }
-
-                        if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl) ||
-                                Fitbit.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
-                            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-
-                            startDate = format.format(cal.getTime());
-
-                            cal.add(Calendar.DATE, 1);
-
-                            endDate = format.format(cal.getTime());
-                        } else if (Fitbit.API_ACTION_BODY_MEASURES_URL.equals(apiUrl) ||
-                                Fitbit.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl) ||
-                                Fitbit.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
-
-                            startTime = cal.getTimeInMillis() / 1000;
-
-                            cal.add(Calendar.DATE, 1);
-
-                            endTime = cal.getTimeInMillis() / 1000;
-                        }
-
-                        Uri apiUri = Uri.parse(apiUrl);
-
-                        Uri.Builder builder = new Uri.Builder();
-                        builder.scheme(apiUri.getScheme());
-                        builder.authority(apiUri.getAuthority());
-                        builder.path(apiUri.getPath());
-
-                        builder.appendQueryParameter("access_token", accessToken);
-
-                        try {
-                            String action = apiUri.getQueryParameter("action");
-
-                            builder.appendQueryParameter("action", action);
-
-                            if (endTime != 0) {
-                                builder.appendQueryParameter("enddate", "" + endTime);
-                            }
-
-                            if (endDate != null) {
-                                builder.appendQueryParameter("enddateymd", endDate);
-                            }
-
-                            if (startTime != 0) {
-                                builder.appendQueryParameter("startdate", "" + startTime);
-                            }
-
-                            if (startDate != null) {
-                                builder.appendQueryParameter("startdateymd", startDate);
-                            }
-
-                            Uri uri = builder.build();
-
-                            OkHttpClient client = new OkHttpClient();
-
-                            Request request = new Request.Builder()
-                                    .url(uri.toString())
-                                    .build();
-
-                            Response response = client.newCall(request).execute();
-
-                            if (response.isSuccessful()) {
-                                if (scanDays > 0) {
-                                    long fetchTime = cal.getTimeInMillis();
-
-                                    if (fetchTime > System.currentTimeMillis()) {
-                                        fetchTime = 0;
-                                    }
-
-                                    SharedPreferences.Editor e = prefs.edit();
-
-                                    if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                        e.putLong(Fitbit.API_ACTION_ACTIVITY_URL_LAST_FETCH, fetchTime);
-                                    } else if (Fitbit.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
-                                        e.putLong(Fitbit.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, fetchTime);
-                                    } else if (Fitbit.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
-                                        e.putLong(Fitbit.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, fetchTime);
-                                    } else if (Fitbit.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
-                                        e.putLong(Fitbit.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, fetchTime);
-                                    } else if (Fitbit.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
-                                        e.putLong(Fitbit.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, fetchTime);
-                                    }
-
-                                    e.apply();
-                                }
-
-                                me.mLatestTimestamp = System.currentTimeMillis();
-
-                                JSONObject apiResponse = new JSONObject(response.body().string());
-
-                                if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                    me.logActivityMeasures(apiResponse);
-                                } else if (Fitbit.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
-                                    me.logBodyMeasures(apiResponse);
-                                } else if (Fitbit.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
-                                    me.logIntradayActivities(apiResponse);
-                                } else if (Fitbit.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
-                                    me.logSleepMeasures(apiResponse);
-                                } else if (Fitbit.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
-                                    me.logSleepSummary(apiResponse);
-                                }
-                            }
-                        } catch (OutOfMemoryError e) {
-                            // Try again next cycle...
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-
-
                 }
             });
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
-        return null;
     }
 
-    private void fetchActivityMeasures() {
+    private void fetchActivity() {
         this.queryApi(Fitbit.API_ACTION_ACTIVITY_URL);
     }
 
-    private void logActivityMeasures(JSONObject response) {
-        try {
-            if (response.getInt("status") == 0) {
-                JSONObject body = response.getJSONObject("body");
-                JSONArray activities = body.getJSONArray("activities");
+    private void logActivity(JSONObject response) throws JSONException {
+        if (response.has("summary")) {
+            JSONObject summary = response.getJSONObject("summary");
 
-                for (int i = 0; i < activities.length(); i++) {
-                    JSONObject activity = activities.getJSONObject(i);
-
-                    Calendar cal = Calendar.getInstance();
-
-                    String[] tokens = activity.getString("date").split("-");
-
-                    cal.set(Calendar.YEAR, Integer.parseInt(tokens[0]));
-                    cal.set(Calendar.MONTH, Integer.parseInt(tokens[1]));
-                    cal.set(Calendar.DAY_OF_MONTH, Integer.parseInt(tokens[2]));
-                    cal.set(Calendar.HOUR_OF_DAY, 0);
-                    cal.set(Calendar.MINUTE, 0);
-                    cal.set(Calendar.SECOND, 0);
-                    cal.set(Calendar.MILLISECOND, 0);
-
-                    ContentValues values = new ContentValues();
-                    values.put(Fitbit.HISTORY_OBSERVED, System.currentTimeMillis());
-
-                    values.put(Fitbit.ACTIVITY_MEASURE_HISTORY_DATE_START, cal.getTimeInMillis());
-                    values.put(Fitbit.ACTIVITY_MEASURE_HISTORY_TIMEZONE, activity.getString("timezone"));
-                    values.put(Fitbit.ACTIVITY_MEASURE_STEPS, activity.getDouble("steps"));
-                    values.put(Fitbit.ACTIVITY_MEASURE_DISTANCE, activity.getDouble("distance"));
-                    values.put(Fitbit.ACTIVITY_MEASURE_ACTIVE_CALORIES, activity.getDouble("calories"));
-                    values.put(Fitbit.ACTIVITY_MEASURE_TOTAL_CALORIES, activity.getDouble("totalcalories"));
-                    values.put(Fitbit.ACTIVITY_MEASURE_ELEVATION, activity.getDouble("elevation"));
-                    values.put(Fitbit.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION, activity.getDouble("soft"));
-                    values.put(Fitbit.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION, activity.getDouble("moderate"));
-                    values.put(Fitbit.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION, activity.getDouble("intense"));
-
-                    String where = Fitbit.ACTIVITY_MEASURE_HISTORY_DATE_START + " = ? AND " +
-                            Fitbit.ACTIVITY_MEASURE_HISTORY_TIMEZONE + " = ? AND " +
-                            Fitbit.ACTIVITY_MEASURE_STEPS + " = ? AND " +
-                            Fitbit.ACTIVITY_MEASURE_DISTANCE + " = ? AND " +
-                            Fitbit.ACTIVITY_MEASURE_ACTIVE_CALORIES + " = ? AND " +
-                            Fitbit.ACTIVITY_MEASURE_TOTAL_CALORIES + " = ? AND " +
-                            Fitbit.ACTIVITY_MEASURE_ELEVATION + " = ? AND " +
-                            Fitbit.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION + " = ? AND " +
-                            Fitbit.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION + " = ? AND " +
-                            Fitbit.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION + " = ?";
-
-                    String[] args = {
-                            "" + cal.getTimeInMillis(),
-                            "" + activity.getString("timezone"),
-                            "" + activity.getDouble("steps"),
-                            "" + activity.getDouble("distance"),
-                            "" + activity.getDouble("calories"),
-                            "" + activity.getDouble("totalcalories"),
-                            "" + activity.getDouble("elevation"),
-                            "" + activity.getDouble("soft"),
-                            "" + activity.getDouble("moderate"),
-                            "" + activity.getDouble("intense")
-                    };
-
-                    Cursor c = this.mDatabase.query(Fitbit.TABLE_ACTIVITY_MEASURE_HISTORY, null, where, args, null, null, null);
-
-                    if (c.getCount() == 0) {
-                        this.mDatabase.insert(Fitbit.TABLE_ACTIVITY_MEASURE_HISTORY, null, values);
-
-                        Bundle updated = new Bundle();
-
-                        updated.putLong(Fitbit.HISTORY_OBSERVED, System.currentTimeMillis());
-                        updated.putLong(Fitbit.ACTIVITY_MEASURE_HISTORY_DATE_START, cal.getTimeInMillis());
-                        updated.putString(Fitbit.ACTIVITY_MEASURE_HISTORY_TIMEZONE, activity.getString("timezone"));
-                        updated.putDouble(Fitbit.ACTIVITY_MEASURE_STEPS, activity.getDouble("steps"));
-                        updated.putDouble(Fitbit.ACTIVITY_MEASURE_DISTANCE, activity.getDouble("distance"));
-                        updated.putDouble(Fitbit.ACTIVITY_MEASURE_ACTIVE_CALORIES, activity.getDouble("calories"));
-                        updated.putDouble(Fitbit.ACTIVITY_MEASURE_TOTAL_CALORIES, activity.getDouble("totalcalories"));
-                        updated.putDouble(Fitbit.ACTIVITY_MEASURE_ELEVATION, activity.getDouble("elevation"));
-                        updated.putDouble(Fitbit.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION, activity.getDouble("soft"));
-                        updated.putDouble(Fitbit.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION, activity.getDouble("moderate"));
-                        updated.putDouble(Fitbit.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION, activity.getDouble("intense"));
-                        updated.putString(Fitbit.DATASTREAM, Fitbit.DATASTREAM_ACTIVITY_MEASURES);
-
-                        this.annotateGeneratorReading(updated);
-
-                        Generators.getInstance(this.mContext).notifyGeneratorUpdated(Fitbit.GENERATOR_IDENTIFIER, updated);
-                    }
-
-                    c.close();
-                }
-            }
-        } catch (JSONException e) {
-            AppEvent.getInstance(this.mContext).logThrowable(e);
-        }
-    }
-
-    private void fetchBodyMeasures() {
-        this.queryApi(Fitbit.API_ACTION_BODY_MEASURES_URL);
-    }
-
-    private void logBodyMeasures(JSONObject response) {
-        try {
-            if (response.getInt("status") == 0) {
-                JSONObject body = response.getJSONObject("body");
-                JSONArray measureGroups = body.getJSONArray("measuregrps");
-
-                for (int i = 0; i < measureGroups.length(); i++) {
-                    JSONObject measureGroup = measureGroups.getJSONObject(i);
-
-                    long measureDate = measureGroup.getLong("date");
-                    long now = System.currentTimeMillis();
-
-                    String status = Fitbit.BODY_MEASURE_STATUS_UNKNOWN;
-
-                    switch (measureGroup.getInt("attrib")) {
-                        case 0:
-                            status = Fitbit.BODY_MEASURE_STATUS_USER_DEVICE;
-                            break;
-                        case 1:
-                            status = Fitbit.BODY_MEASURE_STATUS_SHARED_DEVICE;
-                            break;
-                        case 2:
-                            status = Fitbit.BODY_MEASURE_STATUS_MANUAL_ENTRY;
-                            break;
-                        case 4:
-                            status = Fitbit.BODY_MEASURE_STATUS_MANUAL_ENTRY_CREATION;
-                            break;
-                        case 5:
-                            status = Fitbit.BODY_MEASURE_STATUS_AUTO_DEVICE;
-                            break;
-                        case 7:
-                            status = Fitbit.BODY_MEASURE_STATUS_MEASURE_CONFIRMED;
-                            break;
-                    }
-
-                    String category = Fitbit.BODY_MEASURE_CATEGORY_UNKNOWN;
-
-                    switch (measureGroup.getInt("category")) {
-                        case 1:
-                            category = Fitbit.BODY_MEASURE_CATEGORY_REAL_MEASUREMENTS;
-                            break;
-                        case 2:
-                            category = Fitbit.BODY_MEASURE_CATEGORY_USER_OBJECTIVES;
-                            break;
-                    }
-
-                    JSONArray measures = measureGroup.getJSONArray("measures");
-
-                    for (int j = 0; j < measures.length(); j++) {
-                        JSONObject measure = measures.optJSONObject(j);
-
-                        ContentValues values = new ContentValues();
-                        values.put(Fitbit.HISTORY_OBSERVED, now);
-
-                        String type = Fitbit.BODY_MEASURE_TYPE_UNKNOWN;
-
-                        switch (measure.getInt("type")) {
-                            case 1:
-                                type = Fitbit.BODY_MEASURE_TYPE_WEIGHT;
-                                break;
-                            case 4:
-                                type = Fitbit.BODY_MEASURE_TYPE_HEIGHT;
-                                break;
-                            case 5:
-                                type = Fitbit.BODY_MEASURE_TYPE_FAT_FREE_MASS;
-                                break;
-                            case 6:
-                                type = Fitbit.BODY_MEASURE_TYPE_FAT_RATIO;
-                                break;
-                            case 8:
-                                type = Fitbit.BODY_MEASURE_TYPE_FAT_MASS_WEIGHT;
-                                break;
-                            case 9:
-                                type = Fitbit.BODY_MEASURE_TYPE_DIASTOLIC_BLOOD_PRESSURE;
-                                break;
-                            case 10:
-                                type = Fitbit.BODY_MEASURE_TYPE_SYSTOLIC_BLOOD_PRESSURE;
-                                break;
-                            case 11:
-                                type = Fitbit.BODY_MEASURE_TYPE_HEART_PULSE;
-                                break;
-                            case 12:
-                                type = Fitbit.BODY_MEASURE_TYPE_TEMPERATURE;
-                                break;
-                            case 54:
-                                type = Fitbit.BODY_MEASURE_TYPE_OXYGEN_SATURATION;
-                                break;
-                            case 71:
-                                type = Fitbit.BODY_MEASURE_TYPE_BODY_TEMPERATURE;
-                                break;
-                            case 73:
-                                type = Fitbit.BODY_MEASURE_TYPE_SKIN_TEMPERATURE;
-                                break;
-                            case 76:
-                                type = Fitbit.BODY_MEASURE_TYPE_MUSCLE_MASS;
-                                break;
-                            case 77:
-                                type = Fitbit.BODY_MEASURE_TYPE_HYDRATION;
-                                break;
-                            case 88:
-                                type = Fitbit.BODY_MEASURE_TYPE_BONE_MASS;
-                                break;
-                            case 91:
-                                type = Fitbit.BODY_MEASURE_TYPE_PULSE_WAVE_VELOCITY;
-                                break;
-                        }
-
-                        double value = measure.getDouble("value") * Math.pow(10, measure.getDouble("unit"));
-
-                        values.put(Fitbit.BODY_MEASURE_HISTORY_DATE, measureDate);
-                        values.put(Fitbit.BODY_MEASURE_HISTORY_STATUS, status);
-                        values.put(Fitbit.BODY_MEASURE_HISTORY_CATEGORY, category);
-                        values.put(Fitbit.BODY_MEASURE_HISTORY_TYPE, type);
-                        values.put(Fitbit.BODY_MEASURE_HISTORY_VALUE, value);
-
-                        String where = Fitbit.BODY_MEASURE_HISTORY_DATE + " = ? AND " +
-                                Fitbit.BODY_MEASURE_HISTORY_STATUS + " = ? AND " +
-                                Fitbit.BODY_MEASURE_HISTORY_CATEGORY + " = ? AND " +
-                                Fitbit.BODY_MEASURE_HISTORY_TYPE + " = ? AND " +
-                                Fitbit.BODY_MEASURE_HISTORY_VALUE + " = ?";
-
-                        String[] args = {
-                                "" + measureDate,
-                                "" + status,
-                                "" + category,
-                                "" + type,
-                                "" + value
-                        };
-
-                        Cursor c = this.mDatabase.query(Fitbit.TABLE_BODY_MEASURE_HISTORY, null, where, args, null, null, null);
-
-                        if (c.getCount() == 0) {
-                            this.mDatabase.insert(Fitbit.TABLE_BODY_MEASURE_HISTORY, null, values);
-
-                            Bundle updated = new Bundle();
-
-                            updated.putLong(Fitbit.HISTORY_OBSERVED, System.currentTimeMillis());
-                            updated.putLong(Fitbit.BODY_MEASURE_HISTORY_DATE, measureDate);
-                            updated.putString(Fitbit.BODY_MEASURE_HISTORY_STATUS, status);
-                            updated.putString(Fitbit.BODY_MEASURE_HISTORY_CATEGORY, category);
-                            updated.putString(Fitbit.BODY_MEASURE_HISTORY_TYPE, type);
-                            updated.putDouble(Fitbit.BODY_MEASURE_HISTORY_VALUE, value);
-                            updated.putString(Fitbit.DATASTREAM, Fitbit.DATASTREAM_BODY);
-
-                            this.annotateGeneratorReading(updated);
-
-                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(Fitbit.GENERATOR_IDENTIFIER, updated);
-                        }
-
-                        c.close();
-                    }
-                }
-            }
-        } catch (JSONException e) {
-            AppEvent.getInstance(this.mContext).logThrowable(e);
-        }
-    }
-
-    private void fetchIntradayActivities() {
-        this.queryApi(Fitbit.API_ACTION_INTRADAY_ACTIVITY_URL);
-    }
-
-    private void logIntradayActivities(JSONObject response) {
-        try {
             long now = System.currentTimeMillis();
 
-            if (response.getInt("status") == 0) {
-                JSONObject body = response.getJSONObject("body");
+            ContentValues values = new ContentValues();
+            values.put(Fitbit.HISTORY_FETCHED, now);
+            values.put(Fitbit.HISTORY_OBSERVED, now);
+
+            Calendar cal = Calendar.getInstance();
+
+            cal.setTimeInMillis(now);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+
+            values.put(Fitbit.ACTIVITY_DATE_START, cal.getTimeInMillis());
+            values.put(Fitbit.ACTIVITY_STEPS, summary.getDouble("steps"));
+            values.put(Fitbit.ACTIVITY_FLOORS, summary.getDouble("floors"));
+            values.put(Fitbit.ACTIVITY_ELEVATION, summary.getDouble("elevation"));
+            values.put(Fitbit.ACTIVITY_CALORIES_ACTIVITY, summary.getDouble("activityCalories"));
+            values.put(Fitbit.ACTIVITY_CALORIES_BMR, summary.getDouble("caloriesBMR"));
+            values.put(Fitbit.ACTIVITY_CALORIES_MARGINAL, summary.getDouble("marginalCalories"));
+            values.put(Fitbit.ACTIVITY_MINUTES_VERY_ACTIVE, summary.getDouble("veryActiveMinutes"));
+            values.put(Fitbit.ACTIVITY_MINUTES_FAIRLY_ACTIVE, summary.getDouble("fairlyActiveMinutes"));
+            values.put(Fitbit.ACTIVITY_MINUTES_LIGHTLY_ACTIVE, summary.getDouble("lightlyActiveMinutes"));
+            values.put(Fitbit.ACTIVITY_MINUTES_SEDENTARY, summary.getDouble("sedentaryMinutes"));
+
+            double distance = 0;
+
+            if (summary.has("distance")) {
+                JSONArray distances = summary.getJSONArray("distances");
+
+                for (int i = 0; i < distances.length(); i++) {
+                    JSONObject distanceRecord = distances.getJSONObject(i);
+
+                    distance += distanceRecord.getDouble("distance");
+                }
+            }
+
+            values.put(Fitbit.ACTIVITY_DISTANCE, distance);
+
+            this.mDatabase.insert(Fitbit.TABLE_ACTIVITY_HISTORY, null, values);
+
+            Bundle updated = new Bundle();
+
+            updated.putLong(Fitbit.HISTORY_OBSERVED, values.getAsLong(Fitbit.HISTORY_FETCHED));
+            updated.putLong(Fitbit.HISTORY_FETCHED, values.getAsLong(Fitbit.HISTORY_FETCHED));
+            updated.putLong(Fitbit.ACTIVITY_DATE_START, values.getAsLong(Fitbit.ACTIVITY_DATE_START));
+            updated.putDouble(Fitbit.ACTIVITY_STEPS, values.getAsDouble(Fitbit.ACTIVITY_STEPS));
+            updated.putDouble(Fitbit.ACTIVITY_DISTANCE, values.getAsDouble(Fitbit.ACTIVITY_DISTANCE));
+            updated.putDouble(Fitbit.ACTIVITY_FLOORS, values.getAsDouble(Fitbit.ACTIVITY_FLOORS));
+            updated.putDouble(Fitbit.ACTIVITY_ELEVATION, values.getAsDouble(Fitbit.ACTIVITY_ELEVATION));
+            updated.putDouble(Fitbit.ACTIVITY_CALORIES_ACTIVITY, values.getAsDouble(Fitbit.ACTIVITY_CALORIES_ACTIVITY));
+            updated.putDouble(Fitbit.ACTIVITY_CALORIES_BMR, values.getAsDouble(Fitbit.ACTIVITY_CALORIES_BMR));
+            updated.putDouble(Fitbit.ACTIVITY_CALORIES_MARGINAL, values.getAsDouble(Fitbit.ACTIVITY_CALORIES_MARGINAL));
+            updated.putDouble(Fitbit.ACTIVITY_MINUTES_VERY_ACTIVE, values.getAsDouble(Fitbit.ACTIVITY_MINUTES_VERY_ACTIVE));
+            updated.putDouble(Fitbit.ACTIVITY_MINUTES_FAIRLY_ACTIVE, values.getAsDouble(Fitbit.ACTIVITY_MINUTES_FAIRLY_ACTIVE));
+            updated.putDouble(Fitbit.ACTIVITY_MINUTES_LIGHTLY_ACTIVE, values.getAsDouble(Fitbit.ACTIVITY_MINUTES_LIGHTLY_ACTIVE));
+            updated.putDouble(Fitbit.ACTIVITY_MINUTES_SEDENTARY, values.getAsDouble(Fitbit.ACTIVITY_MINUTES_SEDENTARY));
+
+            updated.putString(Fitbit.FITBIT_TYPE, Fitbit.FITBIT_TYPE_ACTIVITY);
+
+            Generators.getInstance(this.mContext).notifyGeneratorUpdated(Fitbit.GENERATOR_IDENTIFIER, updated);
+        }
+    }
+
+    private void fetchSleep() {
+        this.queryApi(Fitbit.API_ACTION_SLEEP_URL);
+    }
+
+    private void logSleep(JSONObject response) throws JSONException {
+        if (response.has("sleep")) {
+            long now = System.currentTimeMillis();
+
+            @SuppressLint("SimpleDateFormat")
+            SimpleDateFormat startFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss.SSS");
+
+            JSONArray sleeps = response.getJSONArray("sleep");
+
+            for (int i = 0 ; i < sleeps.length(); i++) {
+                JSONObject sleep = sleeps.getJSONObject(i);
 
                 try {
-                    JSONObject series = body.getJSONObject("series");
+                    ContentValues values = new ContentValues();
+                    values.put(Fitbit.HISTORY_FETCHED, now);
+                    values.put(Fitbit.HISTORY_OBSERVED, now);
 
-                    Iterator<String> keys = series.keys();
+                    Bundle updated = new Bundle();
 
-                    while (keys.hasNext()) {
-                        String key = keys.next();
+                    updated.putLong(Fitbit.HISTORY_OBSERVED, values.getAsLong(Fitbit.HISTORY_FETCHED));
+                    updated.putLong(Fitbit.HISTORY_FETCHED, values.getAsLong(Fitbit.HISTORY_FETCHED));
+                    updated.putLong(Fitbit.HISTORY_FETCHED, values.getAsLong(Fitbit.HISTORY_FETCHED));
 
-                        long timestamp = Long.parseLong(key);
+                    Date sleepStart = startFormat.parse(sleep.getString("startTime"));
 
-                        String where = Fitbit.INTRADAY_ACTIVITY_START + " = ?";
-                        String[] args = { "" + timestamp };
+                    values.put(Fitbit.SLEEP_START_TIME, sleepStart.getTime());
+                    values.put(Fitbit.SLEEP_DURATION, sleep.getLong("duration"));
+                    values.put(Fitbit.SLEEP_IS_MAIN_SLEEP, sleep.getBoolean("isMainSleep"));
 
-                        Cursor c = this.mDatabase.query(Fitbit.TABLE_INTRADAY_ACTIVITY_HISTORY, null, where, args, null, null, Fitbit.HISTORY_OBSERVED + " DESC");
+                    updated.putLong(Fitbit.SLEEP_START_TIME, values.getAsLong(Fitbit.SLEEP_START_TIME));
+                    updated.putLong(Fitbit.SLEEP_START_TIME, values.getAsLong(Fitbit.SLEEP_START_TIME));
+                    updated.putBoolean(Fitbit.SLEEP_IS_MAIN_SLEEP, values.getAsBoolean(Fitbit.SLEEP_IS_MAIN_SLEEP));
 
-                        if (c.moveToNext() == false) {
-                            JSONObject item = series.getJSONObject(key);
+                    values.put(Fitbit.SLEEP_MINUTES_ASLEEP, sleep.getDouble("minutesAsleep"));
+                    values.put(Fitbit.SLEEP_MINUTES_AWAKE, sleep.getDouble("minutesAwake"));
+                    values.put(Fitbit.SLEEP_MINUTES_AFTER_WAKE, sleep.getDouble("minutesAfterWakeup"));
+                    values.put(Fitbit.SLEEP_MINUTES_TO_SLEEP, sleep.getDouble("minutesToFallAsleep"));
+                    values.put(Fitbit.SLEEP_MINUTES_IN_BED, sleep.getDouble("timeInBed"));
 
-                            ContentValues values = new ContentValues();
-                            values.put(Fitbit.HISTORY_OBSERVED, now);
-                            values.put(Fitbit.INTRADAY_ACTIVITY_START, timestamp);
-                            values.put(Fitbit.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
+                    updated.putDouble(Fitbit.SLEEP_MINUTES_ASLEEP, values.getAsDouble(Fitbit.SLEEP_MINUTES_ASLEEP));
+                    updated.putDouble(Fitbit.SLEEP_MINUTES_AWAKE, values.getAsDouble(Fitbit.SLEEP_MINUTES_AWAKE));
+                    updated.putDouble(Fitbit.SLEEP_MINUTES_AFTER_WAKE, values.getAsDouble(Fitbit.SLEEP_MINUTES_AFTER_WAKE));
+                    updated.putDouble(Fitbit.SLEEP_MINUTES_TO_SLEEP, values.getAsDouble(Fitbit.SLEEP_MINUTES_TO_SLEEP));
+                    updated.putDouble(Fitbit.SLEEP_MINUTES_IN_BED, values.getAsDouble(Fitbit.SLEEP_MINUTES_IN_BED));
 
-                            Bundle updated = new Bundle();
-                            updated.putLong(Fitbit.HISTORY_OBSERVED, System.currentTimeMillis());
-                            updated.putLong(Fitbit.INTRADAY_ACTIVITY_START, timestamp);
-                            updated.putLong(Fitbit.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
+                    values.put(Fitbit.SLEEP_TYPE, sleep.getString("type"));
 
-                            if (item.has("steps")) {
-                                values.put(Fitbit.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
-                                updated.putLong(Fitbit.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
-                            }
+                    updated.putString(Fitbit.SLEEP_TYPE, values.getAsString(Fitbit.SLEEP_TYPE));
 
-                            if (item.has("elevation")) {
-                                values.put(Fitbit.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
-                                updated.putLong(Fitbit.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
-                            }
+                    if ("stages".equals(sleep.getString("type"))) {
+                        JSONObject summary = sleep.getJSONObject("levels").getJSONObject("summary");
 
-                            if (item.has("distance")) {
-                                values.put(Fitbit.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
-                                updated.putLong(Fitbit.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
-                            }
+                        if (summary.has("deep")) {
+                            JSONObject deep = summary.getJSONObject("deep");
 
-                            if (item.has("calories")) {
-                                values.put(Fitbit.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
-                                updated.putLong(Fitbit.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
-                            }
+                            values.put(Fitbit.SLEEP_DEEP_PERIODS, deep.getDouble("count"));
+                            values.put(Fitbit.SLEEP_DEEP_MINUTES, deep.getDouble("minutes"));
 
-                            if (item.has("stroke")) {
-                                values.put(Fitbit.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
-                                updated.putLong(Fitbit.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
-                            }
-
-                            if (item.has("pool_lap")) {
-                                values.put(Fitbit.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
-                                updated.putLong(Fitbit.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
-                            }
-
-                            this.mDatabase.insert(Fitbit.TABLE_INTRADAY_ACTIVITY_HISTORY, null, values);
-
-                            this.annotateGeneratorReading(updated);
-
-                            updated.putString(Fitbit.DATASTREAM, Fitbit.DATASTREAM_INTRADAY_ACTIVITY);
-
-                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(Fitbit.GENERATOR_IDENTIFIER, updated);
+                            updated.putDouble(Fitbit.SLEEP_DEEP_PERIODS, values.getAsDouble(Fitbit.SLEEP_DEEP_PERIODS));
+                            updated.putDouble(Fitbit.SLEEP_DEEP_MINUTES, values.getAsDouble(Fitbit.SLEEP_DEEP_MINUTES));
                         }
 
-                        c.close();
+                        if (summary.has("light")) {
+                            JSONObject deep = summary.getJSONObject("light");
+
+                            values.put(Fitbit.SLEEP_LIGHT_PERIODS, deep.getDouble("count"));
+                            values.put(Fitbit.SLEEP_LIGHT_MINUTES, deep.getDouble("minutes"));
+
+                            updated.putDouble(Fitbit.SLEEP_LIGHT_PERIODS, values.getAsDouble(Fitbit.SLEEP_LIGHT_PERIODS));
+                            updated.putDouble(Fitbit.SLEEP_LIGHT_MINUTES, values.getAsDouble(Fitbit.SLEEP_LIGHT_MINUTES));
+                        }
+
+                        if (summary.has("rem")) {
+                            JSONObject deep = summary.getJSONObject("rem");
+
+                            values.put(Fitbit.SLEEP_REM_PERIODS, deep.getDouble("count"));
+                            values.put(Fitbit.SLEEP_REM_MINUTES, deep.getDouble("minutes"));
+
+                            updated.putDouble(Fitbit.SLEEP_REM_PERIODS, values.getAsDouble(Fitbit.SLEEP_REM_PERIODS));
+                            updated.putDouble(Fitbit.SLEEP_REM_MINUTES, values.getAsDouble(Fitbit.SLEEP_REM_MINUTES));
+                        }
+
+                        if (summary.has("wake")) {
+                            JSONObject deep = summary.getJSONObject("wake");
+
+                            values.put(Fitbit.SLEEP_WAKE_PERIODS, deep.getDouble("count"));
+                            values.put(Fitbit.SLEEP_WAKE_MINUTES, deep.getDouble("minutes"));
+
+                            updated.putDouble(Fitbit.SLEEP_WAKE_PERIODS, values.getAsDouble(Fitbit.SLEEP_WAKE_PERIODS));
+                            updated.putDouble(Fitbit.SLEEP_WAKE_MINUTES, values.getAsDouble(Fitbit.SLEEP_WAKE_MINUTES));
+                        }
+                    } else if ("classic".equals(sleep.getString("type"))) {
+                        JSONObject summary = sleep.getJSONObject("levels").getJSONObject("summary");
+
+                        if (summary.has("asleep")) {
+                            JSONObject deep = summary.getJSONObject("asleep");
+
+                            values.put(Fitbit.SLEEP_ASLEEP_PERIODS, deep.getDouble("count"));
+                            values.put(Fitbit.SLEEP_ASLEEP_MINUTES, deep.getDouble("minutes"));
+
+                            updated.putDouble(Fitbit.SLEEP_ASLEEP_PERIODS, values.getAsDouble(Fitbit.SLEEP_ASLEEP_PERIODS));
+                            updated.putDouble(Fitbit.SLEEP_ASLEEP_MINUTES, values.getAsDouble(Fitbit.SLEEP_ASLEEP_MINUTES));
+                        }
+
+                        if (summary.has("awake")) {
+                            JSONObject deep = summary.getJSONObject("awake");
+
+                            values.put(Fitbit.SLEEP_AWAKE_PERIODS, deep.getDouble("count"));
+                            values.put(Fitbit.SLEEP_AWAKE_MINUTES, deep.getDouble("minutes"));
+
+                            updated.putDouble(Fitbit.SLEEP_AWAKE_PERIODS, values.getAsDouble(Fitbit.SLEEP_AWAKE_PERIODS));
+                            updated.putDouble(Fitbit.SLEEP_AWAKE_MINUTES, values.getAsDouble(Fitbit.SLEEP_AWAKE_MINUTES));
+                        }
+
+                        if (summary.has("restless")) {
+                            JSONObject deep = summary.getJSONObject("restless");
+
+                            values.put(Fitbit.SLEEP_RESTLESS_PERIODS, deep.getDouble("count"));
+                            values.put(Fitbit.SLEEP_RESTLESS_MINUTES, deep.getDouble("minutes"));
+
+                            updated.putDouble(Fitbit.SLEEP_RESTLESS_PERIODS, values.getAsDouble(Fitbit.SLEEP_RESTLESS_PERIODS));
+                            updated.putDouble(Fitbit.SLEEP_RESTLESS_MINUTES, values.getAsDouble(Fitbit.SLEEP_RESTLESS_MINUTES));
+                        }
                     }
-                } catch (JSONException e) {
-                    // JSON type mismatch when day's data is empty. Do nothing...
+
+                    this.mDatabase.insert(Fitbit.TABLE_SLEEP_HISTORY, null, values);
+
+                    updated.putString(Fitbit.FITBIT_TYPE, Fitbit.FITBIT_TYPE_SLEEP);
+
+                    Generators.getInstance(this.mContext).notifyGeneratorUpdated(Fitbit.GENERATOR_IDENTIFIER, updated);
+                } catch (ParseException e) {
+                    e.printStackTrace();
                 }
             }
-        } catch (JSONException e) {
-            AppEvent.getInstance(this.mContext).logThrowable(e);
         }
     }
 
-    private void fetchSleepMeasures() {
-        this.queryApi(Fitbit.API_ACTION_SLEEP_MEASURES_URL);
+    private void fetchHeartRate() {
+        this.queryApi(Fitbit.API_ACTION_HEART_RATE_URL);
     }
 
-    private void logSleepMeasures(JSONObject response) {
-        try {
-            if (response.getInt("status") == 0) {
-                JSONObject body = response.getJSONObject("body");
+    private void logHeartRate(JSONObject response) throws JSONException {
+        if (response.has("activities-heart")) {
+            long now = System.currentTimeMillis();
 
-                String model = Fitbit.SLEEP_MEASURE_MODEL_UNKNOWN;
+            ContentValues values = new ContentValues();
+            values.put(Fitbit.HISTORY_FETCHED, now);
+            values.put(Fitbit.HISTORY_OBSERVED, now);
 
-                switch(body.getInt("model")) {
-                    case 16:
-                        model = Fitbit.SLEEP_MEASURE_MODEL_ACTIVITY_TRACKER;
-                        break;
-                    case 32:
-                        model = Fitbit.SLEEP_MEASURE_MODEL_AURA;
-                        break;
+            JSONArray zones = response.getJSONArray("activities-heart").getJSONObject(0).getJSONObject("value").getJSONArray("heartRateZones");
+
+            for (int i = 0; i < zones.length(); i++) {
+                JSONObject zone = zones.getJSONObject(i);
+
+                if ("Out of Range".equals(zone.getString("name"))) {
+                    values.put(Fitbit.HEART_RATE_OUT_MIN, zone.getDouble("min"));
+                    values.put(Fitbit.HEART_RATE_OUT_MAX, zone.getDouble("max"));
+                    values.put(Fitbit.HEART_RATE_OUT_MINUTES, zone.getDouble("minutes"));
+                    values.put(Fitbit.HEART_RATE_OUT_CALORIES, zone.getDouble("caloriesOut"));
+                } else if ("Fat Burn".equals(zone.getString("name"))) {
+                    values.put(Fitbit.HEART_RATE_FAT_MIN, zone.getDouble("min"));
+                    values.put(Fitbit.HEART_RATE_FAT_MAX, zone.getDouble("max"));
+                    values.put(Fitbit.HEART_RATE_FAT_MINUTES, zone.getDouble("minutes"));
+                    values.put(Fitbit.HEART_RATE_FAT_CALORIES, zone.getDouble("caloriesOut"));
+                } else if ("Cardio".equals(zone.getString("name"))) {
+                    values.put(Fitbit.HEART_RATE_CARDIO_MIN, zone.getDouble("min"));
+                    values.put(Fitbit.HEART_RATE_CARDIO_MAX, zone.getDouble("max"));
+                    values.put(Fitbit.HEART_RATE_CARDIO_MINUTES, zone.getDouble("minutes"));
+                    values.put(Fitbit.HEART_RATE_CARDIO_CALORIES, zone.getDouble("caloriesOut"));
+                } else if ("Peak".equals(zone.getString("name"))) {
+                    values.put(Fitbit.HEART_RATE_PEAK_MIN, zone.getDouble("min"));
+                    values.put(Fitbit.HEART_RATE_PEAK_MAX, zone.getDouble("max"));
+                    values.put(Fitbit.HEART_RATE_PEAK_MINUTES, zone.getDouble("minutes"));
+                    values.put(Fitbit.HEART_RATE_PEAK_CALORIES, zone.getDouble("caloriesOut"));
                 }
+            }
 
-                JSONArray series = body.getJSONArray("series");
+            JSONObject value = response.getJSONArray("activities-heart").getJSONObject(0).getJSONObject("value");
 
-                for (int i = 0; i < series.length(); i++) {
-                    JSONObject item = series.getJSONObject(i);
+            values.put(Fitbit.HEART_RATE_RESTING_RATE, value.getDouble("restingHeartRate"));
 
-                    long now = System.currentTimeMillis();
+            this.mDatabase.insert(Fitbit.TABLE_HEART_RATE_HISTORY, null, values);
 
-                    String state = Fitbit.SLEEP_MEASURE_STATE_UNKNOWN;
+            Bundle updated = new Bundle();
 
-                    switch (item.getInt("state")) {
-                        case 0:
-                            state = Fitbit.SLEEP_MEASURE_STATE_AWAKE;
-                            break;
-                        case 1:
-                            state = Fitbit.SLEEP_MEASURE_STATE_LIGHT_SLEEP;
-                            break;
-                        case 2:
-                            state = Fitbit.SLEEP_MEASURE_STATE_DEEP_SLEEP;
-                            break;
-                        case 3:
-                            state = Fitbit.SLEEP_MEASURE_STATE_REM_SLEEP;
-                            break;
-                    }
+            updated.putLong(Fitbit.HISTORY_OBSERVED, values.getAsLong(Fitbit.HISTORY_FETCHED));
+            updated.putLong(Fitbit.HISTORY_FETCHED, values.getAsLong(Fitbit.HISTORY_FETCHED));
 
-                    ContentValues values = new ContentValues();
-                    values.put(Fitbit.HISTORY_OBSERVED, now);
-                    values.put(Fitbit.SLEEP_MEASURE_START_DATE, item.getLong("startdate"));
-                    values.put(Fitbit.SLEEP_MEASURE_END_DATE, item.getLong("enddate"));
-                    values.put(Fitbit.SLEEP_MEASURE_STATE, state);
-                    values.put(Fitbit.SLEEP_MEASURE_MEASUREMENT_DEVICE, model);
+            updated.putDouble(Fitbit.HEART_RATE_OUT_MIN, values.getAsDouble(Fitbit.HEART_RATE_OUT_MIN));
+            updated.putDouble(Fitbit.HEART_RATE_OUT_MAX, values.getAsDouble(Fitbit.HEART_RATE_OUT_MAX));
+            updated.putDouble(Fitbit.HEART_RATE_OUT_MINUTES, values.getAsDouble(Fitbit.HEART_RATE_OUT_MINUTES));
+            updated.putDouble(Fitbit.HEART_RATE_OUT_CALORIES, values.getAsDouble(Fitbit.HEART_RATE_OUT_CALORIES));
+            updated.putDouble(Fitbit.HEART_RATE_FAT_MIN, values.getAsDouble(Fitbit.HEART_RATE_FAT_MIN));
+            updated.putDouble(Fitbit.HEART_RATE_FAT_MAX, values.getAsDouble(Fitbit.HEART_RATE_FAT_MAX));
+            updated.putDouble(Fitbit.HEART_RATE_FAT_MINUTES, values.getAsDouble(Fitbit.HEART_RATE_FAT_MINUTES));
+            updated.putDouble(Fitbit.HEART_RATE_FAT_CALORIES, values.getAsDouble(Fitbit.HEART_RATE_FAT_CALORIES));
+            updated.putDouble(Fitbit.HEART_RATE_CARDIO_MIN, values.getAsDouble(Fitbit.HEART_RATE_CARDIO_MIN));
+            updated.putDouble(Fitbit.HEART_RATE_CARDIO_MAX, values.getAsDouble(Fitbit.HEART_RATE_CARDIO_MAX));
+            updated.putDouble(Fitbit.HEART_RATE_CARDIO_MINUTES, values.getAsDouble(Fitbit.HEART_RATE_CARDIO_MINUTES));
+            updated.putDouble(Fitbit.HEART_RATE_CARDIO_CALORIES, values.getAsDouble(Fitbit.HEART_RATE_CARDIO_CALORIES));
+            updated.putDouble(Fitbit.HEART_RATE_PEAK_MIN, values.getAsDouble(Fitbit.HEART_RATE_PEAK_MIN));
+            updated.putDouble(Fitbit.HEART_RATE_PEAK_MAX, values.getAsDouble(Fitbit.HEART_RATE_PEAK_MAX));
+            updated.putDouble(Fitbit.HEART_RATE_PEAK_MINUTES, values.getAsDouble(Fitbit.HEART_RATE_PEAK_MINUTES));
+            updated.putDouble(Fitbit.HEART_RATE_PEAK_CALORIES, values.getAsDouble(Fitbit.HEART_RATE_PEAK_CALORIES));
 
-                    String where = Fitbit.SLEEP_MEASURE_START_DATE + " = ? AND " +
-                            Fitbit.SLEEP_MEASURE_END_DATE + " = ? AND " +
-                            Fitbit.SLEEP_MEASURE_STATE + " = ? AND " +
-                            Fitbit.SLEEP_MEASURE_MEASUREMENT_DEVICE + " = ?";
+            updated.putString(Fitbit.FITBIT_TYPE, Fitbit.FITBIT_TYPE_HEART_RATE);
 
-                    String[] args = {
-                            "" + item.getLong("startdate"),
-                            "" + item.getLong("enddate"),
-                            "" + state,
-                            "" + model
-                    };
+            Generators.getInstance(this.mContext).notifyGeneratorUpdated(Fitbit.GENERATOR_IDENTIFIER, updated);
+        }
+    }
 
-                    Cursor c = this.mDatabase.query(Fitbit.TABLE_SLEEP_MEASURE_HISTORY, null, where, args, null, null, null);
+    private void fetchWeight() {
+        this.queryApi(Fitbit.API_ACTION_WEIGHT_URL);
+    }
 
-                    if (c.getCount() == 0) {
-                        this.mDatabase.insert(Fitbit.TABLE_SLEEP_MEASURE_HISTORY, null, values);
+    private void logWeight(JSONObject response) throws JSONException {
+        if (response.has("weight")) {
+            long now = System.currentTimeMillis();
+
+            @SuppressLint("SimpleDateFormat")
+            SimpleDateFormat startFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss");
+
+            JSONArray weights = response.getJSONArray("weight");
+
+            for (int i = 0; i < weights.length(); i++) {
+                JSONObject weight = weights.getJSONObject(i);
+
+                long logId = weight.getLong("logId");
+
+                String where = Fitbit.WEIGHT_LOG_ID + " = ?";
+                String[] args = { "" + logId };
+
+                Cursor c = this.mDatabase.query(Fitbit.TABLE_WEIGHT_HISTORY, null, where, args, null, null, null);
+
+                if (c.getCount() == 0) {
+                    try {
+                        Date observed = startFormat.parse(weight.get("date") + "T" + weight.getString("time"));
+                        ContentValues values = new ContentValues();
+                        values.put(Fitbit.HISTORY_FETCHED, now);
+                        values.put(Fitbit.HISTORY_OBSERVED, observed.getTime());
+
+                        values.put(Fitbit.WEIGHT_WEIGHT, weight.getDouble("weight"));
+                        values.put(Fitbit.WEIGHT_BMI, weight.getDouble("bmi"));
+                        values.put(Fitbit.WEIGHT_SOURCE, weight.getString("source"));
+                        values.put(Fitbit.WEIGHT_LOG_ID, weight.getLong("logId"));
+
+                        this.mDatabase.insert(Fitbit.TABLE_WEIGHT_HISTORY, null, values);
 
                         Bundle updated = new Bundle();
-                        updated.putLong(Fitbit.HISTORY_OBSERVED, System.currentTimeMillis());
-                        updated.putLong(Fitbit.SLEEP_MEASURE_START_DATE, item.getLong("startdate"));
-                        updated.putLong(Fitbit.SLEEP_MEASURE_END_DATE, item.getLong("enddate"));
-                        updated.putString(Fitbit.SLEEP_MEASURE_STATE, state);
-                        updated.putString(Fitbit.SLEEP_MEASURE_MEASUREMENT_DEVICE, model);
 
-                        this.annotateGeneratorReading(updated);
+                        updated.putLong(Fitbit.HISTORY_OBSERVED, values.getAsLong(Fitbit.HISTORY_FETCHED));
+                        updated.putLong(Fitbit.HISTORY_FETCHED, values.getAsLong(Fitbit.HISTORY_FETCHED));
+                        updated.putLong(Fitbit.WEIGHT_LOG_ID, values.getAsLong(Fitbit.WEIGHT_LOG_ID));
+                        updated.putString(Fitbit.WEIGHT_SOURCE, values.getAsString(Fitbit.WEIGHT_SOURCE));
 
-                        updated.putString(Fitbit.DATASTREAM, Fitbit.DATASTREAM_SLEEP_MEASURES);
+                        updated.putString(Fitbit.FITBIT_TYPE, Fitbit.FITBIT_TYPE_WEIGHT);
 
                         Generators.getInstance(this.mContext).notifyGeneratorUpdated(Fitbit.GENERATOR_IDENTIFIER, updated);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
                     }
-
-                    c.close();
                 }
+
+                c.close();
             }
-        } catch (JSONException e) {
-            AppEvent.getInstance(this.mContext).logThrowable(e);
-        }
-    }
-
-    private void fetchSleepSummary() {
-        this.queryApi(Fitbit.API_ACTION_SLEEP_SUMMARY_URL);
-    }
-
-    private void logSleepSummary(JSONObject response) {
-        try {
-            if (response.getInt("status") == 0) {
-                JSONObject body = response.getJSONObject("body");
-
-                JSONArray series = body.getJSONArray("series");
-
-                long now = System.currentTimeMillis();
-
-                for (int i = 0; i < series.length(); i++) {
-                    JSONObject item = series.getJSONObject(i);
-
-                    String timezone = body.getString("timezone");
-
-                    String model = Fitbit.SLEEP_SUMMARY_MODEL_UNKNOWN;
-
-                    switch(body.getInt("model")) {
-                        case 16:
-                            model = Fitbit.SLEEP_SUMMARY_MODEL_ACTIVITY_TRACKER;
-                            break;
-                        case 32:
-                            model = Fitbit.SLEEP_SUMMARY_MODEL_AURA;
-                            break;
-                    }
-
-                    JSONObject data = item.getJSONObject("data");
-
-                    ContentValues values = new ContentValues();
-                    values.put(Fitbit.HISTORY_OBSERVED, now);
-                    values.put(Fitbit.SLEEP_SUMMARY_START_DATE, item.getLong("startdate"));
-                    values.put(Fitbit.SLEEP_SUMMARY_END_DATE, item.getLong("enddate"));
-                    values.put(Fitbit.SLEEP_SUMMARY_TIMEZONE, timezone);
-                    values.put(Fitbit.SLEEP_SUMMARY_MEASUREMENT_DEVICE, model);
-                    values.put(Fitbit.SLEEP_SUMMARY_WAKE_DURATION, data.getDouble("wakeupduration"));
-                    values.put(Fitbit.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION, data.getDouble("lightsleepduration"));
-                    values.put(Fitbit.SLEEP_SUMMARY_DEEP_SLEEP_DURATION, data.getDouble("deepsleepduration"));
-                    values.put(Fitbit.SLEEP_SUMMARY_TO_SLEEP_DURATION, data.getDouble("durationtosleep"));
-                    values.put(Fitbit.SLEEP_SUMMARY_WAKE_COUNT, data.getDouble("wakeupcount"));
-
-                    if (data.has("remsleepduration")) {
-                        values.put(Fitbit.SLEEP_SUMMARY_REM_SLEEP_DURATION, data.getDouble("remsleepduration"));
-                    }
-
-                    if (data.has("durationtowakeup")) {
-                        values.put(Fitbit.SLEEP_SUMMARY_TO_WAKE_DURATION, data.getDouble("durationtowakeup"));
-                    }
-
-                    String where = Fitbit.SLEEP_SUMMARY_START_DATE + " = ? AND " +
-                            Fitbit.SLEEP_SUMMARY_END_DATE + " = ? AND " +
-                            Fitbit.SLEEP_SUMMARY_TIMEZONE + " = ? AND " +
-                            Fitbit.SLEEP_SUMMARY_MEASUREMENT_DEVICE + " = ? AND " +
-                            Fitbit.SLEEP_SUMMARY_WAKE_DURATION + " = ? AND " +
-                            Fitbit.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION + " = ? AND " +
-                            Fitbit.SLEEP_SUMMARY_DEEP_SLEEP_DURATION + " = ? AND " +
-                            Fitbit.SLEEP_SUMMARY_TO_SLEEP_DURATION + " = ? AND " +
-                            Fitbit.SLEEP_SUMMARY_WAKE_COUNT + " = ?";
-
-                    String[] args = {
-                            "" + item.getLong("startdate"),
-                            "" + item.getLong("enddate"),
-                            "" + timezone,
-                            "" + model,
-                            "" + data.getDouble("wakeupduration"),
-                            "" + data.getDouble("lightsleepduration"),
-                            "" + data.getDouble("deepsleepduration"),
-                            "" + data.getDouble("durationtosleep"),
-                            "" + data.getDouble("wakeupcount")
-                    };
-
-                    Cursor c = this.mDatabase.query(Fitbit.TABLE_SLEEP_MEASURE_HISTORY, null, where, args, null, null, null);
-
-                    if (c.getCount() == 0) {
-                        this.mDatabase.insert(Fitbit.TABLE_SLEEP_MEASURE_HISTORY, null, values);
-
-                        Bundle updated = new Bundle();
-                        updated.putLong(Fitbit.HISTORY_OBSERVED, now);
-                        updated.putLong(Fitbit.SLEEP_SUMMARY_START_DATE, item.getLong("startdate"));
-                        updated.putLong(Fitbit.SLEEP_SUMMARY_END_DATE, item.getLong("enddate"));
-                        updated.putString(Fitbit.SLEEP_SUMMARY_TIMEZONE, timezone);
-                        updated.putString(Fitbit.SLEEP_SUMMARY_MEASUREMENT_DEVICE, model);
-                        updated.putDouble(Fitbit.SLEEP_SUMMARY_WAKE_DURATION, data.getDouble("wakeupduration"));
-                        updated.putDouble(Fitbit.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION, data.getDouble("lightsleepduration"));
-                        updated.putDouble(Fitbit.SLEEP_SUMMARY_DEEP_SLEEP_DURATION, data.getDouble("deepsleepduration"));
-                        updated.putDouble(Fitbit.SLEEP_SUMMARY_TO_SLEEP_DURATION, data.getDouble("durationtosleep"));
-                        updated.putDouble(Fitbit.SLEEP_SUMMARY_WAKE_COUNT, data.getDouble("wakeupcount"));
-
-                        if (data.has("remsleepduration")) {
-                            updated.putDouble(Fitbit.SLEEP_SUMMARY_REM_SLEEP_DURATION, data.getDouble("remsleepduration"));
-                        }
-
-                        if (data.has("durationtowakeup")) {
-                            updated.putDouble(Fitbit.SLEEP_SUMMARY_TO_WAKE_DURATION, data.getDouble("durationtowakeup"));
-                        }
-
-                        this.annotateGeneratorReading(updated);
-
-                        updated.putString(Fitbit.DATASTREAM, Fitbit.DATASTREAM_SLEEP_SUMMARY);
-
-                        Generators.getInstance(this.mContext).notifyGeneratorUpdated(Fitbit.GENERATOR_IDENTIFIER, updated);
-                    }
-
-                    c.close();
-                }
-            }
-        } catch (JSONException e) {
-            AppEvent.getInstance(this.mContext).logThrowable(e);
-        }
-    }
-
-    private void annotateGeneratorReading(Bundle reading) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-
-        if (prefs.getBoolean(Fitbit.SERVER_FETCH_ENABLED, Fitbit.SERVER_FETCH_ENABLED_DEFAULT)) {
-            String clientId = this.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID);
-            String token = this.getProperty(Fitbit.OPTION_OAUTH_ACCESS_TOKEN);
-            String tokenSecret = this.getProperty(Fitbit.OPTION_OAUTH_ACCESS_TOKEN_SECRET);
-            String userId = this.getProperty(Fitbit.OPTION_OAUTH_ACCESS_USER_ID);
-
-            reading.putString(Fitbit.OPTION_OAUTH_CLIENT_ID, clientId);
-            reading.putString(Fitbit.OAUTH_USER_TOKEN, token);
-            reading.putString(Fitbit.OAUTH_USER_SECRET, tokenSecret);
-            reading.putString(Fitbit.OAUTH_USER_ID, userId);
         }
     }
 
@@ -1188,7 +795,7 @@ public class Fitbit extends Generator {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
         if (prefs.contains(Fitbit.PERSISTED_AUTH) == false) {
-            actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_nokia_health_auth_required_title), context.getString(R.string.diagnostic_nokia_health_auth_required), new Runnable() {
+            actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_fitbit_auth_required_title), context.getString(R.string.diagnostic_fitbit_auth_required), new Runnable() {
                 @Override
                 public void run() {
                     Runnable r = new Runnable() {
@@ -1201,9 +808,36 @@ public class Fitbit extends Generator {
 
                             AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(config, clientId, "code", Uri.parse(callbackUrl));
 
-                            builder.setScope("user.info,user.activity,user.metrics");
+                            builder.setPrompt("login consent");
+
+                            HashMap<String, String> params = new HashMap<>();
+                            params.put("expires_in", "2592000");
+
+                            builder.setAdditionalParameters(params);
+
+                            ArrayList<String> scopes = new ArrayList<>();
+                            scopes.add("profile");
+
+                            if (prefs.getBoolean(Fitbit.ACTIVITY_ENABLED, Fitbit.ACTIVITY_ENABLED_DEFAULT)) {
+                                scopes.add("activity");
+                            }
+
+                            if (prefs.getBoolean(Fitbit.HEART_RATE_ENABLED, Fitbit.HEART_RATE_ENABLED_DEFAULT)) {
+                                scopes.add("heartrate");
+                            }
+
+                            if (prefs.getBoolean(Fitbit.SLEEP_ENABLED, Fitbit.SLEEP_ENABLED_DEFAULT)) {
+                                scopes.add("sleep");
+                            }
+
+                            if (prefs.getBoolean(Fitbit.WEIGHT_ENABLED, Fitbit.WEIGHT_ENABLED_DEFAULT)) {
+                                scopes.add("weight");
+                            }
+
+                            builder.setScopes(scopes);
 
                             builder.setCodeVerifier(null);
+                            builder.setState(null);
 
                             AuthorizationRequest request = builder.build();
 
@@ -1226,12 +860,26 @@ public class Fitbit extends Generator {
         return actions;
     }
 
+    private String getProperty(String key) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        if (Fitbit.OPTION_OAUTH_CLIENT_ID.equals(key)) {
+            return prefs.getString(Fitbit.OPTION_OAUTH_CLIENT_ID, null);
+        } else if (Fitbit.OPTION_OAUTH_CALLBACK_URL.equals(key)) {
+            return prefs.getString(Fitbit.OPTION_OAUTH_CALLBACK_URL, null);
+        } else if (Fitbit.OPTION_OAUTH_CLIENT_SECRET.equals(key)) {
+            return prefs.getString(Fitbit.OPTION_OAUTH_CLIENT_SECRET, null);
+        }
+
+        return this.mProperties.get(key);
+    }
+
     private void authorizationSuccessful(final AuthorizationResponse authResponse, final AuthorizationException authException) {
         final Fitbit me = this;
 
         AuthorizationService service = new AuthorizationService(this.mContext);
 
-        ClientSecretPost secret = new ClientSecretPost(me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_SECRET));
+        ClientSecretBasic secret = new ClientSecretBasic(me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_SECRET));
 
         service.performTokenRequest(authResponse.createTokenExchangeRequest(), secret, new AuthorizationService.TokenResponseCallback() {
             @Override public void onTokenRequestCompleted(TokenResponse tokenResponse, AuthorizationException ex) {
@@ -1246,8 +894,8 @@ public class Fitbit extends Generator {
                     e.apply();
                 } else {
                     AlertDialog.Builder builder = new AlertDialog.Builder(me.mContext);
-                    builder.setTitle(R.string.title_dialog_nokia_health_auth_unsuccessful);
-                    builder.setMessage(R.string.message_dialog_nokia_health_auth_unsuccessful);
+                    builder.setTitle(R.string.title_dialog_fitbit_auth_unsuccessful);
+                    builder.setMessage(R.string.message_dialog_fitbit_auth_unsuccessful);
 
                     builder.setPositiveButton(R.string.action_continue, new DialogInterface.OnClickListener() {
                         @Override
@@ -1263,7 +911,7 @@ public class Fitbit extends Generator {
 
     @SuppressWarnings("WeakerAccess")
     public static String getGeneratorTitle(Context context) {
-        return context.getString(R.string.generator_nokia_health_device);
+        return context.getString(R.string.generator_fitbit_device);
     }
 
     @SuppressWarnings("unused")
@@ -1282,7 +930,7 @@ public class Fitbit extends Generator {
         PagerAdapter adapter = new PagerAdapter() {
             @Override
             public int getCount() {
-                return 2;
+                return 5;
             }
 
             @Override
@@ -1308,17 +956,15 @@ public class Fitbit extends Generator {
             public Object instantiateItem(@NonNull ViewGroup container, int position) {
                 switch (position) {
                     case 0:
-                        return Fitbit.bindActivityPage(container, holder, position);
+                        return Fitbit.bindInformationPage(container, holder, position);
                     case 1:
-                        return Fitbit.bindIntradayPage(container, holder, position);
+                        return Fitbit.bindActivityPage(container, holder, position);
                     case 2:
-                        return Fitbit.bindBodyPage(container, holder, position);
+                        return Fitbit.bindHeartRatePage(container, holder, position);
                     case 3:
                         return Fitbit.bindSleepPage(container, holder, position);
-                    case 4:
-                        return Fitbit.bindSleepSummaryPage(container, holder, position);
                     default:
-                        return Fitbit.bindInformationPage(container, holder, position);
+                        return Fitbit.bindWeightPage(container, holder, position);
                 }
             }
         };
@@ -1348,7 +994,8 @@ public class Fitbit extends Generator {
     private static String bindInformationPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
-        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_nokia_health_info_page, null);
+        @SuppressLint("InflateParams")
+        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_fitbit_info_page, null);
         card.setTag("" + position);
 
         container.addView(card);
@@ -1359,7 +1006,7 @@ public class Fitbit extends Generator {
     private static String bindActivityPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
-        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_nokia_health_activity_page, null);
+        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_fitbit_activity_page, null);
         card.setTag("" + position);
 
         long lastTimestamp = 0;
@@ -1374,6 +1021,7 @@ public class Fitbit extends Generator {
 
         Fitbit generator = Fitbit.getInstance(card.getContext());
 
+        /*
         Cursor c = generator.mDatabase.query(Fitbit.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, Fitbit.HISTORY_OBSERVED + " DESC");
 
         if (c.moveToNext()) {
@@ -1389,6 +1037,7 @@ public class Fitbit extends Generator {
         }
 
         c.close();
+        */
 
         View cardContent = card.findViewById(R.id.content_activity);
         View cardEmpty = card.findViewById(R.id.card_empty);
@@ -1410,19 +1059,19 @@ public class Fitbit extends Generator {
             List<PieEntry> entries = new ArrayList<>();
 
             if (softActivity > 0) {
-                entries.add(new PieEntry((long) softActivity, context.getString(R.string.generator_nokia_health_soft_activities_label)));
+                entries.add(new PieEntry((long) softActivity, context.getString(R.string.generator_fitbit_soft_activities_label)));
             }
 
             if (moderateActivity > 0) {
-                entries.add(new PieEntry((long) moderateActivity, context.getString(R.string.generator_nokia_health_moderate_activities_label)));
+                entries.add(new PieEntry((long) moderateActivity, context.getString(R.string.generator_fitbit_moderate_activities_label)));
             }
 
             if (intenseActivity > 0) {
-                entries.add(new PieEntry((long) intenseActivity, context.getString(R.string.generator_nokia_health_intense_activities_label)));
+                entries.add(new PieEntry((long) intenseActivity, context.getString(R.string.generator_fitbit_intense_activities_label)));
             }
 
             if (entries.size() == 0) {
-                entries.add(new PieEntry(1L, context.getString(R.string.generator_nokia_health_soft_activities_label)));
+                entries.add(new PieEntry(1L, context.getString(R.string.generator_fitbit_soft_activities_label)));
             }
 
             PieDataSet set = new PieDataSet(entries, " ");
@@ -1453,19 +1102,47 @@ public class Fitbit extends Generator {
             dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
 
             TextView stepsValue = card.findViewById(R.id.field_steps);
-            stepsValue.setText(context.getResources().getQuantityString(R.plurals.generator_nokia_health_steps_value, (int) steps, (int) steps));
+            stepsValue.setText(context.getResources().getQuantityString(R.plurals.generator_fitbit_steps_value, (int) steps, (int) steps));
 
             TextView distanceValue = card.findViewById(R.id.field_distance);
-            distanceValue.setText(context.getString(R.string.generator_nokia_health_distance_value, (distance / 1000)));
+            distanceValue.setText(context.getString(R.string.generator_fitbit_distance_value, (distance / 1000)));
 
             TextView elevationValue = card.findViewById(R.id.field_elevation);
-            elevationValue.setText(context.getString(R.string.generator_nokia_health_elevation_value, elevation));
+            elevationValue.setText(context.getString(R.string.generator_fitbit_elevation_value, elevation));
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);
 
             dateLabel.setText(R.string.label_never_pdk);
         }
+
+        container.addView(card);
+
+        return "" + card.getTag();
+    }
+
+    private static String bindHeartRatePage(ViewGroup container, DataPointViewHolder holder, int position) {
+        // TODO: Heart Rate Graph
+
+        final Context context = container.getContext();
+
+        @SuppressLint("InflateParams")
+        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_fitbit_info_page, null);
+        card.setTag("" + position);
+
+        container.addView(card);
+
+        return "" + card.getTag();
+    }
+
+    private static String bindWeightPage(ViewGroup container, DataPointViewHolder holder, int position) {
+        // TODO: WEIGHT
+
+        final Context context = container.getContext();
+
+        @SuppressLint("InflateParams")
+        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_fitbit_info_page, null);
+        card.setTag("" + position);
 
         container.addView(card);
 
@@ -1479,7 +1156,7 @@ public class Fitbit extends Generator {
 
     @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent) {
-        return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_nokia_health_device, parent, false);
+        return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_fitbit, parent, false);
     }
 
     @SuppressWarnings("unused")
@@ -1491,7 +1168,7 @@ public class Fitbit extends Generator {
         }
 
         if (me.mDatabase != null) {
-            Cursor c = me.mDatabase.query(Fitbit.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, Fitbit.HISTORY_OBSERVED + " DESC");
+            Cursor c = me.mDatabase.query(Fitbit.TABLE_ACTIVITY_HISTORY, null, null, null, null, null, Fitbit.HISTORY_OBSERVED + " DESC");
 
             if (c.moveToNext()) {
                 me.mLatestTimestamp = c.getLong(c.getColumnIndex(Fitbit.HISTORY_OBSERVED));
@@ -1509,273 +1186,28 @@ public class Fitbit extends Generator {
     public void setProperty(String key, String value) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        if (Fitbit.OPTION_OAUTH_ACCESS_TOKEN.equals(key)) {
+        if (Fitbit.OPTION_OAUTH_CLIENT_ID.equals(key)) {
             SharedPreferences.Editor e = prefs.edit();
-            e.putString(Fitbit.OPTION_OAUTH_ACCESS_TOKEN, value);
+            e.putString(Fitbit.OPTION_OAUTH_CLIENT_ID, value);
             e.apply();
-        } else if (Fitbit.OPTION_OAUTH_ACCESS_TOKEN_SECRET.equals(key)) {
+        } else if (Fitbit.OPTION_OAUTH_CALLBACK_URL.equals(key)) {
             SharedPreferences.Editor e = prefs.edit();
-            e.putString(Fitbit.OPTION_OAUTH_ACCESS_TOKEN_SECRET, value);
+            e.putString(Fitbit.OPTION_OAUTH_CALLBACK_URL, value);
             e.apply();
-        } else if (Fitbit.OPTION_OAUTH_ACCESS_USER_ID.equals(key)) {
+        } else if (Fitbit.OPTION_OAUTH_CLIENT_SECRET.equals(key)) {
             SharedPreferences.Editor e = prefs.edit();
-            e.putString(Fitbit.OPTION_OAUTH_ACCESS_USER_ID, value);
+            e.putString(Fitbit.OPTION_OAUTH_CLIENT_SECRET, value);
             e.apply();
         }
 
         this.mProperties.put(key, value);
     }
 
-    private static String bindIntradayPage(ViewGroup container, DataPointViewHolder holder, int position) {
-        final Context context = container.getContext();
-
-        long now = System.currentTimeMillis();
-
-        Fitbit device = Fitbit.getInstance(context);
-
-        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_nokia_health_intraday_page, null);
-        card.setTag("" + position);
-
-        LineChart stepsChart = card.findViewById(R.id.chart_steps);
-        LineChart distanceChart = card.findViewById(R.id.chart_distance);
-        LineChart elevationChart = card.findViewById(R.id.chart_elevation);
-        LineChart caloriesChart = card.findViewById(R.id.chart_calories);
-
-        ArrayList<Entry> steps = new ArrayList<>();
-        ArrayList<Entry> distance = new ArrayList<>();
-        ArrayList<Entry> elevation = new ArrayList<>();
-        ArrayList<Entry> calories = new ArrayList<>();
-
-        float stepSum = 0;
-        float distanceSum = 0;
-        float elevationSum = 0;
-        float caloriesSum = 0;
-
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-
-        long start = cal.getTimeInMillis() / 1000;
-
-        cal.add(Calendar.DATE, 1);
-
-        long end = cal.getTimeInMillis() / 1000;
-
-        String where = Fitbit.INTRADAY_ACTIVITY_START + " > ?";
-        String[] args = { "" + start };
-
-        Cursor c = device.mDatabase.query(Fitbit.TABLE_INTRADAY_ACTIVITY_HISTORY, null, where, args, null, null, Fitbit.INTRADAY_ACTIVITY_START);
-
-        steps.add(new Entry(0, 0));
-        distance.add(new Entry(0, 0));
-        elevation.add(new Entry(0, 0));
-        calories.add(new Entry(0, 0));
-
-        while (c.moveToNext()) {
-            long when = c.getLong(c.getColumnIndex(Fitbit.INTRADAY_ACTIVITY_START));
-
-            if (c.isNull(c.getColumnIndex(Fitbit.INTRADAY_ACTIVITY_STEPS)) == false) {
-                float value = c.getFloat(c.getColumnIndex(Fitbit.INTRADAY_ACTIVITY_STEPS));
-
-                stepSum += value;
-
-                steps.add(new Entry(when - start, stepSum));
-            }
-
-            if (c.isNull(c.getColumnIndex(Fitbit.INTRADAY_ACTIVITY_DISTANCE)) == false) {
-                float value = c.getFloat(c.getColumnIndex(Fitbit.INTRADAY_ACTIVITY_DISTANCE));
-
-                distanceSum += value;
-
-                distance.add(new Entry(when - start, distanceSum));
-            }
-
-            if (c.isNull(c.getColumnIndex(Fitbit.INTRADAY_ACTIVITY_ELEVATION_CLIMBED)) == false) {
-                float value = c.getFloat(c.getColumnIndex(Fitbit.INTRADAY_ACTIVITY_ELEVATION_CLIMBED));
-
-                elevationSum += value;
-
-                elevation.add(new Entry(when - start, elevationSum));
-            }
-
-            if (c.isNull(c.getColumnIndex(Fitbit.INTRADAY_ACTIVITY_CALORIES)) == false) {
-                float value = c.getFloat(c.getColumnIndex(Fitbit.INTRADAY_ACTIVITY_CALORIES));
-
-                caloriesSum += value;
-
-                calories.add(new Entry(when - start, caloriesSum));
-            }
-        }
-
-        steps.add(new Entry((now / 1000) - start, stepSum));
-        distance.add(new Entry((now / 1000) - start, distanceSum));
-        elevation.add(new Entry((now / 1000) - start, elevationSum));
-        calories.add(new Entry((now / 1000) - start, caloriesSum));
-
-        Fitbit.populateIntradayChart(context, stepsChart, steps, 0, end - start);
-        Fitbit.populateIntradayChart(context, distanceChart, distance, 0, end - start);
-        Fitbit.populateIntradayChart(context, elevationChart, elevation, 0, end - start);
-        Fitbit.populateIntradayChart(context, caloriesChart, calories, 0, end - start);
-
-        c.close();
-
-        container.addView(card);
-
-        return "" + card.getTag();
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private static void populateIntradayChart(Context context, LineChart chart, ArrayList<Entry> values, long start, long end) {
-        chart.getLegend().setEnabled(false);
-        chart.getAxisRight().setEnabled(false);
-        chart.getDescription().setEnabled(false);
-
-        LineData data = new LineData();
-
-        LineDataSet set = new LineDataSet(values, "");
-        set.setAxisDependency(YAxis.AxisDependency.LEFT);
-        set.setLineWidth(1.0f);
-        set.setDrawCircles(false);
-        set.setFillAlpha(128);
-        set.setDrawFilled(true);
-        set.setDrawValues(false);
-        set.setColor(ContextCompat.getColor(context, R.color.generator_battery_plot));
-        set.setFillColor(ContextCompat.getColor(context, R.color.generator_battery_plot));
-
-        data.addDataSet(set);
-
-        float minimum = (float) (0 - (values.get(values.size() - 1).getY() * 0.05));
-        float maximum = (float) (values.get(values.size() - 1).getY() * 1.25);
-
-        if (minimum == 0) {
-            minimum = -0.05f;
-            maximum = 0.95f;
-        }
-
-        chart.getAxisLeft().setAxisMinimum(minimum);
-        chart.getAxisLeft().setAxisMaximum(maximum);
-        chart.getAxisLeft().setDrawGridLines(false);
-        chart.getAxisLeft().setPosition(YAxis.YAxisLabelPosition.INSIDE_CHART);
-        chart.getAxisLeft().setDrawAxisLine(false);
-        chart.getAxisLeft().setDrawLabels(false);
-        chart.getAxisLeft().setTextColor(ContextCompat.getColor(context, android.R.color.white));
-
-        chart.getXAxis().setAxisMinimum(start);
-        chart.getXAxis().setAxisMaximum(end);
-        chart.getXAxis().setDrawGridLines(false);
-        chart.getXAxis().setDrawLabels(false);
-        chart.getXAxis().setDrawAxisLine(false);
-
-        chart.setViewPortOffsets(0,0,8,0);
-        chart.setHighlightPerDragEnabled(false);
-        chart.setHighlightPerTapEnabled(false);
-        chart.setBackgroundColor(ContextCompat.getColor(context, android.R.color.black));
-        chart.setPinchZoom(false);
-
-        ArrayList<Entry> lastValue = new ArrayList<>();
-        lastValue.add(values.get(values.size() - 1));
-
-        LineDataSet lastItem = new LineDataSet(lastValue, "");
-        lastItem.setAxisDependency(YAxis.AxisDependency.LEFT);
-        lastItem.setLineWidth(1.0f);
-        lastItem.setCircleRadius(3.0f);
-        lastItem.setCircleHoleRadius(2.0f);
-        lastItem.setDrawCircles(true);
-        lastItem.setValueTextSize(10f);
-        lastItem.setDrawValues(true);
-        lastItem.setCircleColor(ContextCompat.getColor(context, R.color.generator_battery_plot));
-        lastItem.setCircleColorHole(ContextCompat.getColor(context, android.R.color.black));
-        lastItem.setValueTextColor(ContextCompat.getColor(context, android.R.color.white));
-
-        data.addDataSet(lastItem);
-
-        chart.setData(data);
-    }
-
-    @SuppressLint("SetTextI18n")
-    private static String bindBodyPage(ViewGroup container, DataPointViewHolder holder, int position) {
-        final Context context = container.getContext();
-
-        Fitbit device = Fitbit.getInstance(holder.itemView.getContext());
-
-        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_nokia_health_body_page, null);
-        card.setTag("" + position);
-
-        int[] labels = {
-                R.id.label_body_one,
-                R.id.label_body_two,
-                R.id.label_body_three,
-                R.id.label_body_four,
-                R.id.label_body_five,
-                R.id.label_body_six,
-                R.id.label_body_seven,
-                R.id.label_body_eight
-        };
-
-        int[] values = {
-                R.id.value_body_one,
-                R.id.value_body_two,
-                R.id.value_body_three,
-                R.id.value_body_four,
-                R.id.value_body_five,
-                R.id.value_body_six,
-                R.id.value_body_seven,
-                R.id.value_body_eight
-        };
-
-        HashMap<String, Double> bodyValues = new HashMap<>();
-        ArrayList<String> keys = new ArrayList<>();
-
-        Cursor c = device.mDatabase.query(Fitbit.TABLE_BODY_MEASURE_HISTORY, null, null, null, null, null, Fitbit.BODY_MEASURE_HISTORY_DATE + " DESC");
-
-        while (c.moveToNext() && bodyValues.size() < labels.length) {
-            String label = c.getString(c.getColumnIndex(Fitbit.BODY_MEASURE_HISTORY_TYPE));
-
-            if (bodyValues.containsKey(label) == false) {
-                double value = c.getDouble(c.getColumnIndex(Fitbit.BODY_MEASURE_HISTORY_VALUE));
-
-                bodyValues.put(label, value);
-
-                keys.add(label);
-            }
-        }
-
-        c.close();
-
-        for (int i = 0; i < keys.size() && i < labels.length; i++) {
-            String label = keys.get(i);
-
-            TextView labelView = card.findViewById(labels[i]);
-            labelView.setText(label.substring(0, 1).toUpperCase(Locale.getDefault()) + label.substring(1) + ":");
-
-            Double value = bodyValues.get(label);
-
-            TextView valueView = card.findViewById(values[i]);
-            valueView.setText(String.format(Locale.getDefault(), "%f", value));
-        }
-
-        container.addView(card);
-
-        return "" + card.getTag();
-    }
-
     private static String bindSleepPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
-        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_nokia_health_sleep_page, null);
-        card.setTag("" + position);
-
-        container.addView(card);
-
-        return "" + card.getTag();
-    }
-
-    private static String bindSleepSummaryPage(ViewGroup container, DataPointViewHolder holder, int position) {
-        final Context context = container.getContext();
-
-        @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_nokia_health_sleep_summary_page, null);
+        @SuppressLint("InflateParams")
+        LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_fitbit_sleep_page, null);
         card.setTag("" + position);
 
         container.addView(card);
@@ -1784,61 +1216,41 @@ public class Fitbit extends Generator {
     }
 
     @SuppressWarnings("unused")
-    public void enableActivityMeasures(boolean enable) {
+    public void enableActivity(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
-        e.putBoolean(Fitbit.ACTIVITY_MEASURES_ENABLED, enable);
+        e.putBoolean(Fitbit.ACTIVITY_ENABLED, enable);
 
         e.apply();
     }
 
     @SuppressWarnings("unused")
-    public void enableBodyMeasures(boolean enable) {
+    public void enableSleep(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
-        e.putBoolean(Fitbit.BODY_MEASURES_ENABLED, enable);
+        e.putBoolean(Fitbit.SLEEP_ENABLED, enable);
 
         e.apply();
     }
 
     @SuppressWarnings("unused")
-    public void enableIntradayActivity(boolean enable) {
+    public void enableHeartRateActivity(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
-        e.putBoolean(Fitbit.INTRADAY_ACTIVITY_ENABLED, enable);
+        e.putBoolean(Fitbit.HEART_RATE_ENABLED, enable);
 
         e.apply();
     }
 
     @SuppressWarnings("unused")
-    public void enableSleepMeasures(boolean enable) {
+    public void enableWeight(boolean enable) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
-        e.putBoolean(Fitbit.SLEEP_MEASURES_ENABLED, enable);
-
-        e.apply();
-    }
-
-    @SuppressWarnings("unused")
-    public void enableSleepSummary(boolean enable) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-        SharedPreferences.Editor e = prefs.edit();
-
-        e.putBoolean(Fitbit.SLEEP_SUMMARY_ENABLED, enable);
-
-        e.apply();
-    }
-
-    @SuppressWarnings("unused")
-    public void enableServerFetch(boolean enable) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-        SharedPreferences.Editor e = prefs.edit();
-
-        e.putBoolean(Fitbit.SERVER_FETCH_ENABLED, enable);
+        e.putBoolean(Fitbit.WEIGHT_ENABLED, enable);
 
         e.apply();
     }
@@ -1854,11 +1266,10 @@ public class Fitbit extends Generator {
         String where = Fitbit.HISTORY_OBSERVED + " < ?";
         String[] args = { "" + start };
 
-        this.mDatabase.delete(Fitbit.TABLE_ACTIVITY_MEASURE_HISTORY, where, args);
-        this.mDatabase.delete(Fitbit.TABLE_SLEEP_MEASURE_HISTORY, where, args);
-        this.mDatabase.delete(Fitbit.TABLE_BODY_MEASURE_HISTORY, where, args);
-        this.mDatabase.delete(Fitbit.TABLE_INTRADAY_ACTIVITY_HISTORY, where, args);
-        this.mDatabase.delete(Fitbit.TABLE_SLEEP_SUMMARY_HISTORY, where, args);
+        this.mDatabase.delete(Fitbit.TABLE_ACTIVITY_HISTORY, where, args);
+        this.mDatabase.delete(Fitbit.TABLE_SLEEP_HISTORY, where, args);
+        this.mDatabase.delete(Fitbit.TABLE_HEART_RATE_HISTORY, where, args);
+        this.mDatabase.delete(Fitbit.TABLE_WEIGHT_HISTORY, where, args);
     }
 
     @Override
@@ -1871,36 +1282,27 @@ public class Fitbit extends Generator {
         e.apply();
     }
 
-    @SuppressWarnings("unused")
-    public void setScanDays(long days) {
-        if (days >= 0) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-            SharedPreferences.Editor e = prefs.edit();
-
-            e.putLong(Fitbit.API_SCAN_DAYS, days);
-            e.apply();
-        }
-    }
-
     public static class OAuthResultHandlerActivity extends Activity {
-        public void onCreate(Bundle b) {
-            super.onCreate(b);
+        protected void onResume() {
+            super.onResume();
 
             final OAuthResultHandlerActivity me = this;
 
             final Fitbit device = Fitbit.getInstance(this.getApplicationContext());
 
-            AuthorizationResponse resp = AuthorizationResponse.fromIntent(getIntent());
-            AuthorizationException ex = AuthorizationException.fromIntent(getIntent());
+            AuthorizationResponse resp = AuthorizationResponse.fromIntent(this.getIntent());
+            AuthorizationException ex = AuthorizationException.fromIntent(this.getIntent());
 
             if (resp != null) {
                 device.authorizationSuccessful(resp, ex);
 
                 this.finish();
             } else {
-                AlertDialog.Builder builder = new AlertDialog.Builder(device.mContext);
-                builder.setTitle(R.string.title_dialog_nokia_health_auth_unsuccessful);
-                builder.setMessage(R.string.message_dialog_nokia_health_auth_unsuccessful);
+                ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.Theme_AppCompat_Light_Dialog);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(wrapper);
+                builder.setTitle(R.string.title_dialog_fitbit_auth_unsuccessful);
+                builder.setMessage(R.string.message_dialog_fitbit_auth_unsuccessful);
 
                 builder.setPositiveButton(R.string.action_continue, new DialogInterface.OnClickListener() {
                     @Override

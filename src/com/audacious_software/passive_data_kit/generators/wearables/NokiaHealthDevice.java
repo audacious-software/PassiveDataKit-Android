@@ -2,6 +2,7 @@ package com.audacious_software.passive_data_kit.generators.wearables;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
@@ -22,8 +23,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -308,6 +309,7 @@ public class NokiaHealthDevice extends Generator {
         final Runnable fetchData = new Runnable() {
             @Override
             public void run() {
+                Log.e("PDK", "FITBIT FETCH");
                 final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
                 long fetchInterval = prefs.getLong(NokiaHealthDevice.DATA_FETCH_INTERVAL, NokiaHealthDevice.DATA_FETCH_INTERVAL_DEFAULT);
 
@@ -1884,8 +1886,8 @@ public class NokiaHealthDevice extends Generator {
     }
 
     public static class OAuthResultHandlerActivity extends Activity {
-        public void onCreate(Bundle b) {
-            super.onCreate(b);
+        protected void onResume() {
+            super.onResume();
 
             final OAuthResultHandlerActivity me = this;
 
@@ -1899,7 +1901,9 @@ public class NokiaHealthDevice extends Generator {
 
                 this.finish();
             } else {
-                AlertDialog.Builder builder = new AlertDialog.Builder(device.mContext);
+                ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.Theme_AppCompat_Light_Dialog);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(wrapper);
                 builder.setTitle(R.string.title_dialog_nokia_health_auth_unsuccessful);
                 builder.setMessage(R.string.message_dialog_nokia_health_auth_unsuccessful);
 
