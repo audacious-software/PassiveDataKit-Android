@@ -309,7 +309,6 @@ public class NokiaHealthDevice extends Generator {
         final Runnable fetchData = new Runnable() {
             @Override
             public void run() {
-                Log.e("PDK", "FITBIT FETCH");
                 final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
                 long fetchInterval = prefs.getLong(NokiaHealthDevice.DATA_FETCH_INTERVAL, NokiaHealthDevice.DATA_FETCH_INTERVAL_DEFAULT);
 
