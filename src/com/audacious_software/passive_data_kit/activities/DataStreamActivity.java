@@ -32,7 +32,7 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
 
         this.mAdapter = new DataPointsAdapter();
         this.mAdapter.setContext(this.getApplicationContext());
-        this.mAdapter.sortGenerators(true);
+        // this.mAdapter.sortGenerators(true);
 
         RecyclerView listView = this.findViewById(R.id.list_view);
 
@@ -77,12 +77,12 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
 
         me.mIsUpdating = true;
 
+        me.mAdapter.sortGenerators(false);
+
         this.runOnUiThread(new Runnable() {
             @SuppressWarnings("ConstantConditions")
             @Override
             public void run() {
-                me.mAdapter.sortGenerators(false);
-
                 try {
                     me.mAdapter.notifyDataSetChanged(identifier);
                 } catch (IllegalStateException e) {

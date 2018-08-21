@@ -23,7 +23,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -80,13 +79,13 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
-public class NokiaHealthDevice extends Generator {
-    private static final String GENERATOR_IDENTIFIER = "pdk-nokia-health-device";
+public class NokiaHealth extends Generator {
+    private static final String GENERATOR_IDENTIFIER = "pdk-nokia-health";
 
-    private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.ENABLED";
+    private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
-    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.DATA_RETENTION_PERIOD";
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private static final String DATASTREAM = "datastream";
@@ -95,6 +94,7 @@ public class NokiaHealthDevice extends Generator {
     private static final String DATASTREAM_BODY = "body";
     private static final String DATASTREAM_SLEEP_MEASURES = "sleep-measures";
     private static final String DATASTREAM_SLEEP_SUMMARY = "sleep-summary";
+    private static final String DATASTREAM_SERVER_CREDENTIALS = "server-credentials";
 
     private static final String TABLE_ACTIVITY_MEASURE_HISTORY = "activity_measure_history";
     private static final String ACTIVITY_MEASURE_HISTORY_DATE_START = "date_start";
@@ -192,48 +192,46 @@ public class NokiaHealthDevice extends Generator {
     private static final String DATABASE_PATH = "pdk-nokia-health-device.sqlite";
     private static final int DATABASE_VERSION = 1;
 
-    private static final String LAST_DATA_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.LAST_DATA_FETCH";
+    private static final String LAST_DATA_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.LAST_DATA_FETCH";
 
-    private static final String DATA_FETCH_INTERVAL = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.DATA_FETCH_INTERVAL";
+    private static final String DATA_FETCH_INTERVAL = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.DATA_FETCH_INTERVAL";
     private static final long DATA_FETCH_INTERVAL_DEFAULT = (15 * 60 * 1000); // (60 * 60 * 1000);
 
-    private static final String ACTIVITY_MEASURES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.ACTIVITY_MEASURES_ENABLED";
+    private static final String ACTIVITY_MEASURES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.ACTIVITY_MEASURES_ENABLED";
     private static final boolean ACTIVITY_MEASURES_ENABLED_DEFAULT = true;
 
-    private static final String BODY_MEASURES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.BODY_MEASURES_ENABLED";
+    private static final String BODY_MEASURES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.BODY_MEASURES_ENABLED";
     private static final boolean BODY_MEASURES_ENABLED_DEFAULT = true;
 
-    private static final String INTRADAY_ACTIVITY_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.INTRADAY_ACTIVITY_ENABLED";
+    private static final String INTRADAY_ACTIVITY_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.INTRADAY_ACTIVITY_ENABLED";
     private static final boolean INTRADAY_ACTIVITY_ENABLED_DEFAULT = false;
 
-    private static final String SLEEP_MEASURES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.SLEEP_MEASURES_ENABLED";
+    private static final String SLEEP_MEASURES_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.SLEEP_MEASURES_ENABLED";
     private static final boolean SLEEP_MEASURES_ENABLED_DEFAULT = true;
 
-    private static final String SLEEP_SUMMARY_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.SLEEP_SUMMARY_ENABLED";
+    private static final String SLEEP_SUMMARY_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.SLEEP_SUMMARY_ENABLED";
     private static final boolean SLEEP_SUMMARY_ENABLED_DEFAULT = true;
 
-    private static final String SERVER_FETCH_ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.SERVER_FETCH_ENABLED";
-    private static final boolean SERVER_FETCH_ENABLED_DEFAULT = false;
+    private static final String SERVER_ONLY = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.SERVER_ONLY";
+    private static final boolean SERVER_ONLY_DEFAULT = false;
 
-    @SuppressWarnings("WeakerAccess")
-    public static final String OPTION_OAUTH_CALLBACK_URL = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_CALLBACK_URL";
-    @SuppressWarnings("WeakerAccess")
-    public static final String OPTION_OAUTH_CLIENT_ID = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_CLIENT_ID";
-    @SuppressWarnings("WeakerAccess")
-    public static final String OPTION_OAUTH_CLIENT_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_CLIENT_SECRET";
-    private static final String OPTION_OAUTH_ACCESS_TOKEN = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN";
-    private static final String OPTION_OAUTH_ACCESS_TOKEN_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN_SECRET";
-    private static final String OPTION_OAUTH_REQUEST_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_REQUEST_SECRET";
-    private static final String OPTION_OAUTH_ACCESS_USER_ID = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.OPTION_OAUTH_ACCESS_USER_ID";
+    public static final String OPTION_OAUTH_CALLBACK_URL = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.OPTION_CALLBACK_URL";
+    public static final String OPTION_OAUTH_CLIENT_ID = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.OPTION_OAUTH_CLIENT_ID";
+    public static final String OPTION_OAUTH_CLIENT_SECRET = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.OPTION_OAUTH_CLIENT_SECRET";
 
-    private static final String API_SCAN_DAYS = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_SCAN_DAYS";
+    private static final String OAUTH_ACCESS_TOKEN = "access_token";
+    private static final String OAUTH_REFRESH_TOKEN = "refresh_token";
+    private static final String OAUTH_CLIENT_ID = "client_id";
+    private static final String OAUTH_CLIENT_SECRET = "client_secret";
+
+    private static final String API_SCAN_DAYS = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.API_SCAN_DAYS";
     private static final long API_SCAN_DAYS_DEFAULT = 0;
 
-    private static final String API_ACTION_ACTIVITY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_ACTION_ACTIVITY_URL_LAST_FETCH";
-    private static final String API_ACTION_BODY_MEASURES_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_ACTION_BODY_MEASURES_URL_LAST_FETCH";
-    private static final String API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH";
-    private static final String API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH";
-    private static final String API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH";
+    private static final String API_ACTION_ACTIVITY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.API_ACTION_ACTIVITY_URL_LAST_FETCH";
+    private static final String API_ACTION_BODY_MEASURES_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.API_ACTION_BODY_MEASURES_URL_LAST_FETCH";
+    private static final String API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH";
+    private static final String API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH";
+    private static final String API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH";
 
     private static final String API_ACTION_ACTIVITY_URL = "https://api.health.nokia.com/v2/measure?action=getactivity";
     private static final String API_ACTION_BODY_MEASURES_URL = "https://api.health.nokia.com/measure?action=getmeas";
@@ -241,17 +239,12 @@ public class NokiaHealthDevice extends Generator {
     private static final String API_ACTION_SLEEP_MEASURES_URL = "https://api.health.nokia.com/v2/sleep?action=get";
     private static final String API_ACTION_SLEEP_SUMMARY_URL = "https://api.health.nokia.com/v2/sleep?action=getsummary";
 
-    private static final String OAUTH_CLIENT_ID = "oauth_client_id";
-    private static final String OAUTH_USER_TOKEN = "oauth_user_token";
-    private static final String OAUTH_USER_SECRET = "oauth_user_secret";
-    private static final String OAUTH_USER_ID = "oauth_user_id";
-
-    private static final String PERSISTED_AUTH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice.PERSISTED_AUTH";
+    private static final String PERSISTED_AUTH = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.PERSISTED_AUTH";
 
     private static final Uri OAUTH_AUTHORIZATION_ENDPOINT = Uri.parse("https://account.health.nokia.com/oauth2_user/authorize2");
     private static final Uri OAUTH_TOKEN_ENDPOINT = Uri.parse("https://account.health.nokia.com/oauth2/token");
 
-    private static NokiaHealthDevice sInstance = null;
+    private static NokiaHealth sInstance = null;
     private Context mContext = null;
     private SQLiteDatabase mDatabase = null;
     private Handler mHandler = null;
@@ -263,19 +256,19 @@ public class NokiaHealthDevice extends Generator {
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
-        return NokiaHealthDevice.GENERATOR_IDENTIFIER;
+        return NokiaHealth.GENERATOR_IDENTIFIER;
     }
 
-    public static NokiaHealthDevice getInstance(Context context) {
-        if (NokiaHealthDevice.sInstance == null) {
-            NokiaHealthDevice.sInstance = new NokiaHealthDevice(context.getApplicationContext());
+    public static NokiaHealth getInstance(Context context) {
+        if (NokiaHealth.sInstance == null) {
+            NokiaHealth.sInstance = new NokiaHealth(context.getApplicationContext());
         }
 
-        return NokiaHealthDevice.sInstance;
+        return NokiaHealth.sInstance;
     }
 
     @SuppressWarnings("WeakerAccess")
-    public NokiaHealthDevice(Context context) {
+    public NokiaHealth(Context context) {
         super(context);
 
         this.mContext = context.getApplicationContext();
@@ -283,18 +276,18 @@ public class NokiaHealthDevice extends Generator {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
         SharedPreferences.Editor e = prefs.edit();
-        e.remove(NokiaHealthDevice.LAST_DATA_FETCH);
+        e.remove(NokiaHealth.LAST_DATA_FETCH);
         e.apply();
     }
 
     @SuppressWarnings("unused")
     public static void start(final Context context) {
-        NokiaHealthDevice.getInstance(context).startGenerator();
+        NokiaHealth.getInstance(context).startGenerator();
     }
 
     @SuppressLint("ObsoleteSdkInt")
     private void startGenerator() {
-        final NokiaHealthDevice me = this;
+        final NokiaHealth me = this;
 
         if (this.mHandler != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -310,45 +303,48 @@ public class NokiaHealthDevice extends Generator {
             @Override
             public void run() {
                 final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
-                long fetchInterval = prefs.getLong(NokiaHealthDevice.DATA_FETCH_INTERVAL, NokiaHealthDevice.DATA_FETCH_INTERVAL_DEFAULT);
 
-                if (prefs.contains(NokiaHealthDevice.PERSISTED_AUTH)) {
-                    long lastFetch = prefs.getLong(NokiaHealthDevice.LAST_DATA_FETCH, 0);
+                long fetchInterval = prefs.getLong(NokiaHealth.DATA_FETCH_INTERVAL, NokiaHealth.DATA_FETCH_INTERVAL_DEFAULT);
 
-                    long now = System.currentTimeMillis();
+                if (prefs.getBoolean(NokiaHealth.SERVER_ONLY, NokiaHealth.SERVER_ONLY_DEFAULT)) {
+                    if (prefs.contains(NokiaHealth.PERSISTED_AUTH)) {
+                        long lastFetch = prefs.getLong(NokiaHealth.LAST_DATA_FETCH, 0);
 
-                    if (now - lastFetch > fetchInterval) {
-                        Runnable r = new Runnable() {
-                            @Override
-                            public void run() {
-                                if (prefs.getBoolean(NokiaHealthDevice.ACTIVITY_MEASURES_ENABLED, NokiaHealthDevice.ACTIVITY_MEASURES_ENABLED_DEFAULT)) {
-                                    me.fetchActivityMeasures();
+                        long now = System.currentTimeMillis();
+
+                        if (now - lastFetch > fetchInterval) {
+                            Runnable r = new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (prefs.getBoolean(NokiaHealth.ACTIVITY_MEASURES_ENABLED, NokiaHealth.ACTIVITY_MEASURES_ENABLED_DEFAULT)) {
+                                        me.fetchActivityMeasures();
+                                    }
+
+                                    if (prefs.getBoolean(NokiaHealth.BODY_MEASURES_ENABLED, NokiaHealth.BODY_MEASURES_ENABLED_DEFAULT)) {
+                                        me.fetchBodyMeasures();
+                                    }
+
+                                    if (prefs.getBoolean(NokiaHealth.INTRADAY_ACTIVITY_ENABLED, NokiaHealth.INTRADAY_ACTIVITY_ENABLED_DEFAULT)) {
+                                        me.fetchIntradayActivities();
+                                    }
+
+                                    if (prefs.getBoolean(NokiaHealth.SLEEP_MEASURES_ENABLED, NokiaHealth.SLEEP_MEASURES_ENABLED_DEFAULT)) {
+                                        me.fetchSleepMeasures();
+                                    }
+
+                                    if (prefs.getBoolean(NokiaHealth.SLEEP_SUMMARY_ENABLED, NokiaHealth.SLEEP_SUMMARY_ENABLED_DEFAULT)) {
+                                        me.fetchSleepSummary();
+                                    }
                                 }
+                            };
 
-                                if (prefs.getBoolean(NokiaHealthDevice.BODY_MEASURES_ENABLED, NokiaHealthDevice.BODY_MEASURES_ENABLED_DEFAULT)) {
-                                    me.fetchBodyMeasures();
-                                }
+                            Thread t = new Thread(r);
+                            t.start();
 
-                                if (prefs.getBoolean(NokiaHealthDevice.INTRADAY_ACTIVITY_ENABLED, NokiaHealthDevice.INTRADAY_ACTIVITY_ENABLED_DEFAULT)) {
-                                    me.fetchIntradayActivities();
-                                }
-
-                                if (prefs.getBoolean(NokiaHealthDevice.SLEEP_MEASURES_ENABLED, NokiaHealthDevice.SLEEP_MEASURES_ENABLED_DEFAULT)) {
-                                    me.fetchSleepMeasures();
-                                }
-
-                                if (prefs.getBoolean(NokiaHealthDevice.SLEEP_SUMMARY_ENABLED, NokiaHealthDevice.SLEEP_SUMMARY_ENABLED_DEFAULT)) {
-                                    me.fetchSleepSummary();
-                                }
-                            }
-                        };
-
-                        Thread t = new Thread(r);
-                        t.start();
-
-                        SharedPreferences.Editor e = prefs.edit();
-                        e.putLong(NokiaHealthDevice.LAST_DATA_FETCH, now);
-                        e.apply();
+                            SharedPreferences.Editor e = prefs.edit();
+                            e.putLong(NokiaHealth.LAST_DATA_FETCH, now);
+                            e.apply();
+                        }
                     }
                 }
 
@@ -360,7 +356,7 @@ public class NokiaHealthDevice extends Generator {
 
         File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
 
-        path = new File(path, NokiaHealthDevice.DATABASE_PATH);
+        path = new File(path, NokiaHealth.DATABASE_PATH);
 
         this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
 
@@ -375,8 +371,8 @@ public class NokiaHealthDevice extends Generator {
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_sleep_summary_history_table));
         }
 
-        if (version != NokiaHealthDevice.DATABASE_VERSION) {
-            this.setDatabaseVersion(this.mDatabase, NokiaHealthDevice.DATABASE_VERSION);
+        if (version != NokiaHealth.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, NokiaHealth.DATABASE_VERSION);
         }
 
         Runnable r = new Runnable() {
@@ -401,7 +397,7 @@ public class NokiaHealthDevice extends Generator {
 
         me.mHandler.post(fetchData);
 
-        Generators.getInstance(this.mContext).registerCustomViewClass(NokiaHealthDevice.GENERATOR_IDENTIFIER, NokiaHealthDevice.class);
+        Generators.getInstance(this.mContext).registerCustomViewClass(NokiaHealth.GENERATOR_IDENTIFIER, NokiaHealth.class);
 
         this.flushCachedData();
     }
@@ -409,12 +405,12 @@ public class NokiaHealthDevice extends Generator {
     private String getProperty(String key) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        if (NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN.equals(key)) {
-            return prefs.getString(NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN, null);
-        } else if (NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN_SECRET.equals(key)) {
-            return prefs.getString(NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN_SECRET, null);
-        } else if (NokiaHealthDevice.OPTION_OAUTH_ACCESS_USER_ID.equals(key)) {
-            return prefs.getString(NokiaHealthDevice.OPTION_OAUTH_ACCESS_USER_ID, null);
+        if (NokiaHealth.OPTION_OAUTH_CLIENT_ID.equals(key)) {
+            return prefs.getString(NokiaHealth.OPTION_OAUTH_CLIENT_ID, null);
+        } else if (NokiaHealth.OPTION_OAUTH_CLIENT_SECRET.equals(key)) {
+            return prefs.getString(NokiaHealth.OPTION_OAUTH_CLIENT_SECRET, null);
+        } else if (NokiaHealth.OPTION_OAUTH_CALLBACK_URL.equals(key)) {
+            return prefs.getString(NokiaHealth.OPTION_OAUTH_CALLBACK_URL, null);
         }
 
         return this.mProperties.get(key);
@@ -422,11 +418,11 @@ public class NokiaHealthDevice extends Generator {
 
     @SuppressLint("SimpleDateFormat")
     private JSONObject queryApi(final String apiUrl) {
-        final NokiaHealthDevice me = this;
+        final NokiaHealth me = this;
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        String authJson = prefs.getString(NokiaHealthDevice.PERSISTED_AUTH, null);
+        String authJson = prefs.getString(NokiaHealth.PERSISTED_AUTH, null);
 
         if (authJson == null) {
             return null;
@@ -453,21 +449,21 @@ public class NokiaHealthDevice extends Generator {
                     long endTime = 0;
 
                     if (accessToken != null) {
-                        final long scanDays = prefs.getLong(NokiaHealthDevice.API_SCAN_DAYS, NokiaHealthDevice.API_SCAN_DAYS_DEFAULT);
+                        final long scanDays = prefs.getLong(NokiaHealth.API_SCAN_DAYS, NokiaHealth.API_SCAN_DAYS_DEFAULT);
 
                         if (scanDays > 0) {
                             long lastFetch = 0;
 
-                            if (NokiaHealthDevice.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(NokiaHealthDevice.API_ACTION_ACTIVITY_URL_LAST_FETCH, 0);
-                            } else if (NokiaHealthDevice.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(NokiaHealthDevice.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, 0);
-                            } else if (NokiaHealthDevice.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(NokiaHealthDevice.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, 0);
-                            } else if (NokiaHealthDevice.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(NokiaHealthDevice.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, 0);
-                            } else if (NokiaHealthDevice.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(NokiaHealthDevice.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, 0);
+                            if (NokiaHealth.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                                lastFetch = prefs.getLong(NokiaHealth.API_ACTION_ACTIVITY_URL_LAST_FETCH, 0);
+                            } else if (NokiaHealth.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
+                                lastFetch = prefs.getLong(NokiaHealth.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, 0);
+                            } else if (NokiaHealth.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
+                                lastFetch = prefs.getLong(NokiaHealth.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, 0);
+                            } else if (NokiaHealth.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
+                                lastFetch = prefs.getLong(NokiaHealth.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, 0);
+                            } else if (NokiaHealth.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
+                                lastFetch = prefs.getLong(NokiaHealth.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, 0);
                             }
 
                             if (lastFetch == 0) {
@@ -479,8 +475,8 @@ public class NokiaHealthDevice extends Generator {
                             }
                         }
 
-                        if (NokiaHealthDevice.API_ACTION_ACTIVITY_URL.equals(apiUrl) ||
-                                NokiaHealthDevice.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
+                        if (NokiaHealth.API_ACTION_ACTIVITY_URL.equals(apiUrl) ||
+                                NokiaHealth.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
                             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 
                             startDate = format.format(cal.getTime());
@@ -488,9 +484,9 @@ public class NokiaHealthDevice extends Generator {
                             cal.add(Calendar.DATE, 1);
 
                             endDate = format.format(cal.getTime());
-                        } else if (NokiaHealthDevice.API_ACTION_BODY_MEASURES_URL.equals(apiUrl) ||
-                                NokiaHealthDevice.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl) ||
-                                NokiaHealthDevice.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
+                        } else if (NokiaHealth.API_ACTION_BODY_MEASURES_URL.equals(apiUrl) ||
+                                NokiaHealth.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl) ||
+                                NokiaHealth.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
 
                             startTime = cal.getTimeInMillis() / 1000;
 
@@ -549,16 +545,16 @@ public class NokiaHealthDevice extends Generator {
 
                                     SharedPreferences.Editor e = prefs.edit();
 
-                                    if (NokiaHealthDevice.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                        e.putLong(NokiaHealthDevice.API_ACTION_ACTIVITY_URL_LAST_FETCH, fetchTime);
-                                    } else if (NokiaHealthDevice.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
-                                        e.putLong(NokiaHealthDevice.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, fetchTime);
-                                    } else if (NokiaHealthDevice.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
-                                        e.putLong(NokiaHealthDevice.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, fetchTime);
-                                    } else if (NokiaHealthDevice.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
-                                        e.putLong(NokiaHealthDevice.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, fetchTime);
-                                    } else if (NokiaHealthDevice.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
-                                        e.putLong(NokiaHealthDevice.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, fetchTime);
+                                    if (NokiaHealth.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                                        e.putLong(NokiaHealth.API_ACTION_ACTIVITY_URL_LAST_FETCH, fetchTime);
+                                    } else if (NokiaHealth.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
+                                        e.putLong(NokiaHealth.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, fetchTime);
+                                    } else if (NokiaHealth.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
+                                        e.putLong(NokiaHealth.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, fetchTime);
+                                    } else if (NokiaHealth.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
+                                        e.putLong(NokiaHealth.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, fetchTime);
+                                    } else if (NokiaHealth.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
+                                        e.putLong(NokiaHealth.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, fetchTime);
                                     }
 
                                     e.apply();
@@ -568,15 +564,15 @@ public class NokiaHealthDevice extends Generator {
 
                                 JSONObject apiResponse = new JSONObject(response.body().string());
 
-                                if (NokiaHealthDevice.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                                if (NokiaHealth.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
                                     me.logActivityMeasures(apiResponse);
-                                } else if (NokiaHealthDevice.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
+                                } else if (NokiaHealth.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
                                     me.logBodyMeasures(apiResponse);
-                                } else if (NokiaHealthDevice.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
+                                } else if (NokiaHealth.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
                                     me.logIntradayActivities(apiResponse);
-                                } else if (NokiaHealthDevice.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
+                                } else if (NokiaHealth.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
                                     me.logSleepMeasures(apiResponse);
-                                } else if (NokiaHealthDevice.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
+                                } else if (NokiaHealth.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
                                     me.logSleepSummary(apiResponse);
                                 }
                             }
@@ -600,7 +596,7 @@ public class NokiaHealthDevice extends Generator {
     }
 
     private void fetchActivityMeasures() {
-        this.queryApi(NokiaHealthDevice.API_ACTION_ACTIVITY_URL);
+        this.queryApi(NokiaHealth.API_ACTION_ACTIVITY_URL);
     }
 
     private void logActivityMeasures(JSONObject response) {
@@ -625,29 +621,29 @@ public class NokiaHealthDevice extends Generator {
                     cal.set(Calendar.MILLISECOND, 0);
 
                     ContentValues values = new ContentValues();
-                    values.put(NokiaHealthDevice.HISTORY_OBSERVED, System.currentTimeMillis());
+                    values.put(NokiaHealth.HISTORY_OBSERVED, System.currentTimeMillis());
 
-                    values.put(NokiaHealthDevice.ACTIVITY_MEASURE_HISTORY_DATE_START, cal.getTimeInMillis());
-                    values.put(NokiaHealthDevice.ACTIVITY_MEASURE_HISTORY_TIMEZONE, activity.getString("timezone"));
-                    values.put(NokiaHealthDevice.ACTIVITY_MEASURE_STEPS, activity.getDouble("steps"));
-                    values.put(NokiaHealthDevice.ACTIVITY_MEASURE_DISTANCE, activity.getDouble("distance"));
-                    values.put(NokiaHealthDevice.ACTIVITY_MEASURE_ACTIVE_CALORIES, activity.getDouble("calories"));
-                    values.put(NokiaHealthDevice.ACTIVITY_MEASURE_TOTAL_CALORIES, activity.getDouble("totalcalories"));
-                    values.put(NokiaHealthDevice.ACTIVITY_MEASURE_ELEVATION, activity.getDouble("elevation"));
-                    values.put(NokiaHealthDevice.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION, activity.getDouble("soft"));
-                    values.put(NokiaHealthDevice.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION, activity.getDouble("moderate"));
-                    values.put(NokiaHealthDevice.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION, activity.getDouble("intense"));
+                    values.put(NokiaHealth.ACTIVITY_MEASURE_HISTORY_DATE_START, cal.getTimeInMillis());
+                    values.put(NokiaHealth.ACTIVITY_MEASURE_HISTORY_TIMEZONE, activity.getString("timezone"));
+                    values.put(NokiaHealth.ACTIVITY_MEASURE_STEPS, activity.getDouble("steps"));
+                    values.put(NokiaHealth.ACTIVITY_MEASURE_DISTANCE, activity.getDouble("distance"));
+                    values.put(NokiaHealth.ACTIVITY_MEASURE_ACTIVE_CALORIES, activity.getDouble("calories"));
+                    values.put(NokiaHealth.ACTIVITY_MEASURE_TOTAL_CALORIES, activity.getDouble("totalcalories"));
+                    values.put(NokiaHealth.ACTIVITY_MEASURE_ELEVATION, activity.getDouble("elevation"));
+                    values.put(NokiaHealth.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION, activity.getDouble("soft"));
+                    values.put(NokiaHealth.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION, activity.getDouble("moderate"));
+                    values.put(NokiaHealth.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION, activity.getDouble("intense"));
 
-                    String where = NokiaHealthDevice.ACTIVITY_MEASURE_HISTORY_DATE_START + " = ? AND " +
-                            NokiaHealthDevice.ACTIVITY_MEASURE_HISTORY_TIMEZONE + " = ? AND " +
-                            NokiaHealthDevice.ACTIVITY_MEASURE_STEPS + " = ? AND " +
-                            NokiaHealthDevice.ACTIVITY_MEASURE_DISTANCE + " = ? AND " +
-                            NokiaHealthDevice.ACTIVITY_MEASURE_ACTIVE_CALORIES + " = ? AND " +
-                            NokiaHealthDevice.ACTIVITY_MEASURE_TOTAL_CALORIES + " = ? AND " +
-                            NokiaHealthDevice.ACTIVITY_MEASURE_ELEVATION + " = ? AND " +
-                            NokiaHealthDevice.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION + " = ? AND " +
-                            NokiaHealthDevice.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION + " = ? AND " +
-                            NokiaHealthDevice.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION + " = ?";
+                    String where = NokiaHealth.ACTIVITY_MEASURE_HISTORY_DATE_START + " = ? AND " +
+                            NokiaHealth.ACTIVITY_MEASURE_HISTORY_TIMEZONE + " = ? AND " +
+                            NokiaHealth.ACTIVITY_MEASURE_STEPS + " = ? AND " +
+                            NokiaHealth.ACTIVITY_MEASURE_DISTANCE + " = ? AND " +
+                            NokiaHealth.ACTIVITY_MEASURE_ACTIVE_CALORIES + " = ? AND " +
+                            NokiaHealth.ACTIVITY_MEASURE_TOTAL_CALORIES + " = ? AND " +
+                            NokiaHealth.ACTIVITY_MEASURE_ELEVATION + " = ? AND " +
+                            NokiaHealth.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION + " = ? AND " +
+                            NokiaHealth.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION + " = ? AND " +
+                            NokiaHealth.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION + " = ?";
 
                     String[] args = {
                             "" + cal.getTimeInMillis(),
@@ -662,29 +658,27 @@ public class NokiaHealthDevice extends Generator {
                             "" + activity.getDouble("intense")
                     };
 
-                    Cursor c = this.mDatabase.query(NokiaHealthDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, where, args, null, null, null);
+                    Cursor c = this.mDatabase.query(NokiaHealth.TABLE_ACTIVITY_MEASURE_HISTORY, null, where, args, null, null, null);
 
                     if (c.getCount() == 0) {
-                        this.mDatabase.insert(NokiaHealthDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, values);
+                        this.mDatabase.insert(NokiaHealth.TABLE_ACTIVITY_MEASURE_HISTORY, null, values);
 
                         Bundle updated = new Bundle();
 
-                        updated.putLong(NokiaHealthDevice.HISTORY_OBSERVED, System.currentTimeMillis());
-                        updated.putLong(NokiaHealthDevice.ACTIVITY_MEASURE_HISTORY_DATE_START, cal.getTimeInMillis());
-                        updated.putString(NokiaHealthDevice.ACTIVITY_MEASURE_HISTORY_TIMEZONE, activity.getString("timezone"));
-                        updated.putDouble(NokiaHealthDevice.ACTIVITY_MEASURE_STEPS, activity.getDouble("steps"));
-                        updated.putDouble(NokiaHealthDevice.ACTIVITY_MEASURE_DISTANCE, activity.getDouble("distance"));
-                        updated.putDouble(NokiaHealthDevice.ACTIVITY_MEASURE_ACTIVE_CALORIES, activity.getDouble("calories"));
-                        updated.putDouble(NokiaHealthDevice.ACTIVITY_MEASURE_TOTAL_CALORIES, activity.getDouble("totalcalories"));
-                        updated.putDouble(NokiaHealthDevice.ACTIVITY_MEASURE_ELEVATION, activity.getDouble("elevation"));
-                        updated.putDouble(NokiaHealthDevice.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION, activity.getDouble("soft"));
-                        updated.putDouble(NokiaHealthDevice.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION, activity.getDouble("moderate"));
-                        updated.putDouble(NokiaHealthDevice.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION, activity.getDouble("intense"));
-                        updated.putString(NokiaHealthDevice.DATASTREAM, NokiaHealthDevice.DATASTREAM_ACTIVITY_MEASURES);
+                        updated.putLong(NokiaHealth.HISTORY_OBSERVED, System.currentTimeMillis());
+                        updated.putLong(NokiaHealth.ACTIVITY_MEASURE_HISTORY_DATE_START, cal.getTimeInMillis());
+                        updated.putString(NokiaHealth.ACTIVITY_MEASURE_HISTORY_TIMEZONE, activity.getString("timezone"));
+                        updated.putDouble(NokiaHealth.ACTIVITY_MEASURE_STEPS, activity.getDouble("steps"));
+                        updated.putDouble(NokiaHealth.ACTIVITY_MEASURE_DISTANCE, activity.getDouble("distance"));
+                        updated.putDouble(NokiaHealth.ACTIVITY_MEASURE_ACTIVE_CALORIES, activity.getDouble("calories"));
+                        updated.putDouble(NokiaHealth.ACTIVITY_MEASURE_TOTAL_CALORIES, activity.getDouble("totalcalories"));
+                        updated.putDouble(NokiaHealth.ACTIVITY_MEASURE_ELEVATION, activity.getDouble("elevation"));
+                        updated.putDouble(NokiaHealth.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION, activity.getDouble("soft"));
+                        updated.putDouble(NokiaHealth.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION, activity.getDouble("moderate"));
+                        updated.putDouble(NokiaHealth.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION, activity.getDouble("intense"));
+                        updated.putString(NokiaHealth.DATASTREAM, NokiaHealth.DATASTREAM_ACTIVITY_MEASURES);
 
-                        this.annotateGeneratorReading(updated);
-
-                        Generators.getInstance(this.mContext).notifyGeneratorUpdated(NokiaHealthDevice.GENERATOR_IDENTIFIER, updated);
+                        Generators.getInstance(this.mContext).notifyGeneratorUpdated(NokiaHealth.GENERATOR_IDENTIFIER, updated);
                     }
 
                     c.close();
@@ -696,7 +690,7 @@ public class NokiaHealthDevice extends Generator {
     }
 
     private void fetchBodyMeasures() {
-        this.queryApi(NokiaHealthDevice.API_ACTION_BODY_MEASURES_URL);
+        this.queryApi(NokiaHealth.API_ACTION_BODY_MEASURES_URL);
     }
 
     private void logBodyMeasures(JSONObject response) {
@@ -711,37 +705,37 @@ public class NokiaHealthDevice extends Generator {
                     long measureDate = measureGroup.getLong("date");
                     long now = System.currentTimeMillis();
 
-                    String status = NokiaHealthDevice.BODY_MEASURE_STATUS_UNKNOWN;
+                    String status = NokiaHealth.BODY_MEASURE_STATUS_UNKNOWN;
 
                     switch (measureGroup.getInt("attrib")) {
                         case 0:
-                            status = NokiaHealthDevice.BODY_MEASURE_STATUS_USER_DEVICE;
+                            status = NokiaHealth.BODY_MEASURE_STATUS_USER_DEVICE;
                             break;
                         case 1:
-                            status = NokiaHealthDevice.BODY_MEASURE_STATUS_SHARED_DEVICE;
+                            status = NokiaHealth.BODY_MEASURE_STATUS_SHARED_DEVICE;
                             break;
                         case 2:
-                            status = NokiaHealthDevice.BODY_MEASURE_STATUS_MANUAL_ENTRY;
+                            status = NokiaHealth.BODY_MEASURE_STATUS_MANUAL_ENTRY;
                             break;
                         case 4:
-                            status = NokiaHealthDevice.BODY_MEASURE_STATUS_MANUAL_ENTRY_CREATION;
+                            status = NokiaHealth.BODY_MEASURE_STATUS_MANUAL_ENTRY_CREATION;
                             break;
                         case 5:
-                            status = NokiaHealthDevice.BODY_MEASURE_STATUS_AUTO_DEVICE;
+                            status = NokiaHealth.BODY_MEASURE_STATUS_AUTO_DEVICE;
                             break;
                         case 7:
-                            status = NokiaHealthDevice.BODY_MEASURE_STATUS_MEASURE_CONFIRMED;
+                            status = NokiaHealth.BODY_MEASURE_STATUS_MEASURE_CONFIRMED;
                             break;
                     }
 
-                    String category = NokiaHealthDevice.BODY_MEASURE_CATEGORY_UNKNOWN;
+                    String category = NokiaHealth.BODY_MEASURE_CATEGORY_UNKNOWN;
 
                     switch (measureGroup.getInt("category")) {
                         case 1:
-                            category = NokiaHealthDevice.BODY_MEASURE_CATEGORY_REAL_MEASUREMENTS;
+                            category = NokiaHealth.BODY_MEASURE_CATEGORY_REAL_MEASUREMENTS;
                             break;
                         case 2:
-                            category = NokiaHealthDevice.BODY_MEASURE_CATEGORY_USER_OBJECTIVES;
+                            category = NokiaHealth.BODY_MEASURE_CATEGORY_USER_OBJECTIVES;
                             break;
                     }
 
@@ -751,74 +745,74 @@ public class NokiaHealthDevice extends Generator {
                         JSONObject measure = measures.optJSONObject(j);
 
                         ContentValues values = new ContentValues();
-                        values.put(NokiaHealthDevice.HISTORY_OBSERVED, now);
+                        values.put(NokiaHealth.HISTORY_OBSERVED, now);
 
-                        String type = NokiaHealthDevice.BODY_MEASURE_TYPE_UNKNOWN;
+                        String type = NokiaHealth.BODY_MEASURE_TYPE_UNKNOWN;
 
                         switch (measure.getInt("type")) {
                             case 1:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_WEIGHT;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_WEIGHT;
                                 break;
                             case 4:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_HEIGHT;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_HEIGHT;
                                 break;
                             case 5:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_FAT_FREE_MASS;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_FAT_FREE_MASS;
                                 break;
                             case 6:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_FAT_RATIO;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_FAT_RATIO;
                                 break;
                             case 8:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_FAT_MASS_WEIGHT;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_FAT_MASS_WEIGHT;
                                 break;
                             case 9:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_DIASTOLIC_BLOOD_PRESSURE;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_DIASTOLIC_BLOOD_PRESSURE;
                                 break;
                             case 10:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_SYSTOLIC_BLOOD_PRESSURE;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_SYSTOLIC_BLOOD_PRESSURE;
                                 break;
                             case 11:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_HEART_PULSE;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_HEART_PULSE;
                                 break;
                             case 12:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_TEMPERATURE;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_TEMPERATURE;
                                 break;
                             case 54:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_OXYGEN_SATURATION;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_OXYGEN_SATURATION;
                                 break;
                             case 71:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_BODY_TEMPERATURE;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_BODY_TEMPERATURE;
                                 break;
                             case 73:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_SKIN_TEMPERATURE;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_SKIN_TEMPERATURE;
                                 break;
                             case 76:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_MUSCLE_MASS;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_MUSCLE_MASS;
                                 break;
                             case 77:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_HYDRATION;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_HYDRATION;
                                 break;
                             case 88:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_BONE_MASS;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_BONE_MASS;
                                 break;
                             case 91:
-                                type = NokiaHealthDevice.BODY_MEASURE_TYPE_PULSE_WAVE_VELOCITY;
+                                type = NokiaHealth.BODY_MEASURE_TYPE_PULSE_WAVE_VELOCITY;
                                 break;
                         }
 
                         double value = measure.getDouble("value") * Math.pow(10, measure.getDouble("unit"));
 
-                        values.put(NokiaHealthDevice.BODY_MEASURE_HISTORY_DATE, measureDate);
-                        values.put(NokiaHealthDevice.BODY_MEASURE_HISTORY_STATUS, status);
-                        values.put(NokiaHealthDevice.BODY_MEASURE_HISTORY_CATEGORY, category);
-                        values.put(NokiaHealthDevice.BODY_MEASURE_HISTORY_TYPE, type);
-                        values.put(NokiaHealthDevice.BODY_MEASURE_HISTORY_VALUE, value);
+                        values.put(NokiaHealth.BODY_MEASURE_HISTORY_DATE, measureDate);
+                        values.put(NokiaHealth.BODY_MEASURE_HISTORY_STATUS, status);
+                        values.put(NokiaHealth.BODY_MEASURE_HISTORY_CATEGORY, category);
+                        values.put(NokiaHealth.BODY_MEASURE_HISTORY_TYPE, type);
+                        values.put(NokiaHealth.BODY_MEASURE_HISTORY_VALUE, value);
 
-                        String where = NokiaHealthDevice.BODY_MEASURE_HISTORY_DATE + " = ? AND " +
-                                NokiaHealthDevice.BODY_MEASURE_HISTORY_STATUS + " = ? AND " +
-                                NokiaHealthDevice.BODY_MEASURE_HISTORY_CATEGORY + " = ? AND " +
-                                NokiaHealthDevice.BODY_MEASURE_HISTORY_TYPE + " = ? AND " +
-                                NokiaHealthDevice.BODY_MEASURE_HISTORY_VALUE + " = ?";
+                        String where = NokiaHealth.BODY_MEASURE_HISTORY_DATE + " = ? AND " +
+                                NokiaHealth.BODY_MEASURE_HISTORY_STATUS + " = ? AND " +
+                                NokiaHealth.BODY_MEASURE_HISTORY_CATEGORY + " = ? AND " +
+                                NokiaHealth.BODY_MEASURE_HISTORY_TYPE + " = ? AND " +
+                                NokiaHealth.BODY_MEASURE_HISTORY_VALUE + " = ?";
 
                         String[] args = {
                                 "" + measureDate,
@@ -828,24 +822,22 @@ public class NokiaHealthDevice extends Generator {
                                 "" + value
                         };
 
-                        Cursor c = this.mDatabase.query(NokiaHealthDevice.TABLE_BODY_MEASURE_HISTORY, null, where, args, null, null, null);
+                        Cursor c = this.mDatabase.query(NokiaHealth.TABLE_BODY_MEASURE_HISTORY, null, where, args, null, null, null);
 
                         if (c.getCount() == 0) {
-                            this.mDatabase.insert(NokiaHealthDevice.TABLE_BODY_MEASURE_HISTORY, null, values);
+                            this.mDatabase.insert(NokiaHealth.TABLE_BODY_MEASURE_HISTORY, null, values);
 
                             Bundle updated = new Bundle();
 
-                            updated.putLong(NokiaHealthDevice.HISTORY_OBSERVED, System.currentTimeMillis());
-                            updated.putLong(NokiaHealthDevice.BODY_MEASURE_HISTORY_DATE, measureDate);
-                            updated.putString(NokiaHealthDevice.BODY_MEASURE_HISTORY_STATUS, status);
-                            updated.putString(NokiaHealthDevice.BODY_MEASURE_HISTORY_CATEGORY, category);
-                            updated.putString(NokiaHealthDevice.BODY_MEASURE_HISTORY_TYPE, type);
-                            updated.putDouble(NokiaHealthDevice.BODY_MEASURE_HISTORY_VALUE, value);
-                            updated.putString(NokiaHealthDevice.DATASTREAM, NokiaHealthDevice.DATASTREAM_BODY);
+                            updated.putLong(NokiaHealth.HISTORY_OBSERVED, System.currentTimeMillis());
+                            updated.putLong(NokiaHealth.BODY_MEASURE_HISTORY_DATE, measureDate);
+                            updated.putString(NokiaHealth.BODY_MEASURE_HISTORY_STATUS, status);
+                            updated.putString(NokiaHealth.BODY_MEASURE_HISTORY_CATEGORY, category);
+                            updated.putString(NokiaHealth.BODY_MEASURE_HISTORY_TYPE, type);
+                            updated.putDouble(NokiaHealth.BODY_MEASURE_HISTORY_VALUE, value);
+                            updated.putString(NokiaHealth.DATASTREAM, NokiaHealth.DATASTREAM_BODY);
 
-                            this.annotateGeneratorReading(updated);
-
-                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(NokiaHealthDevice.GENERATOR_IDENTIFIER, updated);
+                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(NokiaHealth.GENERATOR_IDENTIFIER, updated);
                         }
 
                         c.close();
@@ -858,7 +850,7 @@ public class NokiaHealthDevice extends Generator {
     }
 
     private void fetchIntradayActivities() {
-        this.queryApi(NokiaHealthDevice.API_ACTION_INTRADAY_ACTIVITY_URL);
+        this.queryApi(NokiaHealth.API_ACTION_INTRADAY_ACTIVITY_URL);
     }
 
     private void logIntradayActivities(JSONObject response) {
@@ -878,61 +870,59 @@ public class NokiaHealthDevice extends Generator {
 
                         long timestamp = Long.parseLong(key);
 
-                        String where = NokiaHealthDevice.INTRADAY_ACTIVITY_START + " = ?";
+                        String where = NokiaHealth.INTRADAY_ACTIVITY_START + " = ?";
                         String[] args = { "" + timestamp };
 
-                        Cursor c = this.mDatabase.query(NokiaHealthDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, null, where, args, null, null, NokiaHealthDevice.HISTORY_OBSERVED + " DESC");
+                        Cursor c = this.mDatabase.query(NokiaHealth.TABLE_INTRADAY_ACTIVITY_HISTORY, null, where, args, null, null, NokiaHealth.HISTORY_OBSERVED + " DESC");
 
                         if (c.moveToNext() == false) {
                             JSONObject item = series.getJSONObject(key);
 
                             ContentValues values = new ContentValues();
-                            values.put(NokiaHealthDevice.HISTORY_OBSERVED, now);
-                            values.put(NokiaHealthDevice.INTRADAY_ACTIVITY_START, timestamp);
-                            values.put(NokiaHealthDevice.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
+                            values.put(NokiaHealth.HISTORY_OBSERVED, now);
+                            values.put(NokiaHealth.INTRADAY_ACTIVITY_START, timestamp);
+                            values.put(NokiaHealth.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
 
                             Bundle updated = new Bundle();
-                            updated.putLong(NokiaHealthDevice.HISTORY_OBSERVED, System.currentTimeMillis());
-                            updated.putLong(NokiaHealthDevice.INTRADAY_ACTIVITY_START, timestamp);
-                            updated.putLong(NokiaHealthDevice.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
+                            updated.putLong(NokiaHealth.HISTORY_OBSERVED, System.currentTimeMillis());
+                            updated.putLong(NokiaHealth.INTRADAY_ACTIVITY_START, timestamp);
+                            updated.putLong(NokiaHealth.INTRADAY_ACTIVITY_DURATION, item.getLong("duration"));
 
                             if (item.has("steps")) {
-                                values.put(NokiaHealthDevice.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
-                                updated.putLong(NokiaHealthDevice.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
+                                values.put(NokiaHealth.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
+                                updated.putLong(NokiaHealth.INTRADAY_ACTIVITY_STEPS, item.getLong("steps"));
                             }
 
                             if (item.has("elevation")) {
-                                values.put(NokiaHealthDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
-                                updated.putLong(NokiaHealthDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
+                                values.put(NokiaHealth.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
+                                updated.putLong(NokiaHealth.INTRADAY_ACTIVITY_ELEVATION_CLIMBED, item.getLong("elevation"));
                             }
 
                             if (item.has("distance")) {
-                                values.put(NokiaHealthDevice.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
-                                updated.putLong(NokiaHealthDevice.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
+                                values.put(NokiaHealth.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
+                                updated.putLong(NokiaHealth.INTRADAY_ACTIVITY_DISTANCE, item.getLong("distance"));
                             }
 
                             if (item.has("calories")) {
-                                values.put(NokiaHealthDevice.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
-                                updated.putLong(NokiaHealthDevice.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
+                                values.put(NokiaHealth.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
+                                updated.putLong(NokiaHealth.INTRADAY_ACTIVITY_CALORIES, item.getLong("calories"));
                             }
 
                             if (item.has("stroke")) {
-                                values.put(NokiaHealthDevice.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
-                                updated.putLong(NokiaHealthDevice.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
+                                values.put(NokiaHealth.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
+                                updated.putLong(NokiaHealth.INTRADAY_ACTIVITY_SWIM_STROKES, item.getLong("stroke"));
                             }
 
                             if (item.has("pool_lap")) {
-                                values.put(NokiaHealthDevice.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
-                                updated.putLong(NokiaHealthDevice.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
+                                values.put(NokiaHealth.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
+                                updated.putLong(NokiaHealth.INTRADAY_ACTIVITY_POOL_LAPS, item.getLong("pool_lap"));
                             }
 
-                            this.mDatabase.insert(NokiaHealthDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, null, values);
+                            this.mDatabase.insert(NokiaHealth.TABLE_INTRADAY_ACTIVITY_HISTORY, null, values);
 
-                            this.annotateGeneratorReading(updated);
+                            updated.putString(NokiaHealth.DATASTREAM, NokiaHealth.DATASTREAM_INTRADAY_ACTIVITY);
 
-                            updated.putString(NokiaHealthDevice.DATASTREAM, NokiaHealthDevice.DATASTREAM_INTRADAY_ACTIVITY);
-
-                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(NokiaHealthDevice.GENERATOR_IDENTIFIER, updated);
+                            Generators.getInstance(this.mContext).notifyGeneratorUpdated(NokiaHealth.GENERATOR_IDENTIFIER, updated);
                         }
 
                         c.close();
@@ -947,7 +937,7 @@ public class NokiaHealthDevice extends Generator {
     }
 
     private void fetchSleepMeasures() {
-        this.queryApi(NokiaHealthDevice.API_ACTION_SLEEP_MEASURES_URL);
+        this.queryApi(NokiaHealth.API_ACTION_SLEEP_MEASURES_URL);
     }
 
     private void logSleepMeasures(JSONObject response) {
@@ -955,14 +945,14 @@ public class NokiaHealthDevice extends Generator {
             if (response.getInt("status") == 0) {
                 JSONObject body = response.getJSONObject("body");
 
-                String model = NokiaHealthDevice.SLEEP_MEASURE_MODEL_UNKNOWN;
+                String model = NokiaHealth.SLEEP_MEASURE_MODEL_UNKNOWN;
 
                 switch(body.getInt("model")) {
                     case 16:
-                        model = NokiaHealthDevice.SLEEP_MEASURE_MODEL_ACTIVITY_TRACKER;
+                        model = NokiaHealth.SLEEP_MEASURE_MODEL_ACTIVITY_TRACKER;
                         break;
                     case 32:
-                        model = NokiaHealthDevice.SLEEP_MEASURE_MODEL_AURA;
+                        model = NokiaHealth.SLEEP_MEASURE_MODEL_AURA;
                         break;
                 }
 
@@ -973,34 +963,34 @@ public class NokiaHealthDevice extends Generator {
 
                     long now = System.currentTimeMillis();
 
-                    String state = NokiaHealthDevice.SLEEP_MEASURE_STATE_UNKNOWN;
+                    String state = NokiaHealth.SLEEP_MEASURE_STATE_UNKNOWN;
 
                     switch (item.getInt("state")) {
                         case 0:
-                            state = NokiaHealthDevice.SLEEP_MEASURE_STATE_AWAKE;
+                            state = NokiaHealth.SLEEP_MEASURE_STATE_AWAKE;
                             break;
                         case 1:
-                            state = NokiaHealthDevice.SLEEP_MEASURE_STATE_LIGHT_SLEEP;
+                            state = NokiaHealth.SLEEP_MEASURE_STATE_LIGHT_SLEEP;
                             break;
                         case 2:
-                            state = NokiaHealthDevice.SLEEP_MEASURE_STATE_DEEP_SLEEP;
+                            state = NokiaHealth.SLEEP_MEASURE_STATE_DEEP_SLEEP;
                             break;
                         case 3:
-                            state = NokiaHealthDevice.SLEEP_MEASURE_STATE_REM_SLEEP;
+                            state = NokiaHealth.SLEEP_MEASURE_STATE_REM_SLEEP;
                             break;
                     }
 
                     ContentValues values = new ContentValues();
-                    values.put(NokiaHealthDevice.HISTORY_OBSERVED, now);
-                    values.put(NokiaHealthDevice.SLEEP_MEASURE_START_DATE, item.getLong("startdate"));
-                    values.put(NokiaHealthDevice.SLEEP_MEASURE_END_DATE, item.getLong("enddate"));
-                    values.put(NokiaHealthDevice.SLEEP_MEASURE_STATE, state);
-                    values.put(NokiaHealthDevice.SLEEP_MEASURE_MEASUREMENT_DEVICE, model);
+                    values.put(NokiaHealth.HISTORY_OBSERVED, now);
+                    values.put(NokiaHealth.SLEEP_MEASURE_START_DATE, item.getLong("startdate"));
+                    values.put(NokiaHealth.SLEEP_MEASURE_END_DATE, item.getLong("enddate"));
+                    values.put(NokiaHealth.SLEEP_MEASURE_STATE, state);
+                    values.put(NokiaHealth.SLEEP_MEASURE_MEASUREMENT_DEVICE, model);
 
-                    String where = NokiaHealthDevice.SLEEP_MEASURE_START_DATE + " = ? AND " +
-                            NokiaHealthDevice.SLEEP_MEASURE_END_DATE + " = ? AND " +
-                            NokiaHealthDevice.SLEEP_MEASURE_STATE + " = ? AND " +
-                            NokiaHealthDevice.SLEEP_MEASURE_MEASUREMENT_DEVICE + " = ?";
+                    String where = NokiaHealth.SLEEP_MEASURE_START_DATE + " = ? AND " +
+                            NokiaHealth.SLEEP_MEASURE_END_DATE + " = ? AND " +
+                            NokiaHealth.SLEEP_MEASURE_STATE + " = ? AND " +
+                            NokiaHealth.SLEEP_MEASURE_MEASUREMENT_DEVICE + " = ?";
 
                     String[] args = {
                             "" + item.getLong("startdate"),
@@ -1009,23 +999,21 @@ public class NokiaHealthDevice extends Generator {
                             "" + model
                     };
 
-                    Cursor c = this.mDatabase.query(NokiaHealthDevice.TABLE_SLEEP_MEASURE_HISTORY, null, where, args, null, null, null);
+                    Cursor c = this.mDatabase.query(NokiaHealth.TABLE_SLEEP_MEASURE_HISTORY, null, where, args, null, null, null);
 
                     if (c.getCount() == 0) {
-                        this.mDatabase.insert(NokiaHealthDevice.TABLE_SLEEP_MEASURE_HISTORY, null, values);
+                        this.mDatabase.insert(NokiaHealth.TABLE_SLEEP_MEASURE_HISTORY, null, values);
 
                         Bundle updated = new Bundle();
-                        updated.putLong(NokiaHealthDevice.HISTORY_OBSERVED, System.currentTimeMillis());
-                        updated.putLong(NokiaHealthDevice.SLEEP_MEASURE_START_DATE, item.getLong("startdate"));
-                        updated.putLong(NokiaHealthDevice.SLEEP_MEASURE_END_DATE, item.getLong("enddate"));
-                        updated.putString(NokiaHealthDevice.SLEEP_MEASURE_STATE, state);
-                        updated.putString(NokiaHealthDevice.SLEEP_MEASURE_MEASUREMENT_DEVICE, model);
+                        updated.putLong(NokiaHealth.HISTORY_OBSERVED, System.currentTimeMillis());
+                        updated.putLong(NokiaHealth.SLEEP_MEASURE_START_DATE, item.getLong("startdate"));
+                        updated.putLong(NokiaHealth.SLEEP_MEASURE_END_DATE, item.getLong("enddate"));
+                        updated.putString(NokiaHealth.SLEEP_MEASURE_STATE, state);
+                        updated.putString(NokiaHealth.SLEEP_MEASURE_MEASUREMENT_DEVICE, model);
 
-                        this.annotateGeneratorReading(updated);
+                        updated.putString(NokiaHealth.DATASTREAM, NokiaHealth.DATASTREAM_SLEEP_MEASURES);
 
-                        updated.putString(NokiaHealthDevice.DATASTREAM, NokiaHealthDevice.DATASTREAM_SLEEP_MEASURES);
-
-                        Generators.getInstance(this.mContext).notifyGeneratorUpdated(NokiaHealthDevice.GENERATOR_IDENTIFIER, updated);
+                        Generators.getInstance(this.mContext).notifyGeneratorUpdated(NokiaHealth.GENERATOR_IDENTIFIER, updated);
                     }
 
                     c.close();
@@ -1037,7 +1025,7 @@ public class NokiaHealthDevice extends Generator {
     }
 
     private void fetchSleepSummary() {
-        this.queryApi(NokiaHealthDevice.API_ACTION_SLEEP_SUMMARY_URL);
+        this.queryApi(NokiaHealth.API_ACTION_SLEEP_SUMMARY_URL);
     }
 
     private void logSleepSummary(JSONObject response) {
@@ -1054,48 +1042,48 @@ public class NokiaHealthDevice extends Generator {
 
                     String timezone = body.getString("timezone");
 
-                    String model = NokiaHealthDevice.SLEEP_SUMMARY_MODEL_UNKNOWN;
+                    String model = NokiaHealth.SLEEP_SUMMARY_MODEL_UNKNOWN;
 
                     switch(body.getInt("model")) {
                         case 16:
-                            model = NokiaHealthDevice.SLEEP_SUMMARY_MODEL_ACTIVITY_TRACKER;
+                            model = NokiaHealth.SLEEP_SUMMARY_MODEL_ACTIVITY_TRACKER;
                             break;
                         case 32:
-                            model = NokiaHealthDevice.SLEEP_SUMMARY_MODEL_AURA;
+                            model = NokiaHealth.SLEEP_SUMMARY_MODEL_AURA;
                             break;
                     }
 
                     JSONObject data = item.getJSONObject("data");
 
                     ContentValues values = new ContentValues();
-                    values.put(NokiaHealthDevice.HISTORY_OBSERVED, now);
-                    values.put(NokiaHealthDevice.SLEEP_SUMMARY_START_DATE, item.getLong("startdate"));
-                    values.put(NokiaHealthDevice.SLEEP_SUMMARY_END_DATE, item.getLong("enddate"));
-                    values.put(NokiaHealthDevice.SLEEP_SUMMARY_TIMEZONE, timezone);
-                    values.put(NokiaHealthDevice.SLEEP_SUMMARY_MEASUREMENT_DEVICE, model);
-                    values.put(NokiaHealthDevice.SLEEP_SUMMARY_WAKE_DURATION, data.getDouble("wakeupduration"));
-                    values.put(NokiaHealthDevice.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION, data.getDouble("lightsleepduration"));
-                    values.put(NokiaHealthDevice.SLEEP_SUMMARY_DEEP_SLEEP_DURATION, data.getDouble("deepsleepduration"));
-                    values.put(NokiaHealthDevice.SLEEP_SUMMARY_TO_SLEEP_DURATION, data.getDouble("durationtosleep"));
-                    values.put(NokiaHealthDevice.SLEEP_SUMMARY_WAKE_COUNT, data.getDouble("wakeupcount"));
+                    values.put(NokiaHealth.HISTORY_OBSERVED, now);
+                    values.put(NokiaHealth.SLEEP_SUMMARY_START_DATE, item.getLong("startdate"));
+                    values.put(NokiaHealth.SLEEP_SUMMARY_END_DATE, item.getLong("enddate"));
+                    values.put(NokiaHealth.SLEEP_SUMMARY_TIMEZONE, timezone);
+                    values.put(NokiaHealth.SLEEP_SUMMARY_MEASUREMENT_DEVICE, model);
+                    values.put(NokiaHealth.SLEEP_SUMMARY_WAKE_DURATION, data.getDouble("wakeupduration"));
+                    values.put(NokiaHealth.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION, data.getDouble("lightsleepduration"));
+                    values.put(NokiaHealth.SLEEP_SUMMARY_DEEP_SLEEP_DURATION, data.getDouble("deepsleepduration"));
+                    values.put(NokiaHealth.SLEEP_SUMMARY_TO_SLEEP_DURATION, data.getDouble("durationtosleep"));
+                    values.put(NokiaHealth.SLEEP_SUMMARY_WAKE_COUNT, data.getDouble("wakeupcount"));
 
                     if (data.has("remsleepduration")) {
-                        values.put(NokiaHealthDevice.SLEEP_SUMMARY_REM_SLEEP_DURATION, data.getDouble("remsleepduration"));
+                        values.put(NokiaHealth.SLEEP_SUMMARY_REM_SLEEP_DURATION, data.getDouble("remsleepduration"));
                     }
 
                     if (data.has("durationtowakeup")) {
-                        values.put(NokiaHealthDevice.SLEEP_SUMMARY_TO_WAKE_DURATION, data.getDouble("durationtowakeup"));
+                        values.put(NokiaHealth.SLEEP_SUMMARY_TO_WAKE_DURATION, data.getDouble("durationtowakeup"));
                     }
 
-                    String where = NokiaHealthDevice.SLEEP_SUMMARY_START_DATE + " = ? AND " +
-                            NokiaHealthDevice.SLEEP_SUMMARY_END_DATE + " = ? AND " +
-                            NokiaHealthDevice.SLEEP_SUMMARY_TIMEZONE + " = ? AND " +
-                            NokiaHealthDevice.SLEEP_SUMMARY_MEASUREMENT_DEVICE + " = ? AND " +
-                            NokiaHealthDevice.SLEEP_SUMMARY_WAKE_DURATION + " = ? AND " +
-                            NokiaHealthDevice.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION + " = ? AND " +
-                            NokiaHealthDevice.SLEEP_SUMMARY_DEEP_SLEEP_DURATION + " = ? AND " +
-                            NokiaHealthDevice.SLEEP_SUMMARY_TO_SLEEP_DURATION + " = ? AND " +
-                            NokiaHealthDevice.SLEEP_SUMMARY_WAKE_COUNT + " = ?";
+                    String where = NokiaHealth.SLEEP_SUMMARY_START_DATE + " = ? AND " +
+                            NokiaHealth.SLEEP_SUMMARY_END_DATE + " = ? AND " +
+                            NokiaHealth.SLEEP_SUMMARY_TIMEZONE + " = ? AND " +
+                            NokiaHealth.SLEEP_SUMMARY_MEASUREMENT_DEVICE + " = ? AND " +
+                            NokiaHealth.SLEEP_SUMMARY_WAKE_DURATION + " = ? AND " +
+                            NokiaHealth.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION + " = ? AND " +
+                            NokiaHealth.SLEEP_SUMMARY_DEEP_SLEEP_DURATION + " = ? AND " +
+                            NokiaHealth.SLEEP_SUMMARY_TO_SLEEP_DURATION + " = ? AND " +
+                            NokiaHealth.SLEEP_SUMMARY_WAKE_COUNT + " = ?";
 
                     String[] args = {
                             "" + item.getLong("startdate"),
@@ -1109,36 +1097,34 @@ public class NokiaHealthDevice extends Generator {
                             "" + data.getDouble("wakeupcount")
                     };
 
-                    Cursor c = this.mDatabase.query(NokiaHealthDevice.TABLE_SLEEP_MEASURE_HISTORY, null, where, args, null, null, null);
+                    Cursor c = this.mDatabase.query(NokiaHealth.TABLE_SLEEP_MEASURE_HISTORY, null, where, args, null, null, null);
 
                     if (c.getCount() == 0) {
-                        this.mDatabase.insert(NokiaHealthDevice.TABLE_SLEEP_MEASURE_HISTORY, null, values);
+                        this.mDatabase.insert(NokiaHealth.TABLE_SLEEP_MEASURE_HISTORY, null, values);
 
                         Bundle updated = new Bundle();
-                        updated.putLong(NokiaHealthDevice.HISTORY_OBSERVED, now);
-                        updated.putLong(NokiaHealthDevice.SLEEP_SUMMARY_START_DATE, item.getLong("startdate"));
-                        updated.putLong(NokiaHealthDevice.SLEEP_SUMMARY_END_DATE, item.getLong("enddate"));
-                        updated.putString(NokiaHealthDevice.SLEEP_SUMMARY_TIMEZONE, timezone);
-                        updated.putString(NokiaHealthDevice.SLEEP_SUMMARY_MEASUREMENT_DEVICE, model);
-                        updated.putDouble(NokiaHealthDevice.SLEEP_SUMMARY_WAKE_DURATION, data.getDouble("wakeupduration"));
-                        updated.putDouble(NokiaHealthDevice.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION, data.getDouble("lightsleepduration"));
-                        updated.putDouble(NokiaHealthDevice.SLEEP_SUMMARY_DEEP_SLEEP_DURATION, data.getDouble("deepsleepduration"));
-                        updated.putDouble(NokiaHealthDevice.SLEEP_SUMMARY_TO_SLEEP_DURATION, data.getDouble("durationtosleep"));
-                        updated.putDouble(NokiaHealthDevice.SLEEP_SUMMARY_WAKE_COUNT, data.getDouble("wakeupcount"));
+                        updated.putLong(NokiaHealth.HISTORY_OBSERVED, now);
+                        updated.putLong(NokiaHealth.SLEEP_SUMMARY_START_DATE, item.getLong("startdate"));
+                        updated.putLong(NokiaHealth.SLEEP_SUMMARY_END_DATE, item.getLong("enddate"));
+                        updated.putString(NokiaHealth.SLEEP_SUMMARY_TIMEZONE, timezone);
+                        updated.putString(NokiaHealth.SLEEP_SUMMARY_MEASUREMENT_DEVICE, model);
+                        updated.putDouble(NokiaHealth.SLEEP_SUMMARY_WAKE_DURATION, data.getDouble("wakeupduration"));
+                        updated.putDouble(NokiaHealth.SLEEP_SUMMARY_LIGHT_SLEEP_DURATION, data.getDouble("lightsleepduration"));
+                        updated.putDouble(NokiaHealth.SLEEP_SUMMARY_DEEP_SLEEP_DURATION, data.getDouble("deepsleepduration"));
+                        updated.putDouble(NokiaHealth.SLEEP_SUMMARY_TO_SLEEP_DURATION, data.getDouble("durationtosleep"));
+                        updated.putDouble(NokiaHealth.SLEEP_SUMMARY_WAKE_COUNT, data.getDouble("wakeupcount"));
 
                         if (data.has("remsleepduration")) {
-                            updated.putDouble(NokiaHealthDevice.SLEEP_SUMMARY_REM_SLEEP_DURATION, data.getDouble("remsleepduration"));
+                            updated.putDouble(NokiaHealth.SLEEP_SUMMARY_REM_SLEEP_DURATION, data.getDouble("remsleepduration"));
                         }
 
                         if (data.has("durationtowakeup")) {
-                            updated.putDouble(NokiaHealthDevice.SLEEP_SUMMARY_TO_WAKE_DURATION, data.getDouble("durationtowakeup"));
+                            updated.putDouble(NokiaHealth.SLEEP_SUMMARY_TO_WAKE_DURATION, data.getDouble("durationtowakeup"));
                         }
 
-                        this.annotateGeneratorReading(updated);
+                        updated.putString(NokiaHealth.DATASTREAM, NokiaHealth.DATASTREAM_SLEEP_SUMMARY);
 
-                        updated.putString(NokiaHealthDevice.DATASTREAM, NokiaHealthDevice.DATASTREAM_SLEEP_SUMMARY);
-
-                        Generators.getInstance(this.mContext).notifyGeneratorUpdated(NokiaHealthDevice.GENERATOR_IDENTIFIER, updated);
+                        Generators.getInstance(this.mContext).notifyGeneratorUpdated(NokiaHealth.GENERATOR_IDENTIFIER, updated);
                     }
 
                     c.close();
@@ -1149,57 +1135,41 @@ public class NokiaHealthDevice extends Generator {
         }
     }
 
-    private void annotateGeneratorReading(Bundle reading) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-
-        if (prefs.getBoolean(NokiaHealthDevice.SERVER_FETCH_ENABLED, NokiaHealthDevice.SERVER_FETCH_ENABLED_DEFAULT)) {
-            String clientId = this.getProperty(NokiaHealthDevice.OPTION_OAUTH_CLIENT_ID);
-            String token = this.getProperty(NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN);
-            String tokenSecret = this.getProperty(NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN_SECRET);
-            String userId = this.getProperty(NokiaHealthDevice.OPTION_OAUTH_ACCESS_USER_ID);
-
-            reading.putString(NokiaHealthDevice.OPTION_OAUTH_CLIENT_ID, clientId);
-            reading.putString(NokiaHealthDevice.OAUTH_USER_TOKEN, token);
-            reading.putString(NokiaHealthDevice.OAUTH_USER_SECRET, tokenSecret);
-            reading.putString(NokiaHealthDevice.OAUTH_USER_ID, userId);
-        }
-    }
-
     @SuppressWarnings("unused")
     public static boolean isEnabled(Context context) {
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
-        return prefs.getBoolean(NokiaHealthDevice.ENABLED, NokiaHealthDevice.ENABLED_DEFAULT);
+        return prefs.getBoolean(NokiaHealth.ENABLED, NokiaHealth.ENABLED_DEFAULT);
     }
 
     @SuppressWarnings({"unused"})
     public static boolean isRunning(Context context) {
-        if (NokiaHealthDevice.sInstance == null) {
+        if (NokiaHealth.sInstance == null) {
             return false;
         }
 
-        return NokiaHealthDevice.sInstance.mHandler != null;
+        return NokiaHealth.sInstance.mHandler != null;
     }
 
     @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(final Context context) {
-        final NokiaHealthDevice me = NokiaHealthDevice.getInstance(context);
+        final NokiaHealth me = NokiaHealth.getInstance(context);
 
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
-        if (prefs.contains(NokiaHealthDevice.PERSISTED_AUTH) == false) {
+        if (prefs.contains(NokiaHealth.PERSISTED_AUTH) == false) {
             actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_nokia_health_auth_required_title), context.getString(R.string.diagnostic_nokia_health_auth_required), new Runnable() {
                 @Override
                 public void run() {
                     Runnable r = new Runnable() {
                         @Override
                         public void run() {
-                            String clientId = me.getProperty(NokiaHealthDevice.OPTION_OAUTH_CLIENT_ID);
-                            String callbackUrl = me.getProperty(NokiaHealthDevice.OPTION_OAUTH_CALLBACK_URL);
+                            String clientId = me.getProperty(NokiaHealth.OPTION_OAUTH_CLIENT_ID);
+                            String callbackUrl = me.getProperty(NokiaHealth.OPTION_OAUTH_CALLBACK_URL);
 
-                            AuthorizationServiceConfiguration config = new AuthorizationServiceConfiguration(NokiaHealthDevice.OAUTH_AUTHORIZATION_ENDPOINT, NokiaHealthDevice.OAUTH_TOKEN_ENDPOINT);
+                            AuthorizationServiceConfiguration config = new AuthorizationServiceConfiguration(NokiaHealth.OAUTH_AUTHORIZATION_ENDPOINT, NokiaHealth.OAUTH_TOKEN_ENDPOINT);
 
                             AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(config, clientId, "code", Uri.parse(callbackUrl));
 
@@ -1211,7 +1181,7 @@ public class NokiaHealthDevice extends Generator {
 
                             AuthorizationService service = new AuthorizationService(me.mContext);
 
-                            Intent handlerIntent = new Intent(me.mContext, NokiaHealthDevice.OAuthResultHandlerActivity.class);
+                            Intent handlerIntent = new Intent(me.mContext, NokiaHealth.OAuthResultHandlerActivity.class);
 
                             PendingIntent pendingIntent = PendingIntent.getActivity(me.mContext, 0, handlerIntent, 0);
 
@@ -1229,11 +1199,11 @@ public class NokiaHealthDevice extends Generator {
     }
 
     private void authorizationSuccessful(final AuthorizationResponse authResponse, final AuthorizationException authException) {
-        final NokiaHealthDevice me = this;
+        final NokiaHealth me = this;
 
         AuthorizationService service = new AuthorizationService(this.mContext);
 
-        ClientSecretPost secret = new ClientSecretPost(me.getProperty(NokiaHealthDevice.OPTION_OAUTH_CLIENT_SECRET));
+        ClientSecretPost secret = new ClientSecretPost(me.getProperty(NokiaHealth.OPTION_OAUTH_CLIENT_SECRET));
 
         service.performTokenRequest(authResponse.createTokenExchangeRequest(), secret, new AuthorizationService.TokenResponseCallback() {
             @Override public void onTokenRequestCompleted(TokenResponse tokenResponse, AuthorizationException ex) {
@@ -1243,7 +1213,20 @@ public class NokiaHealthDevice extends Generator {
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
                     SharedPreferences.Editor e = prefs.edit();
 
-                    e.putString(NokiaHealthDevice.PERSISTED_AUTH, authState.jsonSerializeString());
+                    e.putString(NokiaHealth.PERSISTED_AUTH, authState.jsonSerializeString());
+
+                    if (prefs.getBoolean(NokiaHealth.SERVER_ONLY, NokiaHealth.SERVER_ONLY_DEFAULT)) {
+                        Bundle updated = new Bundle();
+                        updated.putLong(NokiaHealth.HISTORY_OBSERVED, System.currentTimeMillis());
+
+                        updated.putString(NokiaHealth.DATASTREAM, NokiaHealth.DATASTREAM_SERVER_CREDENTIALS);
+                        updated.putString(NokiaHealth.OAUTH_ACCESS_TOKEN, tokenResponse.accessToken);
+                        updated.putString(NokiaHealth.OAUTH_REFRESH_TOKEN, tokenResponse.refreshToken);
+                        updated.putString(NokiaHealth.OAUTH_CLIENT_ID, me.getProperty(NokiaHealth.OPTION_OAUTH_CLIENT_ID));
+                        updated.putString(NokiaHealth.OAUTH_CLIENT_SECRET, me.getProperty(NokiaHealth.OPTION_OAUTH_CLIENT_SECRET));
+
+                        Generators.getInstance(me.mContext).notifyGeneratorUpdated(NokiaHealth.GENERATOR_IDENTIFIER, updated);
+                    }
 
                     e.apply();
                 } else {
@@ -1272,12 +1255,12 @@ public class NokiaHealthDevice extends Generator {
     public static void bindDisclosureViewHolder(final GeneratorViewHolder holder) {
         TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 
-        generatorLabel.setText(NokiaHealthDevice.getGeneratorTitle(holder.itemView.getContext()));
+        generatorLabel.setText(NokiaHealth.getGeneratorTitle(holder.itemView.getContext()));
     }
 
     @SuppressWarnings("unused")
     public static void bindViewHolder(final DataPointViewHolder holder) {
-        final NokiaHealthDevice device = NokiaHealthDevice.getInstance(holder.itemView.getContext());
+        final NokiaHealth device = NokiaHealth.getInstance(holder.itemView.getContext());
 
         ViewPager pager = holder.itemView.findViewById(R.id.content_pager);
 
@@ -1310,17 +1293,17 @@ public class NokiaHealthDevice extends Generator {
             public Object instantiateItem(@NonNull ViewGroup container, int position) {
                 switch (position) {
                     case 0:
-                        return NokiaHealthDevice.bindActivityPage(container, holder, position);
+                        return NokiaHealth.bindActivityPage(container, holder, position);
                     case 1:
-                        return NokiaHealthDevice.bindIntradayPage(container, holder, position);
+                        return NokiaHealth.bindIntradayPage(container, holder, position);
                     case 2:
-                        return NokiaHealthDevice.bindBodyPage(container, holder, position);
+                        return NokiaHealth.bindBodyPage(container, holder, position);
                     case 3:
-                        return NokiaHealthDevice.bindSleepPage(container, holder, position);
+                        return NokiaHealth.bindSleepPage(container, holder, position);
                     case 4:
-                        return NokiaHealthDevice.bindSleepSummaryPage(container, holder, position);
+                        return NokiaHealth.bindSleepSummaryPage(container, holder, position);
                     default:
-                        return NokiaHealthDevice.bindInformationPage(container, holder, position);
+                        return NokiaHealth.bindInformationPage(container, holder, position);
                 }
             }
         };
@@ -1374,20 +1357,20 @@ public class NokiaHealthDevice extends Generator {
         double moderateActivity = 0;
         double intenseActivity = 0;
 
-        NokiaHealthDevice generator = NokiaHealthDevice.getInstance(card.getContext());
+        NokiaHealth generator = NokiaHealth.getInstance(card.getContext());
 
-        Cursor c = generator.mDatabase.query(NokiaHealthDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, NokiaHealthDevice.HISTORY_OBSERVED + " DESC");
+        Cursor c = generator.mDatabase.query(NokiaHealth.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, NokiaHealth.HISTORY_OBSERVED + " DESC");
 
         if (c.moveToNext()) {
-            lastTimestamp = c.getLong(c.getColumnIndex(NokiaHealthDevice.HISTORY_OBSERVED));
+            lastTimestamp = c.getLong(c.getColumnIndex(NokiaHealth.HISTORY_OBSERVED));
 
-            steps = c.getDouble(c.getColumnIndex(NokiaHealthDevice.ACTIVITY_MEASURE_STEPS));
-            distance = c.getDouble(c.getColumnIndex(NokiaHealthDevice.ACTIVITY_MEASURE_DISTANCE));
-            elevation = c.getDouble(c.getColumnIndex(NokiaHealthDevice.ACTIVITY_MEASURE_ELEVATION));
+            steps = c.getDouble(c.getColumnIndex(NokiaHealth.ACTIVITY_MEASURE_STEPS));
+            distance = c.getDouble(c.getColumnIndex(NokiaHealth.ACTIVITY_MEASURE_DISTANCE));
+            elevation = c.getDouble(c.getColumnIndex(NokiaHealth.ACTIVITY_MEASURE_ELEVATION));
 
-            softActivity = c.getDouble(c.getColumnIndex(NokiaHealthDevice.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION));
-            moderateActivity = c.getDouble(c.getColumnIndex(NokiaHealthDevice.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION));
-            intenseActivity = c.getDouble(c.getColumnIndex(NokiaHealthDevice.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION));
+            softActivity = c.getDouble(c.getColumnIndex(NokiaHealth.ACTIVITY_MEASURE_SOFT_ACTIVITY_DURATION));
+            moderateActivity = c.getDouble(c.getColumnIndex(NokiaHealth.ACTIVITY_MEASURE_MODERATE_ACTIVITY_DURATION));
+            intenseActivity = c.getDouble(c.getColumnIndex(NokiaHealth.ACTIVITY_MEASURE_INTENSE_ACTIVITY_DURATION));
         }
 
         c.close();
@@ -1486,17 +1469,17 @@ public class NokiaHealthDevice extends Generator {
 
     @SuppressWarnings("unused")
     public static long latestPointGenerated(Context context) {
-        NokiaHealthDevice me = NokiaHealthDevice.getInstance(context);
+        NokiaHealth me = NokiaHealth.getInstance(context);
 
         if (me.mLatestTimestamp != -1) {
             return me.mLatestTimestamp;
         }
 
         if (me.mDatabase != null) {
-            Cursor c = me.mDatabase.query(NokiaHealthDevice.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, NokiaHealthDevice.HISTORY_OBSERVED + " DESC");
+            Cursor c = me.mDatabase.query(NokiaHealth.TABLE_ACTIVITY_MEASURE_HISTORY, null, null, null, null, null, NokiaHealth.HISTORY_OBSERVED + " DESC");
 
             if (c.moveToNext()) {
-                me.mLatestTimestamp = c.getLong(c.getColumnIndex(NokiaHealthDevice.HISTORY_OBSERVED));
+                me.mLatestTimestamp = c.getLong(c.getColumnIndex(NokiaHealth.HISTORY_OBSERVED));
             }
 
             c.close();
@@ -1511,17 +1494,17 @@ public class NokiaHealthDevice extends Generator {
     public void setProperty(String key, String value) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        if (NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN.equals(key)) {
+        if (NokiaHealth.OPTION_OAUTH_CALLBACK_URL.equals(key)) {
             SharedPreferences.Editor e = prefs.edit();
-            e.putString(NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN, value);
+            e.putString(NokiaHealth.OPTION_OAUTH_CALLBACK_URL, value);
             e.apply();
-        } else if (NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN_SECRET.equals(key)) {
+        } else if (NokiaHealth.OPTION_OAUTH_CLIENT_ID.equals(key)) {
             SharedPreferences.Editor e = prefs.edit();
-            e.putString(NokiaHealthDevice.OPTION_OAUTH_ACCESS_TOKEN_SECRET, value);
+            e.putString(NokiaHealth.OPTION_OAUTH_CLIENT_ID, value);
             e.apply();
-        } else if (NokiaHealthDevice.OPTION_OAUTH_ACCESS_USER_ID.equals(key)) {
+        } else if (NokiaHealth.OPTION_OAUTH_CLIENT_SECRET.equals(key)) {
             SharedPreferences.Editor e = prefs.edit();
-            e.putString(NokiaHealthDevice.OPTION_OAUTH_ACCESS_USER_ID, value);
+            e.putString(NokiaHealth.OPTION_OAUTH_CLIENT_SECRET, value);
             e.apply();
         }
 
@@ -1533,7 +1516,7 @@ public class NokiaHealthDevice extends Generator {
 
         long now = System.currentTimeMillis();
 
-        NokiaHealthDevice device = NokiaHealthDevice.getInstance(context);
+        NokiaHealth device = NokiaHealth.getInstance(context);
 
         @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_nokia_health_intraday_page, null);
         card.setTag("" + position);
@@ -1565,10 +1548,10 @@ public class NokiaHealthDevice extends Generator {
 
         long end = cal.getTimeInMillis() / 1000;
 
-        String where = NokiaHealthDevice.INTRADAY_ACTIVITY_START + " > ?";
+        String where = NokiaHealth.INTRADAY_ACTIVITY_START + " > ?";
         String[] args = { "" + start };
 
-        Cursor c = device.mDatabase.query(NokiaHealthDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, null, where, args, null, null, NokiaHealthDevice.INTRADAY_ACTIVITY_START);
+        Cursor c = device.mDatabase.query(NokiaHealth.TABLE_INTRADAY_ACTIVITY_HISTORY, null, where, args, null, null, NokiaHealth.INTRADAY_ACTIVITY_START);
 
         steps.add(new Entry(0, 0));
         distance.add(new Entry(0, 0));
@@ -1576,34 +1559,34 @@ public class NokiaHealthDevice extends Generator {
         calories.add(new Entry(0, 0));
 
         while (c.moveToNext()) {
-            long when = c.getLong(c.getColumnIndex(NokiaHealthDevice.INTRADAY_ACTIVITY_START));
+            long when = c.getLong(c.getColumnIndex(NokiaHealth.INTRADAY_ACTIVITY_START));
 
-            if (c.isNull(c.getColumnIndex(NokiaHealthDevice.INTRADAY_ACTIVITY_STEPS)) == false) {
-                float value = c.getFloat(c.getColumnIndex(NokiaHealthDevice.INTRADAY_ACTIVITY_STEPS));
+            if (c.isNull(c.getColumnIndex(NokiaHealth.INTRADAY_ACTIVITY_STEPS)) == false) {
+                float value = c.getFloat(c.getColumnIndex(NokiaHealth.INTRADAY_ACTIVITY_STEPS));
 
                 stepSum += value;
 
                 steps.add(new Entry(when - start, stepSum));
             }
 
-            if (c.isNull(c.getColumnIndex(NokiaHealthDevice.INTRADAY_ACTIVITY_DISTANCE)) == false) {
-                float value = c.getFloat(c.getColumnIndex(NokiaHealthDevice.INTRADAY_ACTIVITY_DISTANCE));
+            if (c.isNull(c.getColumnIndex(NokiaHealth.INTRADAY_ACTIVITY_DISTANCE)) == false) {
+                float value = c.getFloat(c.getColumnIndex(NokiaHealth.INTRADAY_ACTIVITY_DISTANCE));
 
                 distanceSum += value;
 
                 distance.add(new Entry(when - start, distanceSum));
             }
 
-            if (c.isNull(c.getColumnIndex(NokiaHealthDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED)) == false) {
-                float value = c.getFloat(c.getColumnIndex(NokiaHealthDevice.INTRADAY_ACTIVITY_ELEVATION_CLIMBED));
+            if (c.isNull(c.getColumnIndex(NokiaHealth.INTRADAY_ACTIVITY_ELEVATION_CLIMBED)) == false) {
+                float value = c.getFloat(c.getColumnIndex(NokiaHealth.INTRADAY_ACTIVITY_ELEVATION_CLIMBED));
 
                 elevationSum += value;
 
                 elevation.add(new Entry(when - start, elevationSum));
             }
 
-            if (c.isNull(c.getColumnIndex(NokiaHealthDevice.INTRADAY_ACTIVITY_CALORIES)) == false) {
-                float value = c.getFloat(c.getColumnIndex(NokiaHealthDevice.INTRADAY_ACTIVITY_CALORIES));
+            if (c.isNull(c.getColumnIndex(NokiaHealth.INTRADAY_ACTIVITY_CALORIES)) == false) {
+                float value = c.getFloat(c.getColumnIndex(NokiaHealth.INTRADAY_ACTIVITY_CALORIES));
 
                 caloriesSum += value;
 
@@ -1616,10 +1599,10 @@ public class NokiaHealthDevice extends Generator {
         elevation.add(new Entry((now / 1000) - start, elevationSum));
         calories.add(new Entry((now / 1000) - start, caloriesSum));
 
-        NokiaHealthDevice.populateIntradayChart(context, stepsChart, steps, 0, end - start);
-        NokiaHealthDevice.populateIntradayChart(context, distanceChart, distance, 0, end - start);
-        NokiaHealthDevice.populateIntradayChart(context, elevationChart, elevation, 0, end - start);
-        NokiaHealthDevice.populateIntradayChart(context, caloriesChart, calories, 0, end - start);
+        NokiaHealth.populateIntradayChart(context, stepsChart, steps, 0, end - start);
+        NokiaHealth.populateIntradayChart(context, distanceChart, distance, 0, end - start);
+        NokiaHealth.populateIntradayChart(context, elevationChart, elevation, 0, end - start);
+        NokiaHealth.populateIntradayChart(context, caloriesChart, calories, 0, end - start);
 
         c.close();
 
@@ -1700,7 +1683,7 @@ public class NokiaHealthDevice extends Generator {
     private static String bindBodyPage(ViewGroup container, DataPointViewHolder holder, int position) {
         final Context context = container.getContext();
 
-        NokiaHealthDevice device = NokiaHealthDevice.getInstance(holder.itemView.getContext());
+        NokiaHealth device = NokiaHealth.getInstance(holder.itemView.getContext());
 
         @SuppressLint("InflateParams") LinearLayout card = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.card_generator_nokia_health_body_page, null);
         card.setTag("" + position);
@@ -1730,13 +1713,13 @@ public class NokiaHealthDevice extends Generator {
         HashMap<String, Double> bodyValues = new HashMap<>();
         ArrayList<String> keys = new ArrayList<>();
 
-        Cursor c = device.mDatabase.query(NokiaHealthDevice.TABLE_BODY_MEASURE_HISTORY, null, null, null, null, null, NokiaHealthDevice.BODY_MEASURE_HISTORY_DATE + " DESC");
+        Cursor c = device.mDatabase.query(NokiaHealth.TABLE_BODY_MEASURE_HISTORY, null, null, null, null, null, NokiaHealth.BODY_MEASURE_HISTORY_DATE + " DESC");
 
         while (c.moveToNext() && bodyValues.size() < labels.length) {
-            String label = c.getString(c.getColumnIndex(NokiaHealthDevice.BODY_MEASURE_HISTORY_TYPE));
+            String label = c.getString(c.getColumnIndex(NokiaHealth.BODY_MEASURE_HISTORY_TYPE));
 
             if (bodyValues.containsKey(label) == false) {
-                double value = c.getDouble(c.getColumnIndex(NokiaHealthDevice.BODY_MEASURE_HISTORY_VALUE));
+                double value = c.getDouble(c.getColumnIndex(NokiaHealth.BODY_MEASURE_HISTORY_VALUE));
 
                 bodyValues.put(label, value);
 
@@ -1790,7 +1773,7 @@ public class NokiaHealthDevice extends Generator {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
-        e.putBoolean(NokiaHealthDevice.ACTIVITY_MEASURES_ENABLED, enable);
+        e.putBoolean(NokiaHealth.ACTIVITY_MEASURES_ENABLED, enable);
 
         e.apply();
     }
@@ -1800,7 +1783,7 @@ public class NokiaHealthDevice extends Generator {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
-        e.putBoolean(NokiaHealthDevice.BODY_MEASURES_ENABLED, enable);
+        e.putBoolean(NokiaHealth.BODY_MEASURES_ENABLED, enable);
 
         e.apply();
     }
@@ -1810,7 +1793,7 @@ public class NokiaHealthDevice extends Generator {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
-        e.putBoolean(NokiaHealthDevice.INTRADAY_ACTIVITY_ENABLED, enable);
+        e.putBoolean(NokiaHealth.INTRADAY_ACTIVITY_ENABLED, enable);
 
         e.apply();
     }
@@ -1820,7 +1803,7 @@ public class NokiaHealthDevice extends Generator {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
-        e.putBoolean(NokiaHealthDevice.SLEEP_MEASURES_ENABLED, enable);
+        e.putBoolean(NokiaHealth.SLEEP_MEASURES_ENABLED, enable);
 
         e.apply();
     }
@@ -1830,17 +1813,7 @@ public class NokiaHealthDevice extends Generator {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
-        e.putBoolean(NokiaHealthDevice.SLEEP_SUMMARY_ENABLED, enable);
-
-        e.apply();
-    }
-
-    @SuppressWarnings("unused")
-    public void enableServerFetch(boolean enable) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-        SharedPreferences.Editor e = prefs.edit();
-
-        e.putBoolean(NokiaHealthDevice.SERVER_FETCH_ENABLED, enable);
+        e.putBoolean(NokiaHealth.SLEEP_SUMMARY_ENABLED, enable);
 
         e.apply();
     }
@@ -1849,18 +1822,18 @@ public class NokiaHealthDevice extends Generator {
     protected void flushCachedData() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        long retentionPeriod = prefs.getLong(NokiaHealthDevice.DATA_RETENTION_PERIOD, NokiaHealthDevice.DATA_RETENTION_PERIOD_DEFAULT);
+        long retentionPeriod = prefs.getLong(NokiaHealth.DATA_RETENTION_PERIOD, NokiaHealth.DATA_RETENTION_PERIOD_DEFAULT);
 
         long start = System.currentTimeMillis() - retentionPeriod;
 
-        String where = NokiaHealthDevice.HISTORY_OBSERVED + " < ?";
+        String where = NokiaHealth.HISTORY_OBSERVED + " < ?";
         String[] args = { "" + start };
 
-        this.mDatabase.delete(NokiaHealthDevice.TABLE_ACTIVITY_MEASURE_HISTORY, where, args);
-        this.mDatabase.delete(NokiaHealthDevice.TABLE_SLEEP_MEASURE_HISTORY, where, args);
-        this.mDatabase.delete(NokiaHealthDevice.TABLE_BODY_MEASURE_HISTORY, where, args);
-        this.mDatabase.delete(NokiaHealthDevice.TABLE_INTRADAY_ACTIVITY_HISTORY, where, args);
-        this.mDatabase.delete(NokiaHealthDevice.TABLE_SLEEP_SUMMARY_HISTORY, where, args);
+        this.mDatabase.delete(NokiaHealth.TABLE_ACTIVITY_MEASURE_HISTORY, where, args);
+        this.mDatabase.delete(NokiaHealth.TABLE_SLEEP_MEASURE_HISTORY, where, args);
+        this.mDatabase.delete(NokiaHealth.TABLE_BODY_MEASURE_HISTORY, where, args);
+        this.mDatabase.delete(NokiaHealth.TABLE_INTRADAY_ACTIVITY_HISTORY, where, args);
+        this.mDatabase.delete(NokiaHealth.TABLE_SLEEP_SUMMARY_HISTORY, where, args);
     }
 
     @Override
@@ -1868,7 +1841,7 @@ public class NokiaHealthDevice extends Generator {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
-        e.putLong(NokiaHealthDevice.DATA_RETENTION_PERIOD, period);
+        e.putLong(NokiaHealth.DATA_RETENTION_PERIOD, period);
 
         e.apply();
     }
@@ -1879,9 +1852,17 @@ public class NokiaHealthDevice extends Generator {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
             SharedPreferences.Editor e = prefs.edit();
 
-            e.putLong(NokiaHealthDevice.API_SCAN_DAYS, days);
+            e.putLong(NokiaHealth.API_SCAN_DAYS, days);
             e.apply();
         }
+    }
+
+    public void setServerOnly(boolean serverOnly) {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(NokiaHealth.SERVER_ONLY, serverOnly);
+        e.apply();;
     }
 
     public static class OAuthResultHandlerActivity extends Activity {
@@ -1890,7 +1871,7 @@ public class NokiaHealthDevice extends Generator {
 
             final OAuthResultHandlerActivity me = this;
 
-            final NokiaHealthDevice device = NokiaHealthDevice.getInstance(this.getApplicationContext());
+            final NokiaHealth device = NokiaHealth.getInstance(this.getApplicationContext());
 
             AuthorizationResponse resp = AuthorizationResponse.fromIntent(getIntent());
             AuthorizationException ex = AuthorizationException.fromIntent(getIntent());

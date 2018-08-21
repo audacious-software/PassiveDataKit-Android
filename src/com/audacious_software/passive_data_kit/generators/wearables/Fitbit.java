@@ -369,55 +369,61 @@ public class Fitbit extends Generator {
             authState.performActionWithFreshTokens(service, new AuthState.AuthStateAction() {
                 @Override
                 public void execute(@Nullable final String accessToken, @Nullable String idToken, @Nullable AuthorizationException ex) {
-                    OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new Interceptor() {
+                    me.mHandler.post(new Runnable() {
                         @Override
-                        public Response intercept(Chain chain) throws IOException {
-                            Request newRequest = chain.request().newBuilder()
-                                    .addHeader("Authorization", "Bearer " + accessToken)
+                        public void run() {
+                            OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new Interceptor() {
+                                @Override
+                                public Response intercept(Chain chain) throws IOException {
+                                    Request newRequest = chain.request().newBuilder()
+                                            .addHeader("Authorization", "Bearer " + accessToken)
+                                            .build();
+                                    return chain.proceed(newRequest);
+                                }
+                            }).build();
+
+                            Request request = new Request.Builder()
+                                    .url(apiUrl)
                                     .build();
-                            return chain.proceed(newRequest);
-                        }
-                    }).build();
 
-                    Request request = new Request.Builder()
-                            .url(apiUrl)
-                            .build();
+                            try {
+                                Response response = client.newCall(request).execute();
 
-                    try {
-                        Response response = client.newCall(request).execute();
+                                if (response.isSuccessful()) {
+                                    SharedPreferences.Editor e = prefs.edit();
 
-                        if (response.isSuccessful()) {
-                            SharedPreferences.Editor e = prefs.edit();
+                                    JSONObject apiResponse = new JSONObject(response.body().string());
 
-                            JSONObject apiResponse = new JSONObject(response.body().string());
+                                    if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                                        e.putLong(Fitbit.API_ACTION_ACTIVITY_URL_LAST_FETCH, System.currentTimeMillis());
+                                    } else if (Fitbit.API_ACTION_SLEEP_URL.equals(apiUrl)) {
+                                        e.putLong(Fitbit.API_ACTION_SLEEP_URL_LAST_FETCH, System.currentTimeMillis());
+                                    } else if (Fitbit.API_ACTION_WEIGHT_URL.equals(apiUrl)) {
+                                        e.putLong(Fitbit.API_ACTION_WEIGHT_URL_LAST_FETCH, System.currentTimeMillis());
+                                    } else if (Fitbit.API_ACTION_HEART_RATE_URL.equals(apiUrl)) {
+                                        e.putLong(Fitbit.API_ACTION_HEART_RATE_URL_LAST_FETCH, System.currentTimeMillis());
+                                    }
 
-                            if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                e.putLong(Fitbit.API_ACTION_ACTIVITY_URL_LAST_FETCH, System.currentTimeMillis());
-                            } else if (Fitbit.API_ACTION_SLEEP_URL.equals(apiUrl)) {
-                                e.putLong(Fitbit.API_ACTION_SLEEP_URL_LAST_FETCH, System.currentTimeMillis());
-                            } else if (Fitbit.API_ACTION_WEIGHT_URL.equals(apiUrl)) {
-                                e.putLong(Fitbit.API_ACTION_WEIGHT_URL_LAST_FETCH, System.currentTimeMillis());
-                            } else if (Fitbit.API_ACTION_HEART_RATE_URL.equals(apiUrl)) {
-                                e.putLong(Fitbit.API_ACTION_HEART_RATE_URL_LAST_FETCH, System.currentTimeMillis());
+                                    e.apply();
+
+                                    if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                                        me.logActivity(apiResponse);
+                                    } else if (Fitbit.API_ACTION_SLEEP_URL.equals(apiUrl)) {
+                                        me.logSleep(apiResponse);
+                                    } else if (Fitbit.API_ACTION_WEIGHT_URL.equals(apiUrl)) {
+                                        me.logWeight(apiResponse);
+                                    } else if (Fitbit.API_ACTION_HEART_RATE_URL.equals(apiUrl)) {
+                                        me.logHeartRate(apiResponse);
+                                    }
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
 
-                            e.apply();
-
-                            if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                me.logActivity(apiResponse);
-                            } else if (Fitbit.API_ACTION_SLEEP_URL.equals(apiUrl)) {
-                                me.logSleep(apiResponse);
-                            } else if (Fitbit.API_ACTION_WEIGHT_URL.equals(apiUrl)) {
-                                me.logWeight(apiResponse);
-                            } else if (Fitbit.API_ACTION_HEART_RATE_URL.equals(apiUrl)) {
-                                me.logHeartRate(apiResponse);
-                            }
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                    });
                 }
             });
         } catch (JSONException e) {
@@ -756,6 +762,7 @@ public class Fitbit extends Generator {
                         updated.putLong(Fitbit.HISTORY_FETCHED, values.getAsLong(Fitbit.HISTORY_FETCHED));
                         updated.putLong(Fitbit.WEIGHT_LOG_ID, values.getAsLong(Fitbit.WEIGHT_LOG_ID));
                         updated.putString(Fitbit.WEIGHT_SOURCE, values.getAsString(Fitbit.WEIGHT_SOURCE));
+                        updated.putDouble(Fitbit.WEIGHT_WEIGHT, values.getAsDouble(Fitbit.WEIGHT_WEIGHT));
 
                         updated.putString(Fitbit.FITBIT_TYPE, Fitbit.FITBIT_TYPE_WEIGHT);
 

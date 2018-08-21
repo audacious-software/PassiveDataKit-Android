@@ -13,7 +13,7 @@
         <item>com.audacious_software.passive_data_kit.generators.sensors.AmbientLight</item>
         <item>com.audacious_software.passive_data_kit.generators.device.ForegroundApplication</item>
         <item>com.audacious_software.passive_data_kit.generators.wearables.Fitbit</item>
-        <item>com.audacious_software.passive_data_kit.generators.wearables.NokiaHealthDevice</item>
+        <item>com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth</item>
         <item>com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus</item>
         <item>com.audacious_software.passive_data_kit.generators.environment.TimeOfDay</item>
     </string-array>
