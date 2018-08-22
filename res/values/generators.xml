@@ -202,6 +202,9 @@
     <string name="title_dialog_nokia_health_auth_unsuccessful">Authorization Unsuccessful</string>
     <string name="message_dialog_nokia_health_auth_unsuccessful">The app was unable to obtain authorized access to your Nokia Health account.\n\nPlease try again.</string>
 
+    <string name="title_dialog_nokia_health_auth_misconfigured">Nokia Health Generator Misconfigured</string>
+    <string name="message_dialog_nokia_health_auth_misconfigured">The app is not configured properly to communicate with the Nokia Health cloud. Contact the developer to verify that the client ID, client secret, and callback URL parameters are configured properly.</string>
+
     <!-- Fitbit Resources -->
     <string name="generator_fitbit_device">Fitbit</string>
     <string name="generator_fitbit_soft_activities_label">Soft Activities</string>
@@ -235,6 +238,9 @@
 
     <string name="title_dialog_fitbit_auth_unsuccessful">Authorization Unsuccessful</string>
     <string name="message_dialog_fitbit_auth_unsuccessful">The app was unable to obtain authorized access to your Fitbit account.\n\nPlease try again.</string>
+
+    <string name="title_dialog_fitbit_auth_misconfigured">Fitbit Generator Misconfigured</string>
+    <string name="message_dialog_fitbit_auth_misconfigured">The app is not configured properly to communicate with the Fitbit cloud. Contact the developer to verify that the client ID, client secret, and callback URL parameters are configured properly.</string>
 
     <!-- Device Battery -->
     <string name="generator_device_battery">Device Battery</string>

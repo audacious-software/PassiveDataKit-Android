@@ -51,7 +51,6 @@ import net.openid.appauth.AuthorizationResponse;
 import net.openid.appauth.AuthorizationService;
 import net.openid.appauth.AuthorizationServiceConfiguration;
 import net.openid.appauth.ClientSecretBasic;
-import net.openid.appauth.TokenRequest;
 import net.openid.appauth.TokenResponse;
 
 import org.json.JSONArray;
@@ -208,6 +207,7 @@ public class Fitbit extends Generator {
     private int mPage = 0;
 
     private long mLatestTimestamp = -1;
+    private boolean mIsMandatory = true;
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -260,7 +260,7 @@ public class Fitbit extends Generator {
                 final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
                 long fetchInterval = prefs.getLong(Fitbit.DATA_FETCH_INTERVAL, Fitbit.DATA_FETCH_INTERVAL_DEFAULT);
 
-                if (prefs.contains(Fitbit.PERSISTED_AUTH)) {
+                if (me.isAuthenticated()) {
                     long lastFetch = prefs.getLong(Fitbit.LAST_DATA_FETCH, 0);
 
                     long now = System.currentTimeMillis();
@@ -801,60 +801,25 @@ public class Fitbit extends Generator {
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
-        if (prefs.contains(Fitbit.PERSISTED_AUTH) == false) {
+        String clientId = me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID);
+        String clientSecret = me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_SECRET);
+        String callbackUrl = me.getProperty(Fitbit.OPTION_OAUTH_CALLBACK_URL);
+
+        if (clientId == null || clientSecret == null || callbackUrl == null) {
+            actions.add(new DiagnosticAction(context.getString(R.string.title_dialog_fitbit_auth_misconfigured), context.getString(R.string.message_dialog_fitbit_auth_misconfigured), new Runnable() {
+                @Override
+                public void run() { }
+            }));
+        }
+
+        if (me.isAuthenticated() == false && me.mIsMandatory) {
             actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_fitbit_auth_required_title), context.getString(R.string.diagnostic_fitbit_auth_required), new Runnable() {
                 @Override
                 public void run() {
                     Runnable r = new Runnable() {
                         @Override
                         public void run() {
-                            String clientId = me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID);
-                            String callbackUrl = me.getProperty(Fitbit.OPTION_OAUTH_CALLBACK_URL);
-
-                            AuthorizationServiceConfiguration config = new AuthorizationServiceConfiguration(Fitbit.OAUTH_AUTHORIZATION_ENDPOINT, Fitbit.OAUTH_TOKEN_ENDPOINT);
-
-                            AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(config, clientId, "code", Uri.parse(callbackUrl));
-
-                            builder.setPrompt("login consent");
-
-                            HashMap<String, String> params = new HashMap<>();
-                            params.put("expires_in", "2592000");
-
-                            builder.setAdditionalParameters(params);
-
-                            ArrayList<String> scopes = new ArrayList<>();
-                            scopes.add("profile");
-
-                            if (prefs.getBoolean(Fitbit.ACTIVITY_ENABLED, Fitbit.ACTIVITY_ENABLED_DEFAULT)) {
-                                scopes.add("activity");
-                            }
-
-                            if (prefs.getBoolean(Fitbit.HEART_RATE_ENABLED, Fitbit.HEART_RATE_ENABLED_DEFAULT)) {
-                                scopes.add("heartrate");
-                            }
-
-                            if (prefs.getBoolean(Fitbit.SLEEP_ENABLED, Fitbit.SLEEP_ENABLED_DEFAULT)) {
-                                scopes.add("sleep");
-                            }
-
-                            if (prefs.getBoolean(Fitbit.WEIGHT_ENABLED, Fitbit.WEIGHT_ENABLED_DEFAULT)) {
-                                scopes.add("weight");
-                            }
-
-                            builder.setScopes(scopes);
-
-                            builder.setCodeVerifier(null);
-                            builder.setState(null);
-
-                            AuthorizationRequest request = builder.build();
-
-                            AuthorizationService service = new AuthorizationService(me.mContext);
-
-                            Intent handlerIntent = new Intent(me.mContext, Fitbit.OAuthResultHandlerActivity.class);
-
-                            PendingIntent pendingIntent = PendingIntent.getActivity(me.mContext, 0, handlerIntent, 0);
-
-                            service.performAuthorizationRequest(request, pendingIntent);
+                            me.loginToService();
                         }
                     };
 
@@ -865,6 +830,67 @@ public class Fitbit extends Generator {
         }
 
         return actions;
+    }
+
+    public void loginToService() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        String clientId = this.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID);
+        String callbackUrl = this.getProperty(Fitbit.OPTION_OAUTH_CALLBACK_URL);
+
+        AuthorizationServiceConfiguration config = new AuthorizationServiceConfiguration(Fitbit.OAUTH_AUTHORIZATION_ENDPOINT, Fitbit.OAUTH_TOKEN_ENDPOINT);
+
+        AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(config, clientId, "code", Uri.parse(callbackUrl));
+
+        builder.setPrompt("login consent");
+
+        HashMap<String, String> params = new HashMap<>();
+        params.put("expires_in", "2592000");
+
+        builder.setAdditionalParameters(params);
+
+        ArrayList<String> scopes = new ArrayList<>();
+        scopes.add("profile");
+
+        if (prefs.getBoolean(Fitbit.ACTIVITY_ENABLED, Fitbit.ACTIVITY_ENABLED_DEFAULT)) {
+            scopes.add("activity");
+        }
+
+        if (prefs.getBoolean(Fitbit.HEART_RATE_ENABLED, Fitbit.HEART_RATE_ENABLED_DEFAULT)) {
+            scopes.add("heartrate");
+        }
+
+        if (prefs.getBoolean(Fitbit.SLEEP_ENABLED, Fitbit.SLEEP_ENABLED_DEFAULT)) {
+            scopes.add("sleep");
+        }
+
+        if (prefs.getBoolean(Fitbit.WEIGHT_ENABLED, Fitbit.WEIGHT_ENABLED_DEFAULT)) {
+            scopes.add("weight");
+        }
+
+        builder.setScopes(scopes);
+
+        builder.setCodeVerifier(null);
+        builder.setState(null);
+
+        AuthorizationRequest request = builder.build();
+
+        AuthorizationService service = new AuthorizationService(this.mContext);
+
+        Intent handlerIntent = new Intent(this.mContext, Fitbit.OAuthResultHandlerActivity.class);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this.mContext, 0, handlerIntent, 0);
+
+        service.performAuthorizationRequest(request, pendingIntent);
+    }
+
+    public void logout() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.remove(Fitbit.PERSISTED_AUTH);
+
+        e.apply();
     }
 
     private String getProperty(String key) {
@@ -1287,6 +1313,16 @@ public class Fitbit extends Generator {
         e.putLong(Fitbit.DATA_RETENTION_PERIOD, period);
 
         e.apply();
+    }
+
+    public boolean isAuthenticated() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        return prefs.contains(Fitbit.PERSISTED_AUTH);
+    }
+
+    public void setMandatory(boolean isMandatory) {
+        this.mIsMandatory = isMandatory;
     }
 
     public static class OAuthResultHandlerActivity extends Activity {

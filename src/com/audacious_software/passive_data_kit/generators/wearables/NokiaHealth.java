@@ -254,6 +254,8 @@ public class NokiaHealth extends Generator {
 
     private long mLatestTimestamp = -1;
 
+    private boolean mIsMandatory = true;
+
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return NokiaHealth.GENERATOR_IDENTIFIER;
@@ -1159,33 +1161,25 @@ public class NokiaHealth extends Generator {
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
-        if (prefs.contains(NokiaHealth.PERSISTED_AUTH) == false) {
+        String clientId = me.getProperty(NokiaHealth.OPTION_OAUTH_CLIENT_ID);
+        String clientSecret = me.getProperty(NokiaHealth.OPTION_OAUTH_CLIENT_SECRET);
+        String callbackUrl = me.getProperty(NokiaHealth.OPTION_OAUTH_CALLBACK_URL);
+
+        if (clientId == null || clientSecret == null || callbackUrl == null) {
+            actions.add(new DiagnosticAction(context.getString(R.string.title_dialog_nokia_health_auth_misconfigured), context.getString(R.string.message_dialog_nokia_health_auth_misconfigured), new Runnable() {
+                @Override
+                public void run() { }
+            }));
+        }
+
+        if (me.isAuthenticated() == false && me.mIsMandatory) {
             actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_nokia_health_auth_required_title), context.getString(R.string.diagnostic_nokia_health_auth_required), new Runnable() {
                 @Override
                 public void run() {
                     Runnable r = new Runnable() {
                         @Override
                         public void run() {
-                            String clientId = me.getProperty(NokiaHealth.OPTION_OAUTH_CLIENT_ID);
-                            String callbackUrl = me.getProperty(NokiaHealth.OPTION_OAUTH_CALLBACK_URL);
-
-                            AuthorizationServiceConfiguration config = new AuthorizationServiceConfiguration(NokiaHealth.OAUTH_AUTHORIZATION_ENDPOINT, NokiaHealth.OAUTH_TOKEN_ENDPOINT);
-
-                            AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(config, clientId, "code", Uri.parse(callbackUrl));
-
-                            builder.setScope("user.info,user.activity,user.metrics");
-
-                            builder.setCodeVerifier(null);
-
-                            AuthorizationRequest request = builder.build();
-
-                            AuthorizationService service = new AuthorizationService(me.mContext);
-
-                            Intent handlerIntent = new Intent(me.mContext, NokiaHealth.OAuthResultHandlerActivity.class);
-
-                            PendingIntent pendingIntent = PendingIntent.getActivity(me.mContext, 0, handlerIntent, 0);
-
-                            service.performAuthorizationRequest(request, pendingIntent);
+                            me.loginToService();
                         }
                     };
 
@@ -1196,6 +1190,29 @@ public class NokiaHealth extends Generator {
         }
 
         return actions;
+    }
+
+    public void loginToService() {
+        String clientId = this.getProperty(NokiaHealth.OPTION_OAUTH_CLIENT_ID);
+        String callbackUrl = this.getProperty(NokiaHealth.OPTION_OAUTH_CALLBACK_URL);
+
+        AuthorizationServiceConfiguration config = new AuthorizationServiceConfiguration(NokiaHealth.OAUTH_AUTHORIZATION_ENDPOINT, NokiaHealth.OAUTH_TOKEN_ENDPOINT);
+
+        AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(config, clientId, "code", Uri.parse(callbackUrl));
+
+        builder.setScope("user.info,user.activity,user.metrics");
+
+        builder.setCodeVerifier(null);
+
+        AuthorizationRequest request = builder.build();
+
+        AuthorizationService service = new AuthorizationService(this.mContext);
+
+        Intent handlerIntent = new Intent(this.mContext, NokiaHealth.OAuthResultHandlerActivity.class);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this.mContext, 0, handlerIntent, 0);
+
+        service.performAuthorizationRequest(request, pendingIntent);
     }
 
     private void authorizationSuccessful(final AuthorizationResponse authResponse, final AuthorizationException authException) {
@@ -1863,6 +1880,25 @@ public class NokiaHealth extends Generator {
         SharedPreferences.Editor e = prefs.edit();
         e.putBoolean(NokiaHealth.SERVER_ONLY, serverOnly);
         e.apply();;
+    }
+
+    public void setMandatory(boolean isMandatory) {
+        this.mIsMandatory = isMandatory;
+    }
+
+    public boolean isAuthenticated() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        return prefs.contains(NokiaHealth.PERSISTED_AUTH);
+    }
+
+    public void logout() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.remove(NokiaHealth.PERSISTED_AUTH);
+
+        e.apply();
     }
 
     public static class OAuthResultHandlerActivity extends Activity {
