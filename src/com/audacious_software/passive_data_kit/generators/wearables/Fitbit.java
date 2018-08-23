@@ -509,7 +509,7 @@ public class Fitbit extends Generator {
     }
 
     private void logSleep(JSONObject response) throws JSONException {
-        if (response.has("sleep")) {
+        if (response.has("sleeps")) {
             long now = System.currentTimeMillis();
 
             @SuppressLint("SimpleDateFormat")
@@ -528,7 +528,6 @@ public class Fitbit extends Generator {
                     Bundle updated = new Bundle();
 
                     updated.putLong(Fitbit.HISTORY_OBSERVED, values.getAsLong(Fitbit.HISTORY_FETCHED));
-                    updated.putLong(Fitbit.HISTORY_FETCHED, values.getAsLong(Fitbit.HISTORY_FETCHED));
                     updated.putLong(Fitbit.HISTORY_FETCHED, values.getAsLong(Fitbit.HISTORY_FETCHED));
 
                     Date sleepStart = startFormat.parse(sleep.getString("startTime"));
