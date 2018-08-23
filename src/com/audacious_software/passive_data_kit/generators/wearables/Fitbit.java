@@ -467,7 +467,7 @@ public class Fitbit extends Generator {
 
             double distance = 0;
 
-            if (summary.has("distance")) {
+            if (summary.has("distances")) {
                 JSONArray distances = summary.getJSONArray("distances");
 
                 for (int i = 0; i < distances.length(); i++) {
