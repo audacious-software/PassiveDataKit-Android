@@ -876,7 +876,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
         long retentionPeriod = prefs.getLong(Accelerometer.DATA_RETENTION_PERIOD, Accelerometer.DATA_RETENTION_PERIOD_DEFAULT);
 
-        long start = System.currentTimeMillis() - retentionPeriod;
+        long start = (System.currentTimeMillis() - retentionPeriod) * 1000 * 1000;
 
         final String where = Accelerometer.HISTORY_OBSERVED + " < ?";
         final String[] args = { "" + start };

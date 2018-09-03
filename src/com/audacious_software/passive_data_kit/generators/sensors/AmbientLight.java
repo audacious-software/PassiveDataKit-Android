@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteFullException;
 import android.hardware.Sensor;
@@ -632,16 +633,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                 if (now - me.mLastCleanup > me.mCleanupInterval) {
                     me.mLastCleanup = now;
 
-                    long start = (now - (24 * 60 * 60 * 1000)) * 1000 * 1000;
-
-                    String where = AmbientLight.HISTORY_OBSERVED + " < ?";
-                    String[] args = { "" + start };
-
-                    try {
-                        me.mDatabase.delete(AmbientLight.TABLE_HISTORY, where, args);
-                    } catch (SQLiteFullException e) {
-                        // Try again later...
-                    }
+                    me.flushCachedData();
                 }
             }
         };
@@ -654,18 +646,36 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         // Do nothing...
     }
 
-    @Override
     protected void flushCachedData() {
+        if (this.mHandler == null) {
+            return;
+        }
+
+        final AmbientLight me = this;
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
         long retentionPeriod = prefs.getLong(AmbientLight.DATA_RETENTION_PERIOD, AmbientLight.DATA_RETENTION_PERIOD_DEFAULT);
 
-        long start = System.currentTimeMillis() - retentionPeriod;
+        long start = (System.currentTimeMillis() - retentionPeriod) * 1000 * 1000;
 
-        String where = AmbientLight.HISTORY_OBSERVED + " < ?";
-        String[] args = { "" + start };
+        final String where = AmbientLight.HISTORY_OBSERVED + " < ?";
+        final String[] args = { "" + start };
 
-        this.mDatabase.delete(AmbientLight.TABLE_HISTORY, where, args);
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                synchronized(me) {
+                    try {
+                        me.mDatabase.delete(AmbientLight.TABLE_HISTORY, where, args);
+                    } catch (SQLiteDatabaseLockedException e) {
+                        Log.e("PDK", "Ambient Light database is locked. Will try again later...");
+                    }
+                }
+            }
+        };
+
+        this.mHandler.post(r);
     }
 
     @Override
