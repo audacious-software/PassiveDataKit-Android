@@ -23,6 +23,9 @@
     <string name="diagnostic_nokia_health_auth_required_title" tools:ignore="Typos">Access to Nokia Health Account Required</string>
     <string name="diagnostic_nokia_health_auth_required">Permission is required to fetch data from the Nokia cloud. Please grant this application the requested permissions.</string>
 
+    <string name="diagnostic_nokia_health_local_install_required_title">HealthMate Installation Required</string>
+    <string name="diagnostic_nokia_health_local_install_required">This app requires the Nokia HealthMate app to be installed on this device to function properly. Please install it from the Google Play Store.</string>
+
     <string name="diagnostic_fitbit_auth_required_title" tools:ignore="Typos">Access to Fitbit Account Required</string>
     <string name="diagnostic_fitbit_auth_required">Permission is required to fetch data from the Fitbit cloud. Please grant this application the requested permissions.</string>
 

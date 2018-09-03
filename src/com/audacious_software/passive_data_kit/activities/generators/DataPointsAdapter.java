@@ -112,46 +112,48 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         if (prefs.getBoolean(DataPointsAdapter.SORT_BY_UPDATED, DataPointsAdapter.SORT_BY_UPDATED_DEFAULT)) {
-            Collections.sort(me.mActiveGenerators, new Comparator<Class<? extends Generator>>() {
-                @Override
-                public int compare(Class<? extends Generator> one, Class<? extends Generator> two) {
-                    long oneUpdated = 0;
+            synchronized(me.mActiveGenerators) {
+                Collections.sort(me.mActiveGenerators, new Comparator<Class<? extends Generator>>() {
+                    @Override
+                    public int compare(Class<? extends Generator> one, Class<? extends Generator> two) {
+                        long oneUpdated = 0;
 
-                    try {
-                        Method oneGenerated = one.getDeclaredMethod("latestPointGenerated", Context.class);
+                        try {
+                            Method oneGenerated = one.getDeclaredMethod("latestPointGenerated", Context.class);
 
-                        oneUpdated = (long) oneGenerated.invoke(null, context);
-                    } catch (NoSuchMethodException e) {
+                            oneUpdated = (long) oneGenerated.invoke(null, context);
+                        } catch (NoSuchMethodException e) {
 //                        e.printStackTrace();
-                    } catch (InvocationTargetException e) {
+                        } catch (InvocationTargetException e) {
 //                        e.printStackTrace();
-                    } catch (IllegalAccessException e) {
+                        } catch (IllegalAccessException e) {
 //                        e.printStackTrace();
+                        }
+
+                        long twoUpdated = 0;
+
+                        try {
+                            Method twoGenerated = two.getDeclaredMethod("latestPointGenerated", Context.class);
+
+                            twoUpdated = (long) twoGenerated.invoke(null, context);
+                        } catch (NoSuchMethodException e) {
+//                        e.printStackTrace();
+                        } catch (InvocationTargetException e) {
+//                        e.printStackTrace();
+                        } catch (IllegalAccessException e) {
+//                        e.printStackTrace();
+                        }
+
+                        if (oneUpdated < twoUpdated) {
+                            return 1;
+                        } else if (oneUpdated > twoUpdated) {
+                            return -1;
+                        }
+
+                        return 0;
                     }
-
-                    long twoUpdated = 0;
-
-                    try {
-                        Method twoGenerated = two.getDeclaredMethod("latestPointGenerated", Context.class);
-
-                        twoUpdated = (long) twoGenerated.invoke(null, context);
-                    } catch (NoSuchMethodException e) {
-//                        e.printStackTrace();
-                    } catch (InvocationTargetException e) {
-//                        e.printStackTrace();
-                    } catch (IllegalAccessException e) {
-//                        e.printStackTrace();
-                    }
-
-                    if (oneUpdated < twoUpdated) {
-                        return 1;
-                    } else if (oneUpdated > twoUpdated) {
-                        return -1;
-                    }
-
-                    return 0;
-                }
-            });
+                });
+            }
         }
 
         if (redrawAll) {

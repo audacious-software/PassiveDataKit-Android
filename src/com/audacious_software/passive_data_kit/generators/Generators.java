@@ -136,13 +136,13 @@ public class Generators {
 
                     actions.addAll(generatorActions);
                 } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                    e.printStackTrace();
                 } catch (InvocationTargetException e) {
-                e.printStackTrace();
+                    e.printStackTrace();
                 } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+                    e.printStackTrace();
                 } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                    e.printStackTrace();
                 }
             }
         }

@@ -70,16 +70,14 @@ public class DiagnosticsActivity extends AppCompatActivity {
             this.mView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (me.mAction != null)
-                    {
+                    if (me.mAction != null) {
                         me.mAction.run();
                     }
                 }
             });
         }
 
-        public void bindDiagnosticAction(DiagnosticAction action)
-        {
+        public void bindDiagnosticAction(DiagnosticAction action) {
             this.mAction = action;
 
             TextView title = this.mView.findViewById(R.id.action_title);
@@ -95,6 +93,8 @@ public class DiagnosticsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.layout_diagnostics_pdk);
         this.getSupportActionBar().setTitle(R.string.title_pdk_diagnostics);
+
+        this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     protected void onResume() {
@@ -135,5 +135,18 @@ public class DiagnosticsActivity extends AppCompatActivity {
             listView.setVisibility(View.GONE);
             emptyMessage.setVisibility(View.VISIBLE);
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == android.R.id.home) {
+            this.finish();
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }

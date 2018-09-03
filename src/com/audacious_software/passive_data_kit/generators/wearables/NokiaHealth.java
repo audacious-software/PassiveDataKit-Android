@@ -255,6 +255,7 @@ public class NokiaHealth extends Generator {
     private long mLatestTimestamp = -1;
 
     private boolean mIsMandatory = true;
+    private boolean mLocalInstallRequired = false;
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -1189,6 +1190,34 @@ public class NokiaHealth extends Generator {
             }));
         }
 
+        if (me.mLocalInstallRequired) {
+            Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage("com.withings.wiscale2");
+
+            if (launchIntent == null) {
+                actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_nokia_health_local_install_required_title), context.getString(R.string.diagnostic_nokia_health_local_install_required), new Runnable() {
+                    @Override
+                    public void run() {
+                        Runnable r = new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Intent appStoreIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.withings.wiscale2"));
+                                    appStoreIntent.setPackage("com.android.vending");
+
+                                    context.startActivity(appStoreIntent);
+                                } catch (android.content.ActivityNotFoundException exception) {
+                                    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.withings.wiscale2")));
+                                }
+                            }
+                        };
+
+                        Thread t = new Thread(r);
+                        t.start();
+                    }
+                }));
+            }
+        }
+
         return actions;
     }
 
@@ -1884,6 +1913,10 @@ public class NokiaHealth extends Generator {
 
     public void setMandatory(boolean isMandatory) {
         this.mIsMandatory = isMandatory;
+    }
+
+    public void setRequiresLocalInstall(boolean requiresLocalInstall) {
+        this.mLocalInstallRequired = requiresLocalInstall;
     }
 
     public boolean isAuthenticated() {
