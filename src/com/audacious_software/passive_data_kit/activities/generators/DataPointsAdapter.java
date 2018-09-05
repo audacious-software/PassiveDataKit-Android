@@ -14,6 +14,7 @@ import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -23,7 +24,7 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
     public static final boolean SORT_BY_UPDATED_DEFAULT = true;
 
     private Context mContext = null;
-    private List<Class<? extends Generator>> mActiveGenerators = null;
+    private final List<Class<? extends Generator>> mActiveGenerators = new ArrayList<>();
 
     @Override
     public DataPointViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -56,8 +57,8 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
     @SuppressWarnings("UnusedReturnValue")
     private List<Class<? extends Generator>> getGenerators(Context context) {
-        if (this.mActiveGenerators == null) {
-            this.mActiveGenerators = Generators.getInstance(context).activeGenerators();
+        if (this.mActiveGenerators.size() == 0) {
+            this.mActiveGenerators.addAll(Generators.getInstance(context).activeGenerators());
         }
 
         this.sortGenerators(false);
@@ -103,8 +104,8 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
     public void sortGenerators(boolean redrawAll) {
         final Context context = this.mContext;
 
-        if (this.mActiveGenerators == null) {
-            this.mActiveGenerators = Generators.getInstance(this.mContext).activeGenerators();
+        if (this.mActiveGenerators.size() == 0) {
+            this.mActiveGenerators.addAll(Generators.getInstance(context).activeGenerators());
         }
 
         final DataPointsAdapter me = this;

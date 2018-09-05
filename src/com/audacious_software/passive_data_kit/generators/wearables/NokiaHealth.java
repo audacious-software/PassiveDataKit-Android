@@ -1180,7 +1180,11 @@ public class NokiaHealth extends Generator {
                     Runnable r = new Runnable() {
                         @Override
                         public void run() {
-                            me.loginToService();
+                            if (context instanceof Activity) {
+                                Activity activity = (Activity) context;
+
+                                me.loginToService(activity);
+                            }
                         }
                     };
 
@@ -1221,7 +1225,7 @@ public class NokiaHealth extends Generator {
         return actions;
     }
 
-    public void loginToService() {
+    public void loginToService(Activity activity) {
         String clientId = this.getProperty(NokiaHealth.OPTION_OAUTH_CLIENT_ID);
         String callbackUrl = this.getProperty(NokiaHealth.OPTION_OAUTH_CALLBACK_URL);
 
@@ -1235,11 +1239,12 @@ public class NokiaHealth extends Generator {
 
         AuthorizationRequest request = builder.build();
 
-        AuthorizationService service = new AuthorizationService(this.mContext);
+        AuthorizationService service = new AuthorizationService(activity);
 
-        Intent handlerIntent = new Intent(this.mContext, NokiaHealth.OAuthResultHandlerActivity.class);
+        Intent handlerIntent = new Intent(activity, NokiaHealth.OAuthResultHandlerActivity.class);
+        handlerIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this.mContext, 0, handlerIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(activity, 0, handlerIntent, 0);
 
         service.performAuthorizationRequest(request, pendingIntent);
     }
@@ -1908,7 +1913,7 @@ public class NokiaHealth extends Generator {
 
         SharedPreferences.Editor e = prefs.edit();
         e.putBoolean(NokiaHealth.SERVER_ONLY, serverOnly);
-        e.apply();;
+        e.apply();
     }
 
     public void setMandatory(boolean isMandatory) {

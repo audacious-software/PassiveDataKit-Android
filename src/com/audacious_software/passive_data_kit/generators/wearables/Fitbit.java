@@ -818,7 +818,11 @@ public class Fitbit extends Generator {
                     Runnable r = new Runnable() {
                         @Override
                         public void run() {
-                            me.loginToService();
+                            if (context instanceof Activity) {
+                                Activity activity = (Activity) context;
+
+                                me.loginToService(activity);
+                            }
                         }
                     };
 
@@ -831,7 +835,7 @@ public class Fitbit extends Generator {
         return actions;
     }
 
-    public void loginToService() {
+    public void loginToService(Activity activity) {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
         String clientId = this.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID);
@@ -874,11 +878,12 @@ public class Fitbit extends Generator {
 
         AuthorizationRequest request = builder.build();
 
-        AuthorizationService service = new AuthorizationService(this.mContext);
+        AuthorizationService service = new AuthorizationService(activity);
 
-        Intent handlerIntent = new Intent(this.mContext, Fitbit.OAuthResultHandlerActivity.class);
+        Intent handlerIntent = new Intent(activity, Fitbit.OAuthResultHandlerActivity.class);
+        handlerIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this.mContext, 0, handlerIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(activity, 0, handlerIntent, 0);
 
         service.performAuthorizationRequest(request, pendingIntent);
     }

@@ -13,7 +13,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
@@ -24,7 +23,6 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptionsExtension;
 import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.FitnessOptions;
 import com.google.android.gms.fitness.data.DataPoint;
@@ -167,9 +165,7 @@ public class GoogleFit extends Generator {
         final Handler handler = new Handler(Looper.getMainLooper());
         final GoogleFit me = this;
 
-        try {
-            this.mContext.getPackageManager().getPackageInfo(GoogleFit.APP_PACKAGE_NAME, PackageManager.GET_ACTIVITIES);
-
+        if (this.isInstalled()) {
             if (GoogleFit.isEnabled(this.mContext)) {
                 FitnessOptions.Builder builder = FitnessOptions.builder();
 
@@ -184,40 +180,21 @@ public class GoogleFit extends Generator {
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Intent intent = new Intent(me.mContext, RequestPermissionActivity.class);
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                                    intent.putExtra(RequestPermissionActivity.PERMISSION, GoogleFit.GOOGLE_FIT_PERMISSIONS);
-
-                                    for (DataType dataType : me.mHistoryDataTypes) {
-                                        intent.putExtra(dataType.getName(), true);
-                                    }
-
-                                    me.mContext.startActivity(intent);
+                                    me.authenticate();
                                 }
                             });
                         }
                     }));
                 }
             }
-        } catch (PackageManager.NameNotFoundException e) {
+        } else {
             actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_google_fit_app_title), me.mContext.getString(R.string.diagnostic_missing_google_fit_app), new Runnable() {
                 @Override
                 public void run() {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            try {
-                                Intent installIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + GoogleFit.APP_PACKAGE_NAME));
-                                installIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                                me.mContext.startActivity(installIntent);
-                            } catch (android.content.ActivityNotFoundException anfe) {
-                                Intent installIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + GoogleFit.APP_PACKAGE_NAME));
-                                installIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                                me.mContext.startActivity(installIntent);
-                            }
+                            me.install();
                         }
                     });
                 }
@@ -225,6 +202,55 @@ public class GoogleFit extends Generator {
         }
 
         return actions;
+    }
+
+    public boolean isInstalled() {
+        try {
+            this.mContext.getPackageManager().getPackageInfo(GoogleFit.APP_PACKAGE_NAME, PackageManager.GET_ACTIVITIES);
+
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+
+        }
+
+        return false;
+    }
+
+    public void install() {
+        try {
+            Intent installIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + GoogleFit.APP_PACKAGE_NAME));
+            installIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            this.mContext.startActivity(installIntent);
+        } catch (android.content.ActivityNotFoundException anfe) {
+            Intent installIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + GoogleFit.APP_PACKAGE_NAME));
+            installIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            this.mContext.startActivity(installIntent);
+        }
+    }
+
+    public boolean isAuthenticated() {
+        FitnessOptions.Builder builder = FitnessOptions.builder();
+
+        for (DataType dataType : this.mHistoryDataTypes) {
+            builder.addDataType(dataType, FitnessOptions.ACCESS_READ);
+        }
+
+        return GoogleSignIn.hasPermissions(GoogleSignIn.getLastSignedInAccount(this.mContext), builder.build());
+    }
+
+    public void authenticate() {
+        Intent intent = new Intent(this.mContext, RequestPermissionActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        intent.putExtra(RequestPermissionActivity.PERMISSION, GoogleFit.GOOGLE_FIT_PERMISSIONS);
+
+        for (DataType dataType : this.mHistoryDataTypes) {
+            intent.putExtra(dataType.getName(), true);
+        }
+
+        this.mContext.startActivity(intent);
     }
 
     @SuppressWarnings("unused")
@@ -292,9 +318,9 @@ public class GoogleFit extends Generator {
                             DataType pointType = point.getDataType();
                             String pointTypeName = pointType.getName();
 
-                            // for (Field field : point.getDataType().getFields()) {
-                            //    Log.e("PDK", field.getName() + "[" + pointType.getName() + "]: " + point.getValue(field));
-                            // }
+//                            for (Field field : point.getDataType().getFields()) {
+//                                Log.e("PDK", field.getName() + "[" + pointType.getName() + "]: " + point.getValue(field) + " -- " + (new Date(point.getStartTime(TimeUnit.MILLISECONDS))));
+//                            }
 
                             if (DataType.TYPE_STEP_COUNT_DELTA.getName().equals(pointTypeName)) {
                                 ContentValues values = new ContentValues();
@@ -556,4 +582,5 @@ public class GoogleFit extends Generator {
     public void setInitialFetchLimit(long fetchBackInterval) {
         this. mFetchBackInterval = fetchBackInterval;
     }
+
 }

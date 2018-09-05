@@ -10,7 +10,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteException;
-import android.database.sqlite.SQLiteFullException;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -281,10 +280,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PowerManager power = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
 
-                Log.e("PDK", "CHECKING IF IGNORING POWER FOR " + context.getPackageName());
-
                 if (power.isIgnoringBatteryOptimizations(context.getPackageName()) == false) {
-                    Log.e("PDK", "IS IGNORING!");
                     actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_battery_optimization_exempt_title), context.getString(R.string.diagnostic_battery_optimization_exempt), new Runnable() {
 
                         @Override
@@ -297,8 +293,6 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                             }
                         }
                     }));
-                } else {
-                    Log.e("PDK", "IS NOT IGNORING!");
                 }
             }
         }
