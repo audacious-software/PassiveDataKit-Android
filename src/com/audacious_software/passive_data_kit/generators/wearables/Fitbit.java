@@ -513,7 +513,7 @@ public class Fitbit extends Generator {
             long now = System.currentTimeMillis();
 
             @SuppressLint("SimpleDateFormat")
-            SimpleDateFormat startFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss.SSS");
+            SimpleDateFormat startFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
             JSONArray sleeps = response.getJSONArray("sleep");
 
@@ -727,7 +727,7 @@ public class Fitbit extends Generator {
             long now = System.currentTimeMillis();
 
             @SuppressLint("SimpleDateFormat")
-            SimpleDateFormat startFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss");
+            SimpleDateFormat startFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
             JSONArray weights = response.getJSONArray("weight");
 
