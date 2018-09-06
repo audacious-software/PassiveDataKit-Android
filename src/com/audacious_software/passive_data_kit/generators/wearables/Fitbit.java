@@ -75,7 +75,7 @@ import okhttp3.Response;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class Fitbit extends Generator {
-    private static final String GENERATOR_IDENTIFIER = "pdk-fitbit";
+    public static final String GENERATOR_IDENTIFIER = "pdk-fitbit";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
@@ -117,6 +117,7 @@ public class Fitbit extends Generator {
     private static final String API_ACTION_WEIGHT_URL_LAST_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.API_ACTION_WEIGHT_URL_LAST_FETCH";
 
     private static final String API_ACTION_ACTIVITY_URL = "https://api.fitbit.com/1/user/-/activities/date/today.json";
+    private static final String API_ACTION_ACTIVITY_PREFIX = "https://api.fitbit.com/1/user/-/activities/date/";
     private static final String API_ACTION_SLEEP_URL = "https://api.fitbit.com/1.2/user/-/sleep/date/today.json";
     private static final String API_ACTION_HEART_RATE_URL = "https://api.fitbit.com/1/user/-/activities/heart/date/today/1d.json";
     private static final String API_ACTION_WEIGHT_URL = "https://api.fitbit.com/1/user/-/body/log/weight/date/today.json";
@@ -125,6 +126,8 @@ public class Fitbit extends Generator {
 
     private static final Uri OAUTH_AUTHORIZATION_ENDPOINT = Uri.parse("https://www.fitbit.com/oauth2/authorize");
     private static final Uri OAUTH_TOKEN_ENDPOINT = Uri.parse("https://api.fitbit.com/oauth2/token");
+
+    private static final String PARAM_REQUESTED_DATE = "PARAM_REQUESTED_DATE";
 
     private static final String HISTORY_FETCHED = "fetched";
 
@@ -233,6 +236,26 @@ public class Fitbit extends Generator {
         SharedPreferences.Editor e = prefs.edit();
         e.remove(Fitbit.LAST_DATA_FETCH);
         e.apply();
+
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, Fitbit.DATABASE_PATH);
+
+        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+
+        int version = this.getDatabaseVersion(this.mDatabase);
+
+        switch (version) {
+            case 0:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_activity_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_heart_rate_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_sleep_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_weight_history_table));
+        }
+
+        if (version != Fitbit.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, Fitbit.DATABASE_VERSION);
+        }
     }
 
     @SuppressWarnings("unused")
@@ -302,26 +325,6 @@ public class Fitbit extends Generator {
             }
         };
 
-        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
-
-        path = new File(path, Fitbit.DATABASE_PATH);
-
-        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
-
-        int version = this.getDatabaseVersion(this.mDatabase);
-
-        switch (version) {
-            case 0:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_activity_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_heart_rate_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_sleep_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_weight_history_table));
-        }
-
-        if (version != Fitbit.DATABASE_VERSION) {
-            this.setDatabaseVersion(this.mDatabase, Fitbit.DATABASE_VERSION);
-        }
-
         Runnable r = new Runnable() {
             @Override
             public void run() {
@@ -350,8 +353,21 @@ public class Fitbit extends Generator {
     }
 
     @SuppressLint("SimpleDateFormat")
-    private void queryApi(final String apiUrl) {
+    private void queryApi(final String apiUrl, final Map<String, Object> params) {
         final Fitbit me = this;
+
+        if (this.mHandler == null) {
+            Handler h = new Handler(Looper.getMainLooper());
+
+            h.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    me.queryApi(apiUrl, params);
+                }
+            }, 100);
+
+            return;
+        }
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
@@ -407,13 +423,15 @@ public class Fitbit extends Generator {
                                     e.apply();
 
                                     if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                        me.logActivity(apiResponse);
+                                        me.logActivity(apiResponse, params);
                                     } else if (Fitbit.API_ACTION_SLEEP_URL.equals(apiUrl)) {
                                         me.logSleep(apiResponse);
                                     } else if (Fitbit.API_ACTION_WEIGHT_URL.equals(apiUrl)) {
                                         me.logWeight(apiResponse);
                                     } else if (Fitbit.API_ACTION_HEART_RATE_URL.equals(apiUrl)) {
                                         me.logHeartRate(apiResponse);
+                                    } else if (apiUrl.startsWith(Fitbit.API_ACTION_ACTIVITY_PREFIX)) {
+                                        me.logActivity(apiResponse, params);
                                     }
                                 }
                             } catch (IOException e) {
@@ -421,7 +439,6 @@ public class Fitbit extends Generator {
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
-
                         }
                     });
                 }
@@ -432,14 +449,31 @@ public class Fitbit extends Generator {
     }
 
     private void fetchActivity() {
-        this.queryApi(Fitbit.API_ACTION_ACTIVITY_URL);
+        this.queryApi(Fitbit.API_ACTION_ACTIVITY_URL, null);
     }
 
-    private void logActivity(JSONObject response) throws JSONException {
+    public void fetchActivity(Date date) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+
+        String urlString = Fitbit.API_ACTION_ACTIVITY_PREFIX + formatter.format(date) + ".json";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put(Fitbit.PARAM_REQUESTED_DATE, date);
+
+        this.queryApi(urlString, params);
+    }
+
+    private void logActivity(JSONObject response, Map<String, Object> params) throws JSONException {
         if (response.has("summary")) {
             JSONObject summary = response.getJSONObject("summary");
 
             long now = System.currentTimeMillis();
+
+            Date requestDate = new Date();
+
+            if (params != null && params.containsKey(Fitbit.PARAM_REQUESTED_DATE)) {
+                requestDate = (Date) params.get(Fitbit.PARAM_REQUESTED_DATE);
+            }
 
             ContentValues values = new ContentValues();
             values.put(Fitbit.HISTORY_FETCHED, now);
@@ -447,7 +481,7 @@ public class Fitbit extends Generator {
 
             Calendar cal = Calendar.getInstance();
 
-            cal.setTimeInMillis(now);
+            cal.setTime(requestDate);
             cal.set(Calendar.HOUR_OF_DAY, 0);
             cal.set(Calendar.MINUTE, 0);
             cal.set(Calendar.SECOND, 0);
@@ -504,8 +538,47 @@ public class Fitbit extends Generator {
         }
     }
 
+    public long getStepsForPeriod(long start, long end) {
+        long steps = 0;
+
+        while (start < end) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(start);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
+
+            long dayStart = calendar.getTimeInMillis();
+            long dayEnd = dayStart + (24 * 60 * 60 * 1000);
+
+            String where = Fitbit.ACTIVITY_DATE_START + " >= ? AND " + Fitbit.ACTIVITY_DATE_START + " < ?";
+            String[] args = { "" + dayStart, "" + dayEnd};
+
+            Cursor c = this.mDatabase.query(Fitbit.TABLE_ACTIVITY_HISTORY, null, where, args, null, null, Fitbit.ACTIVITY_STEPS + " DESC");
+
+            long daySteps = 0;
+
+            if (c.moveToNext()) {
+                daySteps = c.getLong(c.getColumnIndex(Fitbit.ACTIVITY_STEPS));
+            }
+
+            if (daySteps == 0) {
+                this.fetchActivity(new Date(dayStart));
+            }
+
+            steps += daySteps;
+
+            c.close();
+
+            start += (24 * 60 * 60 * 1000);
+        }
+
+        return steps;
+    }
+
     private void fetchSleep() {
-        this.queryApi(Fitbit.API_ACTION_SLEEP_URL);
+        this.queryApi(Fitbit.API_ACTION_SLEEP_URL, null);
     }
 
     private void logSleep(JSONObject response) throws JSONException {
@@ -645,7 +718,7 @@ public class Fitbit extends Generator {
     }
 
     private void fetchHeartRate() {
-        this.queryApi(Fitbit.API_ACTION_HEART_RATE_URL);
+        this.queryApi(Fitbit.API_ACTION_HEART_RATE_URL, null);
     }
 
     private void logHeartRate(JSONObject response) throws JSONException {
@@ -719,7 +792,7 @@ public class Fitbit extends Generator {
     }
 
     private void fetchWeight() {
-        this.queryApi(Fitbit.API_ACTION_WEIGHT_URL);
+        this.queryApi(Fitbit.API_ACTION_WEIGHT_URL, null);
     }
 
     private void logWeight(JSONObject response) throws JSONException {
@@ -1328,6 +1401,7 @@ public class Fitbit extends Generator {
     public void setMandatory(boolean isMandatory) {
         this.mIsMandatory = isMandatory;
     }
+
 
     public static class OAuthResultHandlerActivity extends Activity {
         protected void onResume() {

@@ -80,7 +80,7 @@ import okhttp3.Response;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class NokiaHealth extends Generator {
-    private static final String GENERATOR_IDENTIFIER = "pdk-nokia-health";
+    public static final String GENERATOR_IDENTIFIER = "pdk-nokia-health";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.wearables.NokiaHealth.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
@@ -690,6 +690,23 @@ public class NokiaHealth extends Generator {
         } catch (JSONException e) {
             AppEvent.getInstance(this.mContext).logThrowable(e);
         }
+    }
+
+    public long getStepsForPeriod(long start, long end) {
+        long steps = 0;
+
+        String where = NokiaHealth.ACTIVITY_MEASURE_HISTORY_DATE_START + " >= ? AND " + NokiaHealth.ACTIVITY_MEASURE_HISTORY_DATE_START + " < ?";
+        String[] args = { "" + start, "" + end};
+
+        Cursor c = this.mDatabase.query(NokiaHealth.TABLE_ACTIVITY_MEASURE_HISTORY, null, where, args, null, null, NokiaHealth.ACTIVITY_MEASURE_STEPS + " DESC");
+
+        if (c.moveToNext()) {
+            steps = c.getLong(c.getColumnIndex(NokiaHealth.ACTIVITY_MEASURE_STEPS));
+        }
+
+        c.close();
+
+        return steps;
     }
 
     private void fetchBodyMeasures() {

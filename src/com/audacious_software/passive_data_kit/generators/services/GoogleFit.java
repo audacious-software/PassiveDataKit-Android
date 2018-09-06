@@ -61,7 +61,10 @@ public class GoogleFit extends Generator {
 
     private static final String STEP_COUNT_TABLE = "step_count_history";
     private static final String STEP_COUNT_STEPS = "steps";
-    private static final String READING_TYPE = "reading-type";
+
+    public static final String READING_TYPE_STEP_DELTA = "com.google.step_count.delta";
+
+    public static final String READING_TYPE = "reading-type";
 
     private static final String STEP_CADENCE_TABLE = "step_cadence_history";
     private static final String STEP_CADENCE = "steps_per_minute";
@@ -100,6 +103,27 @@ public class GoogleFit extends Generator {
         super(context);
 
         this.mHistoryDataTypes = new ArrayList<>();
+
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, GoogleFit.DATABASE_PATH);
+
+        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+
+        int version = this.getDatabaseVersion(this.mDatabase);
+
+        switch (version) {
+            case 0:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_google_fit_step_count_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_google_fit_step_cadence_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_google_fit_speed_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_google_fit_calories_expended_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_google_fit_distance_history_table));
+        }
+
+        if (version != GoogleFit.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, GoogleFit.DATABASE_VERSION);
+        }
 
         HandlerThread thread = new HandlerThread("fit-fetch-tasks");
         thread.start();
@@ -260,29 +284,6 @@ public class GoogleFit extends Generator {
 
     private void startGenerator() {
         final GoogleFit me = this;
-
-        synchronized (this) {
-            File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
-
-            path = new File(path, GoogleFit.DATABASE_PATH);
-
-            this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
-
-            int version = this.getDatabaseVersion(this.mDatabase);
-
-            switch (version) {
-                case 0:
-                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_google_fit_step_count_history_table));
-                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_google_fit_step_cadence_history_table));
-                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_google_fit_speed_history_table));
-                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_google_fit_calories_expended_history_table));
-                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_google_fit_distance_history_table));
-            }
-
-            if (version != GoogleFit.DATABASE_VERSION) {
-                this.setDatabaseVersion(this.mDatabase, GoogleFit.DATABASE_VERSION);
-            }
-        }
 
         this.mFetchHandler.post(new Runnable() {
             @Override
