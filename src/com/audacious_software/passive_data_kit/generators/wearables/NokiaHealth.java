@@ -68,6 +68,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -244,6 +245,8 @@ public class NokiaHealth extends Generator {
     private static final Uri OAUTH_AUTHORIZATION_ENDPOINT = Uri.parse("https://account.health.nokia.com/oauth2_user/authorize2");
     private static final Uri OAUTH_TOKEN_ENDPOINT = Uri.parse("https://account.health.nokia.com/oauth2/token");
 
+    private static final String PARAM_START_DATE = "PARAM_START_DATE";
+
     private static NokiaHealth sInstance = null;
     private Context mContext = null;
     private SQLiteDatabase mDatabase = null;
@@ -281,6 +284,27 @@ public class NokiaHealth extends Generator {
         SharedPreferences.Editor e = prefs.edit();
         e.remove(NokiaHealth.LAST_DATA_FETCH);
         e.apply();
+
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, NokiaHealth.DATABASE_PATH);
+
+        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+
+        int version = this.getDatabaseVersion(this.mDatabase);
+
+        switch (version) {
+            case 0:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_activity_measure_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_body_measure_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_intraday_activity_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_sleep_measure_history_table));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_sleep_summary_history_table));
+        }
+
+        if (version != NokiaHealth.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, NokiaHealth.DATABASE_VERSION);
+        }
     }
 
     @SuppressWarnings("unused")
@@ -357,27 +381,6 @@ public class NokiaHealth extends Generator {
             }
         };
 
-        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
-
-        path = new File(path, NokiaHealth.DATABASE_PATH);
-
-        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
-
-        int version = this.getDatabaseVersion(this.mDatabase);
-
-        switch (version) {
-            case 0:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_activity_measure_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_body_measure_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_intraday_activity_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_sleep_measure_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_nokia_health_create_sleep_summary_history_table));
-        }
-
-        if (version != NokiaHealth.DATABASE_VERSION) {
-            this.setDatabaseVersion(this.mDatabase, NokiaHealth.DATABASE_VERSION);
-        }
-
         Runnable r = new Runnable() {
             @Override
             public void run() {
@@ -420,7 +423,7 @@ public class NokiaHealth extends Generator {
     }
 
     @SuppressLint("SimpleDateFormat")
-    private JSONObject queryApi(final String apiUrl) {
+    private JSONObject queryApi(final String apiUrl, final Map<String, Object> params) {
         final NokiaHealth me = this;
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
@@ -439,7 +442,14 @@ public class NokiaHealth extends Generator {
             authState.performActionWithFreshTokens(service, new AuthState.AuthStateAction() {
                 @Override
                 public void execute(@Nullable String accessToken, @Nullable String idToken, @Nullable AuthorizationException ex) {
+                    Date start = new Date();
+
+                    if (params != null && params.containsKey(NokiaHealth.PARAM_START_DATE)) {
+                        start = (Date) params.get(NokiaHealth.PARAM_START_DATE);
+                    }
+
                     final Calendar cal = Calendar.getInstance();
+                    cal.setTime(start);
                     cal.set(Calendar.HOUR_OF_DAY, 0);
                     cal.set(Calendar.MINUTE, 0);
                     cal.set(Calendar.SECOND, 0);
@@ -599,7 +609,14 @@ public class NokiaHealth extends Generator {
     }
 
     private void fetchActivityMeasures() {
-        this.queryApi(NokiaHealth.API_ACTION_ACTIVITY_URL);
+        this.queryApi(NokiaHealth.API_ACTION_ACTIVITY_URL, null);
+    }
+
+    private void fetchActivityMeasures(Date date) {
+        HashMap<String, Object> params = new HashMap<>();
+        params.put(NokiaHealth.PARAM_START_DATE, date);
+
+        this.queryApi(NokiaHealth.API_ACTION_ACTIVITY_URL, params);
     }
 
     private void logActivityMeasures(JSONObject response) {
@@ -616,7 +633,7 @@ public class NokiaHealth extends Generator {
                     String[] tokens = activity.getString("date").split("-");
 
                     cal.set(Calendar.YEAR, Integer.parseInt(tokens[0]));
-                    cal.set(Calendar.MONTH, Integer.parseInt(tokens[1]));
+                    cal.set(Calendar.MONTH, Integer.parseInt(tokens[1]) - 1);
                     cal.set(Calendar.DAY_OF_MONTH, Integer.parseInt(tokens[2]));
                     cal.set(Calendar.HOUR_OF_DAY, 0);
                     cal.set(Calendar.MINUTE, 0);
@@ -695,22 +712,44 @@ public class NokiaHealth extends Generator {
     public long getStepsForPeriod(long start, long end) {
         long steps = 0;
 
-        String where = NokiaHealth.ACTIVITY_MEASURE_HISTORY_DATE_START + " >= ? AND " + NokiaHealth.ACTIVITY_MEASURE_HISTORY_DATE_START + " < ?";
-        String[] args = { "" + start, "" + end};
+        while (start < end) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(start);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
 
-        Cursor c = this.mDatabase.query(NokiaHealth.TABLE_ACTIVITY_MEASURE_HISTORY, null, where, args, null, null, NokiaHealth.ACTIVITY_MEASURE_STEPS + " DESC");
+            long dayStart = calendar.getTimeInMillis();
+            long dayEnd = dayStart + (24 * 60 * 60 * 1000);
 
-        if (c.moveToNext()) {
-            steps = c.getLong(c.getColumnIndex(NokiaHealth.ACTIVITY_MEASURE_STEPS));
+            String where = NokiaHealth.ACTIVITY_MEASURE_HISTORY_DATE_START + " >= ? AND " + NokiaHealth.ACTIVITY_MEASURE_HISTORY_DATE_START + " < ?";
+            String[] args = { "" + dayStart, "" + dayEnd};
+
+            Cursor c = this.mDatabase.query(NokiaHealth.TABLE_ACTIVITY_MEASURE_HISTORY, null, where, args, null, null, NokiaHealth.ACTIVITY_MEASURE_STEPS + " DESC");
+
+            long daySteps = 0;
+
+            if (c.moveToNext()) {
+                daySteps = c.getLong(c.getColumnIndex(NokiaHealth.ACTIVITY_MEASURE_STEPS));
+            }
+
+            if (daySteps == 0) {
+                this.fetchActivityMeasures(new Date(dayStart));
+            }
+
+            steps += daySteps;
+
+            c.close();
+
+            start += (24 * 60 * 60 * 1000);
         }
-
-        c.close();
 
         return steps;
     }
 
     private void fetchBodyMeasures() {
-        this.queryApi(NokiaHealth.API_ACTION_BODY_MEASURES_URL);
+        this.queryApi(NokiaHealth.API_ACTION_BODY_MEASURES_URL, null);
     }
 
     private void logBodyMeasures(JSONObject response) {
@@ -870,7 +909,7 @@ public class NokiaHealth extends Generator {
     }
 
     private void fetchIntradayActivities() {
-        this.queryApi(NokiaHealth.API_ACTION_INTRADAY_ACTIVITY_URL);
+        this.queryApi(NokiaHealth.API_ACTION_INTRADAY_ACTIVITY_URL, null);
     }
 
     private void logIntradayActivities(JSONObject response) {
@@ -957,7 +996,7 @@ public class NokiaHealth extends Generator {
     }
 
     private void fetchSleepMeasures() {
-        this.queryApi(NokiaHealth.API_ACTION_SLEEP_MEASURES_URL);
+        this.queryApi(NokiaHealth.API_ACTION_SLEEP_MEASURES_URL, null);
     }
 
     private void logSleepMeasures(JSONObject response) {
@@ -1045,7 +1084,7 @@ public class NokiaHealth extends Generator {
     }
 
     private void fetchSleepSummary() {
-        this.queryApi(NokiaHealth.API_ACTION_SLEEP_SUMMARY_URL);
+        this.queryApi(NokiaHealth.API_ACTION_SLEEP_SUMMARY_URL, null);
     }
 
     private void logSleepSummary(JSONObject response) {

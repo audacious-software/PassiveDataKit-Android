@@ -5,5 +5,6 @@
     <color name="colorAccent">#FF4081</color>
 
     <color name="colorAndroid">#A4C639</color>
-    <color name="colorFitbit">#4CBFBF</color>
+    <color name="colorFitbit">#F54785</color>
+    <color name="colorNokiaHealth">#179BBD</color>
 </resources>
