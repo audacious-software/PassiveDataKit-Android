@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Typeface;
 import android.net.Uri;
@@ -190,7 +191,7 @@ public class Withings extends Generator {
     private static final String SLEEP_SUMMARY_TO_WAKE_DURATION = "to_wake_duration";
 
     private static final String HISTORY_OBSERVED = "observed";
-    private static final String DATABASE_PATH = "pdk-withings.sqlite";
+    private static final String DATABASE_PATH = "pdk-withings-data.sqlite";
     private static final int DATABASE_VERSION = 1;
 
     private static final String LAST_DATA_FETCH = "com.audacious_software.passive_data_kit.generators.wearables.Withings.LAST_DATA_FETCH";
@@ -304,8 +305,10 @@ public class Withings extends Generator {
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_withings_create_intraday_activity_history_table));
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_withings_create_sleep_measure_history_table));
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_withings_create_sleep_summary_history_table));
+            case 1:
+                break;
             default:
-
+                break;
         }
 
         if (version != Withings.DATABASE_VERSION) {
@@ -444,189 +447,194 @@ public class Withings extends Generator {
     }
 
     @SuppressLint("SimpleDateFormat")
-    private JSONObject queryApi(final String apiUrl, final Map<String, Object> params) {
+    private void queryApi(final String apiUrl, final Map<String, Object> params) {
         final Withings me = this;
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        String authJson = prefs.getString(Withings.PERSISTED_AUTH, null);
+        final String authJson = prefs.getString(Withings.PERSISTED_AUTH, null);
 
         if (authJson == null) {
-            return null;
+            return;
         }
 
-        try {
-            final AuthState authState = AuthState.jsonDeserialize(authJson);
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final AuthState authState = AuthState.jsonDeserialize(authJson);
 
-            AuthorizationService service = new AuthorizationService(this.mContext);
+                    AuthorizationService service = new AuthorizationService(me.mContext);
 
-            authState.performActionWithFreshTokens(service, new AuthState.AuthStateAction() {
-                @Override
-                public void execute(@Nullable String accessToken, @Nullable String idToken, @Nullable AuthorizationException ex) {
-                    SharedPreferences.Editor e = prefs.edit();
-                    e.putString(Withings.PERSISTED_AUTH, authState.jsonSerializeString());
-                    e.apply();
+                    authState.performActionWithFreshTokens(service, new AuthState.AuthStateAction() {
+                        @Override
+                        public void execute(@Nullable String accessToken, @Nullable String idToken, @Nullable AuthorizationException ex) {
+                            SharedPreferences.Editor e = prefs.edit();
+                            e.putString(Withings.PERSISTED_AUTH, authState.jsonSerializeString());
+                            e.apply();
 
-                    Date start = new Date();
+                            Date start = new Date();
 
-                    if (params != null && params.containsKey(Withings.PARAM_START_DATE)) {
-                        start = (Date) params.get(Withings.PARAM_START_DATE);
-                    }
-
-                    final Calendar cal = Calendar.getInstance();
-                    cal.setTime(start);
-                    cal.set(Calendar.HOUR_OF_DAY, 0);
-                    cal.set(Calendar.MINUTE, 0);
-                    cal.set(Calendar.SECOND, 0);
-                    cal.set(Calendar.MILLISECOND, 0);
-
-                    String startDate = null;
-                    String endDate = null;
-
-                    long startTime = 0;
-                    long endTime = 0;
-
-                    if (accessToken != null) {
-                        final long scanDays = prefs.getLong(Withings.API_SCAN_DAYS, Withings.API_SCAN_DAYS_DEFAULT);
-
-                        if (scanDays > 0) {
-                            long lastFetch = 0;
-
-                            if (Withings.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(Withings.API_ACTION_ACTIVITY_URL_LAST_FETCH, 0);
-                            } else if (Withings.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(Withings.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, 0);
-                            } else if (Withings.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(Withings.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, 0);
-                            } else if (Withings.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(Withings.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, 0);
-                            } else if (Withings.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
-                                lastFetch = prefs.getLong(Withings.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, 0);
+                            if (params != null && params.containsKey(Withings.PARAM_START_DATE)) {
+                                start = (Date) params.get(Withings.PARAM_START_DATE);
                             }
 
-                            if (lastFetch == 0) {
-                                lastFetch = System.currentTimeMillis() - (scanDays * 24 * 60 * 60 * 1000);
-                            }
+                            final Calendar cal = Calendar.getInstance();
+                            cal.setTime(start);
+                            cal.set(Calendar.HOUR_OF_DAY, 0);
+                            cal.set(Calendar.MINUTE, 0);
+                            cal.set(Calendar.SECOND, 0);
+                            cal.set(Calendar.MILLISECOND, 0);
 
-                            while (cal.getTimeInMillis() > lastFetch) {
-                                cal.add(Calendar.DATE, -1);
-                            }
-                        }
+                            String startDate = null;
+                            String endDate = null;
 
-                        if (Withings.API_ACTION_ACTIVITY_URL.equals(apiUrl) ||
-                                Withings.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
-                            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+                            long startTime = 0;
+                            long endTime = 0;
 
-                            startDate = format.format(cal.getTime());
+                            if (accessToken != null) {
+                                final long scanDays = prefs.getLong(Withings.API_SCAN_DAYS, Withings.API_SCAN_DAYS_DEFAULT);
 
-                            cal.add(Calendar.DATE, 1);
-
-                            endDate = format.format(cal.getTime());
-                        } else if (Withings.API_ACTION_BODY_MEASURES_URL.equals(apiUrl) ||
-                                Withings.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl) ||
-                                Withings.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
-
-                            startTime = cal.getTimeInMillis() / 1000;
-
-                            cal.add(Calendar.DATE, 1);
-
-                            endTime = cal.getTimeInMillis() / 1000;
-                        }
-
-                        Uri apiUri = Uri.parse(apiUrl);
-
-                        Uri.Builder builder = new Uri.Builder();
-                        builder.scheme(apiUri.getScheme());
-                        builder.authority(apiUri.getAuthority());
-                        builder.path(apiUri.getPath());
-
-                        builder.appendQueryParameter("access_token", accessToken);
-
-                        try {
-                            String action = apiUri.getQueryParameter("action");
-
-                            builder.appendQueryParameter("action", action);
-
-                            if (endTime != 0) {
-                                builder.appendQueryParameter("enddate", "" + endTime);
-                            }
-
-                            if (endDate != null) {
-                                builder.appendQueryParameter("enddateymd", endDate);
-                            }
-
-                            if (startTime != 0) {
-                                builder.appendQueryParameter("startdate", "" + startTime);
-                            }
-
-                            if (startDate != null) {
-                                builder.appendQueryParameter("startdateymd", startDate);
-                            }
-
-                            Uri uri = builder.build();
-
-                            OkHttpClient client = new OkHttpClient();
-
-                            Request request = new Request.Builder()
-                                    .url(uri.toString())
-                                    .build();
-
-                            Response response = client.newCall(request).execute();
-
-                            if (response.isSuccessful()) {
                                 if (scanDays > 0) {
-                                    long fetchTime = cal.getTimeInMillis();
-
-                                    if (fetchTime > System.currentTimeMillis()) {
-                                        fetchTime = 0;
-                                    }
+                                    long lastFetch = 0;
 
                                     if (Withings.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                        e.putLong(Withings.API_ACTION_ACTIVITY_URL_LAST_FETCH, fetchTime);
+                                        lastFetch = prefs.getLong(Withings.API_ACTION_ACTIVITY_URL_LAST_FETCH, 0);
                                     } else if (Withings.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
-                                        e.putLong(Withings.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, fetchTime);
+                                        lastFetch = prefs.getLong(Withings.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, 0);
                                     } else if (Withings.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
-                                        e.putLong(Withings.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, fetchTime);
+                                        lastFetch = prefs.getLong(Withings.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, 0);
                                     } else if (Withings.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
-                                        e.putLong(Withings.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, fetchTime);
+                                        lastFetch = prefs.getLong(Withings.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, 0);
                                     } else if (Withings.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
-                                        e.putLong(Withings.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, fetchTime);
+                                        lastFetch = prefs.getLong(Withings.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, 0);
                                     }
 
-                                    e.apply();
+                                    if (lastFetch == 0) {
+                                        lastFetch = System.currentTimeMillis() - (scanDays * 24 * 60 * 60 * 1000);
+                                    }
+
+                                    while (cal.getTimeInMillis() > lastFetch) {
+                                        cal.add(Calendar.DATE, -1);
+                                    }
                                 }
 
-                                me.mLatestTimestamp = System.currentTimeMillis();
+                                if (Withings.API_ACTION_ACTIVITY_URL.equals(apiUrl) ||
+                                        Withings.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
+                                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 
-                                JSONObject apiResponse = new JSONObject(response.body().string());
+                                    startDate = format.format(cal.getTime());
 
-                                if (Withings.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                    me.logActivityMeasures(apiResponse);
-                                } else if (Withings.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
-                                    me.logBodyMeasures(apiResponse);
-                                } else if (Withings.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
-                                    me.logIntradayActivities(apiResponse);
-                                } else if (Withings.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
-                                    me.logSleepMeasures(apiResponse);
-                                } else if (Withings.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
-                                    me.logSleepSummary(apiResponse);
+                                    cal.add(Calendar.DATE, 1);
+
+                                    endDate = format.format(cal.getTime());
+                                } else if (Withings.API_ACTION_BODY_MEASURES_URL.equals(apiUrl) ||
+                                        Withings.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl) ||
+                                        Withings.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
+
+                                    startTime = cal.getTimeInMillis() / 1000;
+
+                                    cal.add(Calendar.DATE, 1);
+
+                                    endTime = cal.getTimeInMillis() / 1000;
+                                }
+
+                                Uri apiUri = Uri.parse(apiUrl);
+
+                                Uri.Builder builder = new Uri.Builder();
+                                builder.scheme(apiUri.getScheme());
+                                builder.authority(apiUri.getAuthority());
+                                builder.path(apiUri.getPath());
+
+                                builder.appendQueryParameter("access_token", accessToken);
+
+                                try {
+                                    String action = apiUri.getQueryParameter("action");
+
+                                    builder.appendQueryParameter("action", action);
+
+                                    if (endTime != 0) {
+                                        builder.appendQueryParameter("enddate", "" + endTime);
+                                    }
+
+                                    if (endDate != null) {
+                                        builder.appendQueryParameter("enddateymd", endDate);
+                                    }
+
+                                    if (startTime != 0) {
+                                        builder.appendQueryParameter("startdate", "" + startTime);
+                                    }
+
+                                    if (startDate != null) {
+                                        builder.appendQueryParameter("startdateymd", startDate);
+                                    }
+
+                                    Uri uri = builder.build();
+
+                                    OkHttpClient client = new OkHttpClient();
+
+                                    Request request = new Request.Builder()
+                                            .url(uri.toString())
+                                            .build();
+
+                                    Response response = client.newCall(request).execute();
+
+                                    if (response.isSuccessful()) {
+                                        if (scanDays > 0) {
+                                            long fetchTime = cal.getTimeInMillis();
+
+                                            if (fetchTime > System.currentTimeMillis()) {
+                                                fetchTime = 0;
+                                            }
+
+                                            if (Withings.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                                                e.putLong(Withings.API_ACTION_ACTIVITY_URL_LAST_FETCH, fetchTime);
+                                            } else if (Withings.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
+                                                e.putLong(Withings.API_ACTION_SLEEP_SUMMARY_URL_LAST_FETCH, fetchTime);
+                                            } else if (Withings.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
+                                                e.putLong(Withings.API_ACTION_BODY_MEASURES_URL_LAST_FETCH, fetchTime);
+                                            } else if (Withings.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
+                                                e.putLong(Withings.API_ACTION_INTRADAY_ACTIVITY_URL_LAST_FETCH, fetchTime);
+                                            } else if (Withings.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
+                                                e.putLong(Withings.API_ACTION_SLEEP_MEASURES_URL_LAST_FETCH, fetchTime);
+                                            }
+
+                                            e.apply();
+                                        }
+
+                                        me.mLatestTimestamp = System.currentTimeMillis();
+
+                                        JSONObject apiResponse = new JSONObject(response.body().string());
+
+                                        if (Withings.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                                            me.logActivityMeasures(apiResponse);
+                                        } else if (Withings.API_ACTION_BODY_MEASURES_URL.equals(apiUrl)) {
+                                            me.logBodyMeasures(apiResponse);
+                                        } else if (Withings.API_ACTION_INTRADAY_ACTIVITY_URL.equals(apiUrl)) {
+                                            me.logIntradayActivities(apiResponse);
+                                        } else if (Withings.API_ACTION_SLEEP_MEASURES_URL.equals(apiUrl)) {
+                                            me.logSleepMeasures(apiResponse);
+                                        } else if (Withings.API_ACTION_SLEEP_SUMMARY_URL.equals(apiUrl)) {
+                                            me.logSleepSummary(apiResponse);
+                                        }
+                                    }
+                                } catch (OutOfMemoryError ex2) {
+                                    // Try again next cycle...
+                                } catch (JSONException ex2) {
+                                    ex2.printStackTrace();
+                                } catch (IOException ex2) {
+                                    ex2.printStackTrace();
                                 }
                             }
-                        } catch (OutOfMemoryError ex2) {
-                            // Try again next cycle...
-                        } catch (JSONException ex2) {
-                            ex2.printStackTrace();
-                        } catch (IOException ex2) {
-                            ex2.printStackTrace();
                         }
-                    }
+                    });
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            });
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            }
+        });
 
-        return null;
+        t.start();
     }
 
     private void fetchActivityMeasures() {
