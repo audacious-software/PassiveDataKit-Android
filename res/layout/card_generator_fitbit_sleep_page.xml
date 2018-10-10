@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <TextView
-        android:text="@string/message_generator_nokia_health_info_todo"
+        android:text="@string/message_generator_withings_info_todo"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"

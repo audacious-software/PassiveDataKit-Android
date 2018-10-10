@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
@@ -13,6 +14,7 @@ import android.util.SparseArray;
 import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
+import com.audacious_software.passive_data_kit.transmitters.Transmitter;
 import com.audacious_software.pdk.passivedatakit.R;
 
 import java.lang.reflect.InvocationTargetException;
@@ -177,7 +179,10 @@ public class Generators {
                 Logger.getInstance(this.mContext).logThrowable(e);
             }
 
-            this.mUserAgent = appName + "/" + version + " " + pdkName + "/" + pdkVersion;
+            String androidVersion = "Android " + Build.VERSION.RELEASE + " SDK " + + Build.VERSION.SDK_INT;
+            String hardware = Build.MANUFACTURER + " " + Build.MODEL;
+
+            this.mUserAgent = appName + "/" + version + " " + pdkName + "/" + pdkVersion + " (" + androidVersion + "; " + hardware + ")";
         }
 
         this.mGeneratorIdentifierMap.put(identifier, identifier + ": " + this.mUserAgent);
@@ -320,5 +325,21 @@ public class Generators {
 
     public interface GeneratorUpdatedListener {
         void onGeneratorUpdated(String identifier, long timestamp, Bundle data);
+    }
+
+    public List<Transmitter> activeTransmitters() {
+        ArrayList<Transmitter> transmitters = new ArrayList<>();
+
+        synchronized (this.mGeneratorUpdatedListeners) {
+            for (Generators.GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
+                if (listener instanceof Transmitter) {
+                    if (transmitters.contains(listener) == false) {
+                        transmitters.add((Transmitter) listener);
+                    }
+                }
+            }
+        }
+
+        return transmitters;
     }
 }

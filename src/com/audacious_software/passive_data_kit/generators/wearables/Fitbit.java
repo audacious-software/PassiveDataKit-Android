@@ -22,6 +22,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -205,12 +206,15 @@ public class Fitbit extends Generator {
     private Context mContext = null;
     private SQLiteDatabase mDatabase = null;
     private Handler mHandler = null;
+    private Runnable fetchRequest = null;
+
     private final Map<String, String> mProperties = new HashMap<>();
 
     private int mPage = 0;
 
     private long mLatestTimestamp = -1;
     private boolean mIsMandatory = true;
+
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -277,7 +281,7 @@ public class Fitbit extends Generator {
             this.mHandler = null;
         }
 
-        final Runnable fetchData = new Runnable() {
+        this.fetchRequest = new Runnable() {
             @Override
             public void run() {
                 final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
@@ -297,14 +301,17 @@ public class Fitbit extends Generator {
                                 }
 
                                 if (prefs.getBoolean(Fitbit.HEART_RATE_ENABLED, Fitbit.HEART_RATE_ENABLED_DEFAULT)) {
+                                    Log.e("PDK", "FETCH HEART RATE");
                                     me.fetchHeartRate();
                                 }
 
                                 if (prefs.getBoolean(Fitbit.SLEEP_ENABLED, Fitbit.SLEEP_ENABLED_DEFAULT)) {
+                                    Log.e("PDK", "FETCH SLEEP");
                                     me.fetchSleep();
                                 }
 
                                 if (prefs.getBoolean(Fitbit.WEIGHT_ENABLED, Fitbit.WEIGHT_ENABLED_DEFAULT)) {
+                                    Log.e("PDK", "FETCH WEIGHT");
                                     me.fetchWeight();
                                 }
                             }
@@ -316,6 +323,8 @@ public class Fitbit extends Generator {
                         SharedPreferences.Editor e = prefs.edit();
                         e.putLong(Fitbit.LAST_DATA_FETCH, now);
                         e.apply();
+                    } else {
+                        Log.e("PDK", "FITBIT INTERVAL NOT ELAPSED: " + (now - lastFetch) + " VS " + fetchInterval);
                     }
                 }
 
@@ -345,11 +354,26 @@ public class Fitbit extends Generator {
             e.printStackTrace();
         }
 
-        me.mHandler.post(fetchData);
+        me.mHandler.post(this.fetchRequest);
 
         Generators.getInstance(this.mContext).registerCustomViewClass(Fitbit.GENERATOR_IDENTIFIER, Fitbit.class);
 
         this.flushCachedData();
+    }
+
+    public void refresh() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+        e.remove(Fitbit.LAST_DATA_FETCH);
+        e.apply();
+
+        if (this.fetchRequest != null) {
+            if (this.mHandler != null) {
+                this.mHandler.removeCallbacks(this.fetchRequest);
+            }
+
+            this.mHandler.post(this.fetchRequest);
+        }
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -378,13 +402,17 @@ public class Fitbit extends Generator {
         }
 
         try {
-            AuthState authState = AuthState.jsonDeserialize(authJson);
+            final AuthState authState = AuthState.jsonDeserialize(authJson);
 
             AuthorizationService service = new AuthorizationService(this.mContext);
 
             authState.performActionWithFreshTokens(service, new AuthState.AuthStateAction() {
                 @Override
                 public void execute(@Nullable final String accessToken, @Nullable String idToken, @Nullable AuthorizationException ex) {
+                    SharedPreferences.Editor e = prefs.edit();
+                    e.putString(Fitbit.PERSISTED_AUTH, authState.jsonSerializeString());
+                    e.apply();
+
                     me.mHandler.post(new Runnable() {
                         @Override
                         public void run() {

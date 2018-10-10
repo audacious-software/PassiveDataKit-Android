@@ -9,7 +9,6 @@ import android.support.v4.app.NotificationCompat;
 import com.audacious_software.pdk.passivedatakit.R;
 
 public class ForegroundService extends Service {
-
     public static final String ACTION_START_SERVICE = "com.audacious_software.passive_data_kit.ForegroundService.ACTION_START_SERVICE";
 
     private static final int NOTIFICATION_ID = 778642;

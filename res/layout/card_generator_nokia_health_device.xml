@@ -22,11 +22,11 @@
                 android:background="#134091"
                 android:padding="8dp"
                 android:baselineAligned="false">
-                <ImageView android:src="@drawable/ic_pdk_nokia_health_device"
+                <ImageView android:src="@drawable/ic_pdk_withings_device"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginRight="8dp" />
-                <TextView android:text="@string/generator_nokia_health_device"
+                <TextView android:text="@string/generator_withings_device"
                     android:gravity="center_vertical|start"
                     android:layout_height="24dp"
                     android:layout_width="0dp"

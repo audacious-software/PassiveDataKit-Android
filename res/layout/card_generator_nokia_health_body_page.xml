@@ -15,7 +15,7 @@
             android:gravity="center"
             android:layout_weight="1"
             android:layout_height="0dp"
-            android:text="@string/generator_nokia_health_body_title"
+            android:text="@string/generator_withings_body_title"
             android:layout_marginBottom="8dp"
             tools:ignore="NestedWeights" />
         <LinearLayout android:orientation="horizontal"
@@ -28,13 +28,13 @@
                 android:textStyle="bold"
                 android:gravity="right"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
             <TextView android:id="@+id/value_body_one"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_marginLeft="8dp"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
         </LinearLayout>
         <LinearLayout android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -46,13 +46,13 @@
                 android:textStyle="bold"
                 android:gravity="right"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
             <TextView android:id="@+id/value_body_two"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_marginLeft="8dp"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
         </LinearLayout>
         <LinearLayout android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -64,13 +64,13 @@
                 android:textStyle="bold"
                 android:gravity="right"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
             <TextView android:id="@+id/value_body_three"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_marginLeft="8dp"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
         </LinearLayout>
         <LinearLayout android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -82,13 +82,13 @@
                 android:textStyle="bold"
                 android:gravity="right"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
             <TextView android:id="@+id/value_body_four"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_marginLeft="8dp"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
         </LinearLayout>
     </LinearLayout>
     <LinearLayout android:orientation="vertical"
@@ -111,13 +111,13 @@
                 android:textStyle="bold"
                 android:gravity="right"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
             <TextView android:id="@+id/value_body_five"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_marginLeft="8dp"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
         </LinearLayout>
         <LinearLayout android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -129,13 +129,13 @@
                 android:textStyle="bold"
                 android:gravity="right"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
             <TextView android:id="@+id/value_body_six"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_marginLeft="8dp"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
         </LinearLayout>
         <LinearLayout android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -147,13 +147,13 @@
                 android:textStyle="bold"
                 android:gravity="right"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
             <TextView android:id="@+id/value_body_seven"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_marginLeft="8dp"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
         </LinearLayout>
         <LinearLayout android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -165,13 +165,13 @@
                 android:textStyle="bold"
                 android:gravity="right"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
             <TextView android:id="@+id/value_body_eight"
                 android:layout_width="0dp"
                 android:layout_marginLeft="8dp"
                 android:layout_weight="1"
                 android:layout_height="match_parent"
-                android:text="@string/generator_nokia_health_body_placeholder" />
+                android:text="@string/generator_withings_body_placeholder" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

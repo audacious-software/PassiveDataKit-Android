@@ -9,9 +9,11 @@ import android.support.v4.content.ContextCompat;
 
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.transmitters.Transmitter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("PointlessBooleanExpression")
 public class PassiveDataKit {
@@ -70,8 +72,7 @@ public class PassiveDataKit {
         }
     }
 
-    public static ArrayList<DiagnosticAction> diagnostics(Context context)
-    {
+    public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
         actions.addAll(Generators.getInstance(context).diagnostics(context));
@@ -134,5 +135,17 @@ public class PassiveDataKit {
 
     private void setContext(Context context) {
         this.mContext = context;
+    }
+
+    public long pendingTransmissions() {
+        long pending = 0;
+
+        List<Transmitter> transmitters = Generators.getInstance(this.mContext).activeTransmitters();
+
+        for (Transmitter transmitted : transmitters) {
+            pending += transmitted.pendingTransmissions();
+        }
+
+        return pending;
     }
 }

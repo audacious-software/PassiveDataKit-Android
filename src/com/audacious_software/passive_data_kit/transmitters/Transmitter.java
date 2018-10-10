@@ -17,4 +17,6 @@ public abstract class Transmitter {
 
     @SuppressWarnings("unused")
     public abstract long transmittedSize();
+
+    public abstract long pendingTransmissions();
 }

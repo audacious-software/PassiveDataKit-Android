@@ -543,6 +543,11 @@ public class GoogleFit extends Generator {
         return GoogleFit.sInstance.mFetchHandler.hasMessages(0);
     }
 
+    public void fetchNow() {
+        this.stopGenerator();
+        this.startGenerator();
+    }
+
     public List<DataType> allDataTypes() {
         ArrayList<DataType> dataTypes = new ArrayList<>();
 

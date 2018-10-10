@@ -28,8 +28,8 @@
                 <View android:layout_width="16dp"
                     android:layout_marginRight="4dp"
                     android:layout_height="16dp"
-                    android:background="@color/generator_nokia_health_intense_activities" />
-                <TextView android:text="@string/generator_nokia_health_intense_activities_label"
+                    android:background="@color/generator_withings_intense_activities" />
+                <TextView android:text="@string/generator_withings_intense_activities_label"
                     android:layout_width="wrap_content"
                     android:textSize="12sp"
                     android:layout_height="16dp" />
@@ -41,8 +41,8 @@
                 <View android:layout_width="16dp"
                     android:layout_marginRight="4dp"
                     android:layout_height="16dp"
-                    android:background="@color/generator_nokia_health_moderate_activities" />
-                <TextView android:text="@string/generator_nokia_health_moderate_activities_label"
+                    android:background="@color/generator_withings_moderate_activities" />
+                <TextView android:text="@string/generator_withings_moderate_activities_label"
                     android:layout_width="wrap_content"
                     android:textSize="12sp"
                     android:layout_height="16dp" />
@@ -54,8 +54,8 @@
                 <View android:layout_width="16dp"
                     android:layout_marginRight="4dp"
                     android:layout_height="16dp"
-                    android:background="@color/generator_nokia_health_soft_activities" />
-                <TextView android:text="@string/generator_nokia_health_soft_activities_label"
+                    android:background="@color/generator_withings_soft_activities" />
+                <TextView android:text="@string/generator_withings_soft_activities_label"
                     android:layout_width="wrap_content"
                     android:textSize="12sp"
                     android:layout_height="16dp" />
@@ -69,7 +69,7 @@
             android:layout_height="match_parent"
             android:layout_marginRight="8dp"
             android:layout_marginTop="8dp">
-            <TextView android:text="@string/generator_nokia_health_steps_label"
+            <TextView android:text="@string/generator_withings_steps_label"
                 android:textStyle="bold"
                 android:textSize="12sp"
                 android:layout_width="wrap_content"
@@ -81,7 +81,7 @@
             <View android:layout_weight="1"
                 android:layout_height="0dp"
                 android:layout_width="40dp" />
-            <TextView android:text="@string/generator_nokia_health_distance_label"
+            <TextView android:text="@string/generator_withings_distance_label"
                 android:textStyle="bold"
                 android:textSize="12sp"
                 android:layout_width="wrap_content"
@@ -93,7 +93,7 @@
             <View android:layout_weight="1"
                 android:layout_height="0dp"
                 android:layout_width="40dp" />
-            <TextView android:text="@string/generator_nokia_health_elevation_label"
+            <TextView android:text="@string/generator_withings_elevation_label"
                 android:textStyle="bold"
                 android:textSize="12sp"
                 android:layout_width="wrap_content"
@@ -108,7 +108,7 @@
         </LinearLayout>
     </LinearLayout>
     <TextView android:id="@+id/card_empty"
-        android:text="@string/message_generator_nokia_health_empty"
+        android:text="@string/message_generator_withings_empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"

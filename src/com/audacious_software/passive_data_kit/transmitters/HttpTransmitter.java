@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
 import android.os.BadParcelableException;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -423,6 +424,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 String version = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0).versionName;
                 String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
 
+
                 this.mUserAgent = appName + " " + version;
             }
 
@@ -565,6 +567,45 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     }
 
     @Override
+    public long pendingTransmissions() {
+        File pendingFolder = this.getPendingFolder();
+
+        if (pendingFolder == null || !pendingFolder.exists()) {
+            return 0;
+        }
+
+        final List<File> dirs = new LinkedList<>();
+
+        dirs.add(pendingFolder);
+
+        long result = 0;
+
+        while (!dirs.isEmpty()) {
+            final File dir = dirs.remove(0);
+
+            if (!dir.exists()) {
+                continue;
+            }
+
+            final File[] listFiles = dir.listFiles();
+
+            if (listFiles == null || listFiles.length == 0) {
+                continue;
+            }
+
+            for (final File child : listFiles) {
+                if (child.isDirectory()) {
+                    dirs.add(child);
+                } else {
+                    result += 1;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    @Override
     public long transmittedSize() {
         return this.mTransmitted;
     }
@@ -587,7 +628,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             public void run() {
                 Bundle clonedData = p.readBundle(getClass().getClassLoader());
 
-                if (clonedData.keySet().size() > 1) {  // Only transmit non-empty bundles...
+                if (clonedData.keySet().size() > 0) {  // Only transmit non-empty bundles...
                     long generatorTimestamp = timestamp / 1000; // Convert to seconds...
 
                     Generators generators = Generators.getInstance(me.mContext);

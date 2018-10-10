@@ -6,5 +6,9 @@
 
     <color name="colorAndroid">#A4C639</color>
     <color name="colorFitbit">#F54785</color>
-    <color name="colorNokiaHealth">#179BBD</color>
+    <color name="colorWithings">#179BBD</color>
+
+    <color name="generator_nokia_health_soft_activities">#757575</color>
+    <color name="generator_nokia_health_moderate_activities">#039BE5</color>
+    <color name="generator_nokia_health_intense_activities">#43A047</color>
 </resources>
