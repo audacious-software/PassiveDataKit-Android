@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,20 +88,6 @@ public class AppEvent extends Generator{
 
     public AppEvent(Context context) {
         super(context);
-    }
-
-    @SuppressWarnings("unused")
-    public static void start(final Context context) {
-        AppEvent.getInstance(context).startGenerator();
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    public static String getGeneratorTitle(Context context) {
-        return context.getString(R.string.generator_app_events);
-    }
-
-    private void startGenerator() {
-        Generators.getInstance(this.mContext).registerCustomViewClass(AppEvent.GENERATOR_IDENTIFIER, AppEvent.class);
 
         File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
 
@@ -124,6 +111,20 @@ public class AppEvent extends Generator{
         this.mWorking = false;
 
         this.flushCachedData();
+    }
+
+    @SuppressWarnings("unused")
+    public static void start(final Context context) {
+        AppEvent.getInstance(context).startGenerator();
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public static String getGeneratorTitle(Context context) {
+        return context.getString(R.string.generator_app_events);
+    }
+
+    private void startGenerator() {
+        Generators.getInstance(this.mContext).registerCustomViewClass(AppEvent.GENERATOR_IDENTIFIER, AppEvent.class);
     }
 
     @SuppressWarnings("unused")
@@ -346,6 +347,22 @@ public class AppEvent extends Generator{
         c.close();
 
         return me.mLastTimestamp;
+    }
+
+    public static long earliestPointGenerated(Context context) {
+        AppEvent me = AppEvent.getInstance(context);
+
+        long earliestTimestamp = System.currentTimeMillis();
+
+        Cursor c = me.mDatabase.query(AppEvent.TABLE_HISTORY, null, null, null, null, null, AppEvent.HISTORY_OBSERVED, "1");
+
+        if (c.moveToNext()) {
+            earliestTimestamp = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED));
+        }
+
+        c.close();
+
+        return earliestTimestamp;
     }
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
