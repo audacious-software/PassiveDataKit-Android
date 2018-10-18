@@ -22,6 +22,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Base64;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -52,6 +53,7 @@ import net.openid.appauth.AuthorizationResponse;
 import net.openid.appauth.AuthorizationService;
 import net.openid.appauth.AuthorizationServiceConfiguration;
 import net.openid.appauth.ClientSecretBasic;
+import net.openid.appauth.TokenRequest;
 import net.openid.appauth.TokenResponse;
 
 import org.json.JSONArray;
@@ -60,6 +62,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -70,10 +73,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import okhttp3.Authenticator;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Credentials;
+import okhttp3.FormBody;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.Route;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class Fitbit extends Generator {
@@ -414,28 +423,77 @@ public class Fitbit extends Generator {
 
             long now = System.currentTimeMillis();
 
+            Log.e("PDK", "LAST FITBIT REFRESH: " + (now - lastRefresh));
+
             if (now - lastRefresh > 60 * 60 * 1000) {
                 SharedPreferences.Editor e = prefs.edit();
                 e.putLong(Fitbit.LAST_REFRESH, now);
                 e.apply();
 
-                ClientSecretBasic secret = new ClientSecretBasic(me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_SECRET));
+                final OkHttpClient client = new OkHttpClient.Builder()
+                        .authenticator(new Authenticator() {
+                            @Override
+                            public Request authenticate(Route route, Response response) throws IOException {
+                                String credential = Credentials.basic(me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID), me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_SECRET));
+                                return response.request().newBuilder().header("Authorization", credential).build();
+                            }
+                        })
+                        .build();
 
-                service.performTokenRequest(authState.createTokenRefreshRequest(), secret, new AuthorizationService.TokenResponseCallback() {
-                    @Override public void onTokenRequestCompleted(TokenResponse tokenResponse, AuthorizationException authException) {
-                        if (tokenResponse != null) {
-                            AuthState newAuthState = new AuthState(authResponse, tokenResponse, authException);
+                Log.e("PDK", "FITBIT REFRESH WITH " + authState.getLastTokenResponse().refreshToken);
 
-                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
-                            SharedPreferences.Editor e = prefs.edit();
+                FormBody.Builder bodyBuilder = new FormBody.Builder();
+                bodyBuilder.add("grant_type", "refresh_token");
+                bodyBuilder.add("refresh_token", authState.getLastTokenResponse().refreshToken);
+                bodyBuilder.add("expires_in", "3600");
 
-                            e.putString(Fitbit.PERSISTED_AUTH, newAuthState.jsonSerializeString());
-                            e.putLong(Fitbit.LAST_REFRESH, System.currentTimeMillis());
+                Request request = new Request.Builder()
+                        .url("https://api.fitbit.com/oauth2/token")
+                        .post(bodyBuilder.build())
+                        .build();
 
-                            e.apply();
+                client.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        Log.e("PDK", "FITBIT EXCEPTION: " + e);
+                    }
 
-                            me.queryApi(apiUrl, params);
-                        } else {
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        if (response.code() == 200) {
+                            try {
+                                JSONObject responseJson = new JSONObject(response.body().string());
+
+                                Log.e("PDK", "FITBIT RESPONSE: " + responseJson.toString());
+
+                                if (responseJson.has("access_token") && responseJson.has("refresh_token")) {
+                                    TokenRequest.Builder tokenRequestBuilder = new TokenRequest.Builder(authState.getAuthorizationServiceConfiguration(), me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID));
+                                    tokenRequestBuilder.setClientId(me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID));
+                                    tokenRequestBuilder.setGrantType("refresh_token");
+                                    tokenRequestBuilder.setRefreshToken(responseJson.getString("refresh_token"));
+
+                                    TokenResponse.Builder tokenBuilder = new TokenResponse.Builder(tokenRequestBuilder.build());
+                                    tokenBuilder.setAccessToken(responseJson.getString("access_token"));
+                                    tokenBuilder.setAccessTokenExpiresIn(Long.parseLong(responseJson.getString("expires_in")));
+                                    tokenBuilder.setRefreshToken(responseJson.getString("refresh_token"));
+                                    tokenBuilder.setScope(responseJson.getString("scope"));
+
+                                    AuthState newAuthState = new AuthState(authResponse, tokenBuilder.build(), null);
+
+                                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+                                    SharedPreferences.Editor e = prefs.edit();
+
+                                    e.putString(Fitbit.PERSISTED_AUTH, newAuthState.jsonSerializeString());
+                                    e.putLong(Fitbit.LAST_REFRESH, System.currentTimeMillis());
+
+                                    e.apply();
+
+                                    me.queryApi(apiUrl, params);
+                                }
+                            } catch (JSONException e1) {
+                                e1.printStackTrace();
+                            }
+                        } else if (response.code() == 401) {
                             me.logout();
                         }
                     }
@@ -444,15 +502,11 @@ public class Fitbit extends Generator {
                 authState.performActionWithFreshTokens(service, new AuthState.AuthStateAction() {
                     @Override
                     public void execute(@Nullable final String accessToken, @Nullable String idToken, @Nullable AuthorizationException ex) {
-                        TokenResponse authResponse = authState.getLastTokenResponse();
-
-                        SharedPreferences.Editor e = prefs.edit();
-                        e.putString(Fitbit.PERSISTED_AUTH, authState.jsonSerializeString());
-                        e.apply();
-
                         me.mHandler.post(new Runnable() {
                             @Override
                             public void run() {
+                                Log.e("PDK", "FITBIT USING TOKEN: " + accessToken);
+
                                 OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new Interceptor() {
                                     @Override
                                     public Response intercept(Chain chain) throws IOException {

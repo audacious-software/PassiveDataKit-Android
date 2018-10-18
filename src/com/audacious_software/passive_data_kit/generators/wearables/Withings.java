@@ -550,10 +550,6 @@ public class Withings extends Generator {
                         authState.performActionWithFreshTokens(service, new AuthState.AuthStateAction() {
                             @Override
                             public void execute(@Nullable String accessToken, @Nullable String idToken, @Nullable AuthorizationException ex) {
-                                SharedPreferences.Editor e = prefs.edit();
-                                e.putString(Withings.PERSISTED_AUTH, authState.jsonSerializeString());
-                                e.apply();
-
                                 Date start = new Date();
 
                                 if (params != null && params.containsKey(Withings.PARAM_START_DATE)) {
@@ -669,6 +665,8 @@ public class Withings extends Generator {
                                                 if (fetchTime > System.currentTimeMillis()) {
                                                     fetchTime = 0;
                                                 }
+
+                                                SharedPreferences.Editor e = prefs.edit();
 
                                                 if (Withings.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
                                                     e.putLong(Withings.API_ACTION_ACTIVITY_URL_LAST_FETCH, fetchTime);
