@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">PassiveDataKit</string>
     <string name="pdk_name">Passive Data Kit</string>
-    <string name="pdk_version">0.0.1</string>
+    <string name="pdk_version">1.0</string>
     <string name="unknown_version">Unknown Version</string>
     <string name="activity_data_stream">Data Stream</string>
     <string name="action_continue">Continue</string>

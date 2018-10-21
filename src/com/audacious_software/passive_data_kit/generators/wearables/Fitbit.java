@@ -425,7 +425,7 @@ public class Fitbit extends Generator {
 
             Log.e("PDK", "LAST FITBIT REFRESH: " + (now - lastRefresh));
 
-            if (now - lastRefresh > 60 * 60 * 1000) {
+            if (now - lastRefresh > 60 * 1000) {
                 SharedPreferences.Editor e = prefs.edit();
                 e.putLong(Fitbit.LAST_REFRESH, now);
                 e.apply();
@@ -444,8 +444,8 @@ public class Fitbit extends Generator {
 
                 FormBody.Builder bodyBuilder = new FormBody.Builder();
                 bodyBuilder.add("grant_type", "refresh_token");
-                bodyBuilder.add("refresh_token", authState.getLastTokenResponse().refreshToken);
                 bodyBuilder.add("expires_in", "3600");
+                bodyBuilder.add("refresh_token", authState.getLastTokenResponse().refreshToken);
 
                 Request request = new Request.Builder()
                         .url("https://api.fitbit.com/oauth2/token")
@@ -463,6 +463,8 @@ public class Fitbit extends Generator {
                         if (response.code() == 200) {
                             try {
                                 JSONObject responseJson = new JSONObject(response.body().string());
+
+                                Log.e("PDK", "RESPONSE HEADERS: " + response.request().headers());
 
                                 Log.e("PDK", "FITBIT RESPONSE: " + responseJson.toString());
 
