@@ -53,7 +53,6 @@ import net.openid.appauth.AuthorizationResponse;
 import net.openid.appauth.AuthorizationService;
 import net.openid.appauth.AuthorizationServiceConfiguration;
 import net.openid.appauth.ClientSecretBasic;
-import net.openid.appauth.TokenRequest;
 import net.openid.appauth.TokenResponse;
 
 import org.json.JSONArray;
@@ -136,6 +135,8 @@ public class Fitbit extends Generator {
     private static final String API_ACTION_WEIGHT_URL = "https://api.fitbit.com/1/user/-/body/log/weight/date/today.json";
 
     private static final String PERSISTED_AUTH = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.PERSISTED_AUTH";
+    private static final String ACCESS_TOKEN = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.ACCESS_TOKEN";
+    private static final String REFRESH_TOKEN = "com.audacious_software.passive_data_kit.generators.wearables.Fitbit.REFRESH_TOKEN";
 
     private static final Uri OAUTH_AUTHORIZATION_ENDPOINT = Uri.parse("https://www.fitbit.com/oauth2/authorize");
     private static final Uri OAUTH_TOKEN_ENDPOINT = Uri.parse("https://api.fitbit.com/oauth2/token");
@@ -335,8 +336,6 @@ public class Fitbit extends Generator {
                         SharedPreferences.Editor e = prefs.edit();
                         e.putLong(Fitbit.LAST_DATA_FETCH, now);
                         e.apply();
-                    } else {
-                        Log.e("PDK", "FITBIT INTERVAL NOT ELAPSED: " + (now - lastFetch) + " VS " + fetchInterval);
                     }
                 }
 
@@ -407,172 +406,133 @@ public class Fitbit extends Generator {
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        String authJson = prefs.getString(Fitbit.PERSISTED_AUTH, null);
+        final String accessToken = prefs.getString(Fitbit.ACCESS_TOKEN, null);
 
-        if (authJson == null) {
+        if (accessToken == null) {
             return;
         }
 
-        try {
-            final AuthState authState = AuthState.jsonDeserialize(authJson);
+        long lastRefresh = prefs.getLong(Fitbit.LAST_REFRESH, 0);
 
-            final AuthorizationResponse authResponse = authState.getLastAuthorizationResponse();
-            AuthorizationService service = new AuthorizationService(this.mContext);
+        long now = System.currentTimeMillis();
 
-            long lastRefresh = prefs.getLong(Fitbit.LAST_REFRESH, 0);
+        if (now - lastRefresh > 60 * 60 * 1000) {
+            String refreshToken = prefs.getString(Fitbit.REFRESH_TOKEN, null);
 
-            long now = System.currentTimeMillis();
+            SharedPreferences.Editor e = prefs.edit();
+            e.putLong(Fitbit.LAST_REFRESH, now);
+            e.apply();
 
-            Log.e("PDK", "LAST FITBIT REFRESH: " + (now - lastRefresh));
-
-            if (now - lastRefresh > 60 * 1000) {
-                SharedPreferences.Editor e = prefs.edit();
-                e.putLong(Fitbit.LAST_REFRESH, now);
-                e.apply();
-
-                final OkHttpClient client = new OkHttpClient.Builder()
-                        .authenticator(new Authenticator() {
-                            @Override
-                            public Request authenticate(Route route, Response response) throws IOException {
-                                String credential = Credentials.basic(me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID), me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_SECRET));
-                                return response.request().newBuilder().header("Authorization", credential).build();
-                            }
-                        })
-                        .build();
-
-                Log.e("PDK", "FITBIT REFRESH WITH " + authState.getLastTokenResponse().refreshToken);
-
-                FormBody.Builder bodyBuilder = new FormBody.Builder();
-                bodyBuilder.add("grant_type", "refresh_token");
-                bodyBuilder.add("expires_in", "3600");
-                bodyBuilder.add("refresh_token", authState.getLastTokenResponse().refreshToken);
-
-                Request request = new Request.Builder()
-                        .url("https://api.fitbit.com/oauth2/token")
-                        .post(bodyBuilder.build())
-                        .build();
-
-                client.newCall(request).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        Log.e("PDK", "FITBIT EXCEPTION: " + e);
-                    }
-
-                    @Override
-                    public void onResponse(Call call, Response response) throws IOException {
-                        if (response.code() == 200) {
-                            try {
-                                JSONObject responseJson = new JSONObject(response.body().string());
-
-                                Log.e("PDK", "RESPONSE HEADERS: " + response.request().headers());
-
-                                Log.e("PDK", "FITBIT RESPONSE: " + responseJson.toString());
-
-                                if (responseJson.has("access_token") && responseJson.has("refresh_token")) {
-                                    TokenRequest.Builder tokenRequestBuilder = new TokenRequest.Builder(authState.getAuthorizationServiceConfiguration(), me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID));
-                                    tokenRequestBuilder.setClientId(me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID));
-                                    tokenRequestBuilder.setGrantType("refresh_token");
-                                    tokenRequestBuilder.setRefreshToken(responseJson.getString("refresh_token"));
-
-                                    TokenResponse.Builder tokenBuilder = new TokenResponse.Builder(tokenRequestBuilder.build());
-                                    tokenBuilder.setAccessToken(responseJson.getString("access_token"));
-                                    tokenBuilder.setAccessTokenExpiresIn(Long.parseLong(responseJson.getString("expires_in")));
-                                    tokenBuilder.setRefreshToken(responseJson.getString("refresh_token"));
-                                    tokenBuilder.setScope(responseJson.getString("scope"));
-
-                                    AuthState newAuthState = new AuthState(authResponse, tokenBuilder.build(), null);
-
-                                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
-                                    SharedPreferences.Editor e = prefs.edit();
-
-                                    e.putString(Fitbit.PERSISTED_AUTH, newAuthState.jsonSerializeString());
-                                    e.putLong(Fitbit.LAST_REFRESH, System.currentTimeMillis());
-
-                                    e.apply();
-
-                                    me.queryApi(apiUrl, params);
-                                }
-                            } catch (JSONException e1) {
-                                e1.printStackTrace();
-                            }
-                        } else if (response.code() == 401) {
-                            me.logout();
+            final OkHttpClient client = new OkHttpClient.Builder()
+                    .authenticator(new Authenticator() {
+                        @Override
+                        public Request authenticate(Route route, Response response) throws IOException {
+                            String credential = Credentials.basic(me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_ID), me.getProperty(Fitbit.OPTION_OAUTH_CLIENT_SECRET));
+                            return response.request().newBuilder().header("Authorization", credential).build();
                         }
-                    }
-                });
-            } else {
-                authState.performActionWithFreshTokens(service, new AuthState.AuthStateAction() {
-                    @Override
-                    public void execute(@Nullable final String accessToken, @Nullable String idToken, @Nullable AuthorizationException ex) {
-                        me.mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                Log.e("PDK", "FITBIT USING TOKEN: " + accessToken);
+                    })
+                    .build();
 
-                                OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new Interceptor() {
-                                    @Override
-                                    public Response intercept(Chain chain) throws IOException {
-                                        Request newRequest = chain.request().newBuilder()
-                                                .addHeader("Authorization", "Bearer " + accessToken)
-                                                .build();
-                                        return chain.proceed(newRequest);
-                                    }
-                                }).build();
+            FormBody.Builder bodyBuilder = new FormBody.Builder();
+            bodyBuilder.add("grant_type", "refresh_token");
+            bodyBuilder.add("expires_in", "3600");
+            bodyBuilder.add("refresh_token", refreshToken);
 
-                                Request request = new Request.Builder()
-                                        .url(apiUrl)
-                                        .build();
+            Request request = new Request.Builder()
+                    .url("https://api.fitbit.com/oauth2/token")
+                    .post(bodyBuilder.build())
+                    .build();
 
-                                try {
-                                    Response response = client.newCall(request).execute();
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    Log.e("PDK", "FITBIT EXCEPTION: " + e);
+                }
 
-                                    String fitbitResponse = response.body().string();
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    if (response.code() == 200) {
+                        try {
+                            JSONObject responseJson = new JSONObject(response.body().string());
 
-                                    if (response.isSuccessful()) {
-                                        SharedPreferences.Editor e = prefs.edit();
+                            if (responseJson.has("access_token") && responseJson.has("refresh_token")) {
+                                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+                                SharedPreferences.Editor e = prefs.edit();
 
-                                        JSONObject apiResponse = new JSONObject(fitbitResponse);
+                                e.putString(Fitbit.ACCESS_TOKEN, responseJson.getString("access_token"));
+                                e.putString(Fitbit.REFRESH_TOKEN, responseJson.getString("refresh_token"));
+                                e.putLong(Fitbit.LAST_REFRESH, System.currentTimeMillis());
 
-                                        if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                            e.putLong(Fitbit.API_ACTION_ACTIVITY_URL_LAST_FETCH, System.currentTimeMillis());
-                                        } else if (Fitbit.API_ACTION_SLEEP_URL.equals(apiUrl)) {
-                                            e.putLong(Fitbit.API_ACTION_SLEEP_URL_LAST_FETCH, System.currentTimeMillis());
-                                        } else if (Fitbit.API_ACTION_WEIGHT_URL.equals(apiUrl)) {
-                                            e.putLong(Fitbit.API_ACTION_WEIGHT_URL_LAST_FETCH, System.currentTimeMillis());
-                                        } else if (Fitbit.API_ACTION_HEART_RATE_URL.equals(apiUrl)) {
-                                            e.putLong(Fitbit.API_ACTION_HEART_RATE_URL_LAST_FETCH, System.currentTimeMillis());
-                                        }
+                                e.apply();
 
-                                        e.apply();
-
-                                        if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
-                                            me.logActivity(apiResponse, params);
-                                        } else if (Fitbit.API_ACTION_SLEEP_URL.equals(apiUrl)) {
-                                            me.logSleep(apiResponse);
-                                        } else if (Fitbit.API_ACTION_WEIGHT_URL.equals(apiUrl)) {
-                                            me.logWeight(apiResponse);
-                                        } else if (Fitbit.API_ACTION_HEART_RATE_URL.equals(apiUrl)) {
-                                            me.logHeartRate(apiResponse);
-                                        } else if (apiUrl.startsWith(Fitbit.API_ACTION_ACTIVITY_PREFIX)) {
-                                            me.logActivity(apiResponse, params);
-                                        }
-                                    } else {
-                                        if (response.code() == 401) {
-                                            me.logout();
-                                        }
-                                    }
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
+                                me.queryApi(apiUrl, params);
                             }
-                        });
+                        } catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
+                    } else if (response.code() == 401) {
+                        me.logout();
                     }
-                });
+                }
+            });
+        } else {
+            OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new Interceptor() {
+                @Override
+                public Response intercept(Chain chain) throws IOException {
+                    Request newRequest = chain.request().newBuilder()
+                            .addHeader("Authorization", "Bearer " + accessToken)
+                            .build();
+                    return chain.proceed(newRequest);
+                }
+            }).build();
+
+            Request request = new Request.Builder()
+                    .url(apiUrl)
+                    .build();
+
+            try {
+                Response response = client.newCall(request).execute();
+
+                String fitbitResponse = response.body().string();
+
+                if (response.isSuccessful()) {
+                    SharedPreferences.Editor e = prefs.edit();
+
+                    JSONObject apiResponse = new JSONObject(fitbitResponse);
+
+                    if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                        e.putLong(Fitbit.API_ACTION_ACTIVITY_URL_LAST_FETCH, System.currentTimeMillis());
+                    } else if (Fitbit.API_ACTION_SLEEP_URL.equals(apiUrl)) {
+                        e.putLong(Fitbit.API_ACTION_SLEEP_URL_LAST_FETCH, System.currentTimeMillis());
+                    } else if (Fitbit.API_ACTION_WEIGHT_URL.equals(apiUrl)) {
+                        e.putLong(Fitbit.API_ACTION_WEIGHT_URL_LAST_FETCH, System.currentTimeMillis());
+                    } else if (Fitbit.API_ACTION_HEART_RATE_URL.equals(apiUrl)) {
+                        e.putLong(Fitbit.API_ACTION_HEART_RATE_URL_LAST_FETCH, System.currentTimeMillis());
+                    }
+
+                    e.apply();
+
+                    if (Fitbit.API_ACTION_ACTIVITY_URL.equals(apiUrl)) {
+                        me.logActivity(apiResponse, params);
+                    } else if (Fitbit.API_ACTION_SLEEP_URL.equals(apiUrl)) {
+                        me.logSleep(apiResponse);
+                    } else if (Fitbit.API_ACTION_WEIGHT_URL.equals(apiUrl)) {
+                        me.logWeight(apiResponse);
+                    } else if (Fitbit.API_ACTION_HEART_RATE_URL.equals(apiUrl)) {
+                        me.logHeartRate(apiResponse);
+                    } else if (apiUrl.startsWith(Fitbit.API_ACTION_ACTIVITY_PREFIX)) {
+                        me.logActivity(apiResponse, params);
+                    }
+                } else {
+                    if (response.code() == 401) {
+                        me.logout();
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
     }
 
@@ -1128,6 +1088,8 @@ public class Fitbit extends Generator {
                     SharedPreferences.Editor e = prefs.edit();
 
                     e.putString(Fitbit.PERSISTED_AUTH, authState.jsonSerializeString());
+                    e.putString(Fitbit.ACCESS_TOKEN, tokenResponse.accessToken);
+                    e.putString(Fitbit.REFRESH_TOKEN, tokenResponse.refreshToken);
                     e.putLong(Fitbit.LAST_REFRESH, System.currentTimeMillis());
 
                     e.apply();

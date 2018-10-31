@@ -661,7 +661,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                             }
                         }
 
-                        HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
+                        if (me.mJsonGenerator != null) {
+                            HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
+                        }
                     }
                 }
 
@@ -799,7 +801,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                 HttpTransmitter.writeBundle(context, generator, (Bundle) o);
                             }
                             else {
-                                Log.e("PDK", "LIST OBJ: " + o.getClass().getCanonicalName() + " IN " + key);
+                                // Log.e("PDK", "LIST OBJ: " + o.getClass().getCanonicalName() + " IN " + key);
                             }
                         }
 
@@ -810,7 +812,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                         HttpTransmitter.writeBundle(context, generator, (Bundle) value);
                     }
                     else {
-                        Log.e("PDK", "GOT TYPE " + value.getClass().getCanonicalName() + " FOR " + key);
+                        // Log.e("PDK", "GOT TYPE " + value.getClass().getCanonicalName() + " FOR " + key);
                     }
                 }
             }
