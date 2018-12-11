@@ -61,7 +61,7 @@ android {
 
     dependencies {
         api fileTree(dir: 'libs', include: ['*.jar'])
-//    testCompile 'junit:junit:4.12'
+        // testCompile 'junit:junit:4.12'
         api 'com.android.support:appcompat-v7:28.0.0'
         api 'com.android.support:recyclerview-v7:28.0.0'
         api 'com.android.support:support-media-compat:28.0.0'
@@ -82,16 +82,9 @@ android {
         api 'org.apache.commons:commons-lang3:3.4'
         api 'com.fasterxml.jackson.core:jackson-core:2.9.0'
         api 'com.github.philjay:mpandroidchart:v3.0.3'
-        api 'com.rvalerio:fgchecker:1.0.1'
+        api 'com.rvalerio:fgchecker:1.1.0'
         api 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
         api 'net.openid:appauth:0.7.0'
         api(name:'amazon-maps-api-v2', ext:'aar')
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
     }
 }

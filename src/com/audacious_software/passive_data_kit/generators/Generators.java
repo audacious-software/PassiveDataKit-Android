@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.util.SparseArray;
 
 import com.audacious_software.passive_data_kit.Logger;
@@ -70,6 +71,7 @@ public class Generators {
                     } catch (ClassNotFoundException e) {
                         Logger.getInstance(this.mContext).logThrowable(e);
                     } catch (NoSuchMethodException e) {
+                        Log.e("PDK", "NO ENABLED FOR " + className);
                         Logger.getInstance(this.mContext).logThrowable(e);
                     } catch (InvocationTargetException e) {
                         Logger.getInstance(this.mContext).logThrowable(e);

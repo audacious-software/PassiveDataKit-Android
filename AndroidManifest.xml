@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!--suppress DeprecatedClassUsageInspection -->
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
@@ -35,6 +36,8 @@
             <intent-filter>
                 <action android:name="com.audacious_software.passive_data_kit.ForegroundService.ACTION_START_SERVICE" />
             </intent-filter>
+        </service>
+        <service android:name="com.audacious_software.passive_data_kit.generators.environment.services.GeofencesService">
         </service>
     </application>
 </manifest>
