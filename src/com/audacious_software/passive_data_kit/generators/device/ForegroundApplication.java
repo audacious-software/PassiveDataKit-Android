@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -94,6 +95,8 @@ public class ForegroundApplication extends Generator{
     private void startGenerator() {
         final ForegroundApplication me = this;
 
+        Log.e("PDK", "START FOREGROUND APP GENERATOR");
+
         if (this.mAppChecker != null) {
             this.mAppChecker.stop();
 
@@ -104,6 +107,8 @@ public class ForegroundApplication extends Generator{
         this.mAppChecker.other(new AppChecker.Listener() {
             @Override
             public void onForeground(final String process) {
+                Log.e("PDK", "GOT FOREGROUND APP: " + process);
+
                 final long now = System.currentTimeMillis();
 
                 WindowManager window = (WindowManager) me.mContext.getSystemService(Context.WINDOW_SERVICE);

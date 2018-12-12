@@ -21,10 +21,14 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
     private Menu mMenu = null;
     private boolean mIsUpdating = false;
 
+    protected int layoutResource() {
+        return R.layout.layout_data_stream_pdk;
+    }
+
     @SuppressWarnings("ConstantConditions")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setContentView(R.layout.layout_data_stream_pdk);
+        this.setContentView(this.layoutResource());
         this.setTitle(R.string.activity_data_stream);
         this.getSupportActionBar().setSubtitle(this.getResources().getQuantityString(R.plurals.activity_data_stream_subtitle, 0, 0));
 
