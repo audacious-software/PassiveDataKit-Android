@@ -302,5 +302,8 @@
     <string name="diagnostic_missing_google_fit_permission">This app requires access to your Google Fit health and fitness data to function properly.</string>
     <string name="diagnostic_missing_google_fit_app_title">Google Fit Not Installed</string>
     <string name="diagnostic_missing_google_fit_app">Please install and enable the Google Fit application to continue.</string>
+
+    <!-- Geofences -->
+    <string name="generator_environment_geofences">Geofences</string>
 </resources>
 

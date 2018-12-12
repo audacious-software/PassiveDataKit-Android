@@ -1,11 +1,14 @@
 package com.audacious_software.passive_data_kit;
 
 import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -30,6 +33,7 @@ public class PassiveDataKit {
     private int mForegroundIconId = 0;
     private int mForegroundColor = 0;
     private PendingIntent mForegroundPendingIntent = null;
+    private boolean mAlwaysNotify = false;
 
     public void start() {
         synchronized (this) {
@@ -49,9 +53,12 @@ public class PassiveDataKit {
                 Thread t = new Thread(r);
                 t.start();
 
-                if (this.mStartForegroundService) {
+                Boolean notificationStarted = false;
+                if (this.mStartForegroundService || this.mAlwaysNotify) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         Intent intent = new Intent(ForegroundService.ACTION_START_SERVICE, null, this.mContext, ForegroundService.class);
+
+                        Log.e("PDK", "HAS CHANNEL ID: " + this.mForegroundChannelId);
 
                         if (this.mForegroundChannelId != null) {
                             intent.putExtra(PassiveDataKit.NOTIFICATION_CHANNEL_ID, this.mForegroundChannelId);
@@ -66,7 +73,17 @@ public class PassiveDataKit {
                         }
 
                         ContextCompat.startForegroundService(this.mContext, intent);
+
+                        notificationStarted = true;
                     }
+                }
+
+                if (this.mAlwaysNotify && notificationStarted == false) {
+                    Notification note = ForegroundService.getForegroundNotification(this.mContext, null);
+
+                    NotificationManager notes = (NotificationManager) this.mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+
+                    notes.notify(ForegroundService.getNotificationId(), note);
                 }
             }
         }
@@ -95,6 +112,10 @@ public class PassiveDataKit {
     @SuppressWarnings("unused")
     public void setStartForegroundService(boolean startService) {
         this.mStartForegroundService = startService;
+    }
+
+    public void setAlwaysNotify(boolean always) {
+        this.mAlwaysNotify = always;
     }
 
     @SuppressWarnings("unused")
