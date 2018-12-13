@@ -584,4 +584,10 @@ public class GoogleAwareness extends Generator {
 
         this.mIncludeActivity = true;
     }
+
+    @Override
+    public String getIdentifier() {
+        return GoogleAwareness.GENERATOR_IDENTIFIER;
+    }
+
 }

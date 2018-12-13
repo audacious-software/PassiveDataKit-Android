@@ -515,4 +515,9 @@ public class TextMessages extends Generator {
 
         return timestamp;
     }
+
+    @Override
+    public String getIdentifier() {
+        return TextMessages.GENERATOR_IDENTIFIER;
+    }
 }

@@ -40,6 +40,7 @@
 
     <!-- System Status Generator -->
     <string name="pdk_generator_diagnostics_system_status_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, runtime INTEGER, storage_app INTEGER, storage_other INTEGER, storage_available INTEGER, storage_total INTEGER, storage_path TEXT);</string>
+    <string name="pdk_generator_diagnostics_system_status_history_table_add_system_runtime">ALTER TABLE history ADD system_runtime INTEGER;</string>
 
     <!-- Time of Day Status Generator -->
     <string name="pdk_generator_time_of_day_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, sunrise INTEGER, sunset INTEGER);</string>
@@ -61,4 +62,7 @@
     <string name="pdk_generator_geofences_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, transition TEXT, metadata_json TEXT);</string>
     <string name="pdk_generator_geofences_history_table_add_identifier">ALTER TABLE history ADD identifier TEXT;</string>
 
+    <!-- Users Generator -->
+    <string name="pdk_generator_users_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, mode TEXT);</string>
+    <string name="pdk_generator_users_history_table_add_identifier">ALTER TABLE history ADD identifier INTEGER;</string>
 </resources>

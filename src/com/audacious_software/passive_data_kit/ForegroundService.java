@@ -46,6 +46,8 @@ public class ForegroundService extends Service {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId);
         builder.setContentTitle(context.getString(R.string.foreground_service_title));
         builder.setContentText(context.getString(R.string.foreground_service_message));
+        builder.setAutoCancel(false);
+        builder.setOngoing(true);
         builder.setPriority(NotificationCompat.PRIORITY_MIN);
         builder.setSound(null);
 

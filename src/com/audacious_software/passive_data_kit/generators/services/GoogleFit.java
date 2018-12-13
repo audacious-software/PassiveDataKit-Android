@@ -589,4 +589,9 @@ public class GoogleFit extends Generator {
         this. mFetchBackInterval = fetchBackInterval;
     }
 
+    @Override
+    public String getIdentifier() {
+        return GoogleFit.GENERATOR_IDENTIFIER;
+    }
+
 }

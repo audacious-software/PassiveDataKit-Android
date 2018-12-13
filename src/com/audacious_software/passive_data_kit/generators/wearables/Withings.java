@@ -2141,5 +2141,10 @@ public class Withings extends Generator {
             }
         }
     }
+
+    @Override
+    public String getIdentifier() {
+        return Withings.GENERATOR_IDENTIFIER;
+    }
 }
 

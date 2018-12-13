@@ -551,4 +551,9 @@ public class AppEvent extends Generator{
 
         e.apply();
     }
+
+    @Override
+    public String getIdentifier() {
+        return AppEvent.GENERATOR_IDENTIFIER;
+    }
 }

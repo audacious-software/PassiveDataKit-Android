@@ -574,4 +574,10 @@ public class Geofences extends Generator {
             Logger.getInstance(this.mContext).logThrowable(e);
         }
     }
+
+    @Override
+    public String getIdentifier() {
+        return Geofences.GENERATOR_IDENTIFIER;
+    }
+
 }

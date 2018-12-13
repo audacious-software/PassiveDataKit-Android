@@ -1531,5 +1531,10 @@ public class Fitbit extends Generator {
             }
         }
     }
+
+    @Override
+    public String getIdentifier() {
+        return Fitbit.GENERATOR_IDENTIFIER;
+    }
 }
 

@@ -33,6 +33,9 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.rvalerio.fgchecker.AppChecker;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +54,9 @@ public class ForegroundApplication extends Generator{
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
+    private static final String SAMPLE_INTERVAL = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.SAMPLE_INTERVAL";
+    private static final long SAMPLE_INTERVAL_DEFAULT = 15000;
+
     private static final int DATABASE_VERSION = 3;
 
     private static final String TABLE_HISTORY = "history";
@@ -64,7 +70,7 @@ public class ForegroundApplication extends Generator{
     private static final String DATABASE_PATH = "pdk-foreground-application.sqlite";
 
     private SQLiteDatabase mDatabase = null;
-    private long mSampleInterval = 15000;
+
     private AppChecker mAppChecker = null;
     private long mLastTimestamp = 0;
 
@@ -92,10 +98,15 @@ public class ForegroundApplication extends Generator{
         ForegroundApplication.getInstance(context).startGenerator();
     }
 
+    public void setSampleInterval(long interval) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putLong(ForegroundApplication.SAMPLE_INTERVAL, interval);
+        e.apply();
+    }
+
     private void startGenerator() {
         final ForegroundApplication me = this;
-
-        Log.e("PDK", "START FOREGROUND APP GENERATOR");
 
         if (this.mAppChecker != null) {
             this.mAppChecker.stop();
@@ -103,12 +114,13 @@ public class ForegroundApplication extends Generator{
             this.mAppChecker = null;
         }
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        final long sampleInterval = prefs.getLong(ForegroundApplication.SAMPLE_INTERVAL, ForegroundApplication.SAMPLE_INTERVAL_DEFAULT);
+
         this.mAppChecker = new AppChecker();
         this.mAppChecker.other(new AppChecker.Listener() {
             @Override
             public void onForeground(final String process) {
-                Log.e("PDK", "GOT FOREGROUND APP: " + process);
-
                 final long now = System.currentTimeMillis();
 
                 WindowManager window = (WindowManager) me.mContext.getSystemService(Context.WINDOW_SERVICE);
@@ -128,7 +140,7 @@ public class ForegroundApplication extends Generator{
                         ContentValues values = new ContentValues();
                         values.put(ForegroundApplication.HISTORY_OBSERVED, now);
                         values.put(ForegroundApplication.HISTORY_APPLICATION, process);
-                        values.put(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
+                        values.put(ForegroundApplication.HISTORY_DURATION, sampleInterval);
                         values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
 
                         if (me.mDatabase.isOpen()) {
@@ -138,7 +150,7 @@ public class ForegroundApplication extends Generator{
                         Bundle update = new Bundle();
                         update.putLong(ForegroundApplication.HISTORY_OBSERVED, now);
                         update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
-                        update.putLong(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
+                        update.putLong(ForegroundApplication.HISTORY_DURATION, sampleInterval);
                         update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
 
                         Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
@@ -154,7 +166,7 @@ public class ForegroundApplication extends Generator{
             }
         });
 
-        this.mAppChecker.timeout((int) this.mSampleInterval);
+        this.mAppChecker.timeout((int) sampleInterval);
         this.mAppChecker.start(this.mContext);
 
         File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
@@ -485,5 +497,25 @@ public class ForegroundApplication extends Generator{
         }
 
         return me.mLastTimestamp;
+    }
+
+    @Override
+    public String getIdentifier() {
+        return ForegroundApplication.GENERATOR_IDENTIFIER;
+    }
+
+    public void updateConfig(JSONObject config) {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(ForegroundApplication.ENABLED, true);
+        e.apply();
+
+        try {
+            if (config.has("sample-interval")) {
+                this.setSampleInterval(config.getLong("sample-interval"));
+            }
+        } catch (JSONException ex) {
+            ex.printStackTrace();
+        }
     }
 }

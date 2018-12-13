@@ -27,19 +27,27 @@ public class DiagnosticsActivity extends AppCompatActivity {
     public static void setUpDiagnositicsItem(Activity activity, Menu menu, boolean showAction) {
         final ArrayList<DiagnosticAction> actions = PassiveDataKit.diagnostics(activity);
 
-        MenuItem item = menu.add(Menu.NONE, R.id.action_diagnostics, 0, activity.getString(R.string.action_diagnostics));
+        MenuItem item = menu.findItem(R.id.action_diagnostics);
+
+        if (item == null) {
+            item = menu.add(Menu.NONE, R.id.action_diagnostics, 0, activity.getString(R.string.action_diagnostics));
+        }
 
         if (actions.size() > 0 && showAction) {
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
             item.setIcon(R.drawable.ic_pdk_diagnostic);
-            item.setTitle("" + actions.size());
+            item.setTitle("");
         } else {
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 
             if (actions.size() > 0) {
                 item.setTitle(activity.getString(R.string.action_diagnostics_incomplete, actions.size()));
             }
+        }
+
+        if (actions.size() == 0) {
+            menu.removeItem(R.id.action_diagnostics);
         }
     }
 

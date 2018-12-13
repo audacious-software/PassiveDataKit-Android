@@ -596,4 +596,9 @@ public class Battery extends Generator {
     public int getLastScale() {
         return this.mLastScale;
     }
+
+    @Override
+    public String getIdentifier() {
+        return Battery.GENERATOR_IDENTIFIER;
+    }
 }

@@ -906,4 +906,10 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
         e.apply();
     }
+
+    @Override
+    public String getIdentifier() {
+        return Accelerometer.GENERATOR_IDENTIFIER;
+    }
+
 }
