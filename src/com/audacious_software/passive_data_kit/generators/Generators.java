@@ -5,12 +5,16 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.util.Base64;
 import android.util.Log;
 import android.util.SparseArray;
+import android.webkit.MimeTypeMap;
 
 import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
@@ -18,6 +22,14 @@ import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
 import com.audacious_software.pdk.passivedatakit.R;
 
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -293,6 +305,69 @@ public class Generators {
 
             this.mWakeLocks.remove(tag);
         }
+    }
+
+    public ArrayList<Bundle> bundleForFiles(String media) {
+        ArrayList<Bundle> bundles = new ArrayList<>();
+
+        try {
+            JSONArray mediaUrls = new JSONArray(media);
+
+            for (int i = 0; i < mediaUrls.length(); i++) {
+                Bundle bundle = new Bundle();
+
+                String url = mediaUrls.getString(i);
+
+                Uri uri = Uri.parse(url);
+
+                bundle.putString("source-url", url);
+
+                String filename = uri.getLastPathSegment();
+                bundle.putString("filename", filename);
+
+                String contentType = "application/octet-stream";
+
+                String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+
+                if (extension != null) {
+                    contentType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+                }
+
+                bundle.putString("content-type", contentType);
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+                try {
+                    InputStream in = this.mContext.getContentResolver().openInputStream(uri);
+
+                    byte[] buf = new byte[1024];
+
+                    int n;
+
+                    while (-1 != (n = in.read(buf))) {
+                        baos.write(buf, 0, n);
+                    }
+
+                    byte[] bytes = baos.toByteArray();
+
+                    String encoded = Base64.encodeToString(bytes, Base64.NO_WRAP);
+
+                    bundle.putString("data", encoded);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                Log.e("ENVIRO", "MEDIA URL: " + url);
+
+                bundles.add(bundle);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return bundles;
     }
 
     private static class GeneratorsHolder {

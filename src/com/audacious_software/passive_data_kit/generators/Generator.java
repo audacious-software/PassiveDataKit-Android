@@ -15,12 +15,14 @@ import com.audacious_software.passive_data_kit.activities.generators.DataPointVi
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.pdk.passivedatakit.R;
 
+import org.json.JSONArray;
+
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-public abstract class Generator
-{
+public abstract class Generator {
     public static final String PDK_METADATA = "passive-data-metadata";
     public static final String IDENTIFIER = "generator-id";
     public static final String TIMESTAMP = "timestamp";
@@ -41,8 +43,7 @@ public abstract class Generator
 
     protected Context mContext = null;
 
-    public Generator(Context context)
-    {
+    public Generator(Context context) {
         this.mContext = context.getApplicationContext();
     }
 
@@ -78,7 +79,8 @@ public abstract class Generator
 
     @SuppressWarnings("unused")
     public static void bindViewHolder(DataPointViewHolder holder) {
-        Class currentClass = new Object() { }.getClass().getEnclosingClass();
+        Class currentClass = new Object() {
+        }.getClass().getEnclosingClass();
 
         String identifier = currentClass.getCanonicalName();
 
@@ -93,7 +95,8 @@ public abstract class Generator
 
     @SuppressWarnings("unused")
     public static void bindDisclosureViewHolder(GeneratorViewHolder holder) {
-        Class currentClass = new Object() { }.getClass().getEnclosingClass();
+        Class currentClass = new Object() {
+        }.getClass().getEnclosingClass();
 
         String identifier = currentClass.getCanonicalName();
 
@@ -133,7 +136,7 @@ public abstract class Generator
 
     protected int getDatabaseVersion(SQLiteDatabase db) {
         String where = "type = ? AND name = ?";
-        String[] args = { "table", Generator.TABLE_METADATA };
+        String[] args = {"table", Generator.TABLE_METADATA};
 
         Cursor c = db.query(Generator.TABLE_SQLITE_MASTER, null, where, args, null, null, null);
 
@@ -144,7 +147,7 @@ public abstract class Generator
         c.close();
 
         String versionWhere = Generator.TABLE_METADATA_KEY + " = ?";
-        String[] versionArgs = { "version" };
+        String[] versionArgs = {"version"};
 
         c = db.query(Generator.TABLE_METADATA, null, versionWhere, versionArgs, null, null, Generator.TABLE_METADATA_LAST_UPDATED + " DESC");
 
@@ -163,7 +166,7 @@ public abstract class Generator
         boolean keyExists = false;
 
         String versionWhere = Generator.TABLE_METADATA_KEY + " = ?";
-        String[] versionArgs = { "version" };
+        String[] versionArgs = {"version"};
 
         Cursor c = db.query(Generator.TABLE_METADATA, null, versionWhere, versionArgs, null, null, Generator.TABLE_METADATA_LAST_UPDATED + " DESC");
 
