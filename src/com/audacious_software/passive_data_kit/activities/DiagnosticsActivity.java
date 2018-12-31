@@ -4,9 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,6 +16,10 @@ import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.pdk.passivedatakit.R;
 
 import java.util.ArrayList;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 @SuppressWarnings("unused")
 public class DiagnosticsActivity extends AppCompatActivity {

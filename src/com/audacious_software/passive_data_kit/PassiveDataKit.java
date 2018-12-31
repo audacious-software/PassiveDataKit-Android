@@ -7,7 +7,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
@@ -17,6 +16,8 @@ import com.audacious_software.passive_data_kit.transmitters.Transmitter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.core.content.ContextCompat;
 
 @SuppressWarnings("PointlessBooleanExpression")
 public class PassiveDataKit {

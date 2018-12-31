@@ -15,8 +15,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.audacious_software.passive_data_kit.Logger;
@@ -44,6 +42,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;

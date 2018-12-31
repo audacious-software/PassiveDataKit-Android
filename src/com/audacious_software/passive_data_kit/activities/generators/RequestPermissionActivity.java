@@ -3,13 +3,14 @@ package com.audacious_software.passive_data_kit.activities.generators;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 
 import com.audacious_software.passive_data_kit.generators.services.GoogleFit;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.fitness.FitnessOptions;
 import com.google.android.gms.fitness.data.DataType;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 
 public class RequestPermissionActivity extends Activity
 {

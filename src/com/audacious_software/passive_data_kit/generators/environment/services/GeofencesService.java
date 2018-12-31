@@ -2,7 +2,6 @@ package com.audacious_software.passive_data_kit.generators.environment.services;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.support.annotation.Nullable;
 
 import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.generators.environment.Geofences;
@@ -12,6 +11,8 @@ import com.google.android.gms.location.GeofencingEvent;
 
 import java.util.HashMap;
 import java.util.List;
+
+import androidx.annotation.Nullable;
 
 public class GeofencesService extends IntentService {
     public GeofencesService() {

@@ -3,7 +3,6 @@ package com.audacious_software.passive_data_kit.activities.generators;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +22,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 public class GeneratorsAdapter extends RecyclerView.Adapter<GeneratorViewHolder> {
     private Context mContext = null;

@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -69,6 +68,8 @@ import com.microsoft.band.sensors.UVIndexLevel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import androidx.annotation.NonNull;
 
 @SuppressWarnings("SimplifiableIfStatement")
 public class MicrosoftBand extends Generator
