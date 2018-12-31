@@ -1,6 +1,7 @@
 package com.audacious_software.passive_data_kit.generators.environment;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
@@ -121,6 +122,7 @@ public class Geofences extends Generator {
         Geofences.getInstance(context).startGenerator();
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     private void startGenerator() {
         final Geofences me = this;
 
@@ -227,7 +229,7 @@ public class Geofences extends Generator {
                             if (fences.has("features")) {
                                 SharedPreferences.Editor e = prefs.edit();
                                 e.putString(Geofences.CACHED_GEOFENCES, fences.toString(2));
-                                e.commit();
+                                e.apply();
                             }
                         } catch (JSONException e) {
                             Logger.getInstance(me.mContext).logThrowable(e);
