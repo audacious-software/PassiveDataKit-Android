@@ -6,10 +6,10 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
-import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
 import com.audacious_software.pdk.passivedatakit.R;
+
+import androidx.core.app.NotificationCompat;
 
 public class ForegroundService extends Service {
     public static final String ACTION_START_SERVICE = "com.audacious_software.passive_data_kit.ForegroundService.ACTION_START_SERVICE";
@@ -37,6 +37,10 @@ public class ForegroundService extends Service {
     }
 
     public static Notification getForegroundNotification(Context context, Intent intent) {
+        return ForegroundService.getForegroundNotification(context, intent, R.drawable.ic_foreground_service);
+    }
+
+    public static Notification getForegroundNotification(Context context, Intent intent, int iconResource) {
         if (intent == null) {
             intent = context.getPackageManager().getLaunchIntentForPackage(context.getApplicationContext().getPackageName());
         }
@@ -49,7 +53,7 @@ public class ForegroundService extends Service {
         builder.setPriority(NotificationCompat.PRIORITY_MIN);
         builder.setSound(null);
 
-        builder.setSmallIcon(intent.getIntExtra(PassiveDataKit.NOTIFICATION_ICON_ID, R.drawable.ic_foreground_service));
+        builder.setSmallIcon(intent.getIntExtra(PassiveDataKit.NOTIFICATION_ICON_ID, iconResource));
 
         if (intent.hasExtra(PassiveDataKit.NOTIFICATION_COLOR)) {
             builder.setColor(intent.getIntExtra(PassiveDataKit.NOTIFICATION_COLOR, 0));

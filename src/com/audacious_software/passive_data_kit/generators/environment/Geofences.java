@@ -1,6 +1,7 @@
 package com.audacious_software.passive_data_kit.generators.environment;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
@@ -15,8 +16,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.audacious_software.passive_data_kit.Logger;
@@ -44,6 +43,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -121,6 +122,7 @@ public class Geofences extends Generator {
         Geofences.getInstance(context).startGenerator();
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     private void startGenerator() {
         final Geofences me = this;
 
@@ -212,6 +214,7 @@ public class Geofences extends Generator {
                     e.printStackTrace();
                 }
 
+                @SuppressLint("MissingPermission")
                 @Override
                 public void onResponse(Call call, final Response response) throws IOException {
                     JSONObject fences = new JSONObject();
@@ -231,7 +234,7 @@ public class Geofences extends Generator {
                             if (fences.has("features")) {
                                 SharedPreferences.Editor e = prefs.edit();
                                 e.putString(Geofences.CACHED_GEOFENCES, fences.toString(2));
-                                e.commit();
+                                e.apply();
                             }
                         } catch (JSONException e) {
                             Logger.getInstance(me.mContext).logThrowable(e);

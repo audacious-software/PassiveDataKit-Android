@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Typeface;
 import android.net.Uri;
@@ -18,10 +19,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.util.Base64;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
@@ -72,6 +69,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import androidx.annotation.NonNull;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 import okhttp3.Authenticator;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -264,10 +264,29 @@ public class Fitbit extends Generator {
 
         switch (version) {
             case 0:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_activity_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_heart_rate_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_sleep_history_table));
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_weight_history_table));
+                try {
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_activity_history_table));
+                } catch (SQLException ex) {
+                    // Table already exists...
+                }
+
+                try {
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_heart_rate_history_table));
+                } catch (SQLException ex) {
+                    // Table already exists...
+                }
+
+                try {
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_sleep_history_table));
+                } catch (SQLException ex) {
+                    // Table already exists...
+                }
+
+                try {
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_fitbit_create_weight_history_table));
+                } catch (SQLException ex) {
+                    // Table already exists...
+                }
         }
 
         if (version != Fitbit.DATABASE_VERSION) {
