@@ -166,6 +166,8 @@ public class GoogleFit extends Generator {
                 while (c.moveToNext()) {
                     steps += c.getLong(columnIndex);
                 }
+
+                c.close();
             }
         }
 

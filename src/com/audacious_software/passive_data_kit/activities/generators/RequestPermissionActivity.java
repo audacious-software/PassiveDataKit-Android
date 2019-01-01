@@ -1,18 +1,19 @@
 package com.audacious_software.passive_data_kit.activities.generators;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 
+import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.generators.services.GoogleFit;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.fitness.FitnessOptions;
 import com.google.android.gms.fitness.data.DataType;
+
+import java.util.HashMap;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 
 public class RequestPermissionActivity extends Activity
 {
@@ -63,32 +64,19 @@ public class RequestPermissionActivity extends Activity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.e("PDK", "REQUEST CODE: " + requestCode + " -- " + resultCode + " DATA: " + data);
-
-        if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == GOOGLE_FIT_PERMISSIONS_REQUEST_CODE) {
+        if (requestCode == GOOGLE_FIT_PERMISSIONS_REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
                 GoogleFit.stop(this);
                 GoogleFit.start(this);
 
                 this.finish();
+            } else {
+                HashMap<String, Object> payload = new HashMap<>();
+                payload.put("request-code", requestCode);
+                payload.put("result-code", resultCode);
 
-                return;
+                Logger.getInstance(this).log("pdk-fit-permission-failed", payload);
             }
         }
-
-        final RequestPermissionActivity me = this;
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Google Fit Permission Failed");
-        builder.setMessage("Report to chris@audacious-software.com:\n\nRequest Code: " + requestCode + "\nResult Code: " + resultCode);
-
-        builder.setPositiveButton("Close", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                me.finish();
-            }
-        });
-
-        builder.create().show();
     }
 }

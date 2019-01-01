@@ -1,11 +1,15 @@
 package com.audacious_software.passive_data_kit;
 
 import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
-import android.support.v4.content.ContextCompat;
+import android.preference.PreferenceManager;
+import android.util.Log;
 
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -13,7 +17,10 @@ import com.audacious_software.passive_data_kit.transmitters.Transmitter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+
+import androidx.core.content.ContextCompat;
 
 @SuppressWarnings("PointlessBooleanExpression")
 public class PassiveDataKit {
@@ -22,6 +29,7 @@ public class PassiveDataKit {
     public static final String NOTIFICATION_CHANNEL_ID = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_CHANNEL_ID";
     public static final String NOTIFICATION_ICON_ID = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_ICON_ID";
     public static final String NOTIFICATION_COLOR = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_COLOR";
+    private static final String FIREBASE_DEVICE_TOKEN = "com.audacious_software.passive_data_kit.PassiveDataKit.FIREBASE_DEVICE_TOKEN";
 
     private Context mContext = null;
     private boolean mStarted = false;
@@ -30,6 +38,7 @@ public class PassiveDataKit {
     private int mForegroundIconId = 0;
     private int mForegroundColor = 0;
     private PendingIntent mForegroundPendingIntent = null;
+    private boolean mAlwaysNotify = false;
 
     public void start() {
         synchronized (this) {
@@ -49,9 +58,12 @@ public class PassiveDataKit {
                 Thread t = new Thread(r);
                 t.start();
 
-                if (this.mStartForegroundService) {
+                Boolean notificationStarted = false;
+                if (this.mStartForegroundService || this.mAlwaysNotify) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         Intent intent = new Intent(ForegroundService.ACTION_START_SERVICE, null, this.mContext, ForegroundService.class);
+
+                        Log.e("PDK", "HAS CHANNEL ID: " + this.mForegroundChannelId);
 
                         if (this.mForegroundChannelId != null) {
                             intent.putExtra(PassiveDataKit.NOTIFICATION_CHANNEL_ID, this.mForegroundChannelId);
@@ -66,8 +78,20 @@ public class PassiveDataKit {
                         }
 
                         ContextCompat.startForegroundService(this.mContext, intent);
+
+                        notificationStarted = true;
                     }
                 }
+
+                if (this.mAlwaysNotify && notificationStarted == false) {
+                    Notification note = ForegroundService.getForegroundNotification(this.mContext, null);
+
+                    NotificationManager notes = (NotificationManager) this.mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+
+                    notes.notify(ForegroundService.getNotificationId(), note);
+                }
+
+                Log.i("PDK", "Passive Data Kit is running...");
             }
         }
     }
@@ -97,6 +121,10 @@ public class PassiveDataKit {
         this.mStartForegroundService = startService;
     }
 
+    public void setAlwaysNotify(boolean always) {
+        this.mAlwaysNotify = always;
+    }
+
     @SuppressWarnings("unused")
     public void setForegroundServiceChannelId(String channelId) {
         this.mForegroundChannelId = channelId;
@@ -118,6 +146,32 @@ public class PassiveDataKit {
 
     public void setForegroundPendingIntent(PendingIntent pendingIntent) {
         this.mForegroundPendingIntent = pendingIntent;
+    }
+
+    public void updateFirebaseDeviceToken(String token) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putString(PassiveDataKit.FIREBASE_DEVICE_TOKEN, token);
+        e.apply();
+
+        this.transmitTokens();
+
+    }
+
+    public void transmitTokens() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        if (prefs.contains(PassiveDataKit.FIREBASE_DEVICE_TOKEN)) {
+            String token = prefs.getString(PassiveDataKit.FIREBASE_DEVICE_TOKEN, null);
+
+            if (token != null) {
+                HashMap<String, Object> payload = new HashMap<>();
+                payload.put("token", token);
+
+                Logger.getInstance(this.mContext).log("pdk-firebase-token", payload);
+            }
+        }
     }
 
     private static class PassiveDataKitHolder {

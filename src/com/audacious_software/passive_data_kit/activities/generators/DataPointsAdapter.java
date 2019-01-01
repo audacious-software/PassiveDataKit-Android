@@ -3,7 +3,6 @@ package com.audacious_software.passive_data_kit.activities.generators;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -18,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder> {
     public static final String SORT_BY_UPDATED = "com.audacious_software.passive_data_kit.activities.generators.DataPointsAdapter";

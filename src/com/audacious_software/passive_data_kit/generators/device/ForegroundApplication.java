@@ -270,9 +270,7 @@ public class ForegroundApplication extends Generator{
             String application = c.getString(c.getColumnIndex(ForegroundApplication.HISTORY_APPLICATION));
 
             if (application != null) {
-                if (latest.contains(application)) {
-                    latest.remove(application);
-                }
+                latest.remove(application);
 
                 latest.add(0, application);
 
