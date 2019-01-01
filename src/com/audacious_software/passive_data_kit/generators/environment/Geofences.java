@@ -167,10 +167,7 @@ public class Geofences extends Generator {
             this.mHandler = null;
         }
 
-        HandlerThread handlerThread = new HandlerThread("pdk-geofences-worker");
-        handlerThread.start();
-        Looper looper = handlerThread.getLooper();
-        this.mHandler = new Handler(looper);
+        this.initializeHandler();
 
         this.mHandler.postDelayed(new Runnable() {
             @Override
@@ -178,6 +175,13 @@ public class Geofences extends Generator {
                 me.fetchGeofences(null);
             }
         }, 500);
+    }
+
+    private void initializeHandler() {
+        HandlerThread handlerThread = new HandlerThread("pdk-geofences-worker");
+        handlerThread.start();
+        Looper looper = handlerThread.getLooper();
+        this.mHandler = new Handler(looper);
     }
 
     public void setFencesURL(String url) {
@@ -546,6 +550,10 @@ public class Geofences extends Generator {
                         }
 
                         updated.putBundle(Geofences.HISTORY_FENCE_DETAILS, fenceDetails);
+
+                        if (this.mHandler == null) {
+                            this.initializeHandler();
+                        }
 
                         this.mHandler.post(new Runnable() {
                             @Override
