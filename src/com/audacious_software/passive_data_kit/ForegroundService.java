@@ -14,7 +14,7 @@ import androidx.core.app.NotificationCompat;
 public class ForegroundService extends Service {
     public static final String ACTION_START_SERVICE = "com.audacious_software.passive_data_kit.ForegroundService.ACTION_START_SERVICE";
 
-    private static final int NOTIFICATION_ID = 778642;
+    public static final int NOTIFICATION_ID = 778642;
 
     public IBinder onBind(Intent intent) {
         return null;
