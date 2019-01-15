@@ -3,9 +3,9 @@ language: android
 jdk: oraclejdk8
 
 before_install:
-  - wget http://services.gradle.org/distributions/gradle-4.6-bin.zip
-  - unzip gradle-4.6-bin.zip
-  - export GRADLE_HOME=$PWD/gradle-4.6
+  - wget http://services.gradle.org/distributions/gradle-5.1.1-bin.zip
+  - unzip gradle-5.1.1-bin.zip
+  - export GRADLE_HOME=$PWD/gradle-5.1.1
   - export PATH=$GRADLE_HOME/bin:$PATH
   - yes | sdkmanager "platforms;android-28"
   - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-28.0.3

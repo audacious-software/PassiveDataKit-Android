@@ -1,5 +1,4 @@
 apply plugin: 'com.android.library'
-
 buildscript {
     repositories {
         jcenter()
@@ -13,10 +12,9 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.2.1'
+        classpath 'com.android.tools.build:gradle:3.3.0'
     }
 }
-
 repositories {
     jcenter()
     maven {
@@ -28,11 +26,10 @@ repositories {
     maven {
         url "https://maven.google.com"
     }
-    flatDir{
+    flatDir {
         dirs 'libs'
     }
 }
-
 android {
     useLibrary 'org.apache.http.legacy'
 
@@ -91,6 +88,9 @@ android {
         api 'com.rvalerio:fgchecker:1.1.0'
         api 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
         api 'net.openid:appauth:0.7.0'
-        api(name:'amazon-maps-api-v2', ext:'aar')
+        api(name: 'amazon-maps-api-v2', ext: 'aar')
     }
+}
+
+dependencies {
 }
