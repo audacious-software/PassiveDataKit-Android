@@ -195,7 +195,7 @@ public class AppEvent extends Generator{
 
                             Object[] values = events.get(0);
 
-                            dateLabel.setText(Generator.formatTimestamp(activity, ((long) values[1]) / 1000));
+                            dateLabel.setText(Generator.formatTimestamp(activity, ((long) values[1]) / 1000.0));
 
                             final int pages = (int) Math.ceil(((double) events.size()) / AppEvent.CARD_PAGE_SIZE);
 
@@ -273,7 +273,7 @@ public class AppEvent extends Generator{
                                         TextView eventWhen = row.findViewById(R.id.app_event_row_event_when);
 
                                         eventName.setText(event);
-                                        eventWhen.setText(Generator.formatTimestamp(activity, timestamp / 1000));
+                                        eventWhen.setText(Generator.formatTimestamp(activity, timestamp / 1000.0));
                                     }
 
                                     list.setTag("" + position);

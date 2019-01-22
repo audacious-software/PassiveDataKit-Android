@@ -115,7 +115,7 @@ public class Generators {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "JavaReflectionInvocation"})
     private void stopGenerator(String className) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         if (this.mActiveGenerators.contains(className)) {
             Class<Generator> probeClass = (Class<Generator>) Class.forName(className);

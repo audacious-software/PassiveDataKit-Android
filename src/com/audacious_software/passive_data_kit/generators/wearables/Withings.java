@@ -10,7 +10,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Typeface;
 import android.net.Uri;
@@ -53,7 +52,6 @@ import net.openid.appauth.AuthorizationRequest;
 import net.openid.appauth.AuthorizationResponse;
 import net.openid.appauth.AuthorizationService;
 import net.openid.appauth.AuthorizationServiceConfiguration;
-import net.openid.appauth.ClientSecretBasic;
 import net.openid.appauth.ClientSecretPost;
 import net.openid.appauth.TokenRequest;
 import net.openid.appauth.TokenResponse;
@@ -84,7 +82,6 @@ import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
@@ -1655,7 +1652,7 @@ public class Withings extends Generator {
             pieChart.setData(data);
             pieChart.invalidate();
 
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
+            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000.0));
 
             TextView stepsValue = card.findViewById(R.id.field_steps);
             stepsValue.setText(context.getResources().getQuantityString(R.plurals.generator_withings_steps_value, (int) steps, (int) steps));
@@ -1814,10 +1811,10 @@ public class Withings extends Generator {
             }
         }
 
-        steps.add(new Entry((now / 1000) - start, stepSum));
-        distance.add(new Entry((now / 1000) - start, distanceSum));
-        elevation.add(new Entry((now / 1000) - start, elevationSum));
-        calories.add(new Entry((now / 1000) - start, caloriesSum));
+        steps.add(new Entry((now / 1000.0f) - start, stepSum));
+        distance.add(new Entry((now / 1000.0f) - start, distanceSum));
+        elevation.add(new Entry((now / 1000.0f) - start, elevationSum));
+        calories.add(new Entry((now / 1000.0f) - start, caloriesSum));
 
         Withings.populateIntradayChart(context, stepsChart, steps, 0, end - start);
         Withings.populateIntradayChart(context, distanceChart, distance, 0, end - start);

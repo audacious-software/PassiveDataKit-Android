@@ -97,11 +97,7 @@ public class PassiveDataKit {
     }
 
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
-        ArrayList<DiagnosticAction> actions = new ArrayList<>();
-
-        actions.addAll(Generators.getInstance(context).diagnostics(context));
-
-        return actions;
+        return new ArrayList<>(Generators.getInstance(context).diagnostics(context));
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")

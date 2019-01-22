@@ -528,7 +528,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (timestamp > 0) {
-            dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000));
+            dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000.0));
         } else {
             dateLabel.setText(R.string.label_never_pdk);
         }
