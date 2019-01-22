@@ -3,10 +3,13 @@ package com.audacious_software.passive_data_kit.messaging;
 import android.app.Application;
 import android.util.Log;
 
+import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.PassiveDataKitApplication;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import java.util.HashMap;
 
 public class FirebasePushNotificationService extends FirebaseMessagingService {
     @Override
@@ -30,9 +33,12 @@ public class FirebasePushNotificationService extends FirebaseMessagingService {
             }
         }
 
+        HashMap<String, Object> payload = new HashMap<>();
+
         // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
             Log.e("PDK", "Message Notification Body: " + remoteMessage.getNotification().getBody());
+            payload.put("body", remoteMessage.getNotification().getBody());
         }
 
         Application sharedApp = this.getApplication();
@@ -42,5 +48,7 @@ public class FirebasePushNotificationService extends FirebaseMessagingService {
 
             pdkApp.doBackgroundWork();
         }
+
+        Logger.getInstance(this).log("pdk-received-firebase-message", payload);
     }
 }
