@@ -76,11 +76,8 @@ public abstract class Generator {
     }
 
     @SuppressWarnings("unused")
-    public static void bindViewHolder(DataPointViewHolder holder) {
-        Class currentClass = new Object() {
-        }.getClass().getEnclosingClass();
-
-        String identifier = currentClass.getCanonicalName();
+    public static void bindViewHolder(DataPointViewHolder holder, Class generatorClass) {
+        String identifier = generatorClass.getCanonicalName();
 
         TextView generatorLabel = holder.itemView.findViewById(R.id.label_generator);
 

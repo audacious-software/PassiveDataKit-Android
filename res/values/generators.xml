@@ -305,5 +305,9 @@
 
     <!-- Geofences -->
     <string name="generator_environment_geofences">Geofences</string>
+
+    <!-- Google Awareness -->
+    <string name="generator_google_awareness">Google Awareness</string>
+    <string name="message_generator_google_awareness_empty">Awaiting first data&#8230;</string>
 </resources>
 

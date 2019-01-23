@@ -80,11 +80,9 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
             AppEvent.getInstance(this.mContext).logThrowable(e);
 
             try {
-                generatorClass = Generator.class;
+                Method bindViewHolder = Generator.class.getDeclaredMethod("bindViewHolder", DataPointViewHolder.class, Class.class);
 
-                Method bindViewHolder = generatorClass.getDeclaredMethod("bindViewHolder", DataPointViewHolder.class);
-
-                bindViewHolder.invoke(null, holder);
+                bindViewHolder.invoke(null, holder, generatorClass);
             } catch (NoSuchMethodException e1) {
                 Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
             } catch (InvocationTargetException e1) {

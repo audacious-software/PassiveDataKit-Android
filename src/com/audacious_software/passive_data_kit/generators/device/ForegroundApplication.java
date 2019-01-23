@@ -458,8 +458,7 @@ public class ForegroundApplication extends Generator{
     }
 
     @SuppressWarnings("unused")
-    public static View fetchView(ViewGroup parent)
-    {
+    public static View fetchView(ViewGroup parent) {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_foreground_application, parent, false);
     }
 
