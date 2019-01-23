@@ -472,7 +472,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                     activity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            dateLabel.setText(Generator.formatTimestamp(context, lastGenerated / 1000));
+                            dateLabel.setText(Generator.formatTimestamp(context, lastGenerated / 1000.0));
                         }
                     });
 

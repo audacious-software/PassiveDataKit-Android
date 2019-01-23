@@ -527,7 +527,7 @@ public class PhoneCalls extends Generator {
             durationField.setText(context.getString(R.string.generator_phone_calls_duration_format, ((float) lastDuration) / 60));
             directionField.setText(callType);
 
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
+            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000.0));
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);

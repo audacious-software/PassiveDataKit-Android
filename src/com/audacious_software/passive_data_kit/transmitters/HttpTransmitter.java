@@ -32,6 +32,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -153,7 +154,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                     this.mUserId = this.mHashPrefix + this.mUserId;
                 }
 
-                byte[] digest = md.digest(this.mUserId.getBytes("UTF-8"));
+                byte[] digest = md.digest(this.mUserId.getBytes(StandardCharsets.UTF_8));
 
                 this.mUserId = (new BigInteger(1, digest)).toString(16);
 
@@ -161,8 +162,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                     this.mUserId = "0" + this.mUserId;
                 }
             } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
         }

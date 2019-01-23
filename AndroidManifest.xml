@@ -38,7 +38,8 @@
             </intent-filter>
         </service>
         <service android:name="com.audacious_software.passive_data_kit.generators.environment.services.GeofencesService" />
-        <service android:name="com.audacious_software.passive_data_kit.messaging.FirebasePushNotificationService">
+        <service android:name="com.audacious_software.passive_data_kit.messaging.FirebasePushNotificationService"
+            tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>

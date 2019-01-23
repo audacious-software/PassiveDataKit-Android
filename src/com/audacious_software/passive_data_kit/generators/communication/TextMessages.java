@@ -456,7 +456,7 @@ public class TextMessages extends Generator {
             lengthField.setText(context.getResources().getQuantityString(R.plurals.generator_text_messages_length_format, lastLength, lastLength));
             directionField.setText(lastDirection);
 
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
+            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000.0));
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);

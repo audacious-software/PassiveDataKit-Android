@@ -475,7 +475,7 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (timestamp > 0) {
-            dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000));
+            dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000.0));
             cardEmpty.setVisibility(View.GONE);
             cardContent.setVisibility(View.VISIBLE);
 

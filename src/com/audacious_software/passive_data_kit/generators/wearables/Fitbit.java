@@ -19,7 +19,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.util.Base64;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -58,7 +57,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -1324,7 +1322,7 @@ public class Fitbit extends Generator {
             pieChart.setData(data);
             pieChart.invalidate();
 
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
+            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000.0));
 
             TextView stepsValue = card.findViewById(R.id.field_steps);
             stepsValue.setText(context.getResources().getQuantityString(R.plurals.generator_fitbit_steps_value, (int) steps, (int) steps));
