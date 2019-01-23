@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,10 +28,13 @@ import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.environment.services.GeofencesService;
 import com.audacious_software.pdk.passivedatakit.R;
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
@@ -41,6 +45,8 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -72,10 +78,31 @@ public class Geofences extends Generator {
     private static final String INITIAL_TRIGGERS = "com.audacious_software.passive_data_kit.generators.environment.Geofences.INITIAL_TRIGGERS";
     private static final int INITIAL_TRIGGERS_DEFAULT = GeofencingRequest.INITIAL_TRIGGER_ENTER | GeofencingRequest.INITIAL_TRIGGER_EXIT;
 
+    private static final String CUSTOM_FENCE_NAME = "com.audacious_software.passive_data_kit.generators.environment.Geofences.CUSTOM_FENCE_NAME";
+    private static final String CUSTOM_FENCE_NAME_DEFAULT = "???";
+    private static final String CUSTOM_FENCE_IDENTIFIER = "com.audacious_software.passive_data_kit.generators.environment.Geofences.CUSTOM_FENCE_IDENTIFIER";
+    private static final int CUSTOM_FENCE_IDENTIFIER_DEFAULT = 0;
+    private static final String CUSTOM_FENCE_ADDRESS = "com.audacious_software.passive_data_kit.generators.environment.Geofences.CUSTOM_FENCE_ADDRESS";
+    private static final String CUSTOM_FENCE_RADIUS = "com.audacious_software.passive_data_kit.generators.environment.Geofences.CUSTOM_FENCE_RADIUS";
+    private static final float CUSTOM_FENCE_RADIUS_DEFAULT = 200;
+    private static final String CUSTOM_FENCE_DWELL_MINUTES = "com.audacious_software.passive_data_kit.generators.environment.Geofences.CUSTOM_FENCE_DWELL_MINUTES";
+    private static final float CUSTOM_FENCE_DWELL_MINUTES_DEFAULT = 30;
+    private static final String CUSTOM_FENCE_WINDOW_MINUTES = "com.audacious_software.passive_data_kit.generators.environment.Geofences.CUSTOM_FENCE_WINDOW_MINUTES";
+    private static final float CUSTOM_FENCE_WINDOW_MINUTES_DEFAULT = 45;
+    private static final String CUSTOM_FENCE_LATITUDE = "com.audacious_software.passive_data_kit.generators.environment.Geofences.CUSTOM_FENCE_LATITUDE";
+    private static final float CUSTOM_FENCE_LATITUDE_DEFAULT = 0;
+    private static final String CUSTOM_FENCE_LONGITUDE = "com.audacious_software.passive_data_kit.generators.environment.Geofences.CUSTOM_FENCE_LONGITUDE";
+    private static final float CUSTOM_FENCE_LONGITUDE_DEFAULT = 0;
+
     private static Geofences sInstance = null;
+
+    private static int MAX_ACTIVE_FENCES = 95;
 
     private GeofencingClient mGeofencingClient;
     private PendingIntent mGeofencePendingIntent;
+
+    private FusedLocationProviderClient mFusedLocationClient;
+
     private Handler mHandler = null;
 
     private SQLiteDatabase mDatabase = null;
@@ -131,6 +158,10 @@ public class Geofences extends Generator {
             public void run() {
                 if (me.mGeofencingClient == null) {
                     me.mGeofencingClient = LocationServices.getGeofencingClient(me.mContext);
+                }
+
+                if (me.mFusedLocationClient == null) {
+                    me.mFusedLocationClient = LocationServices.getFusedLocationProviderClient(me.mContext);
                 }
             }
         };
@@ -195,96 +226,152 @@ public class Geofences extends Generator {
     }
 
     public void fetchGeofences(final Runnable next) {
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-
-        final String fencesUrl = prefs.getString(Geofences.LAST_FENCES_URL, null);
-
         final Geofences me = this;
 
-        if (fencesUrl != null) {
-            OkHttpClient client = new OkHttpClient();
-
-            final Request request = new Request.Builder()
-                    .url(fencesUrl)
-                    .build();
-
-            client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    e.printStackTrace();
+        this.mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                if (location == null) {
+                    location = new Location("passive-data-kit");
+                    location.setLatitude(41.8781);
+                    location.setLongitude(-87.6298);
                 }
 
-                @SuppressLint("MissingPermission")
-                @Override
-                public void onResponse(Call call, final Response response) throws IOException {
-                    JSONObject fences = new JSONObject();
+                final Location sortLocation = location;
 
-                    try {
-                        fences = new JSONObject(prefs.getString(Geofences.CACHED_GEOFENCES, "{}"));
-                    } catch (JSONException e) {
-                        Logger.getInstance(me.mContext).logThrowable(e);
-                    }
+                final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
-                    if (!response.isSuccessful()) {
-                        Logger.getInstance(me.mContext).logThrowable(new IOException("Unexpected code " + response));
-                    } else {
-                        try {
-                            fences = new JSONObject(response.body().string());
+                final String fencesUrl = prefs.getString(Geofences.LAST_FENCES_URL, null);
+
+                if (fencesUrl != null) {
+                    OkHttpClient client = new OkHttpClient();
+
+                    final Request request = new Request.Builder()
+                            .url(fencesUrl)
+                            .build();
+
+                    client.newCall(request).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        @SuppressLint("MissingPermission")
+                        @Override
+                        public void onResponse(Call call, final Response response) throws IOException {
+                            JSONObject fences = new JSONObject();
+
+                            try {
+                                fences = new JSONObject(prefs.getString(Geofences.CACHED_GEOFENCES, "{}"));
+                            } catch (JSONException e) {
+                                Logger.getInstance(me.mContext).logThrowable(e);
+                            }
+
+                            if (!response.isSuccessful()) {
+                                Logger.getInstance(me.mContext).logThrowable(new IOException("Unexpected code " + response));
+                            } else {
+                                try {
+                                    fences = new JSONObject(response.body().string());
+
+                                    if (fences.has("features")) {
+                                        SharedPreferences.Editor e = prefs.edit();
+                                        e.putString(Geofences.CACHED_GEOFENCES, fences.toString(2));
+                                        e.apply();
+                                    }
+                                } catch (JSONException e) {
+                                    Logger.getInstance(me.mContext).logThrowable(e);
+                                }
+                            }
 
                             if (fences.has("features")) {
-                                SharedPreferences.Editor e = prefs.edit();
-                                e.putString(Geofences.CACHED_GEOFENCES, fences.toString(2));
-                                e.apply();
-                            }
-                        } catch (JSONException e) {
-                            Logger.getInstance(me.mContext).logThrowable(e);
-                        }
-                    }
+                                try {
+                                    JSONArray features = fences.getJSONArray("features");
 
-                    if (fences.has("features")) {
-                        try {
-                            JSONArray features = fences.getJSONArray("features");
+                                    ArrayList<JSONObject> fenceList = new ArrayList<>();
 
-                            ArrayList<Geofence> fenceList = new ArrayList<>();
+                                    JSONObject customFence = me.getCustomGeofence();
 
-                            for (int i = 0; i < features.length(); i++) {
-                                fenceList.add(me.buildFence(features.getJSONObject(i)));
-                            }
+                                    if (customFence != null) {
+                                        fenceList.add(customFence);
+                                    }
 
-                            GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+                                    for (int i = 0; i < features.length(); i++) {
+                                        fenceList.add(features.getJSONObject(i));
+                                    }
 
-                            builder.setInitialTrigger(me.getInitialTriggers());
+                                    Collections.sort(fenceList, new Comparator<JSONObject>() {
+                                        @Override
+                                        public int compare(JSONObject one, JSONObject two) {
+                                            try {
+                                                JSONArray oneCoordinates = one.getJSONObject("geometry").getJSONArray("coordinates");
 
-                            builder.addGeofences(fenceList);
+                                                Location oneLocation = new Location("passive-data-kit");
+                                                oneLocation.setLongitude(oneCoordinates.getDouble(0));
+                                                oneLocation.setLatitude(oneCoordinates.getDouble(1));
 
-                            final GeofencingRequest request = builder.build();
+                                                JSONArray twoCoordinates = two.getJSONObject("geometry").getJSONArray("coordinates");
 
-                            me.mGeofencingClient.removeGeofences(me.mGeofencePendingIntent);
+                                                Location twoLocation = new Location("passive-data-kit");
+                                                twoLocation.setLongitude(twoCoordinates.getDouble(0));
+                                                twoLocation.setLatitude(twoCoordinates.getDouble(1));
 
-                            if (ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                                me.mGeofencingClient.addGeofences(request, me.mGeofencePendingIntent)
-                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                            @Override
-                                            public void onSuccess(Void aVoid) {
-                                                if (next != null) {
-                                                    next.run();
-                                                }
+                                                Float oneDistance = sortLocation.distanceTo(oneLocation);
+
+                                                Float twoDistance = sortLocation.distanceTo(twoLocation);
+
+                                                return oneDistance.compareTo(twoDistance);
+                                            } catch (JSONException e) {
+                                                e.printStackTrace();
                                             }
-                                        })
-                                        .addOnFailureListener(new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull Exception e) {
-                                                Log.e("PDK", "GEOFENCE FENCES REGISTER FAILED: " + e);
-                                            }
-                                        });
+
+                                            return 0;
+                                        }
+                                    });
+
+                                    ArrayList<Geofence> activeFences = new ArrayList<>();
+
+                                    GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+
+                                    builder.setInitialTrigger(me.getInitialTriggers());
+
+                                    for (JSONObject fenceDef : fenceList) {
+                                        if (activeFences.size() < Geofences.MAX_ACTIVE_FENCES) {
+                                            activeFences.add(me.buildFence(fenceDef));
+                                        }
+                                    }
+
+                                    builder.addGeofences(activeFences);
+
+                                    final GeofencingRequest request = builder.build();
+
+                                    me.mGeofencingClient.removeGeofences(me.mGeofencePendingIntent);
+
+                                    if (ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                        me.mGeofencingClient.addGeofences(request, me.mGeofencePendingIntent)
+                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void aVoid) {
+                                                        if (next != null) {
+                                                            next.run();
+                                                        }
+                                                    }
+                                                })
+                                                .addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull Exception e) {
+                                                        Log.e("PDK", "GEOFENCE FENCES REGISTER FAILED: " + e);
+                                                    }
+                                                });
+                                    }
+                                } catch (JSONException e) {
+                                    Logger.getInstance(me.mContext).logThrowable(e);
+                                }
                             }
-                        } catch (JSONException e) {
-                            Logger.getInstance(me.mContext).logThrowable(e);
                         }
-                    }
+                    });
                 }
-            });
-        }
+            }
+        });
     }
 
     private int getInitialTriggers() {
@@ -478,6 +565,12 @@ public class Geofences extends Generator {
             if (fencesJson.has("features")) {
                 JSONArray features = fencesJson.getJSONArray("features");
 
+                JSONObject customFence = this.getCustomGeofence();
+
+                if (customFence != null) {
+                    features.put(customFence);
+                }
+
                 for (int i = 0; i < features.length(); i++) {
                     fences.add(features.getJSONObject(i));
                 }
@@ -501,6 +594,12 @@ public class Geofences extends Generator {
 
             if (fencesJson.has("features")) {
                 JSONArray features = fencesJson.getJSONArray("features");
+
+                JSONObject customFence = this.getCustomGeofence();
+
+                if (customFence != null) {
+                    features.put(customFence);
+                }
 
                 for (int i = 0; i < features.length() && found == false; i++) {
                     JSONObject fence = features.getJSONObject(i);
@@ -584,5 +683,84 @@ public class Geofences extends Generator {
         } catch (JSONException e) {
             Logger.getInstance(this.mContext).logThrowable(e);
         }
+    }
+
+    private JSONObject getCustomGeofence() {
+        try {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+            if (prefs.contains(Geofences.CUSTOM_FENCE_NAME)) {
+                JSONObject feature = new JSONObject();
+                feature.put("type", "Feature");
+
+                JSONObject properties = new JSONObject();
+
+                properties.put("name", prefs.getString(Geofences.CUSTOM_FENCE_NAME, Geofences.CUSTOM_FENCE_NAME_DEFAULT));
+                properties.put("identifier", prefs.getInt(Geofences.CUSTOM_FENCE_IDENTIFIER, Geofences.CUSTOM_FENCE_IDENTIFIER_DEFAULT));
+                properties.put("address", prefs.getString(Geofences.CUSTOM_FENCE_ADDRESS, null));
+                properties.put("radius", prefs.getFloat(Geofences.CUSTOM_FENCE_RADIUS, Geofences.CUSTOM_FENCE_RADIUS_DEFAULT));
+                properties.put("dwell_minutes", prefs.getFloat(Geofences.CUSTOM_FENCE_DWELL_MINUTES, Geofences.CUSTOM_FENCE_DWELL_MINUTES_DEFAULT));
+                properties.put("window_minutes", prefs.getFloat(Geofences.CUSTOM_FENCE_WINDOW_MINUTES, Geofences.CUSTOM_FENCE_WINDOW_MINUTES_DEFAULT));
+                properties.put("center_latitude", prefs.getFloat(Geofences.CUSTOM_FENCE_LATITUDE, Geofences.CUSTOM_FENCE_LATITUDE_DEFAULT));
+                properties.put("center_longitude", prefs.getFloat(Geofences.CUSTOM_FENCE_LONGITUDE, Geofences.CUSTOM_FENCE_LONGITUDE_DEFAULT));
+
+                feature.put("properties", properties);
+
+                JSONObject geometry = new JSONObject();
+                geometry.put("type", "Point");
+
+                JSONArray coordinates = new JSONArray();
+                coordinates.put(prefs.getFloat(Geofences.CUSTOM_FENCE_LONGITUDE, Geofences.CUSTOM_FENCE_LONGITUDE_DEFAULT));
+                coordinates.put(prefs.getFloat(Geofences.CUSTOM_FENCE_LATITUDE, Geofences.CUSTOM_FENCE_LATITUDE_DEFAULT));
+
+                geometry.put("coordinates", coordinates);
+
+                feature.put("geometry", geometry);
+
+                return feature;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public void setCustomGeofence(Place place, int identifier) {
+        this.clearCustomGeofence();
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putString(Geofences.CUSTOM_FENCE_NAME, place.getName().toString());
+        e.putInt(Geofences.CUSTOM_FENCE_IDENTIFIER, identifier);
+
+        LatLng location = place.getLatLng();
+
+        e.putFloat(Geofences.CUSTOM_FENCE_LATITUDE, (float) location.latitude);
+        e.putFloat(Geofences.CUSTOM_FENCE_LONGITUDE, (float) location.longitude);
+
+        e.apply();
+
+        this.fetchGeofences(null);
+    }
+
+    public void clearCustomGeofence() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.remove(Geofences.CUSTOM_FENCE_NAME);
+        e.remove(Geofences.CUSTOM_FENCE_IDENTIFIER);
+        e.remove(Geofences.CUSTOM_FENCE_ADDRESS);
+        e.remove(Geofences.CUSTOM_FENCE_RADIUS);
+        e.remove(Geofences.CUSTOM_FENCE_DWELL_MINUTES);
+        e.remove(Geofences.CUSTOM_FENCE_WINDOW_MINUTES);
+        e.remove(Geofences.CUSTOM_FENCE_LATITUDE);
+        e.remove(Geofences.CUSTOM_FENCE_LATITUDE);
+        e.remove(Geofences.CUSTOM_FENCE_LONGITUDE);
+
+        e.apply();
+
+        this.recordTransition("0", "exit", System.currentTimeMillis());
     }
 }
