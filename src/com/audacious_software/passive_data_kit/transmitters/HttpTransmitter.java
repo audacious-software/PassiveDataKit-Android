@@ -199,6 +199,10 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         Generators.getInstance(this.mContext).addNewGeneratorUpdatedListener(this);
     }
 
+    public void deinitialize(Context context) {
+        Generators.getInstance(this.mContext).removeGeneratorUpdatedListener(this);
+    }
+
     private boolean shouldAttemptUpload(boolean force) {
         if (force) {
             return true;

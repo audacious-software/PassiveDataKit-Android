@@ -63,6 +63,7 @@ public class GoogleFit extends Generator {
     private static final String STEP_COUNT_STEPS = "steps";
 
     public static final String READING_TYPE_STEP_DELTA = "com.google.step_count.delta";
+    public static final String READING_TYPE_SPEED = "com.google.step_count.delta";
 
     public static final String READING_TYPE = "reading-type";
 
