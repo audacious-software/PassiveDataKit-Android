@@ -592,4 +592,12 @@ public class GoogleFit extends Generator {
         this. mFetchBackInterval = fetchBackInterval;
     }
 
+    public void needsFullRefresh() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.remove(GoogleFit.LATEST_FETCH);
+
+        e.apply();
+    }
 }
