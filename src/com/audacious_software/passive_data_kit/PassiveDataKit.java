@@ -7,8 +7,9 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
 import android.os.Build;
-import android.support.v4.content.ContextCompat;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
@@ -26,6 +27,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import androidx.core.content.ContextCompat;
+
 @SuppressWarnings("PointlessBooleanExpression")
 public class PassiveDataKit {
     private static final String STORAGE_PATH = "passive-data-kit";
@@ -33,6 +36,7 @@ public class PassiveDataKit {
     public static final String NOTIFICATION_CHANNEL_ID = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_CHANNEL_ID";
     public static final String NOTIFICATION_ICON_ID = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_ICON_ID";
     public static final String NOTIFICATION_COLOR = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_COLOR";
+    private static final String FIREBASE_DEVICE_TOKEN = "com.audacious_software.passive_data_kit.PassiveDataKit.FIREBASE_DEVICE_TOKEN";
 
     private Context mContext = null;
     private boolean mStarted = false;
@@ -92,16 +96,14 @@ public class PassiveDataKit {
 
                     notes.notify(ForegroundService.getNotificationId(), note);
                 }
+
+                Log.i("PDK", "Passive Data Kit is running...");
             }
         }
     }
 
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
-        ArrayList<DiagnosticAction> actions = new ArrayList<>();
-
-        actions.addAll(Generators.getInstance(context).diagnostics(context));
-
-        return actions;
+        return new ArrayList<>(Generators.getInstance(context).diagnostics(context));
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -148,6 +150,31 @@ public class PassiveDataKit {
         this.mForegroundPendingIntent = pendingIntent;
     }
 
+    public void updateFirebaseDeviceToken(String token) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putString(PassiveDataKit.FIREBASE_DEVICE_TOKEN, token);
+        e.apply();
+
+        this.transmitTokens();
+
+    }
+
+    public void transmitTokens() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        if (prefs.contains(PassiveDataKit.FIREBASE_DEVICE_TOKEN)) {
+            String token = prefs.getString(PassiveDataKit.FIREBASE_DEVICE_TOKEN, null);
+
+            if (token != null) {
+                HashMap<String, Object> payload = new HashMap<>();
+                payload.put("token", token);
+
+                Logger.getInstance(this.mContext).log("pdk-firebase-token", payload);
+            }
+        }
+    }
 
     private static class PassiveDataKitHolder {
         @SuppressLint("StaticFieldLeak")

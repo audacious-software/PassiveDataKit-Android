@@ -329,6 +329,8 @@ public class ScreenState extends Generator{
             lastState = c.getString(c.getColumnIndex(ScreenState.HISTORY_STATE));
         }
 
+        c.close();
+
         if (activeStates.size() > 0) {
             long firstTimestamp = activeTimestamps.get(0);
             String firstState = activeStates.get(0);

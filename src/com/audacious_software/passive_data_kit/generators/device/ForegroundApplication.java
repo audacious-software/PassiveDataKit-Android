@@ -292,9 +292,7 @@ public class ForegroundApplication extends Generator{
             String application = c.getString(c.getColumnIndex(ForegroundApplication.HISTORY_APPLICATION));
 
             if (application != null) {
-                if (latest.contains(application)) {
-                    latest.remove(application);
-                }
+                latest.remove(application);
 
                 latest.add(0, application);
 
@@ -436,14 +434,14 @@ public class ForegroundApplication extends Generator{
                     }
 
                     TextView appWhen = row.findViewById(R.id.app_last_used);
-                    appWhen.setText(Generator.formatTimestamp(context, appWhens.get(appPackage) / 1000));
+                    appWhen.setText(Generator.formatTimestamp(context, appWhens.get(appPackage) / 1000.0));
                 }
             }
 
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
 
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
+            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000.0));
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);

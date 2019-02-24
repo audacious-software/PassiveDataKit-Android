@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
 import android.os.BadParcelableException;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -33,6 +32,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -154,7 +154,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                     this.mUserId = this.mHashPrefix + this.mUserId;
                 }
 
-                byte[] digest = md.digest(this.mUserId.getBytes("UTF-8"));
+                byte[] digest = md.digest(this.mUserId.getBytes(StandardCharsets.UTF_8));
 
                 this.mUserId = (new BigInteger(1, digest)).toString(16);
 
@@ -162,8 +162,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                     this.mUserId = "0" + this.mUserId;
                 }
             } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -199,6 +197,10 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         this.mContext = context.getApplicationContext();
 
         Generators.getInstance(this.mContext).addNewGeneratorUpdatedListener(this);
+    }
+
+    public void deinitialize(Context context) {
+        Generators.getInstance(this.mContext).removeGeneratorUpdatedListener(this);
     }
 
     private boolean shouldAttemptUpload(boolean force) {
@@ -358,10 +360,12 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 // Create a trust manager that does not validate certificate chains
                 final TrustManager[] trustAllCerts = new TrustManager[] {
                         new X509TrustManager() {
+                            @SuppressLint("TrustAllX509TrustManager")
                             @Override
                             public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
                             }
 
+                            @SuppressLint("TrustAllX509TrustManager")
                             @Override
                             public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
                             }

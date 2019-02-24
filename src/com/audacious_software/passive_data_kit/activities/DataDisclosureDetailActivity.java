@@ -3,8 +3,6 @@ package com.audacious_software.passive_data_kit.activities;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,6 +20,9 @@ import com.audacious_software.pdk.passivedatakit.R;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class DataDisclosureDetailActivity extends AppCompatActivity {
     public static class Action {

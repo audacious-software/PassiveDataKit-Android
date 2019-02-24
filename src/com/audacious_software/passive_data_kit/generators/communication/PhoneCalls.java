@@ -16,7 +16,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.CallLog;
-import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,6 +43,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import androidx.core.content.ContextCompat;
 
 @SuppressWarnings("SimplifiableIfStatement")
 @SuppressLint("InlinedApi")
@@ -526,7 +527,7 @@ public class PhoneCalls extends Generator {
             durationField.setText(context.getString(R.string.generator_phone_calls_duration_format, ((float) lastDuration) / 60));
             directionField.setText(callType);
 
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
+            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000.0));
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);

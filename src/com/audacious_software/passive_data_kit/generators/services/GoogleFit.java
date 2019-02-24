@@ -63,6 +63,7 @@ public class GoogleFit extends Generator {
     private static final String STEP_COUNT_STEPS = "steps";
 
     public static final String READING_TYPE_STEP_DELTA = "com.google.step_count.delta";
+    public static final String READING_TYPE_SPEED = "com.google.step_count.delta";
 
     public static final String READING_TYPE = "reading-type";
 
@@ -166,6 +167,8 @@ public class GoogleFit extends Generator {
                 while (c.moveToNext()) {
                     steps += c.getLong(columnIndex);
                 }
+
+                c.close();
             }
         }
 
@@ -594,4 +597,12 @@ public class GoogleFit extends Generator {
         return GoogleFit.GENERATOR_IDENTIFIER;
     }
 
+    public void needsFullRefresh() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.remove(GoogleFit.LATEST_FETCH);
+
+        e.apply();
+    }
 }

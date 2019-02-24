@@ -22,7 +22,6 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,6 +49,8 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import androidx.core.content.ContextCompat;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class AmbientLight extends SensorGenerator implements SensorEventListener {
@@ -335,7 +336,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
 
-            dateLabel.setText(Generator.formatTimestamp(context, AmbientLight.latestPointGenerated(context) / 1000));
+            dateLabel.setText(Generator.formatTimestamp(context, AmbientLight.latestPointGenerated(context) / 1000.0));
 
             final LineChart chart = holder.itemView.findViewById(R.id.light_chart);
             chart.setNoDataText(context.getString(R.string.pdk_generator_chart_loading_data));

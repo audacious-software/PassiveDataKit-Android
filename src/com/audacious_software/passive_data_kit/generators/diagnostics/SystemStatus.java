@@ -16,7 +16,6 @@ import android.os.Bundle;
 import android.os.StatFs;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
-import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,6 +45,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+
+import androidx.core.content.ContextCompat;
 
 @SuppressWarnings("SimplifiableIfStatement")
 @SuppressLint("NewApi")

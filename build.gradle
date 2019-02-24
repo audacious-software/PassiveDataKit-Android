@@ -1,5 +1,4 @@
 apply plugin: 'com.android.library'
-
 buildscript {
     repositories {
         jcenter()
@@ -13,11 +12,11 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.2.1'
+        classpath 'com.android.tools.build:gradle:3.3.1'
     }
 }
-
 repositories {
+    google()
     jcenter()
     maven {
         url "https://jitpack.io"
@@ -25,14 +24,10 @@ repositories {
     maven {
         url 'https://dl.bintray.com/rvalerio/maven'
     }
-    maven {
-        url "https://maven.google.com"
-    }
-    flatDir{
+    flatDir {
         dirs 'libs'
     }
 }
-
 android {
     useLibrary 'org.apache.http.legacy'
 
@@ -59,22 +54,28 @@ android {
         androidTest.setRoot('tests')
     }
 
+    lintOptions {
+        abortOnError false
+    }
+
     dependencies {
         api fileTree(dir: 'libs', include: ['*.jar'])
         // testCompile 'junit:junit:4.12'
-        api 'com.android.support:appcompat-v7:28.0.0'
-        api 'com.android.support:recyclerview-v7:28.0.0'
-        api 'com.android.support:support-media-compat:28.0.0'
-        api 'com.android.support:support-v4:28.0.0'
-        api 'com.android.support:cardview-v7:28.0.0'
-        api 'com.android.support:customtabs:28.0.0'
+        api 'androidx.appcompat:appcompat:1.0.2'
+        api 'androidx.recyclerview:recyclerview:1.0.0'
+        api 'androidx.media:media:1.0.1'
+        api 'androidx.legacy:legacy-support-v4:1.0.0'
+        api 'androidx.cardview:cardview:1.0.0'
+        api 'androidx.browser:browser:1.0.0'
         api 'com.google.android.gms:play-services-location:16.0.0'
-        api 'com.google.android.gms:play-services-maps:16.0.0'
+        api 'com.google.android.gms:play-services-maps:16.1.0'
         api 'com.google.android.gms:play-services-nearby:16.0.0'
         api 'com.google.android.gms:play-services-places:16.0.0'
         api 'com.google.android.gms:play-services-awareness:16.0.0'
         api 'com.google.android.gms:play-services-fitness:16.0.1'
         api 'com.google.android.gms:play-services-auth:16.0.1'
+        api 'com.google.firebase:firebase-core:16.0.7'
+        api 'com.google.firebase:firebase-messaging:17.4.0'
         api 'com.google.maps.android:android-maps-utils:0.4'
         api 'com.squareup.okhttp3:okhttp:3.11.0'
         api 'commons-io:commons-io:2.6'
@@ -85,6 +86,9 @@ android {
         api 'com.rvalerio:fgchecker:1.1.0'
         api 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
         api 'net.openid:appauth:0.7.0'
-        api(name:'amazon-maps-api-v2', ext:'aar')
+        api(name: 'amazon-maps-api-v2', ext: 'aar')
     }
+}
+
+dependencies {
 }

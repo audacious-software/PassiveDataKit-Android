@@ -16,7 +16,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,6 +46,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+
+import androidx.core.content.ContextCompat;
 
 @SuppressWarnings("SimplifiableIfStatement")
 public class TextMessages extends Generator {
@@ -455,7 +456,7 @@ public class TextMessages extends Generator {
             lengthField.setText(context.getResources().getQuantityString(R.plurals.generator_text_messages_length_format, lastLength, lastLength));
             directionField.setText(lastDirection);
 
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000));
+            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000.0));
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);
