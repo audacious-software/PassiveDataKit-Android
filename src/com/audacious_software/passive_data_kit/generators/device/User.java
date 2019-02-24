@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
+import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
@@ -182,5 +183,10 @@ public class User extends Generator {
     @Override
     public String getIdentifier() {
         return User.IDENTIFIER;
+    }
+
+    @SuppressWarnings({"unused"})
+    public static ArrayList<DiagnosticAction> diagnostics(Context context) {
+        return new ArrayList<>();
     }
 }

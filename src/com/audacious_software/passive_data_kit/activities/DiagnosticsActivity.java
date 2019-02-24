@@ -24,7 +24,7 @@ import java.util.ArrayList;
 public class DiagnosticsActivity extends AppCompatActivity {
     @SuppressWarnings("SameParameterValue")
     @SuppressLint("AlwaysShowAction")
-    public static void setUpDiagnositicsItem(Activity activity, Menu menu, boolean showAction) {
+    public static void setUpDiagnosticsItem(Activity activity, Menu menu, boolean showAction, boolean includeIfClear) {
         final ArrayList<DiagnosticAction> actions = PassiveDataKit.diagnostics(activity);
 
         MenuItem item = menu.findItem(R.id.action_diagnostics);
@@ -37,7 +37,6 @@ public class DiagnosticsActivity extends AppCompatActivity {
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
             item.setIcon(R.drawable.ic_pdk_diagnostic);
-            item.setTitle("");
         } else {
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 
@@ -47,8 +46,13 @@ public class DiagnosticsActivity extends AppCompatActivity {
         }
 
         if (actions.size() == 0) {
-            menu.removeItem(R.id.action_diagnostics);
+            if (includeIfClear) {
+                item.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+            } else {
+                menu.removeItem(R.id.action_diagnostics);
+            }
         }
+
     }
 
     public static boolean diagnosticItemSelected(Activity activity, MenuItem item) {

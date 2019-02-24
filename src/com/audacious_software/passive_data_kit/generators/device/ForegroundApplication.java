@@ -45,7 +45,6 @@ import java.util.List;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class ForegroundApplication extends Generator{
-
     private static final String GENERATOR_IDENTIFIER = "pdk-foreground-application";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.ENABLED";
@@ -73,6 +72,12 @@ public class ForegroundApplication extends Generator{
 
     private AppChecker mAppChecker = null;
     private long mLastTimestamp = 0;
+
+    public static class ForegroundApplicationUsage {
+        public long start;
+        public long duration;
+        public String packageName;
+    }
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -517,5 +522,38 @@ public class ForegroundApplication extends Generator{
         } catch (JSONException ex) {
             ex.printStackTrace();
         }
+    }
+
+    public List<ForegroundApplicationUsage> fetchUsagesBetween(long start, long end, boolean screenActive) {
+        ArrayList<ForegroundApplication.ForegroundApplicationUsage> usages = new ArrayList<>();
+
+        if (this.mDatabase == null) {
+            return usages;
+        }
+
+        int isActive = 0;
+
+        if (screenActive) {
+            isActive = 1;
+        }
+
+        String where = ForegroundApplication.HISTORY_OBSERVED + " >= ? AND " + ForegroundApplication.HISTORY_OBSERVED + " < ? AND " + ForegroundApplication.HISTORY_SCREEN_ACTIVE + " = ?";
+        String[] args = { "" + start, "" + end, "" + isActive };
+
+        Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
+
+        while (c.moveToNext()) {
+            ForegroundApplicationUsage usage = new ForegroundApplicationUsage();
+
+            usage.duration = c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_DURATION));
+            usage.start = c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_OBSERVED));
+            usage.packageName = c.getString(c.getColumnIndex(ForegroundApplication.HISTORY_APPLICATION));
+
+            usages.add(usage);
+        }
+
+        c.close();
+
+        return usages;
     }
 }

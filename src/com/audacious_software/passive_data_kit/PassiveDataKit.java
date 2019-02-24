@@ -65,8 +65,6 @@ public class PassiveDataKit {
 
                 Intent intent = new Intent(ForegroundService.ACTION_START_SERVICE, null, this.mContext, ForegroundService.class);
 
-                Log.e("PDK", "HAS CHANNEL ID: " + this.mForegroundChannelId);
-
                 if (this.mForegroundChannelId != null) {
                     intent.putExtra(PassiveDataKit.NOTIFICATION_CHANNEL_ID, this.mForegroundChannelId);
                 }

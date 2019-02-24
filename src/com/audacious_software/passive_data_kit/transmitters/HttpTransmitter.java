@@ -519,8 +519,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         return pendingFolder;
     }
 
-    private static long getFileSize(final File file)
-    {
+    private static long getFileSize(final File file) {
         if (file == null || !file.exists()) {
             return 0;
         }
@@ -559,7 +558,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
         return result;
     }
-
 
     @Override
     public long pendingSize() {
@@ -695,8 +693,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     }
 
     @SuppressWarnings("unchecked")
-    private static void writeBundle(Context context, JsonGenerator generator, Bundle bundle)
-    {
+    private static void writeBundle(Context context, JsonGenerator generator, Bundle bundle) {
         try {
             generator.writeStartObject();
 
