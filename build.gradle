@@ -89,6 +89,3 @@ android {
         api(name: 'amazon-maps-api-v2', ext: 'aar')
     }
 }
-
-dependencies {
-}

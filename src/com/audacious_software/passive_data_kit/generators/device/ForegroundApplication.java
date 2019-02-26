@@ -221,23 +221,35 @@ public class ForegroundApplication extends Generator{
     public static ArrayList<DiagnosticAction> diagnostics(final Context context) {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
+        if (ForegroundApplication.hasPermissions(context) == false) {
+            actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_usage_stats_permission_required_title), context.getString(R.string.diagnostic_usage_stats_permission_required), new Runnable() {
+                @Override
+                public void run() {
+                    ForegroundApplication.fetchPermissions(context);
+                }
+            }));
+        }
+
+        return actions;
+    }
+
+    public static void fetchPermissions(final Context context) {
+        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+    }
+
+    public static boolean hasPermissions(final Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             AppOpsManager appOps = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
             int mode = appOps.checkOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), context.getPackageName());
 
             if (mode != AppOpsManager.MODE_ALLOWED) {
-                actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_usage_stats_permission_required_title), context.getString(R.string.diagnostic_usage_stats_permission_required), new Runnable() {
-                    @Override
-                    public void run() {
-                        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        context.startActivity(intent);
-                    }
-                }));
+                return false;
             }
         }
 
-        return actions;
+        return true;
     }
 
     public static String getGeneratorTitle(Context context) {
@@ -553,5 +565,32 @@ public class ForegroundApplication extends Generator{
         c.close();
 
         return usages;
+    }
+
+    public long fetchUsageBetween(String packageName, long start, long end, boolean screenActive) {
+        long duration = 0;
+
+        if (this.mDatabase == null) {
+            return duration;
+        }
+
+        int isActive = 0;
+
+        if (screenActive) {
+            isActive = 1;
+        }
+
+        String where = ForegroundApplication.HISTORY_OBSERVED + " >= ? AND " + ForegroundApplication.HISTORY_OBSERVED + " < ? AND " + ForegroundApplication.HISTORY_SCREEN_ACTIVE + " = ? AND " + ForegroundApplication.HISTORY_APPLICATION + " = ?";
+        String[] args = { "" + start, "" + end, "" + isActive, packageName };
+
+        Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
+
+        while (c.moveToNext()) {
+            duration += c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_DURATION));
+        }
+
+        c.close();
+
+        return duration;
     }
 }
