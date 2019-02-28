@@ -565,6 +565,11 @@ public class PhoneCalls extends Generator {
         e.apply();
     }
 
+    @Override
+    public String getIdentifier() {
+        return PhoneCalls.GENERATOR_IDENTIFIER;
+    }
+
     @SuppressWarnings("unused")
     public static View fetchView(ViewGroup parent)
     {

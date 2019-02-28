@@ -685,6 +685,11 @@ public class Geofences extends Generator {
         }
     }
 
+    @Override
+    public String getIdentifier() {
+        return Geofences.GENERATOR_IDENTIFIER;
+    }
+
     private JSONObject getCustomGeofence() {
         try {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);

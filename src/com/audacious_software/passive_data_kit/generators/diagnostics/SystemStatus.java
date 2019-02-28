@@ -14,6 +14,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StatFs;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,6 +36,8 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+
+import org.json.JSONObject;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -59,12 +62,13 @@ public class SystemStatus extends Generator {
     private static final String ACTION_HEARTBEAT = "com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus.ACTION_HEARTBEAT";
 
     private static final String DATABASE_PATH = "pdk-system-status.sqlite";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE_HISTORY = "history";
 
     private static final String HISTORY_OBSERVED = "observed";
     private static final String HISTORY_RUNTIME = "runtime";
+    private static final String HISTORY_SYSTEM_RUNTIME = "system_runtime";
     private static final String HISTORY_STORAGE_USED_APP = "storage_app";
     private static final String HISTORY_STORAGE_USED_OTHER = "storage_other";
     private static final String HISTORY_STORAGE_AVAILABLE = "storage_available";
@@ -121,6 +125,8 @@ public class SystemStatus extends Generator {
         switch (version) {
             case 0:
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_system_status_create_history_table));
+            case 1:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_system_status_history_table_add_system_runtime));
         }
 
         if (version != SystemStatus.DATABASE_VERSION) {
@@ -155,9 +161,12 @@ public class SystemStatus extends Generator {
 
                         long bytesOtherUsed = bytesTotal - bytesAvailable - bytesAppUsed;
 
+                        long systemRuntime = SystemClock.elapsedRealtime();
+
                         ContentValues values = new ContentValues();
                         values.put(SystemStatus.HISTORY_OBSERVED, now);
                         values.put(SystemStatus.HISTORY_RUNTIME, now - runtimeStart);
+                        values.put(SystemStatus.HISTORY_SYSTEM_RUNTIME, systemRuntime);
                         values.put(SystemStatus.HISTORY_STORAGE_PATH, storagePath);
                         values.put(SystemStatus.HISTORY_STORAGE_TOTAL, bytesTotal);
                         values.put(SystemStatus.HISTORY_STORAGE_AVAILABLE, bytesAvailable);
@@ -167,6 +176,7 @@ public class SystemStatus extends Generator {
                         Bundle update = new Bundle();
                         update.putLong(SystemStatus.HISTORY_OBSERVED, now);
                         update.putLong(SystemStatus.HISTORY_RUNTIME, now - runtimeStart);
+                        update.putLong(SystemStatus.HISTORY_SYSTEM_RUNTIME, systemRuntime);
                         update.putString(SystemStatus.HISTORY_STORAGE_PATH, storagePath);
                         update.putLong(SystemStatus.HISTORY_STORAGE_TOTAL, bytesTotal);
                         update.putLong(SystemStatus.HISTORY_STORAGE_AVAILABLE, bytesAvailable);
@@ -534,6 +544,18 @@ public class SystemStatus extends Generator {
 
         e.putLong(SystemStatus.DATA_RETENTION_PERIOD, period);
 
+        e.apply();
+    }
+
+    @Override
+    public String getIdentifier() {
+        return SystemStatus.GENERATOR_IDENTIFIER;
+    }
+
+    public void updateConfig(JSONObject config) {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(SystemStatus.ENABLED, true);
         e.apply();
     }
 }

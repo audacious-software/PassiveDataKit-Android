@@ -24,15 +24,12 @@
         <activity android:name="com.audacious_software.passive_data_kit.activities.DataStreamActivity" android:label="@string/app_name" />
         <activity android:name="com.audacious_software.passive_data_kit.activities.DataDisclosureActivity" android:label="@string/app_name" />
         <activity android:name="com.audacious_software.passive_data_kit.activities.DataDisclosureDetailActivity" android:label="@string/app_name" />
-
         <activity
             android:name="com.audacious_software.passive_data_kit.generators.wearables.Withings$OAuthResultHandlerActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
         <activity
             android:name="com.audacious_software.passive_data_kit.generators.wearables.Fitbit$OAuthResultHandlerActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
         <service android:enabled="true" android:name="com.audacious_software.passive_data_kit.ForegroundService" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false" android:persistent="true">
             <intent-filter>
                 <action android:name="com.audacious_software.passive_data_kit.ForegroundService.ACTION_START_SERVICE" />

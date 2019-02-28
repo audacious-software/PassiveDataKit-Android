@@ -1237,4 +1237,9 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         e.apply();
     }
+
+    @Override
+    public String getIdentifier() {
+        return Location.GENERATOR_IDENTIFIER;
+    }
 }

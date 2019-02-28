@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +33,9 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.rvalerio.fgchecker.AppChecker;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +45,6 @@ import java.util.List;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class ForegroundApplication extends Generator{
-
     private static final String GENERATOR_IDENTIFIER = "pdk-foreground-application";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.ENABLED";
@@ -49,6 +52,9 @@ public class ForegroundApplication extends Generator{
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
+
+    private static final String SAMPLE_INTERVAL = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.SAMPLE_INTERVAL";
+    private static final long SAMPLE_INTERVAL_DEFAULT = 15000;
 
     private static final int DATABASE_VERSION = 3;
 
@@ -63,9 +69,15 @@ public class ForegroundApplication extends Generator{
     private static final String DATABASE_PATH = "pdk-foreground-application.sqlite";
 
     private SQLiteDatabase mDatabase = null;
-    private long mSampleInterval = 15000;
+
     private AppChecker mAppChecker = null;
     private long mLastTimestamp = 0;
+
+    public static class ForegroundApplicationUsage {
+        public long start;
+        public long duration;
+        public String packageName;
+    }
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -91,6 +103,13 @@ public class ForegroundApplication extends Generator{
         ForegroundApplication.getInstance(context).startGenerator();
     }
 
+    public void setSampleInterval(long interval) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putLong(ForegroundApplication.SAMPLE_INTERVAL, interval);
+        e.apply();
+    }
+
     private void startGenerator() {
         final ForegroundApplication me = this;
 
@@ -99,6 +118,9 @@ public class ForegroundApplication extends Generator{
 
             this.mAppChecker = null;
         }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        final long sampleInterval = prefs.getLong(ForegroundApplication.SAMPLE_INTERVAL, ForegroundApplication.SAMPLE_INTERVAL_DEFAULT);
 
         this.mAppChecker = new AppChecker();
         this.mAppChecker.other(new AppChecker.Listener() {
@@ -123,7 +145,7 @@ public class ForegroundApplication extends Generator{
                         ContentValues values = new ContentValues();
                         values.put(ForegroundApplication.HISTORY_OBSERVED, now);
                         values.put(ForegroundApplication.HISTORY_APPLICATION, process);
-                        values.put(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
+                        values.put(ForegroundApplication.HISTORY_DURATION, sampleInterval);
                         values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
 
                         if (me.mDatabase.isOpen()) {
@@ -133,7 +155,7 @@ public class ForegroundApplication extends Generator{
                         Bundle update = new Bundle();
                         update.putLong(ForegroundApplication.HISTORY_OBSERVED, now);
                         update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
-                        update.putLong(ForegroundApplication.HISTORY_DURATION, me.mSampleInterval);
+                        update.putLong(ForegroundApplication.HISTORY_DURATION, sampleInterval);
                         update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
 
                         Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
@@ -149,7 +171,7 @@ public class ForegroundApplication extends Generator{
             }
         });
 
-        this.mAppChecker.timeout((int) this.mSampleInterval);
+        this.mAppChecker.timeout((int) sampleInterval);
         this.mAppChecker.start(this.mContext);
 
         File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
@@ -199,23 +221,35 @@ public class ForegroundApplication extends Generator{
     public static ArrayList<DiagnosticAction> diagnostics(final Context context) {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
+        if (ForegroundApplication.hasPermissions(context) == false) {
+            actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_usage_stats_permission_required_title), context.getString(R.string.diagnostic_usage_stats_permission_required), new Runnable() {
+                @Override
+                public void run() {
+                    ForegroundApplication.fetchPermissions(context);
+                }
+            }));
+        }
+
+        return actions;
+    }
+
+    public static void fetchPermissions(final Context context) {
+        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+    }
+
+    public static boolean hasPermissions(final Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             AppOpsManager appOps = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
             int mode = appOps.checkOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), context.getPackageName());
 
             if (mode != AppOpsManager.MODE_ALLOWED) {
-                actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_usage_stats_permission_required_title), context.getString(R.string.diagnostic_usage_stats_permission_required), new Runnable() {
-                    @Override
-                    public void run() {
-                        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        context.startActivity(intent);
-                    }
-                }));
+                return false;
             }
         }
 
-        return actions;
+        return true;
     }
 
     public static String getGeneratorTitle(Context context) {
@@ -477,5 +511,85 @@ public class ForegroundApplication extends Generator{
         }
 
         return me.mLastTimestamp;
+    }
+
+    @Override
+    public String getIdentifier() {
+        return ForegroundApplication.GENERATOR_IDENTIFIER;
+    }
+
+    public void updateConfig(JSONObject config) {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(ForegroundApplication.ENABLED, true);
+        e.apply();
+
+        try {
+            if (config.has("sample-interval")) {
+                this.setSampleInterval(config.getLong("sample-interval"));
+            }
+        } catch (JSONException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public List<ForegroundApplicationUsage> fetchUsagesBetween(long start, long end, boolean screenActive) {
+        ArrayList<ForegroundApplication.ForegroundApplicationUsage> usages = new ArrayList<>();
+
+        if (this.mDatabase == null) {
+            return usages;
+        }
+
+        int isActive = 0;
+
+        if (screenActive) {
+            isActive = 1;
+        }
+
+        String where = ForegroundApplication.HISTORY_OBSERVED + " >= ? AND " + ForegroundApplication.HISTORY_OBSERVED + " < ? AND " + ForegroundApplication.HISTORY_SCREEN_ACTIVE + " = ?";
+        String[] args = { "" + start, "" + end, "" + isActive };
+
+        Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
+
+        while (c.moveToNext()) {
+            ForegroundApplicationUsage usage = new ForegroundApplicationUsage();
+
+            usage.duration = c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_DURATION));
+            usage.start = c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_OBSERVED));
+            usage.packageName = c.getString(c.getColumnIndex(ForegroundApplication.HISTORY_APPLICATION));
+
+            usages.add(usage);
+        }
+
+        c.close();
+
+        return usages;
+    }
+
+    public long fetchUsageBetween(String packageName, long start, long end, boolean screenActive) {
+        long duration = 0;
+
+        if (this.mDatabase == null) {
+            return duration;
+        }
+
+        int isActive = 0;
+
+        if (screenActive) {
+            isActive = 1;
+        }
+
+        String where = ForegroundApplication.HISTORY_OBSERVED + " >= ? AND " + ForegroundApplication.HISTORY_OBSERVED + " < ? AND " + ForegroundApplication.HISTORY_SCREEN_ACTIVE + " = ? AND " + ForegroundApplication.HISTORY_APPLICATION + " = ?";
+        String[] args = { "" + start, "" + end, "" + isActive, packageName };
+
+        Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
+
+        while (c.moveToNext()) {
+            duration += c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_DURATION));
+        }
+
+        c.close();
+
+        return duration;
     }
 }

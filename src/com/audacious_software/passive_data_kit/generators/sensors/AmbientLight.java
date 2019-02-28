@@ -682,4 +682,10 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
         e.apply();
     }
+
+    @Override
+    public String getIdentifier() {
+        return AmbientLight.GENERATOR_IDENTIFIER;
+    }
+
 }

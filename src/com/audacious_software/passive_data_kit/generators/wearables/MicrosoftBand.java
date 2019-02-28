@@ -1479,4 +1479,10 @@ public class MicrosoftBand extends Generator
         e.apply();
     }
 
+    @Override
+    public String getIdentifier() {
+        return MicrosoftBand.GENERATOR_IDENTIFIER;
+    }
+
+
 }

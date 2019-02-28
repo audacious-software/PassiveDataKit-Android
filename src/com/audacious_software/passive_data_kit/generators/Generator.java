@@ -7,6 +7,7 @@ import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,8 @@ import android.widget.TextView;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.pdk.passivedatakit.R;
+
+import org.json.JSONObject;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -194,4 +197,10 @@ public abstract class Generator {
 
     @SuppressWarnings("unused")
     public abstract void setCachedDataRetentionPeriod(long period);
+
+    public abstract String getIdentifier();
+
+    public void updateConfig(JSONObject config) {
+        Log.e("PDK", "No updateConfig implemented for " + this.getClass().getCanonicalName());
+    }
 }

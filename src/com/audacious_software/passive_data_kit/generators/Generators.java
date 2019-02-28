@@ -24,6 +24,7 @@ import com.audacious_software.pdk.passivedatakit.R;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -302,6 +303,49 @@ public class Generators {
             }
 
             this.mWakeLocks.remove(tag);
+        }
+    }
+
+    public void updateGenerators(JSONObject config) {
+        ArrayList<String> availableGenerators = new ArrayList<>();
+        availableGenerators.add(AppEvent.class.getCanonicalName());
+
+        Collections.addAll(availableGenerators, this.mContext.getResources().getStringArray(R.array.pdk_available_generators));
+        Collections.addAll(availableGenerators, this.mContext.getResources().getStringArray(R.array.pdk_app_generators));
+
+        if (config.has("generators")) {
+            try {
+                JSONArray generatorDefs = config.getJSONArray("generators");
+
+                for (int i = 0; i < generatorDefs.length(); i++) {
+                    JSONObject generatorDef = generatorDefs.getJSONObject(i);
+                    String generatorId = generatorDef.getString("identifier");
+
+                    for (String className : availableGenerators) {
+                        try {
+                            Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
+
+                            Method getInstance = probeClass.getDeclaredMethod("getInstance", Context.class);
+
+                            Generator generator = (Generator) getInstance.invoke(null, this.mContext);
+
+                            if (generatorId.equals(generator.getIdentifier())) {
+                                generator.updateConfig(generatorDef);
+                            }
+                        } catch (ClassNotFoundException e) {
+//                e.printStackTrace();
+                        } catch (NoSuchMethodException e) {
+//                e.printStackTrace();
+                        } catch (IllegalAccessException e) {
+//                e.printStackTrace();
+                        } catch (InvocationTargetException e) {
+//                e.printStackTrace();
+                        }
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 

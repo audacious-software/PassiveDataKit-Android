@@ -25,16 +25,19 @@ import androidx.recyclerview.widget.RecyclerView;
 public class DiagnosticsActivity extends AppCompatActivity {
     @SuppressWarnings("SameParameterValue")
     @SuppressLint("AlwaysShowAction")
-    public static void setUpDiagnositicsItem(Activity activity, Menu menu, boolean showAction) {
+    public static void setUpDiagnosticsItem(Activity activity, Menu menu, boolean showAction, boolean includeIfClear) {
         final ArrayList<DiagnosticAction> actions = PassiveDataKit.diagnostics(activity);
 
-        MenuItem item = menu.add(Menu.NONE, R.id.action_diagnostics, 0, activity.getString(R.string.action_diagnostics));
+        MenuItem item = menu.findItem(R.id.action_diagnostics);
+
+        if (item == null) {
+            item = menu.add(Menu.NONE, R.id.action_diagnostics, 0, activity.getString(R.string.action_diagnostics));
+        }
 
         if (actions.size() > 0 && showAction) {
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
             item.setIcon(R.drawable.ic_pdk_diagnostic);
-            item.setTitle("" + actions.size());
         } else {
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 
@@ -42,6 +45,15 @@ public class DiagnosticsActivity extends AppCompatActivity {
                 item.setTitle(activity.getString(R.string.action_diagnostics_incomplete, actions.size()));
             }
         }
+
+        if (actions.size() == 0) {
+            if (includeIfClear) {
+                item.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+            } else {
+                menu.removeItem(R.id.action_diagnostics);
+            }
+        }
+
     }
 
     public static boolean diagnosticItemSelected(Activity activity, MenuItem item) {

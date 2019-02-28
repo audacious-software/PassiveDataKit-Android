@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.preference.PreferenceManager;
@@ -13,7 +14,13 @@ import android.util.Log;
 
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
+import com.audacious_software.passive_data_kit.transmitters.HttpTransmitter;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -58,25 +65,24 @@ public class PassiveDataKit {
                 Thread t = new Thread(r);
                 t.start();
 
-                Boolean notificationStarted = false;
+                boolean notificationStarted = false;
+
+                Intent intent = new Intent(ForegroundService.ACTION_START_SERVICE, null, this.mContext, ForegroundService.class);
+
+                if (this.mForegroundChannelId != null) {
+                    intent.putExtra(PassiveDataKit.NOTIFICATION_CHANNEL_ID, this.mForegroundChannelId);
+                }
+
+                if (this.mForegroundIconId != 0) {
+                    intent.putExtra(PassiveDataKit.NOTIFICATION_ICON_ID, this.mForegroundIconId);
+                }
+
+                if (this.mForegroundColor != 0) {
+                    intent.putExtra(PassiveDataKit.NOTIFICATION_COLOR, this.mForegroundColor);
+                }
+
                 if (this.mStartForegroundService || this.mAlwaysNotify) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        Intent intent = new Intent(ForegroundService.ACTION_START_SERVICE, null, this.mContext, ForegroundService.class);
-
-                        Log.e("PDK", "HAS CHANNEL ID: " + this.mForegroundChannelId);
-
-                        if (this.mForegroundChannelId != null) {
-                            intent.putExtra(PassiveDataKit.NOTIFICATION_CHANNEL_ID, this.mForegroundChannelId);
-                        }
-
-                        if (this.mForegroundIconId != 0) {
-                            intent.putExtra(PassiveDataKit.NOTIFICATION_ICON_ID, this.mForegroundIconId);
-                        }
-
-                        if (this.mForegroundColor != 0) {
-                            intent.putExtra(PassiveDataKit.NOTIFICATION_COLOR, this.mForegroundColor);
-                        }
-
                         ContextCompat.startForegroundService(this.mContext, intent);
 
                         notificationStarted = true;
@@ -84,7 +90,7 @@ public class PassiveDataKit {
                 }
 
                 if (this.mAlwaysNotify && notificationStarted == false) {
-                    Notification note = ForegroundService.getForegroundNotification(this.mContext, null);
+                    Notification note = ForegroundService.getForegroundNotification(this.mContext, intent);
 
                     NotificationManager notes = (NotificationManager) this.mContext.getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -198,4 +204,90 @@ public class PassiveDataKit {
 
         return pending;
     }
+
+    public void updateGenerators(JSONObject config) {
+        Generators.getInstance(this.mContext).updateGenerators(config);
+    }
+
+    public List<Transmitter> fetchTransmitters(String userId, String appName, JSONObject config) {
+        ArrayList<Transmitter> transmitters = new ArrayList<>();
+
+        try {
+            if (config.has("transmitters")) {
+                JSONArray transmitterDefs = config.getJSONArray("transmitters");
+
+                for (int i = 0; i < transmitterDefs.length(); i++) {
+                    JSONObject transmitterDef = transmitterDefs.getJSONObject(i);
+
+                    if ("pdk-http-transmitter".equals(transmitterDef.getString("type"))) {
+                        HttpTransmitter transmitter = new HttpTransmitter();
+
+                        HashMap<String, String> options = new HashMap<>();
+                        options.put(HttpTransmitter.USER_ID, userId);
+
+                        if (transmitterDef.has("upload-uri")) {
+                            options.put(HttpTransmitter.UPLOAD_URI, transmitterDef.getString("upload-uri"));
+                        }
+
+                        if (transmitterDef.has("wifi-only")) {
+                            boolean wifiOnly = transmitterDef.getBoolean("wifi-only");
+
+                            if (wifiOnly) {
+                                options.put(HttpTransmitter.WIFI_ONLY, "true");
+                            } else {
+                                options.put(HttpTransmitter.WIFI_ONLY, "false");
+                            }
+                        }
+
+                        if (transmitterDef.has("charging-only")) {
+                            boolean chargingOnly = transmitterDef.getBoolean("charging-only");
+
+                            if (chargingOnly) {
+                                options.put(HttpTransmitter.CHARGING_ONLY, "true");
+                            } else {
+                                options.put(HttpTransmitter.CHARGING_ONLY, "false");
+                            }
+                        }
+
+                        if (transmitterDef.has("use-external-storage")) {
+                            boolean useExternal = transmitterDef.getBoolean("use-external-storage");
+
+                            if (useExternal) {
+                                options.put(HttpTransmitter.USE_EXTERNAL_STORAGE, "true");
+                            } else {
+                                options.put(HttpTransmitter.USE_EXTERNAL_STORAGE, "false");
+                            }
+                        }
+
+                        if (transmitterDef.has("strict-ssl-verification")) {
+                            boolean strictSsl = transmitterDef.getBoolean("strict-ssl-verification");
+
+                            if (strictSsl) {
+                                options.put(HttpTransmitter.STRICT_SSL_VERIFICATION, "true");
+                            } else {
+                                options.put(HttpTransmitter.STRICT_SSL_VERIFICATION, "false");
+                            }
+                        }
+
+                        try {
+                            String version = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0).versionName;
+
+                            options.put(HttpTransmitter.USER_AGENT_NAME, appName + " " + version);
+                        } catch (PackageManager.NameNotFoundException ex) {
+                            AppEvent.getInstance(this.mContext).logThrowable(ex);
+                        }
+
+                        transmitter.initialize(this.mContext, options);
+
+                        transmitters.add(transmitter);
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return transmitters;
+    }
+
 }

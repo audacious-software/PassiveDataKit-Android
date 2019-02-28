@@ -1596,5 +1596,10 @@ public class GoogleAwareness extends Generator {
 
         return types;
     }
+
+    @Override
+    public String getIdentifier() {
+        return GoogleAwareness.GENERATOR_IDENTIFIER;
+    }
 }
 

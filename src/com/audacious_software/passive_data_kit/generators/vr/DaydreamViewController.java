@@ -221,4 +221,8 @@ public class DaydreamViewController extends Generator  {
         e.apply();
     }
 
+    @Override
+    public String getIdentifier() {
+        return DaydreamViewController.GENERATOR_IDENTIFIER;
+    }
 }

@@ -27,6 +27,8 @@ import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
 
+import org.json.JSONObject;
+
 import java.io.File;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -514,6 +516,18 @@ public class ScreenState extends Generator{
 
         e.putLong(ScreenState.DATA_RETENTION_PERIOD, period);
 
+        e.apply();
+    }
+
+    @Override
+    public String getIdentifier() {
+        return ScreenState.GENERATOR_IDENTIFIER;
+    }
+
+    public void updateConfig(JSONObject config) {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(ScreenState.ENABLED, true);
         e.apply();
     }
 }

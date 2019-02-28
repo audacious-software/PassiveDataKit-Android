@@ -40,6 +40,7 @@
 
     <!-- System Status Generator -->
     <string name="pdk_generator_diagnostics_system_status_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, runtime INTEGER, storage_app INTEGER, storage_other INTEGER, storage_available INTEGER, storage_total INTEGER, storage_path TEXT);</string>
+    <string name="pdk_generator_diagnostics_system_status_history_table_add_system_runtime">ALTER TABLE history ADD system_runtime INTEGER;</string>
 
     <!-- Time of Day Status Generator -->
     <string name="pdk_generator_time_of_day_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, sunrise INTEGER, sunset INTEGER);</string>
@@ -63,4 +64,8 @@
 
     <!-- Google Awareness Generator -->
     <string name="pdk_generator_google_awareness_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER,  current_activity TEXT, current_activity_confidence REAL, headphone_state TEXT, current_place TEXT, current_place_id TEXT, current_place_latitude REAL, current_place_longitude REAL, current_place_types TEXT, current_place_confidence REAL, weekday TEXT, holiday TEXT, time_of_day TEXT,  current_temperature REAL, current_perceived_temperature REAL, current_dew_point REAL, current_humidity REAL, current_weather_conditions REAL);</string>
+
+    <!-- Users Generator -->
+    <string name="pdk_generator_users_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, mode TEXT);</string>
+    <string name="pdk_generator_users_history_table_add_identifier">ALTER TABLE history ADD identifier INTEGER;</string>
 </resources>
