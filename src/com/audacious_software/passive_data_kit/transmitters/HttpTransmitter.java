@@ -39,11 +39,13 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
@@ -642,8 +644,13 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                     metadata.putString(Generator.IDENTIFIER, identifier);
                     metadata.putDouble(Generator.TIMESTAMP, generatorTimestamp);
                     metadata.putString(Generator.GENERATOR, generators.getGeneratorFullName(identifier));
-                    metadata.putString(Generator.SOURCE, generators.getSource());
                     metadata.putString(Generator.SOURCE, me.mUserId);
+
+                    TimeZone timeZone = TimeZone.getDefault();
+
+                    metadata.putString(Generator.TIMEZONE, timeZone.getID());
+                    metadata.putInt(Generator.TIMEZONE_OFFSET, timeZone.getOffset(timestamp) / 1000);
+
                     clonedData.putBundle(Generator.PDK_METADATA, metadata);
 
                     synchronized(me) {
@@ -695,8 +702,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     }
 
     @SuppressWarnings("unchecked")
-    private static void writeBundle(Context context, JsonGenerator generator, Bundle bundle)
-    {
+    private static void writeBundle(Context context, JsonGenerator generator, Bundle bundle) {
         try {
             generator.writeStartObject();
 

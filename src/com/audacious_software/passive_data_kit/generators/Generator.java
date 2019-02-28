@@ -31,6 +31,8 @@ public abstract class Generator {
     public static final String MEDIA_ATTACHMENT_GUID_KEY = "attachment-guid";
     public static final String LATITUDE = "latitude";
     public static final String LONGITUDE = "longitude";
+    public static final String TIMEZONE = "timezone";
+    public static final String TIMEZONE_OFFSET = "timezone-offset";
 
     private static final String TABLE_SQLITE_MASTER = "sqlite_master";
 
