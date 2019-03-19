@@ -228,7 +228,7 @@ public class Geofences extends Generator {
     public void fetchGeofences(final Runnable next) {
         final Geofences me = this;
 
-        this.mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+        OnSuccessListener<Location> successListener = new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
                 if (location == null) {
@@ -371,7 +371,11 @@ public class Geofences extends Generator {
                     });
                 }
             }
-        });
+        };
+
+        if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            this.mFusedLocationClient.getLastLocation().addOnSuccessListener(successListener);
+        }
     }
 
     private int getInitialTriggers() {

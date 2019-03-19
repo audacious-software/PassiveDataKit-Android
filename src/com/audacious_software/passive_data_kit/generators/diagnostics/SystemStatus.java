@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.generators.diagnostics;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -9,8 +10,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StatFs;
@@ -62,7 +65,7 @@ public class SystemStatus extends Generator {
     private static final String ACTION_HEARTBEAT = "com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus.ACTION_HEARTBEAT";
 
     private static final String DATABASE_PATH = "pdk-system-status.sqlite";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     private static final String TABLE_HISTORY = "history";
 
@@ -74,6 +77,9 @@ public class SystemStatus extends Generator {
     private static final String HISTORY_STORAGE_AVAILABLE = "storage_available";
     private static final String HISTORY_STORAGE_TOTAL = "storage_total";
     private static final String HISTORY_STORAGE_PATH = "storage_path";
+    private static final String HISTORY_LOCATION_GPS_ENABLED = "gps_enabled";
+    private static final String HISTORY_LOCATION_NETWORK_ENABLED = "network_enabled";
+
     private static final double GIGABYTE = (1024 * 1024 * 1024);
 
     private static SystemStatus sInstance = null;
@@ -127,6 +133,9 @@ public class SystemStatus extends Generator {
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_system_status_create_history_table));
             case 1:
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_system_status_history_table_add_system_runtime));
+            case 2:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_system_status_history_table_add_gps_enabled));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_system_status_history_table_add_network_enabled));
         }
 
         if (version != SystemStatus.DATABASE_VERSION) {
@@ -182,6 +191,30 @@ public class SystemStatus extends Generator {
                         update.putLong(SystemStatus.HISTORY_STORAGE_AVAILABLE, bytesAvailable);
                         update.putLong(SystemStatus.HISTORY_STORAGE_USED_APP, bytesAppUsed);
                         update.putLong(SystemStatus.HISTORY_STORAGE_USED_OTHER, bytesOtherUsed);
+
+                        if (ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                                ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                            LocationManager locations = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+
+                            try {
+                                boolean gpsEnabled = locations.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+                                values.put(SystemStatus.HISTORY_LOCATION_GPS_ENABLED, gpsEnabled);
+                                update.putBoolean(SystemStatus.HISTORY_LOCATION_GPS_ENABLED, gpsEnabled);
+                            } catch (Exception ex) {
+
+                            }
+
+                            try {
+                                boolean networkEnabled = locations.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+                                values.put(SystemStatus.HISTORY_LOCATION_NETWORK_ENABLED, networkEnabled);
+                                update.putBoolean(SystemStatus.HISTORY_LOCATION_NETWORK_ENABLED, networkEnabled);
+
+                            } catch (Exception ex) {
+
+                            }
+                        }
 
                         me.mDatabase.insert(SystemStatus.TABLE_HISTORY, null, values);
 
@@ -482,8 +515,7 @@ public class SystemStatus extends Generator {
     }
 
     @SuppressWarnings("unused")
-    public static View fetchView(ViewGroup parent)
-    {
+    public static View fetchView(ViewGroup parent) {
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_diagnostics_system_status, parent, false);
     }
 
