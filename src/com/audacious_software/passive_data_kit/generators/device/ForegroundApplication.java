@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -58,7 +59,7 @@ public class ForegroundApplication extends Generator{
     private static final int DATABASE_VERSION = 3;
 
     private static final String TABLE_HISTORY = "history";
-    private static final String HISTORY_OBSERVED = "observed";
+    public static final String HISTORY_OBSERVED = "observed";
     private static final String HISTORY_APPLICATION = "application";
     private static final String HISTORY_DURATION = "duration";
     private static final String HISTORY_SCREEN_ACTIVE = "screen_active";
@@ -590,5 +591,13 @@ public class ForegroundApplication extends Generator{
         c.close();
 
         return duration;
+    }
+
+    public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
+        if (this.mDatabase != null) {
+            return this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, cols, where, args, null, null, orderBy);
+        } else {
+            return new MatrixCursor(cols);
+        }
     }
 }
