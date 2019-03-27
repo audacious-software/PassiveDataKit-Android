@@ -597,6 +597,10 @@ public class ForegroundApplication extends Generator{
         if (this.mDatabase != null) {
             return this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, cols, where, args, null, null, orderBy);
         } else {
+            if (cols == null) {
+                cols = new String[0];
+            }
+
             return new MatrixCursor(cols);
         }
     }
