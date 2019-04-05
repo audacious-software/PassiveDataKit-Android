@@ -56,13 +56,22 @@ public class ForegroundApplication extends Generator{
     private static final String SAMPLE_INTERVAL = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.SAMPLE_INTERVAL";
     private static final long SAMPLE_INTERVAL_DEFAULT = 15000;
 
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     private static final String TABLE_HISTORY = "history";
     public static final String HISTORY_OBSERVED = "observed";
     private static final String HISTORY_APPLICATION = "application";
     private static final String HISTORY_DURATION = "duration";
     private static final String HISTORY_SCREEN_ACTIVE = "screen_active";
+
+    private static final String HISTORY_DISPLAY_STATE = "display_state";
+    private static final String HISTORY_DISPLAY_STATE_OFF = "off";
+    private static final String HISTORY_DISPLAY_STATE_ON = "on";
+    private static final String HISTORY_DISPLAY_STATE_ON_SUSPEND = "on-suspend";
+    private static final String HISTORY_DISPLAY_STATE_DOZE = "doze";
+    private static final String HISTORY_DISPLAY_STATE_DOZE_SUSPEND = "doze-suspend";
+    private static final String HISTORY_DISPLAY_STATE_VR = "virtual-reality";
+    private static final String HISTORY_DISPLAY_STATE_UNKNOWN = "unknown";
 
     private static ForegroundApplication sInstance = null;
 
@@ -148,6 +157,34 @@ public class ForegroundApplication extends Generator{
                         values.put(ForegroundApplication.HISTORY_DURATION, sampleInterval);
                         values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
 
+                        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                            int state = display.getState();
+
+                            switch(state) {
+                                case Display.STATE_OFF:
+                                    values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_OFF);
+                                    break;
+                                case Display.STATE_ON:
+                                    values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_ON);
+                                    break;
+                                case Display.STATE_ON_SUSPEND:
+                                    values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_ON_SUSPEND);
+                                    break;
+                                case Display.STATE_DOZE:
+                                    values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_DOZE);
+                                    break;
+                                case Display.STATE_DOZE_SUSPEND:
+                                    values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_DOZE_SUSPEND);
+                                    break;
+                                case Display.STATE_VR:
+                                    values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_VR);
+                                    break;
+                                case Display.STATE_UNKNOWN:
+                                    values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_UNKNOWN);
+                                    break;
+                            }
+                        }
+
                         if (me.mDatabase.isOpen()) {
                             me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
                         }
@@ -157,6 +194,10 @@ public class ForegroundApplication extends Generator{
                         update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
                         update.putLong(ForegroundApplication.HISTORY_DURATION, sampleInterval);
                         update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
+
+                        if (values.containsKey(ForegroundApplication.HISTORY_DISPLAY_STATE)) {
+                            update.putString(ForegroundApplication.HISTORY_DISPLAY_STATE, values.getAsString(ForegroundApplication.HISTORY_DISPLAY_STATE));
+                        }
 
                         Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
                     }
@@ -189,6 +230,8 @@ public class ForegroundApplication extends Generator{
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_duration));
             case 2:
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_screen_active));
+            case 3:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_display_state));
         }
 
         if (version != ForegroundApplication.DATABASE_VERSION) {

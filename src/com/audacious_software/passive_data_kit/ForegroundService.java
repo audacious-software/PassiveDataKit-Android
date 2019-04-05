@@ -45,6 +45,8 @@ public class ForegroundService extends Service {
             intent = context.getPackageManager().getLaunchIntentForPackage(context.getApplicationContext().getPackageName());
         }
 
+        PassiveDataKit.getInstance(context).annotateForegroundIntent(intent);
+
         String channelId = intent.getStringExtra(PassiveDataKit.NOTIFICATION_CHANNEL_ID);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId);

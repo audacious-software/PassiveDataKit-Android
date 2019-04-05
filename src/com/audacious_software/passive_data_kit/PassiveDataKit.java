@@ -65,40 +65,48 @@ public class PassiveDataKit {
                 Thread t = new Thread(r);
                 t.start();
 
-                boolean notificationStarted = false;
-
-                Intent intent = new Intent(ForegroundService.ACTION_START_SERVICE, null, this.mContext, ForegroundService.class);
-
-                if (this.mForegroundChannelId != null) {
-                    intent.putExtra(PassiveDataKit.NOTIFICATION_CHANNEL_ID, this.mForegroundChannelId);
-                }
-
-                if (this.mForegroundIconId != 0) {
-                    intent.putExtra(PassiveDataKit.NOTIFICATION_ICON_ID, this.mForegroundIconId);
-                }
-
-                if (this.mForegroundColor != 0) {
-                    intent.putExtra(PassiveDataKit.NOTIFICATION_COLOR, this.mForegroundColor);
-                }
-
-                if (this.mStartForegroundService || this.mAlwaysNotify) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        ContextCompat.startForegroundService(this.mContext, intent);
-
-                        notificationStarted = true;
-                    }
-                }
-
-                if (this.mAlwaysNotify && notificationStarted == false) {
-                    Notification note = ForegroundService.getForegroundNotification(this.mContext, intent);
-
-                    NotificationManager notes = (NotificationManager) this.mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-
-                    notes.notify(ForegroundService.getNotificationId(), note);
-                }
+                this.initializeNotifications();
 
                 Log.i("PDK", "Passive Data Kit is running...");
             }
+        }
+    }
+
+    private void initializeNotifications() {
+        boolean notificationStarted = false;
+
+        Intent intent = new Intent(ForegroundService.ACTION_START_SERVICE, null, this.mContext, ForegroundService.class);
+
+        this.annotateForegroundIntent(intent);
+
+        if (this.mStartForegroundService || this.mAlwaysNotify) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ContextCompat.startForegroundService(this.mContext, intent);
+
+                notificationStarted = true;
+            }
+        }
+
+        if (this.mAlwaysNotify && notificationStarted == false) {
+            Notification note = ForegroundService.getForegroundNotification(this.mContext, intent);
+
+            NotificationManager notes = (NotificationManager) this.mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            notes.notify(ForegroundService.getNotificationId(), note);
+        }
+    }
+
+    public void annotateForegroundIntent(Intent intent) {
+        if (this.mForegroundChannelId != null) {
+            intent.putExtra(PassiveDataKit.NOTIFICATION_CHANNEL_ID, this.mForegroundChannelId);
+        }
+
+        if (this.mForegroundIconId != 0) {
+            intent.putExtra(PassiveDataKit.NOTIFICATION_ICON_ID, this.mForegroundIconId);
+        }
+
+        if (this.mForegroundColor != 0) {
+            intent.putExtra(PassiveDataKit.NOTIFICATION_COLOR, this.mForegroundColor);
         }
     }
 
@@ -289,5 +297,4 @@ public class PassiveDataKit {
 
         return transmitters;
     }
-
 }
