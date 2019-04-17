@@ -40,6 +40,7 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import net.openid.appauth.AuthState;
@@ -1312,9 +1313,9 @@ public class Fitbit extends Generator {
             data.setValueTypeface(Typeface.DEFAULT_BOLD);
             data.setValueTextColor(0xffffffff);
 
-            data.setValueFormatter(new IValueFormatter() {
+            data.setValueFormatter(new ValueFormatter() {
                 @Override
-                public String getFormattedValue(float value, Entry entry, int dataSetIndex, ViewPortHandler viewPortHandler) {
+                public String getFormattedValue(float value) {
                     return "" + ((Float) value).intValue();
                 }
             });

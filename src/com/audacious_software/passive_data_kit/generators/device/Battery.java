@@ -32,6 +32,7 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -443,9 +444,9 @@ public class Battery extends Generator {
             xAxis.setGranularity(1);
             xAxis.setAxisMinimum(start);
             xAxis.setAxisMaximum(now);
-            xAxis.setValueFormatter(new IAxisValueFormatter() {
+            xAxis.setValueFormatter(new ValueFormatter() {
                 @Override
-                public String getFormattedValue(float value, AxisBase axis) {
+                public String getFormattedValue(float value) {
                    Date date = new Date((long) value);
 
                     return timeFormat.format(date);

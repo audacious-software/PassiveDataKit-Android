@@ -88,7 +88,7 @@ android {
         api 'commons-codec:commons-codec:1.10'
         api 'org.apache.commons:commons-lang3:3.4'
         api 'com.fasterxml.jackson.core:jackson-core:2.9.0'
-        api 'com.github.philjay:mpandroidchart:v3.0.3'
+        api 'com.github.philjay:mpandroidchart:v3.1.0'
         api 'com.rvalerio:fgchecker:1.1.0'
         api 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
         api 'net.openid:appauth:0.7.0'
