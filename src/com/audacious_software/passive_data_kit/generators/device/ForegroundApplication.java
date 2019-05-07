@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,6 +43,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeSet;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class ForegroundApplication extends Generator{
@@ -81,6 +83,9 @@ public class ForegroundApplication extends Generator{
 
     private AppChecker mAppChecker = null;
     private long mLastTimestamp = 0;
+    private long mEarliestTimestamp = 0;
+
+    private HashMap<String, Long> mUsageDurations = new HashMap<>();
 
     public static class ForegroundApplicationUsage {
         public long start;
@@ -200,6 +205,18 @@ public class ForegroundApplication extends Generator{
                         }
 
                         Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
+
+                        ArrayList<String> toDelete = new ArrayList<>();
+
+                        for (String key : me.mUsageDurations.keySet()) {
+                            if (key.startsWith(process)) {
+                                toDelete.add(key);
+                            }
+                        }
+
+                        for (String key : toDelete) {
+                            me.mUsageDurations.remove(key);
+                        }
                     }
                 };
 
@@ -609,7 +626,25 @@ public class ForegroundApplication extends Generator{
         return usages;
     }
 
+    public long earliestTimestamp() {
+        if (this.mEarliestTimestamp == 0) {
+            Cursor c = this.queryHistory(null, null, null, ForegroundApplication.HISTORY_OBSERVED);
+
+            if (c.moveToNext()) {
+                this.mEarliestTimestamp = c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_OBSERVED));
+            }
+        }
+
+        return this.mEarliestTimestamp;
+    }
+
     public long fetchUsageBetween(String packageName, long start, long end, boolean screenActive) {
+        String key = packageName + "-"  + start + "-" + end + "-" + screenActive;
+
+        if (this.mUsageDurations.containsKey(key)) {
+            return this.mUsageDurations.get(key);
+        }
+
         long duration = 0;
 
         if (this.mDatabase == null) {
@@ -632,6 +667,8 @@ public class ForegroundApplication extends Generator{
         }
 
         c.close();
+
+        this.mUsageDurations.put(key, duration);
 
         return duration;
     }
