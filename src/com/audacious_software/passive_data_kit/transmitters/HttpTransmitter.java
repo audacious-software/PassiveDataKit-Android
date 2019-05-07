@@ -128,6 +128,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     @SuppressWarnings({"StringConcatenationInLoop"})
     @Override
     public void initialize(Context context, HashMap<String, String> options) {
+        this.mContext = context.getApplicationContext();
+
         if (!options.containsKey(HttpTransmitter.UPLOAD_URI)) {
             throw new HttpTransmitter.IncompleteConfigurationException("The upload URI is not specified.");
         }
@@ -194,8 +196,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             this.mUserAgent = options.get(HttpTransmitter.USER_AGENT_NAME);
         }
 
-        this.mContext = context.getApplicationContext();
-
         Generators.getInstance(this.mContext).addNewGeneratorUpdatedListener(this);
     }
 
@@ -224,6 +224,10 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     @Override
     public void transmit(boolean force) {
+        if (this.mContext == null) {
+            return;
+        }
+
         long now = System.currentTimeMillis();
 
         if (force) {

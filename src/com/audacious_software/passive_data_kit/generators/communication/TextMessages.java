@@ -243,7 +243,11 @@ public class TextMessages extends Generator {
                                     value = PhoneUtililties.normalizedPhoneNumber(value);
                                 }
 
-                                values.put(field, new String(Hex.encodeHex(DigestUtils.sha256(value))));
+                                try {
+                                    values.put(field, new String(Hex.encodeHex(DigestUtils.sha256(value))));
+                                } catch (NullPointerException ex) {
+                                    values.put(field, "null");
+                                }
                             }
                         }
 
