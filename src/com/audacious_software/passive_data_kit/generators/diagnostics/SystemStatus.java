@@ -52,6 +52,8 @@ import java.util.List;
 
 import androidx.core.content.ContextCompat;
 
+import humanize.Humanize;
+
 @SuppressWarnings("SimplifiableIfStatement")
 @SuppressLint("NewApi")
 public class SystemStatus extends Generator {
@@ -301,9 +303,17 @@ public class SystemStatus extends Generator {
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
 
+            long storage = generator.storageUsed();
+
+            String storageDesc = context.getString(R.string.label_storage_unknown);
+
+            if (storage >= 0) {
+                storageDesc = Humanize.binaryPrefix(storage);
+            }
+
             long timestamp = c.getLong(c.getColumnIndex(SystemStatus.HISTORY_OBSERVED)) / 1000;
 
-            dateLabel.setText(Generator.formatTimestamp(context, timestamp));
+            dateLabel.setText(context.getString(R.string.label_storage_date_card, Generator.formatTimestamp(context, timestamp), storageDesc));
 
             c.moveToPrevious();
 
@@ -590,5 +600,17 @@ public class SystemStatus extends Generator {
         SharedPreferences.Editor e = prefs.edit();
         e.putBoolean(SystemStatus.ENABLED, true);
         e.apply();
+    }
+
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, SystemStatus.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
     }
 }

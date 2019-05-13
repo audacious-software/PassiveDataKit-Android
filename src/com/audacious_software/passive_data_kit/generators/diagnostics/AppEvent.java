@@ -31,6 +31,8 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,8 @@ import java.util.Map;
 import androidx.annotation.NonNull;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
+
+import humanize.Humanize;
 
 public class AppEvent extends Generator{
     private static final String GENERATOR_IDENTIFIER = "pdk-app-event";
@@ -64,6 +68,7 @@ public class AppEvent extends Generator{
     private static final String EVENT_LOG_THROWABLE = "log_throwable";
 
     private static AppEvent sInstance = null;
+    private static int MAX_EVENT_COUNT = 256 * 1024;
 
     private SQLiteDatabase mDatabase = null;
 
@@ -195,7 +200,15 @@ public class AppEvent extends Generator{
 
                             Object[] values = events.get(0);
 
-                            dateLabel.setText(Generator.formatTimestamp(activity, ((long) values[1]) / 1000.0));
+                            long storage = generator.storageUsed();
+
+                            String storageDesc = activity.getString(R.string.label_storage_unknown);
+
+                            if (storage >= 0) {
+                                storageDesc = Humanize.binaryPrefix(storage);
+                            }
+
+                            dateLabel.setText(activity.getString(R.string.label_storage_date_card, Generator.formatTimestamp(activity, ((long) values[1]) / 1000.0), storageDesc));
 
                             final int pages = (int) Math.ceil(((double) events.size()) / AppEvent.CARD_PAGE_SIZE);
 
@@ -338,7 +351,7 @@ public class AppEvent extends Generator{
             return me.mLastTimestamp;
         }
 
-        Cursor c = me.mDatabase.query(AppEvent.TABLE_HISTORY, null, null, null, null, null, AppEvent.HISTORY_OBSERVED + " DESC");
+        Cursor c = me.mDatabase.query(AppEvent.TABLE_HISTORY, null, null, null, null, null, null); // AppEvent.HISTORY_OBSERVED + " DESC");
 
         if (c.moveToNext()) {
             me.mLastTimestamp = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED));
@@ -529,10 +542,31 @@ public class AppEvent extends Generator{
 
                 long start = System.currentTimeMillis() - retentionPeriod;
 
-                String where = AppEvent.HISTORY_OBSERVED + " < ?";
+                String where = AppEvent.HISTORY_OBSERVED + " > ?";
                 String[] args = { "" + start };
 
-                me.mDatabase.delete(AppEvent.TABLE_HISTORY, where, args);
+                Cursor c = me.mDatabase.query(AppEvent.TABLE_HISTORY, null, where, args, null, null, null);
+
+                int count = c.getCount();
+
+                c.close();
+
+                if (count > AppEvent.MAX_EVENT_COUNT) {
+                    long limit = (AppEvent.MAX_EVENT_COUNT * 9) / 10;
+
+                    c = me.mDatabase.query(AppEvent.TABLE_HISTORY, null, null, null, null, null, AppEvent.HISTORY_OBSERVED + " DESC", "" + limit);
+
+                    if (c.moveToLast()) {
+                        start = c.getLong(c.getColumnIndex(AppEvent.HISTORY_OBSERVED));
+                    }
+
+                    c.close();
+                }
+
+                where = AppEvent.HISTORY_OBSERVED + " < ?";
+                args[0] = "" + start;
+
+                int deleted = me.mDatabase.delete(AppEvent.TABLE_HISTORY, where, args);
 
                 me.mWorking = false;
             }
@@ -555,5 +589,17 @@ public class AppEvent extends Generator{
     @Override
     public String getIdentifier() {
         return AppEvent.GENERATOR_IDENTIFIER;
+    }
+
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, AppEvent.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
     }
 }

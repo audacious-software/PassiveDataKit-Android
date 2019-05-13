@@ -101,13 +101,13 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
     }
 
     public void sortGenerators(boolean redrawAll) {
+        final DataPointsAdapter me = this;
+
         final Context context = this.mContext;
 
         if (this.mActiveGenerators.size() == 0) {
             this.mActiveGenerators.addAll(Generators.getInstance(context).activeGenerators());
         }
-
-        final DataPointsAdapter me = this;
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 

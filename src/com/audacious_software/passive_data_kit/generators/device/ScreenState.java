@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import humanize.Humanize;
+
 @SuppressWarnings("SimplifiableIfStatement")
 public class ScreenState extends Generator{
     private static final String GENERATOR_IDENTIFIER = "pdk-screen-state";
@@ -265,7 +267,15 @@ public class ScreenState extends Generator{
 
             long timestamp = c.getLong(c.getColumnIndex(ScreenState.HISTORY_OBSERVED)) / 1000;
 
-            dateLabel.setText(Generator.formatTimestamp(context, timestamp));
+            long storage = generator.storageUsed();
+
+            String storageDesc = context.getString(R.string.label_storage_unknown);
+
+            if (storage >= 0) {
+                storageDesc = Humanize.binaryPrefix(storage);
+            }
+
+            dateLabel.setText(context.getString(R.string.label_storage_date_card, Generator.formatTimestamp(context, timestamp), storageDesc));
 
             cal = Calendar.getInstance();
             DateFormat format = android.text.format.DateFormat.getDateFormat(context);
@@ -529,5 +539,17 @@ public class ScreenState extends Generator{
         SharedPreferences.Editor e = prefs.edit();
         e.putBoolean(ScreenState.ENABLED, true);
         e.apply();
+    }
+
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, ScreenState.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
     }
 }

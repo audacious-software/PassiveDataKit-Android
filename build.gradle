@@ -84,8 +84,8 @@ android {
         api 'com.google.android.gms:play-services-awareness:16.0.0'
         implementation 'com.google.android.gms:play-services-fitness:16.0.1'
         implementation 'com.google.android.gms:play-services-auth:16.0.1'
-        implementation 'com.google.firebase:firebase-core:16.0.8'
-        implementation 'com.google.firebase:firebase-messaging:17.6.0'
+        implementation 'com.google.firebase:firebase-core:16.0.9'
+        implementation 'com.google.firebase:firebase-messaging:18.0.0'
         implementation 'com.google.maps.android:android-maps-utils:0.4'
         api 'com.squareup.okhttp3:okhttp:3.14.0'
         implementation 'commons-io:commons-io:2.6'
@@ -96,6 +96,7 @@ android {
         implementation 'com.rvalerio:fgchecker:1.1.0'
         implementation 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
         implementation 'net.openid:appauth:0.7.0'
+        implementation 'com.github.mfornos:humanize-slim:1.2.2'
         api(name: 'amazon-maps-api-v2', ext: 'aar')
     }
 }

@@ -44,6 +44,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.TreeSet;
 
+import humanize.Humanize;
+
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class ForegroundApplication extends Generator{
     private static final String GENERATOR_IDENTIFIER = "pdk-foreground-application";
@@ -514,7 +516,16 @@ public class ForegroundApplication extends Generator{
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
 
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000.0));
+            long storage = generator.storageUsed();
+
+            String storageDesc = context.getString(R.string.label_storage_unknown);
+
+            if (storage >= 0) {
+                storageDesc = Humanize.binaryPrefix(storage);
+            }
+
+            dateLabel.setText(context.getString(R.string.label_storage_date_card, Generator.formatTimestamp(context, lastTimestamp / 1000.0), storageDesc));
+
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);
@@ -694,5 +705,17 @@ public class ForegroundApplication extends Generator{
 
             return new MatrixCursor(cols);
         }
+    }
+
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, ForegroundApplication.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
     }
 }
