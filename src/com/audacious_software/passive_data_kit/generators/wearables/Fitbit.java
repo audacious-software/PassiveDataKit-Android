@@ -332,17 +332,14 @@ public class Fitbit extends Generator {
                                 }
 
                                 if (prefs.getBoolean(Fitbit.HEART_RATE_ENABLED, Fitbit.HEART_RATE_ENABLED_DEFAULT)) {
-                                    Log.e("PDK", "FETCH HEART RATE");
                                     me.fetchHeartRate();
                                 }
 
                                 if (prefs.getBoolean(Fitbit.SLEEP_ENABLED, Fitbit.SLEEP_ENABLED_DEFAULT)) {
-                                    Log.e("PDK", "FETCH SLEEP");
                                     me.fetchSleep();
                                 }
 
                                 if (prefs.getBoolean(Fitbit.WEIGHT_ENABLED, Fitbit.WEIGHT_ENABLED_DEFAULT)) {
-                                    Log.e("PDK", "FETCH WEIGHT");
                                     me.fetchWeight();
                                 }
                             }

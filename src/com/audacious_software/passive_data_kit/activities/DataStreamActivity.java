@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -37,7 +38,7 @@ public class DataStreamActivity extends AppCompatActivity implements Generators.
 
         this.mAdapter = new DataPointsAdapter();
         this.mAdapter.setContext(this.getApplicationContext());
-        // this.mAdapter.sortGenerators(true);
+        this.mAdapter.sortGenerators(true);
 
         RecyclerView listView = this.findViewById(R.id.list_view);
 

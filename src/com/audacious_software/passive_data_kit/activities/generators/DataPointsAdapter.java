@@ -3,6 +3,7 @@ package com.audacious_software.passive_data_kit.activities.generators;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -16,6 +17,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,6 +28,7 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
     private Context mContext = null;
     private final List<Class<? extends Generator>> mActiveGenerators = new ArrayList<>();
+    private boolean mIsSorting = false;
 
     @Override
     public DataPointViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -37,6 +40,8 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
             return new DataPointViewHolder(view);
         } catch (Exception e) {
+            e.printStackTrace();
+
             try {
                 generatorClass = Generator.class;
 
@@ -58,8 +63,10 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
     @SuppressWarnings("UnusedReturnValue")
     private List<Class<? extends Generator>> getGenerators(Context context) {
-        if (this.mActiveGenerators.size() == 0) {
-            this.mActiveGenerators.addAll(Generators.getInstance(context).activeGenerators());
+        synchronized (this.mActiveGenerators) {
+            if (this.mActiveGenerators.size() == 0) {
+                this.mActiveGenerators.addAll(Generators.getInstance(context).activeGenerators());
+            }
         }
 
         this.sortGenerators(false);
@@ -101,47 +108,62 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
     }
 
     public void sortGenerators(boolean redrawAll) {
+        if (this.mIsSorting) {
+            return;
+        }
+
+        this.mIsSorting = true;
+
         final DataPointsAdapter me = this;
 
         final Context context = this.mContext;
 
-        if (this.mActiveGenerators.size() == 0) {
-            this.mActiveGenerators.addAll(Generators.getInstance(context).activeGenerators());
-        }
+        synchronized (this.mActiveGenerators) {
+            this.getGenerators(this.mContext);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            final HashMap<Class, Long> timestamps = new HashMap<>();
 
-        if (prefs.getBoolean(DataPointsAdapter.SORT_BY_UPDATED, DataPointsAdapter.SORT_BY_UPDATED_DEFAULT)) {
-            synchronized(me.mActiveGenerators) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+            if (prefs.getBoolean(DataPointsAdapter.SORT_BY_UPDATED, DataPointsAdapter.SORT_BY_UPDATED_DEFAULT)) {
                 Collections.sort(me.mActiveGenerators, new Comparator<Class<? extends Generator>>() {
                     @Override
                     public int compare(Class<? extends Generator> one, Class<? extends Generator> two) {
                         long oneUpdated = 0;
 
-                        try {
-                            Method oneGenerated = one.getDeclaredMethod("latestPointGenerated", Context.class);
+                        if (timestamps.containsKey(one)) {
+                            oneUpdated = timestamps.get(one);
+                        } else {
+                            try {
+                                Method oneGenerated = one.getDeclaredMethod("latestPointGenerated", Context.class);
+                                oneUpdated = (long) oneGenerated.invoke(null, context);
 
-                            oneUpdated = (long) oneGenerated.invoke(null, context);
-                        } catch (NoSuchMethodException e) {
+                                timestamps.put(one, oneUpdated);
+                            } catch (NoSuchMethodException e) {
 //                        e.printStackTrace();
-                        } catch (InvocationTargetException e) {
+                            } catch (InvocationTargetException e) {
 //                        e.printStackTrace();
-                        } catch (IllegalAccessException e) {
+                            } catch (IllegalAccessException e) {
 //                        e.printStackTrace();
+                            }
                         }
 
                         long twoUpdated = 0;
 
-                        try {
-                            Method twoGenerated = two.getDeclaredMethod("latestPointGenerated", Context.class);
-
-                            twoUpdated = (long) twoGenerated.invoke(null, context);
-                        } catch (NoSuchMethodException e) {
+                        if (timestamps.containsKey(two)) {
+                            twoUpdated = timestamps.get(two);
+                        } else {
+                            try {
+                                Method twoGenerated = two.getDeclaredMethod("latestPointGenerated", Context.class);
+                                twoUpdated = (long) twoGenerated.invoke(null, context);
+                                timestamps.put(two, twoUpdated);
+                            } catch (NoSuchMethodException e) {
 //                        e.printStackTrace();
-                        } catch (InvocationTargetException e) {
+                            } catch (InvocationTargetException e) {
 //                        e.printStackTrace();
-                        } catch (IllegalAccessException e) {
+                            } catch (IllegalAccessException e) {
 //                        e.printStackTrace();
+                            }
                         }
 
                         if (oneUpdated < twoUpdated) {
@@ -159,6 +181,8 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
         if (redrawAll) {
             this.notifyDataSetChanged();
         }
+
+        this.mIsSorting = false;
     }
 
     public void notifyDataSetChanged(String identifier) {

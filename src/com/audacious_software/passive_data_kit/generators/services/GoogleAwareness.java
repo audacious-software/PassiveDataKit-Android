@@ -577,8 +577,6 @@ public class GoogleAwareness extends Generator {
 
                                         PlaceLikelihood mostLikely = places.get(0);
 
-                                        Log.e("PDK", "MOST LIKELY PLACE: " + mostLikely);
-
                                         me.mPlaceLikelihood = mostLikely.getLikelihood();
                                         me.mPlace = mostLikely.getPlace();
                                     } else {

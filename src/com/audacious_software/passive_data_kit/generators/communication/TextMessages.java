@@ -50,6 +50,8 @@ import java.util.List;
 
 import androidx.core.content.ContextCompat;
 
+import humanize.Humanize;
+
 @SuppressWarnings("SimplifiableIfStatement")
 public class TextMessages extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-text-messages";
@@ -406,7 +408,15 @@ public class TextMessages extends Generator {
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
 
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp));
+            long storage = generator.storageUsed();
+
+            String storageDesc = context.getString(R.string.label_storage_unknown);
+
+            if (storage >= 0) {
+                storageDesc = Humanize.binaryPrefix(storage);
+            }
+
+            dateLabel.setText(context.getString(R.string.label_storage_date_card, Generator.formatTimestamp(context, lastTimestamp / 1000.0), storageDesc));
 
             PieChart pieChart = holder.itemView.findViewById(R.id.chart_text_messages);
             pieChart.getLegend().setEnabled(false);
@@ -460,8 +470,6 @@ public class TextMessages extends Generator {
             latestField.setText(context.getString(R.string.format_full_timestamp_pdk, day, time));
             lengthField.setText(context.getResources().getQuantityString(R.plurals.generator_text_messages_length_format, lastLength, lastLength));
             directionField.setText(lastDirection);
-
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000.0));
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);
@@ -525,5 +533,17 @@ public class TextMessages extends Generator {
     @Override
     public String getIdentifier() {
         return TextMessages.GENERATOR_IDENTIFIER;
+    }
+
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, TextMessages.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
     }
 }
