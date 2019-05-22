@@ -17,3 +17,5 @@
 #}
 
 -keep class com.audacious_software.passive_data_kit.** { *; }
+
+-dontwarn javax.xml.bind.**;
