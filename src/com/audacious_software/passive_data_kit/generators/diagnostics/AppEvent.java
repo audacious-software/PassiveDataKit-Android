@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteFullException;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
@@ -31,8 +32,6 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,11 +93,17 @@ public class AppEvent extends Generator{
     public AppEvent(Context context) {
         super(context);
 
+        this.openDatabase();
+
+        this.flushCachedData();
+    }
+
+    private void openDatabase() {
+        this.mWorking = true;
+
         File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
 
         path = new File(path, AppEvent.DATABASE_PATH);
-
-        this.mWorking = true;
 
         this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
 
@@ -114,9 +119,24 @@ public class AppEvent extends Generator{
         }
 
         this.mWorking = false;
-
-        this.flushCachedData();
     }
+
+    private void resetDatabase() {
+        this.mWorking = true;
+
+        this.mDatabase.close();
+
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, AppEvent.DATABASE_PATH);
+
+        path.delete();
+
+        this.openDatabase();
+
+        this.mWorking = false;
+    }
+
 
     @SuppressWarnings("unused")
     public static void start(final Context context) {
@@ -566,7 +586,11 @@ public class AppEvent extends Generator{
                 where = AppEvent.HISTORY_OBSERVED + " < ?";
                 args[0] = "" + start;
 
-                int deleted = me.mDatabase.delete(AppEvent.TABLE_HISTORY, where, args);
+                try {
+                    me.mDatabase.delete(AppEvent.TABLE_HISTORY, where, args);
+                } catch (SQLiteFullException ex) {
+                    me.resetDatabase();
+                }
 
                 me.mWorking = false;
             }

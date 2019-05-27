@@ -30,6 +30,7 @@ import com.audacious_software.passive_data_kit.activities.generators.GeneratorVi
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.transmitters.Transmitter;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
@@ -68,7 +69,7 @@ public class SystemStatus extends Generator {
     private static final String ACTION_HEARTBEAT = "com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus.ACTION_HEARTBEAT";
 
     private static final String DATABASE_PATH = "pdk-system-status.sqlite";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     private static final String TABLE_HISTORY = "history";
 
@@ -82,6 +83,7 @@ public class SystemStatus extends Generator {
     private static final String HISTORY_STORAGE_PATH = "storage_path";
     private static final String HISTORY_LOCATION_GPS_ENABLED = "gps_enabled";
     private static final String HISTORY_LOCATION_NETWORK_ENABLED = "network_enabled";
+    private static final String HISTORY_PENDING_TRANSMISSIONS = "pending_transmissions";
 
     private static final double GIGABYTE = (1024 * 1024 * 1024);
 
@@ -139,6 +141,8 @@ public class SystemStatus extends Generator {
             case 2:
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_system_status_history_table_add_gps_enabled));
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_system_status_history_table_add_network_enabled));
+            case 3:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_system_status_history_table_add_pending_transmissions));
         }
 
         if (version != SystemStatus.DATABASE_VERSION) {
@@ -175,6 +179,12 @@ public class SystemStatus extends Generator {
 
                         long systemRuntime = SystemClock.elapsedRealtime();
 
+                        long pendingTransmissions = 0;
+
+                        for (Transmitter transmitter : Generators.getInstance(context).activeTransmitters()) {
+                            pendingTransmissions += transmitter.pendingTransmissions();
+                        }
+
                         ContentValues values = new ContentValues();
                         values.put(SystemStatus.HISTORY_OBSERVED, now);
                         values.put(SystemStatus.HISTORY_RUNTIME, now - runtimeStart);
@@ -184,6 +194,7 @@ public class SystemStatus extends Generator {
                         values.put(SystemStatus.HISTORY_STORAGE_AVAILABLE, bytesAvailable);
                         values.put(SystemStatus.HISTORY_STORAGE_USED_APP, bytesAppUsed);
                         values.put(SystemStatus.HISTORY_STORAGE_USED_OTHER, bytesOtherUsed);
+                        values.put(SystemStatus.HISTORY_PENDING_TRANSMISSIONS, pendingTransmissions);
 
                         Bundle update = new Bundle();
                         update.putLong(SystemStatus.HISTORY_OBSERVED, now);
@@ -194,6 +205,7 @@ public class SystemStatus extends Generator {
                         update.putLong(SystemStatus.HISTORY_STORAGE_AVAILABLE, bytesAvailable);
                         update.putLong(SystemStatus.HISTORY_STORAGE_USED_APP, bytesAppUsed);
                         update.putLong(SystemStatus.HISTORY_STORAGE_USED_OTHER, bytesOtherUsed);
+                        update.putLong(SystemStatus.HISTORY_PENDING_TRANSMISSIONS, pendingTransmissions);
 
                         if (ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                                 ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
