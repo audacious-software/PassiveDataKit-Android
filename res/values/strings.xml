@@ -35,6 +35,8 @@
     <string name="foreground_service_title">Background Data Collection Active</string>
     <string name="foreground_service_message">This app is collecting data in the background&#8230;</string>
 
+    <string name="action_upload_charging">Only Transmit While Charging</string>
+    <string name="action_upload_wifi">Only Upload With WiFi</string>
     <string name="label_storage_unknown">Usage Unknown</string>
     <string name="label_storage_date_card">%1$s &#8226; %2$s</string>
 </resources>
