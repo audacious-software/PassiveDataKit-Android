@@ -80,25 +80,25 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     private static final int RESULT_SUCCESS = 0;
     private static final int RESULT_ERROR = 1;
 
-    private Uri mUploadUri = null;
-    private String mUserId = null;
+    protected Uri mUploadUri = null;
+    protected String mUserId = null;
     private String mHashAlgorithm = null;
     private String mHashPrefix = null;
-    private boolean mStrictSsl = true;
-    private Context mContext = null;
+    protected boolean mStrictSsl = true;
+    protected Context mContext = null;
     private long mUploadInterval = 300000;
-    private long mLastAttempt = 0;
-    private boolean mWifiOnly = false;
-    private boolean mChargingOnly = false;
-    private boolean mUseExternalStorage = false;
+    protected long mLastAttempt = 0;
+    protected boolean mWifiOnly = false;
+    protected boolean mChargingOnly = false;
+    protected boolean mUseExternalStorage = false;
     private String mFolderName = "http-transmitter";
     private String mUserAgent = "http-transmitter";
 
-    private JsonGenerator mJsonGenerator = null;
-    private File mCurrentFile = null;
-    private long mTransmitted = 0;
+    protected JsonGenerator mJsonGenerator = null;
+    protected File mCurrentFile = null;
+    protected long mTransmitted = 0;
     private Thread mLooperThread = null;
-    private Handler mHandler = null;
+    protected Handler mHandler = null;
 
     public HttpTransmitter() {
         super();
@@ -128,6 +128,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     @SuppressWarnings({"StringConcatenationInLoop"})
     @Override
     public void initialize(Context context, HashMap<String, String> options) {
+        this.mContext = context.getApplicationContext();
+
         if (!options.containsKey(HttpTransmitter.UPLOAD_URI)) {
             throw new HttpTransmitter.IncompleteConfigurationException("The upload URI is not specified.");
         }
@@ -194,8 +196,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             this.mUserAgent = options.get(HttpTransmitter.USER_AGENT_NAME);
         }
 
-        this.mContext = context.getApplicationContext();
-
         Generators.getInstance(this.mContext).addNewGeneratorUpdatedListener(this);
     }
 
@@ -224,6 +224,10 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     @Override
     public void transmit(boolean force) {
+        if (this.mContext == null) {
+            return;
+        }
+
         long now = System.currentTimeMillis();
 
         if (force) {
@@ -460,7 +464,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void closeOpenSession() throws IOException {
+    protected void closeOpenSession() throws IOException {
         synchronized(this) {
             if (this.mCurrentFile == null) {
                 return;
@@ -503,7 +507,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    private File getPendingFolder() {
+    protected File getPendingFolder() {
         File internalStorage = this.mContext.getFilesDir();
 
         if (this.mUseExternalStorage) {
@@ -523,7 +527,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         return pendingFolder;
     }
 
-    private static long getFileSize(final File file) {
+    protected static long getFileSize(final File file) {
         if (file == null || !file.exists()) {
             return 0;
         }
@@ -702,7 +706,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     }
 
     @SuppressWarnings("unchecked")
-    private static void writeBundle(Context context, JsonGenerator generator, Bundle bundle) {
+    protected static void writeBundle(Context context, JsonGenerator generator, Bundle bundle) {
         try {
             generator.writeStartObject();
 
@@ -839,6 +843,14 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     public void setUserId(String userId) {
         this.mUserId = userId;
+    }
+
+    public void setChargingOnly(boolean onlyCharging) {
+        this.mChargingOnly = onlyCharging;
+    }
+
+    public void setWiFiOnly(boolean onlyWiFi) {
+        this.mWifiOnly = onlyWiFi;
     }
 
     @SuppressWarnings("unused")

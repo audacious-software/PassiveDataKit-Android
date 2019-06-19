@@ -37,13 +37,12 @@ import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -52,6 +51,8 @@ import java.util.Date;
 import java.util.List;
 
 import androidx.core.content.ContextCompat;
+
+import humanize.Humanize;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class Accelerometer extends SensorGenerator implements SensorEventListener {
@@ -473,6 +474,15 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                         @Override
                         public void run() {
                             dateLabel.setText(Generator.formatTimestamp(context, lastGenerated / 1000.0));
+                            long storage = generator.storageUsed();
+
+                            String storageDesc = context.getString(R.string.label_storage_unknown);
+
+                            if (storage >= 0) {
+                                storageDesc = Humanize.binaryPrefix(storage);
+                            }
+
+                            dateLabel.setText(context.getString(R.string.label_storage_date_card, Generator.formatTimestamp(context, lastGenerated / 1000.0), storageDesc));
                         }
                     });
 
@@ -671,9 +681,9 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                                 xAxis.setGranularity(1);
                                 xAxis.setAxisMinimum(start);
                                 xAxis.setAxisMaximum(now);
-                                xAxis.setValueFormatter(new IAxisValueFormatter() {
+                                xAxis.setValueFormatter(new ValueFormatter() {
                                     @Override
-                                    public String getFormattedValue(float value, AxisBase axis) {
+                                    public String getFormattedValue(float value) {
                                         Date date = new Date((long) value * 5 * 60 * 1000);
 
                                         return timeFormat.format(date);
@@ -913,4 +923,15 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         return Accelerometer.GENERATOR_IDENTIFIER;
     }
 
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, Accelerometer.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
+    }
 }

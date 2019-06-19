@@ -18,12 +18,7 @@ public class FirebasePushNotificationService extends FirebaseMessagingService {
     }
 
     public void onMessageReceived(RemoteMessage remoteMessage) {
-        Log.d("PDK", "From: " + remoteMessage.getFrom());
-
-        // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
-            Log.e("PDK", "Message data payload: " + remoteMessage.getData());
-
             if (/* Check if data needs to be processed by long running job */ true) {
                 // For long-running tasks (10 seconds or more) use Firebase Job Dispatcher.
                 // scheduleJob();
@@ -37,7 +32,6 @@ public class FirebasePushNotificationService extends FirebaseMessagingService {
 
         // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
-            Log.e("PDK", "Message Notification Body: " + remoteMessage.getNotification().getBody());
             payload.put("body", remoteMessage.getNotification().getBody());
         }
 

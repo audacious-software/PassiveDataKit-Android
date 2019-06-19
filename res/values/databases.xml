@@ -31,6 +31,7 @@
     <string name="pdk_generator_foreground_applications_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, application TEXT);</string>
     <string name="pdk_generator_foreground_applications_history_table_add_duration">ALTER TABLE history ADD duration REAL;</string>
     <string name="pdk_generator_foreground_applications_history_table_add_screen_active">ALTER TABLE history ADD screen_active INTEGER;</string>
+    <string name="pdk_generator_foreground_applications_history_table_add_display_state">ALTER TABLE history ADD display_state TEXT;</string>
 
     <!-- Ambient Light Sensor Generator -->
     <string name="pdk_generator_ambient_light_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, light_level REAL, raw_timestamp BIGINT, accuracy INTEGER);</string>
@@ -43,6 +44,7 @@
     <string name="pdk_generator_diagnostics_system_status_history_table_add_system_runtime">ALTER TABLE history ADD system_runtime INTEGER;</string>
     <string name="pdk_generator_diagnostics_system_status_history_table_add_gps_enabled">ALTER TABLE history ADD gps_enabled INTEGER;</string>
     <string name="pdk_generator_diagnostics_system_status_history_table_add_network_enabled">ALTER TABLE history ADD network_enabled INTEGER;</string>
+    <string name="pdk_generator_diagnostics_system_status_history_table_add_pending_transmissions">ALTER TABLE history ADD pending_transmissions INTEGER;</string>
 
     <!-- Time of Day Status Generator -->
     <string name="pdk_generator_time_of_day_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, sunrise INTEGER, sunset INTEGER);</string>

@@ -78,6 +78,8 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
+import humanize.Humanize;
+
 public class Location extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, android.location.LocationListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-location";
     private static final String DATABASE_PATH = "pdk-location.sqlite";
@@ -527,11 +529,15 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
-        if (timestamp > 0) {
-            dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000.0));
-        } else {
-            dateLabel.setText(R.string.label_never_pdk);
+        long storage = me.storageUsed();
+
+        String storageDesc = context.getString(R.string.label_storage_unknown);
+
+        if (storage >= 0) {
+            storageDesc = Humanize.binaryPrefix(storage);
         }
+
+        dateLabel.setText(context.getString(R.string.label_storage_date_card, Generator.formatTimestamp(context, timestamp / 1000.0), storageDesc));
 
         final DisplayMetrics metrics = new DisplayMetrics();
         ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
@@ -1241,5 +1247,17 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     @Override
     public String getIdentifier() {
         return Location.GENERATOR_IDENTIFIER;
+    }
+
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, Location.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
     }
 }

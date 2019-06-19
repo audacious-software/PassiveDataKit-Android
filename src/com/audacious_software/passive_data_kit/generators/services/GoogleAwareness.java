@@ -365,8 +365,6 @@ public class GoogleAwareness extends Generator {
                             if (task.isSuccessful()) {
                                 HeadphoneState headphone =  task.getResult().getHeadphoneState();
 
-                                Log.e("PDK", "HEADPHONE: " + headphone);
-
                                 if (headphone.getState() == HeadphoneState.PLUGGED_IN) {
                                     me.mHeadphoneState = GoogleAwareness.HEADPHONE_STATE_PLUGGED_IN;
                                 } else {
@@ -392,8 +390,6 @@ public class GoogleAwareness extends Generator {
                             public void onComplete(@NonNull Task<TimeIntervalsResponse> task) {
                                 if (task.isSuccessful()) {
                                     TimeIntervals intervals = task.getResult().getTimeIntervals();
-
-                                    Log.e("PDK", "TIME INTERVALS: " + intervals);
 
                                     if (intervals.hasTimeInterval(TimeFence.TIME_INTERVAL_WEEKDAY)) {
                                         me.mDayState = GoogleAwareness.DAY_STATE_WEEKDAY;
@@ -439,8 +435,6 @@ public class GoogleAwareness extends Generator {
                             public void onComplete(@NonNull Task<DetectedActivityResponse> task) {
                                 if (task.isSuccessful()) {
                                     DetectedActivity activity = task.getResult().getActivityRecognitionResult().getMostProbableActivity();
-
-                                    Log.e("PDK", "ACTIVITY: " + activity);
 
                                     switch(activity.getType()) {
                                         case DetectedActivity.IN_VEHICLE:
@@ -582,8 +576,6 @@ public class GoogleAwareness extends Generator {
                                         });
 
                                         PlaceLikelihood mostLikely = places.get(0);
-
-                                        Log.e("PDK", "MOST LIKELY PLACE: " + mostLikely);
 
                                         me.mPlaceLikelihood = mostLikely.getLikelihood();
                                         me.mPlace = mostLikely.getPlace();

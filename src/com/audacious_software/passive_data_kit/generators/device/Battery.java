@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteFullException;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +33,7 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -40,6 +42,8 @@ import java.util.Date;
 import java.util.List;
 
 import androidx.core.content.ContextCompat;
+
+import humanize.Humanize;
 
 @SuppressWarnings("SimplifiableIfStatement")
 public class Battery extends Generator {
@@ -418,7 +422,15 @@ public class Battery extends Generator {
 
             long timestamp = c.getLong(c.getColumnIndex(Battery.HISTORY_OBSERVED)) / 1000;
 
-            dateLabel.setText(Generator.formatTimestamp(context, timestamp));
+            long storage = generator.storageUsed();
+
+            String storageDesc = context.getString(R.string.label_storage_unknown);
+
+            if (storage >= 0) {
+                storageDesc = Humanize.binaryPrefix(storage);
+            }
+
+            dateLabel.setText(context.getString(R.string.label_storage_date_card, Generator.formatTimestamp(context, timestamp), storageDesc));
 
             c.moveToPrevious();
 
@@ -443,9 +455,9 @@ public class Battery extends Generator {
             xAxis.setGranularity(1);
             xAxis.setAxisMinimum(start);
             xAxis.setAxisMaximum(now);
-            xAxis.setValueFormatter(new IAxisValueFormatter() {
+            xAxis.setValueFormatter(new ValueFormatter() {
                 @Override
-                public String getFormattedValue(float value, AxisBase axis) {
+                public String getFormattedValue(float value) {
                    Date date = new Date((long) value);
 
                     return timeFormat.format(date);
@@ -601,5 +613,17 @@ public class Battery extends Generator {
     @Override
     public String getIdentifier() {
         return Battery.GENERATOR_IDENTIFIER;
+    }
+
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, Battery.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
     }
 }

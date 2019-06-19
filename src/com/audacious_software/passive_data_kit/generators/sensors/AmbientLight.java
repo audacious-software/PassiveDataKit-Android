@@ -34,6 +34,8 @@ import com.audacious_software.passive_data_kit.activities.generators.GeneratorVi
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.generators.device.ScreenState;
+import com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
@@ -43,6 +45,7 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -51,6 +54,8 @@ import java.util.Date;
 import java.util.List;
 
 import androidx.core.content.ContextCompat;
+
+import humanize.Humanize;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class AmbientLight extends SensorGenerator implements SensorEventListener {
@@ -336,7 +341,21 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
 
-            dateLabel.setText(Generator.formatTimestamp(context, AmbientLight.latestPointGenerated(context) / 1000.0));
+            long timestamp = AmbientLight.latestPointGenerated(context);
+
+            while (timestamp > System.currentTimeMillis()) {
+                timestamp = timestamp / 1000;
+            }
+
+            long storage = generator.storageUsed();
+
+            String storageDesc = context.getString(R.string.label_storage_unknown);
+
+            if (storage >= 0) {
+                storageDesc = Humanize.binaryPrefix(storage);
+            }
+
+            dateLabel.setText(context.getString(R.string.label_storage_date_card, Generator.formatTimestamp(context, timestamp / 1000.0), storageDesc));
 
             final LineChart chart = holder.itemView.findViewById(R.id.light_chart);
             chart.setNoDataText(context.getString(R.string.pdk_generator_chart_loading_data));
@@ -439,9 +458,9 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                             xAxis.setGranularity(1);
                             xAxis.setAxisMinimum(start);
                             xAxis.setAxisMaximum(now);
-                            xAxis.setValueFormatter(new IAxisValueFormatter() {
+                            xAxis.setValueFormatter(new ValueFormatter() {
                                 @Override
-                                public String getFormattedValue(float value, AxisBase axis) {
+                                public String getFormattedValue(float value) {
                                     Date date = new Date((long) value * 5 * 60 * 1000);
 
                                     return timeFormat.format(date);
@@ -454,9 +473,9 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                             leftAxis.setDrawAxisLine(true);
                             leftAxis.setGranularityEnabled(true);
                             leftAxis.setTextColor(ContextCompat.getColor(context, android.R.color.white));
-                            leftAxis.setValueFormatter(new IAxisValueFormatter() {
+                            leftAxis.setValueFormatter(new ValueFormatter() {
                                 @Override
-                                public String getFormattedValue(float value, AxisBase axis) {
+                                public String getFormattedValue(float value) {
                                     return "" + Math.pow(10, value);
                                 }
                             });
@@ -688,4 +707,15 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         return AmbientLight.GENERATOR_IDENTIFIER;
     }
 
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, AmbientLight.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
+    }
 }

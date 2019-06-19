@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -41,6 +42,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeSet;
+
+import humanize.Humanize;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class ForegroundApplication extends Generator{
@@ -55,13 +59,22 @@ public class ForegroundApplication extends Generator{
     private static final String SAMPLE_INTERVAL = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.SAMPLE_INTERVAL";
     private static final long SAMPLE_INTERVAL_DEFAULT = 15000;
 
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     private static final String TABLE_HISTORY = "history";
-    private static final String HISTORY_OBSERVED = "observed";
+    public static final String HISTORY_OBSERVED = "observed";
     private static final String HISTORY_APPLICATION = "application";
     private static final String HISTORY_DURATION = "duration";
     private static final String HISTORY_SCREEN_ACTIVE = "screen_active";
+
+    private static final String HISTORY_DISPLAY_STATE = "display_state";
+    private static final String HISTORY_DISPLAY_STATE_OFF = "off";
+    private static final String HISTORY_DISPLAY_STATE_ON = "on";
+    private static final String HISTORY_DISPLAY_STATE_ON_SUSPEND = "on-suspend";
+    private static final String HISTORY_DISPLAY_STATE_DOZE = "doze";
+    private static final String HISTORY_DISPLAY_STATE_DOZE_SUSPEND = "doze-suspend";
+    private static final String HISTORY_DISPLAY_STATE_VR = "virtual-reality";
+    private static final String HISTORY_DISPLAY_STATE_UNKNOWN = "unknown";
 
     private static ForegroundApplication sInstance = null;
 
@@ -71,6 +84,9 @@ public class ForegroundApplication extends Generator{
 
     private AppChecker mAppChecker = null;
     private long mLastTimestamp = 0;
+    private long mEarliestTimestamp = 0;
+
+    private HashMap<String, Long> mUsageDurations = new HashMap<>();
 
     public static class ForegroundApplicationUsage {
         public long start;
@@ -133,31 +149,77 @@ public class ForegroundApplication extends Generator{
                 Runnable r = new Runnable() {
                     @Override
                     public void run() {
-                        boolean screenActive = true;
+                        synchronized (me.mUsageDurations) {
+                            boolean screenActive = true;
 
-                        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                            if (display.getState() != Display.STATE_ON) {
-                                screenActive = false;
+                            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                                if (display.getState() != Display.STATE_ON) {
+                                    screenActive = false;
+                                }
+                            }
+
+                            ContentValues values = new ContentValues();
+                            values.put(ForegroundApplication.HISTORY_OBSERVED, now);
+                            values.put(ForegroundApplication.HISTORY_APPLICATION, process);
+                            values.put(ForegroundApplication.HISTORY_DURATION, sampleInterval);
+                            values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
+
+                            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                                int state = display.getState();
+
+                                switch (state) {
+                                    case Display.STATE_OFF:
+                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_OFF);
+                                        break;
+                                    case Display.STATE_ON:
+                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_ON);
+                                        break;
+                                    case Display.STATE_ON_SUSPEND:
+                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_ON_SUSPEND);
+                                        break;
+                                    case Display.STATE_DOZE:
+                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_DOZE);
+                                        break;
+                                    case Display.STATE_DOZE_SUSPEND:
+                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_DOZE_SUSPEND);
+                                        break;
+                                    case Display.STATE_VR:
+                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_VR);
+                                        break;
+                                    case Display.STATE_UNKNOWN:
+                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_UNKNOWN);
+                                        break;
+                                }
+                            }
+
+                            if (me.mDatabase.isOpen()) {
+                                me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
+                            }
+
+                            Bundle update = new Bundle();
+                            update.putLong(ForegroundApplication.HISTORY_OBSERVED, now);
+                            update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
+                            update.putLong(ForegroundApplication.HISTORY_DURATION, sampleInterval);
+                            update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
+
+                            if (values.containsKey(ForegroundApplication.HISTORY_DISPLAY_STATE)) {
+                                update.putString(ForegroundApplication.HISTORY_DISPLAY_STATE, values.getAsString(ForegroundApplication.HISTORY_DISPLAY_STATE));
+                            }
+
+                            Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
+
+                            ArrayList<String> toDelete = new ArrayList<>();
+
+                            for (String key : me.mUsageDurations.keySet()) {
+                                if (key.startsWith(process)) {
+                                    toDelete.add(key);
+                                }
+                            }
+
+                            for (String key : toDelete) {
+                                me.mUsageDurations.remove(key);
                             }
                         }
-
-                        ContentValues values = new ContentValues();
-                        values.put(ForegroundApplication.HISTORY_OBSERVED, now);
-                        values.put(ForegroundApplication.HISTORY_APPLICATION, process);
-                        values.put(ForegroundApplication.HISTORY_DURATION, sampleInterval);
-                        values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
-
-                        if (me.mDatabase.isOpen()) {
-                            me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
-                        }
-
-                        Bundle update = new Bundle();
-                        update.putLong(ForegroundApplication.HISTORY_OBSERVED, now);
-                        update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
-                        update.putLong(ForegroundApplication.HISTORY_DURATION, sampleInterval);
-                        update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
-
-                        Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
                     }
                 };
 
@@ -188,6 +250,8 @@ public class ForegroundApplication extends Generator{
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_duration));
             case 2:
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_screen_active));
+            case 3:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_display_state));
         }
 
         if (version != ForegroundApplication.DATABASE_VERSION) {
@@ -452,7 +516,15 @@ public class ForegroundApplication extends Generator{
             cardContent.setVisibility(View.VISIBLE);
             cardEmpty.setVisibility(View.GONE);
 
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000.0));
+            long storage = generator.storageUsed();
+
+            String storageDesc = context.getString(R.string.label_storage_unknown);
+
+            if (storage >= 0) {
+                storageDesc = Humanize.binaryPrefix(storage);
+            }
+
+            dateLabel.setText(context.getString(R.string.label_storage_date_card, Generator.formatTimestamp(context, lastTimestamp / 1000.0), storageDesc));
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);
@@ -565,7 +637,25 @@ public class ForegroundApplication extends Generator{
         return usages;
     }
 
+    public long earliestTimestamp() {
+        if (this.mEarliestTimestamp == 0) {
+            Cursor c = this.queryHistory(null, null, null, ForegroundApplication.HISTORY_OBSERVED);
+
+            if (c.moveToNext()) {
+                this.mEarliestTimestamp = c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_OBSERVED));
+            }
+        }
+
+        return this.mEarliestTimestamp;
+    }
+
     public long fetchUsageBetween(String packageName, long start, long end, boolean screenActive) {
+        String key = packageName + "-"  + start + "-" + end + "-" + screenActive;
+
+        if (this.mUsageDurations.containsKey(key)) {
+            return this.mUsageDurations.get(key);
+        }
+
         long duration = 0;
 
         if (this.mDatabase == null) {
@@ -581,6 +671,14 @@ public class ForegroundApplication extends Generator{
         String where = ForegroundApplication.HISTORY_OBSERVED + " >= ? AND " + ForegroundApplication.HISTORY_OBSERVED + " < ? AND " + ForegroundApplication.HISTORY_SCREEN_ACTIVE + " = ? AND " + ForegroundApplication.HISTORY_APPLICATION + " = ?";
         String[] args = { "" + start, "" + end, "" + isActive, packageName };
 
+        if (packageName == null) {
+            where = ForegroundApplication.HISTORY_OBSERVED + " >= ? AND " + ForegroundApplication.HISTORY_OBSERVED + " < ? AND " + ForegroundApplication.HISTORY_SCREEN_ACTIVE + " = ?";
+            args = new String[3];
+            args[0] = "" + start;
+            args[1] = "" + end;
+            args[2] = "" + isActive;
+        }
+
         Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
 
         while (c.moveToNext()) {
@@ -589,6 +687,34 @@ public class ForegroundApplication extends Generator{
 
         c.close();
 
+        synchronized (this.mUsageDurations) {
+            this.mUsageDurations.put(key, duration);
+        }
+
         return duration;
+    }
+
+    public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
+        if (this.mDatabase != null) {
+            return this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, cols, where, args, null, null, orderBy);
+        } else {
+            if (cols == null) {
+                cols = new String[0];
+            }
+
+            return new MatrixCursor(cols);
+        }
+    }
+
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, ForegroundApplication.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
     }
 }

@@ -34,6 +34,7 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import org.apache.commons.codec.binary.Hex;
@@ -45,6 +46,8 @@ import java.util.Date;
 import java.util.List;
 
 import androidx.core.content.ContextCompat;
+
+import humanize.Humanize;
 
 @SuppressWarnings("SimplifiableIfStatement")
 @SuppressLint("InlinedApi")
@@ -505,9 +508,9 @@ public class PhoneCalls extends Generator {
             data.setValueTypeface(Typeface.DEFAULT_BOLD);
             data.setValueTextColor(0xffffffff);
 
-            data.setValueFormatter(new IValueFormatter() {
+            data.setValueFormatter(new ValueFormatter() {
                 @Override
-                public String getFormattedValue(float value, Entry entry, int dataSetIndex, ViewPortHandler viewPortHandler) {
+                public String getFormattedValue(float value) {
                     return "" + ((Float) value).intValue();
                 }
             });
@@ -527,7 +530,15 @@ public class PhoneCalls extends Generator {
             durationField.setText(context.getString(R.string.generator_phone_calls_duration_format, ((float) lastDuration) / 60));
             directionField.setText(callType);
 
-            dateLabel.setText(Generator.formatTimestamp(context, lastTimestamp / 1000.0));
+            long storage = generator.storageUsed();
+
+            String storageDesc = context.getString(R.string.label_storage_unknown);
+
+            if (storage >= 0) {
+                storageDesc = Humanize.binaryPrefix(storage);
+            }
+
+            dateLabel.setText(context.getString(R.string.label_storage_date_card, Generator.formatTimestamp(context, lastTimestamp / 1000.0), storageDesc));
         } else {
             cardContent.setVisibility(View.GONE);
             cardEmpty.setVisibility(View.VISIBLE);
@@ -591,5 +602,17 @@ public class PhoneCalls extends Generator {
         c.close();
 
         return timestamp;
+    }
+
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, PhoneCalls.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
     }
 }

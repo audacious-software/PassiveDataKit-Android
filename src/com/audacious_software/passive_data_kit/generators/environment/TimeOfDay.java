@@ -42,6 +42,8 @@ import java.util.TimeZone;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
+import humanize.Humanize;
+
 public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-time-of-day";
     private static final String DATABASE_PATH = "pdk-time-of-day.sqlite";
@@ -475,7 +477,16 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         TextView dateLabel = holder.itemView.findViewById(R.id.generator_data_point_date);
 
         if (timestamp > 0) {
-            dateLabel.setText(Generator.formatTimestamp(context, timestamp / 1000.0));
+            long storage = me.storageUsed();
+
+            String storageDesc = context.getString(R.string.label_storage_unknown);
+
+            if (storage >= 0) {
+                storageDesc = Humanize.binaryPrefix(storage);
+            }
+
+            dateLabel.setText(context.getString(R.string.label_storage_date_card, Generator.formatTimestamp(context, timestamp / 1000.0), storageDesc));
+
             cardEmpty.setVisibility(View.GONE);
             cardContent.setVisibility(View.VISIBLE);
 
@@ -542,5 +553,17 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
     @Override
     public String getIdentifier() {
         return TimeOfDay.GENERATOR_IDENTIFIER;
+    }
+
+    public long storageUsed() {
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, TimeOfDay.DATABASE_PATH);
+
+        if (path.exists()) {
+            return path.length();
+        }
+
+        return -1;
     }
 }

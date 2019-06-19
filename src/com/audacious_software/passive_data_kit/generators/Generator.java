@@ -203,4 +203,10 @@ public abstract class Generator {
     public void updateConfig(JSONObject config) {
         Log.e("PDK", "No updateConfig implemented for " + this.getClass().getCanonicalName());
     }
+
+    public long storageUsed() {
+        Log.e("PDK", "No storageUsed implemented for " + this.getClass().getCanonicalName());
+
+        return -1;
+    }
 }
