@@ -13,6 +13,7 @@ import android.util.Log;
 
 import com.audacious_software.passive_data_kit.DeviceInformation;
 import com.audacious_software.passive_data_kit.Logger;
+import com.audacious_software.passive_data_kit.Toolbox;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.fasterxml.jackson.core.JsonEncoding;
@@ -31,7 +32,7 @@ import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -73,6 +74,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     private static final String STORAGE_FOLDER_NAME = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.STORAGE_FOLDER_NAME";
     public static final String USER_AGENT_NAME = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.USER_AGENT_NAME";
 
+    public static final String PUBLIC_KEY = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.PUBLIC_KEY";
+    public static final String PRIVATE_KEY = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.PRIVATE_KEY";
+
     private static final String ERROR_FILE_EXTENSION = ".error";
     private static final String JSON_EXTENSION = ".json";
     private static final String TEMP_EXTENSION = ".in-progress";
@@ -99,6 +103,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     protected long mTransmitted = 0;
     private Thread mLooperThread = null;
     protected Handler mHandler = null;
+    private byte[] mPublicKey = null;
+    private byte[] mPrivateKey = null;
 
     public HttpTransmitter() {
         super();
@@ -148,6 +154,14 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             this.mHashPrefix = options.get(HttpTransmitter.HASH_PREFIX);
         }
 
+        if (options.containsKey(HttpTransmitter.PUBLIC_KEY)) {
+            this.mPublicKey = Toolbox.decodeBase64(options.get(HttpTransmitter.PUBLIC_KEY));
+        }
+
+        if (options.containsKey(HttpTransmitter.PRIVATE_KEY)) {
+            this.mPrivateKey = Toolbox.decodeBase64(options.get(HttpTransmitter.PRIVATE_KEY));
+        }
+
         if (this.mHashAlgorithm != null) {
             try {
                 MessageDigest md = MessageDigest.getInstance(this.mHashAlgorithm);
@@ -156,7 +170,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                     this.mUserId = this.mHashPrefix + this.mUserId;
                 }
 
-                byte[] digest = md.digest(this.mUserId.getBytes(StandardCharsets.UTF_8));
+                byte[] digest = md.digest(this.mUserId.getBytes(Charset.forName("UTF-8")));
 
                 this.mUserId = (new BigInteger(1, digest)).toString(16);
 
@@ -242,15 +256,12 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
         final HttpTransmitter me = this;
 
-        Runnable r = new Runnable()
-        {
+        Runnable r = new Runnable() {
             @SuppressWarnings("ResultOfMethodCallIgnored")
             @SuppressLint("TrulyRandom")
-            public void run()
-            {
+            public void run() {
                 synchronized (me) {
-                    try
-                    {
+                    try {
                         File pendingFolder = me.getPendingFolder();
 
                         me.closeOpenSession();
@@ -424,7 +435,19 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 }
             }
 
-            builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, (new JSONArray(payload)).toString(2)));
+            if (this.mPublicKey != null) {
+                String payloadString = (new JSONArray(payload)).toString(2);
+
+                byte[] nonce = Toolbox.randomNonce();
+
+                String encryptedString = Toolbox.encrypt(this.mPrivateKey, this.mPublicKey, nonce, payloadString);
+
+                builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, encryptedString));
+                builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"encrypted\""), RequestBody.create(null, "true"));
+                builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"nonce\""), RequestBody.create(null, Toolbox.encodeBase64(nonce)));
+            } else {
+                builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, (new JSONArray(payload)).toString(2)));
+            }
 
             RequestBody requestBody = builder.build();
 
@@ -851,6 +874,18 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     public void setWiFiOnly(boolean onlyWiFi) {
         this.mWifiOnly = onlyWiFi;
+    }
+
+    public void setPublicKey(byte[] publicKey) {
+        this.mPublicKey = publicKey;
+    }
+
+    public void setPublicKey(String publicKey) {
+        this.mPublicKey = Toolbox.decodeBase64(publicKey);
+    }
+
+    public void setPrivateKey(String privateKey) {
+        this.mPrivateKey = Toolbox.decodeBase64(privateKey);
     }
 
     @SuppressWarnings("unused")
