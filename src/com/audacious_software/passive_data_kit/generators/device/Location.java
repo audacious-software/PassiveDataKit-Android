@@ -23,7 +23,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -344,8 +343,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     @SuppressLint("TrulyRandom")
     @Override
     public void onLocationChanged(android.location.Location location) {
-        Log.e("PDK", "LOCATION CHANGED: " + location);
-
         if (location == null) {
             return;
         }

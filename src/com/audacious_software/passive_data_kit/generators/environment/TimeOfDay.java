@@ -297,7 +297,6 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         Runnable r = new Runnable() {
             @Override
             public void run() {
-
                 com.luckycatlabs.sunrisesunset.dto.Location calcLocation = new com.luckycatlabs.sunrisesunset.dto.Location("" + location.getLatitude(), "" + location.getLongitude());
                 TimeZone timezone = TimeZone.getDefault();
 

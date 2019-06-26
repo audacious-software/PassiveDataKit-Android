@@ -72,4 +72,7 @@
     <!-- Users Generator -->
     <string name="pdk_generator_users_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, mode TEXT);</string>
     <string name="pdk_generator_users_history_table_add_identifier">ALTER TABLE history ADD identifier INTEGER;</string>
+
+    <!-- Dark Sky Weather Generator -->
+    <string name="pdk_generator_dark_sky_weather_create_history_table">CREATE TABLE dark_sky_weather_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, summary TEXT, temperature REAL, apparent_temperature REAL, ozone REAL, humidity REAL, dew_point REAL, wind_speed REAL, wind_gust_speed REAL, wind_bearing REAL, cloud_cover REAL, uv_index REAL, air_pressure REAL, visibility REAL, precipitation_intensity REAL, precipitation_probability REAL, full_reading TEXT);</string>
 </resources>
