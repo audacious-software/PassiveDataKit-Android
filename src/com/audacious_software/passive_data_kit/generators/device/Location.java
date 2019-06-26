@@ -23,6 +23,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -166,11 +167,10 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         Location.getInstance(context).startGenerator();
     }
 
-    private void startGenerator() {
+    public void startGenerator() {
         final Location me = this;
 
         Runnable r = new Runnable() {
-
             @Override
             public void run() {
                 if (Location.useKindleLocationServices()) {
@@ -182,9 +182,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
                         locations.requestLocationUpdates(me.mUpdateInterval, me.mMinimumDistance, criteria, me, Looper.getMainLooper());
                     }
-                }
-                else if (Location.useGoogleLocationServices(me.mContext))
-                {
+                } else if (Location.useGoogleLocationServices(me.mContext)) {
                     if (me.mGoogleApiClient == null) {
                         GoogleApiClient.Builder builder = new GoogleApiClient.Builder(me.mContext);
                         builder.addConnectionCallbacks(me);
@@ -194,9 +192,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                         me.mGoogleApiClient = builder.build();
                         me.mGoogleApiClient.connect();
                     }
-                }
-                else
-                {
+                } else {
                     // TODO
                     throw new RuntimeException("Throw rocks at developer to implement generic location support.");
                 }
@@ -226,14 +222,16 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
     }
 
-    private void stopGenerator() {
+    public void stopGenerator() {
         if (this.mGoogleApiClient != null) {
             this.mGoogleApiClient.disconnect();
             this.mGoogleApiClient = null;
         }
 
-        this.mDatabase.close();
-        this.mDatabase = null;
+        if (this.mDatabase != null) {
+            this.mDatabase.close();
+            this.mDatabase = null;
+        }
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -278,8 +276,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     }
 
     @SuppressWarnings("unused")
-    public static ArrayList<DiagnosticAction> diagnostics(Context context)
-    {
+    public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return Location.getInstance(context).runDiagostics();
     }
 
@@ -295,7 +292,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
             if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
                 actions.add(new DiagnosticAction(me.mContext.getString(R.string.diagnostic_missing_location_permission_title), me.mContext.getString(R.string.diagnostic_missing_location_permission), new Runnable() {
-
                     @Override
                     public void run() {
                         handler.post(new Runnable() {
@@ -348,6 +344,8 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     @SuppressLint("TrulyRandom")
     @Override
     public void onLocationChanged(android.location.Location location) {
+        Log.e("PDK", "LOCATION CHANGED: " + location);
+
         if (location == null) {
             return;
         }
@@ -978,9 +976,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             });
 
             return mapView;
-        }
-        else if (Location.useGoogleLocationServices(holder.itemView.getContext()))
-        {
+        } else if (Location.useGoogleLocationServices(holder.itemView.getContext())) {
             final MapView mapView = new MapView(context);
 
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -1259,5 +1255,19 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
 
         return -1;
+    }
+
+    public boolean hasPermissions() {
+        ArrayList<DiagnosticAction> actions = this.runDiagostics();
+
+        return (actions.size() == 0);
+    }
+
+    public void requestPermissions() {
+        ArrayList<DiagnosticAction> actions = this.runDiagostics();
+
+        if (actions.size() > 0) {
+            actions.get(0).run();
+        }
     }
 }

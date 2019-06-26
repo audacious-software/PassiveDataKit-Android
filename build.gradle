@@ -82,8 +82,8 @@ android {
         }
         implementation 'com.google.android.gms:play-services-maps:16.1.0'
         api 'com.google.android.gms:play-services-awareness:16.0.0'
-        implementation 'com.google.android.gms:play-services-fitness:16.0.1'
-        implementation 'com.google.android.gms:play-services-auth:16.0.1'
+        api 'com.google.android.gms:play-services-fitness:16.0.1'
+        api 'com.google.android.gms:play-services-auth:16.0.1'
         implementation 'com.google.firebase:firebase-core:16.0.9'
         implementation 'com.google.firebase:firebase-messaging:18.0.0'
         implementation 'com.google.maps.android:android-maps-utils:0.4'
