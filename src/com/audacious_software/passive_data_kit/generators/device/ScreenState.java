@@ -109,54 +109,61 @@ public class ScreenState extends Generator{
         this.mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(final Context context, Intent intent) {
-                long now = System.currentTimeMillis();
+                Thread update = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        long now = System.currentTimeMillis();
 
-                me.mLatestTimestamp = now;
+                        me.mLatestTimestamp = now;
 
-                ContentValues values = new ContentValues();
-                values.put(ScreenState.HISTORY_OBSERVED, now);
+                        ContentValues values = new ContentValues();
+                        values.put(ScreenState.HISTORY_OBSERVED, now);
 
-                Bundle update = new Bundle();
-                update.putLong(ScreenState.HISTORY_OBSERVED, now);
+                        Bundle update = new Bundle();
+                        update.putLong(ScreenState.HISTORY_OBSERVED, now);
 
-                WindowManager window = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-                Display display = window.getDefaultDisplay();
+                        WindowManager window = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+                        Display display = window.getDefaultDisplay();
 
-                final String action = intent.getAction();
+                        final String action = intent.getAction();
 
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                    switch (display.getState()) {
-                        case Display.STATE_DOZE:
-                            values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_DOZE);
-                            break;
-                        case Display.STATE_DOZE_SUSPEND:
-                            values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_DOZE_SUSPEND);
-                            break;
-                        case Display.STATE_ON:
-                            values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_ON);
-                            break;
-                        case Display.STATE_OFF:
-                            values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_OFF);
-                            break;
-                        case Display.STATE_UNKNOWN:
-                            values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_UNKNOWN);
-                            break;
+                        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                            switch (display.getState()) {
+                                case Display.STATE_DOZE:
+                                    values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_DOZE);
+                                    break;
+                                case Display.STATE_DOZE_SUSPEND:
+                                    values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_DOZE_SUSPEND);
+                                    break;
+                                case Display.STATE_ON:
+                                    values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_ON);
+                                    break;
+                                case Display.STATE_OFF:
+                                    values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_OFF);
+                                    break;
+                                case Display.STATE_UNKNOWN:
+                                    values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_UNKNOWN);
+                                    break;
+                            }
+                        } else {
+                            if (Intent.ACTION_SCREEN_OFF.equals(action)) {
+                                values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_OFF);
+                            } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
+                                values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_ON);
+                            } else {
+                                values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_UNKNOWN);
+                            }
+                        }
+
+                        me.mDatabase.insert(ScreenState.TABLE_HISTORY, null, values);
+
+                        update.putString(ScreenState.HISTORY_STATE, values.getAsString(ScreenState.HISTORY_STATE));
+
+                        Generators.getInstance(context).notifyGeneratorUpdated(ScreenState.GENERATOR_IDENTIFIER, update);
                     }
-                } else {
-                    if (Intent.ACTION_SCREEN_OFF.equals(action)) {
-                        values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_OFF);
-                    } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
-                        values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_ON);
-                    } else {
-                        values.put(ScreenState.HISTORY_STATE, ScreenState.STATE_UNKNOWN);
-                    }
-                }
+                }, "pdk-screen-state-record");
 
-                me.mDatabase.insert(ScreenState.TABLE_HISTORY, null, values);
-
-                update.putString(ScreenState.HISTORY_STATE, values.getAsString(ScreenState.HISTORY_STATE));
-
-                Generators.getInstance(context).notifyGeneratorUpdated(ScreenState.GENERATOR_IDENTIFIER, update);
+                update.run();
             }
         };
 
