@@ -192,8 +192,10 @@ public class ForegroundApplication extends Generator{
                                 }
                             }
 
-                            if (me.mDatabase.isOpen()) {
-                                me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
+                            synchronized(me) {
+                                if (me.mDatabase.isOpen()) {
+                                    me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
+                                }
                             }
 
                             Bundle update = new Bundle();
@@ -679,10 +681,14 @@ public class ForegroundApplication extends Generator{
             args[2] = "" + isActive;
         }
 
-        Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
+        String[] columns = { ForegroundApplication.HISTORY_DURATION };
+
+        Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, columns, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
+
+        int durationIndex = c.getColumnIndex(ForegroundApplication.HISTORY_DURATION);
 
         while (c.moveToNext()) {
-            duration += c.getLong(c.getColumnIndex(ForegroundApplication.HISTORY_DURATION));
+            duration += c.getLong(durationIndex);
         }
 
         c.close();
