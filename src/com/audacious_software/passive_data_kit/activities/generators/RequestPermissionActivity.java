@@ -1,10 +1,13 @@
 package com.audacious_software.passive_data_kit.activities.generators;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.audacious_software.passive_data_kit.Logger;
+import com.audacious_software.passive_data_kit.generators.device.Location;
 import com.audacious_software.passive_data_kit.generators.services.GoogleFit;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.fitness.FitnessOptions;
@@ -59,6 +62,14 @@ public class RequestPermissionActivity extends Activity
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        Bundle extras = this.getIntent().getExtras();
+        String permission = extras.getString(RequestPermissionActivity.PERMISSION);
+
+        if (Manifest.permission.ACCESS_FINE_LOCATION.equals(permission) || Manifest.permission.ACCESS_COARSE_LOCATION.equals(permission)) {
+            Location.getInstance(this).stopGenerator();
+            Location.getInstance(this).startGenerator();
+        }
+
         this.finish();
     }
 
