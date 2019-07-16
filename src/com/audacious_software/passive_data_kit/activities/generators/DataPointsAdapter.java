@@ -3,7 +3,6 @@ package com.audacious_software.passive_data_kit.activities.generators;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 

@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -876,7 +875,7 @@ public class GoogleAwareness extends Generator {
                 toTransmit.putDouble(GoogleAwareness.HISTORY_CURRENT_PLACE_LONGITUDE, Double.NaN);
 
                 toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_TYPES, "");
-                toTransmit.putStringArrayList(GoogleAwareness.HISTORY_CURRENT_PLACE_TYPES, new ArrayList<String>());
+                toTransmit.putStringArrayList(GoogleAwareness.HISTORY_CURRENT_PLACE_TYPES, new ArrayList<>());
 
                 toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_CONFIDENCE, 0);
                 toTransmit.putDouble(GoogleAwareness.HISTORY_CURRENT_PLACE_CONFIDENCE, 0);

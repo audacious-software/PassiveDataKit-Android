@@ -33,13 +33,11 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import org.json.JSONObject;
