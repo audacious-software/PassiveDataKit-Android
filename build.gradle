@@ -95,7 +95,7 @@ android {
         api 'com.squareup.okhttp3:okhttp:3.14.0'
         implementation 'commons-io:commons-io:2.6'
         implementation 'commons-codec:commons-codec:1.12'
-        implementation 'org.apache.commons:commons-lang3:3.9'
+        api 'org.apache.commons:commons-lang3:3.9'
         implementation 'com.fasterxml.jackson.core:jackson-core:2.9.9'
         api 'com.github.philjay:mpandroidchart:v3.1.0'
         implementation 'com.rvalerio:fgchecker:1.1.0'
