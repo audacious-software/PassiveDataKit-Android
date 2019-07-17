@@ -277,6 +277,11 @@ public class PassiveDataKit {
                             }
                         }
 
+                        if (transmitterDef.has("device-key") && transmitterDef.has("server-key")) {
+                            options.put(HttpTransmitter.PRIVATE_KEY, transmitterDef.getString("device-key"));
+                            options.put(HttpTransmitter.PUBLIC_KEY, transmitterDef.getString("server-key"));
+                        }
+
                         try {
                             String version = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0).versionName;
 
