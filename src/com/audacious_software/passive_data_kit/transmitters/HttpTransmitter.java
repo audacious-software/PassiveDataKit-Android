@@ -59,6 +59,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 @SuppressWarnings({"PointlessBooleanExpression", "unused"})
 public class HttpTransmitter extends Transmitter implements Generators.GeneratorUpdatedListener {
@@ -470,14 +471,22 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
             int code = response.code();
 
+            ResponseBody body = response.body();
+
+            String bodyString = body.string();
+
             response.body().close();
 
             if (code >= 200 && code < 300) {
-                for (File f : toDelete) {
-                    f.delete();
-                }
+                JSONObject responseObject = new JSONObject(bodyString);
 
-                return HttpTransmitter.RESULT_SUCCESS;
+                if (responseObject.has("added") && responseObject.getBoolean("added")) {
+                    for (File f : toDelete) {
+                        f.delete();
+                    }
+
+                    return HttpTransmitter.RESULT_SUCCESS;
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

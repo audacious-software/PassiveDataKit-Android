@@ -1,14 +1,11 @@
-sudo: true
 language: android
-jdk: oraclejdk8
+dist: trusty
 
 before_install:
   - wget http://services.gradle.org/distributions/gradle-5.1.1-bin.zip
   - unzip gradle-5.1.1-bin.zip
   - export GRADLE_HOME=$PWD/gradle-5.1.1
   - export PATH=$GRADLE_HOME/bin:$PATH
-  - yes | sdkmanager "platforms;android-28"
-  - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-28.0.3
 
 script:
   - gradle lint
@@ -18,20 +15,10 @@ android:
   components:
     - platform-tools
     - tools
-
-    # The BuildTools version used by your project
-    - build-tools-28
-
-    # The SDK version used to compile your project
+    - build-tools-28.0.3
     - android-28
 
     # Additional components
     - extra-google-google_play_services
     - extra-google-m2repository
     - extra-android-m2repository
-    - addon-google_apis-google-28
-
-    # Specify at least one system image,
-    # if you need to run emulator(s) during your tests
-    # - sys-img-armeabi-v7a-android-23
-    # - sys-img-x86-android-23

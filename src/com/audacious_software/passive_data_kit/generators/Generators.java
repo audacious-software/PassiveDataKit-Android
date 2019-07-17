@@ -323,6 +323,7 @@ public class Generators {
 
                     for (String className : availableGenerators) {
                         try {
+                            @SuppressWarnings (value="unchecked")
                             Class<Generator> probeClass = (Class<Generator>) Class.forName(className);
 
                             Method getInstance = probeClass.getDeclaredMethod("getInstance", Context.class);

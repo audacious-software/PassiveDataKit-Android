@@ -1,6 +1,5 @@
 package com.audacious_software.passive_data_kit;
 
-import android.content.Context;
 import android.util.Base64;
 
 import org.libsodium.jni.NaCl;

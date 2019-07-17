@@ -30,7 +30,7 @@ repositories {
     }
 }
 android {
-    useLibrary 'org.apache.http.legacy'
+    // useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         minSdkVersion 18
@@ -40,8 +40,13 @@ android {
         versionCode 1
         versionName "1.0"
 
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_1_8
+            targetCompatibility JavaVersion.VERSION_1_8
+        }
+
         manifestPlaceholders = [
-                appAuthRedirectScheme: "NOT-USED"
+            appAuthRedirectScheme: "NOT-USED"
         ]
     }
 
@@ -71,22 +76,22 @@ android {
     dependencies {
         api fileTree(dir: 'libs', include: ['*.jar'])
         // testCompile 'junit:junit:4.12'
-        api 'androidx.appcompat:appcompat:1.0.2'
+        implementation 'androidx.appcompat:appcompat:1.0.2'
         implementation 'androidx.recyclerview:recyclerview:1.0.0'
         implementation 'androidx.media:media:1.0.1'
         implementation 'androidx.legacy:legacy-support-v4:1.0.0'
         implementation 'androidx.cardview:cardview:1.0.0'
         implementation 'androidx.browser:browser:1.0.0'
-        implementation('androidx.work:work-runtime:2.0.1')  {
+        implementation('androidx.work:work-runtime:2.0.1') {
             exclude group: 'com.google.guava', module: 'listenablefuture'
         }
+        implementation 'com.google.android.gms:play-services-auth:16.0.1'
+        implementation 'com.google.android.gms:play-services-fitness:16.0.1'
         implementation 'com.google.android.gms:play-services-maps:16.1.0'
-        api 'com.google.android.gms:play-services-awareness:16.0.0'
-        api 'com.google.android.gms:play-services-fitness:16.0.1'
-        api 'com.google.android.gms:play-services-auth:16.0.1'
-        implementation 'com.google.firebase:firebase-core:16.0.9'
-        implementation 'com.google.firebase:firebase-messaging:18.0.0'
-        implementation 'com.google.maps.android:android-maps-utils:0.4'
+        implementation 'com.google.android.gms:play-services-awareness:16.0.0'
+        implementation 'com.google.firebase:firebase-core:17.0.0'
+        implementation 'com.google.firebase:firebase-messaging:19.0.1'
+        implementation 'com.google.maps.android:android-maps-utils:0.5'
         api 'com.squareup.okhttp3:okhttp:3.14.0'
         implementation 'commons-io:commons-io:2.6'
         implementation 'commons-codec:commons-codec:1.12'
@@ -97,7 +102,7 @@ android {
         implementation 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
         implementation 'net.openid:appauth:0.7.0'
         implementation 'com.github.mfornos:humanize-slim:1.2.2'
-        api 'com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2'
+        implementation 'com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2'
         api 'com.google.code.findbugs:jsr305:3.0.2'
         api(name: 'amazon-maps-api-v2', ext: 'aar')
     }

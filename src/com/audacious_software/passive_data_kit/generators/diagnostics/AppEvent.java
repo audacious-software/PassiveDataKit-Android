@@ -472,7 +472,9 @@ public class AppEvent extends Generator{
 
                             values.put(AppEvent.HISTORY_EVENT_DETAILS, detailsJson.toString(2));
 
-                            this.mDatabase.insert(AppEvent.TABLE_HISTORY, null, values);
+                            synchronized(this.mDatabase) {
+                                this.mDatabase.insert(AppEvent.TABLE_HISTORY, null, values);
+                            }
 
                             Bundle update = new Bundle();
                             update.putLong(AppEvent.HISTORY_OBSERVED, now);
@@ -587,7 +589,9 @@ public class AppEvent extends Generator{
                 args[0] = "" + start;
 
                 try {
-                    me.mDatabase.delete(AppEvent.TABLE_HISTORY, where, args);
+                    synchronized(me.mDatabase) {
+                        me.mDatabase.delete(AppEvent.TABLE_HISTORY, where, args);
+                    }
                 } catch (SQLiteFullException ex) {
                     me.resetDatabase();
                 }
@@ -596,7 +600,7 @@ public class AppEvent extends Generator{
             }
         };
 
-        Thread t = new Thread(r);
+        Thread t = new Thread(r, "pdk-app-event-flush-cached-data");
         t.start();
     }
 
