@@ -82,7 +82,7 @@ public class Generators {
                     } catch (ClassNotFoundException e) {
                         Logger.getInstance(this.mContext).logThrowable(e);
                     } catch (NoSuchMethodException e) {
-                        Log.e("PDK", "NO ENABLED FOR " + className);
+                        Log.e("PDK", "NOT ENABLED FOR " + className);
                         Logger.getInstance(this.mContext).logThrowable(e);
                     } catch (InvocationTargetException e) {
                         Logger.getInstance(this.mContext).logThrowable(e);
@@ -401,8 +401,6 @@ public class Generators {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-                Log.e("ENVIRO", "MEDIA URL: " + url);
 
                 bundles.add(bundle);
             }

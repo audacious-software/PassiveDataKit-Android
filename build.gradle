@@ -85,11 +85,11 @@ android {
         implementation('androidx.work:work-runtime:2.0.1') {
             exclude group: 'com.google.guava', module: 'listenablefuture'
         }
-        implementation 'com.google.android.gms:play-services-auth:16.0.1'
-        implementation 'com.google.android.gms:play-services-fitness:16.0.1'
-        implementation 'com.google.android.gms:play-services-maps:16.1.0'
-        implementation 'com.google.android.gms:play-services-awareness:16.0.0'
-        implementation 'com.google.firebase:firebase-core:17.0.0'
+        api 'com.google.android.gms:play-services-auth:16.0.1'
+        api 'com.google.android.gms:play-services-fitness:16.0.1'
+        api 'com.google.android.gms:play-services-maps:16.1.0'
+        api 'com.google.android.gms:play-services-awareness:16.0.0'
+        api 'com.google.firebase:firebase-core:17.0.1'
         implementation 'com.google.firebase:firebase-messaging:19.0.1'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         api 'com.squareup.okhttp3:okhttp:3.14.0'
@@ -105,5 +105,6 @@ android {
         implementation 'com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2'
         api 'com.google.code.findbugs:jsr305:3.0.2'
         api(name: 'amazon-maps-api-v2', ext: 'aar')
+        implementation 'com.google.android.material:material:1.0.0'
     }
 }

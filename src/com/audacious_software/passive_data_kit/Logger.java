@@ -20,6 +20,10 @@ public class Logger {
         AppEvent.getInstance(this.mContext).logEvent(event, details);
     }
 
+    public void log(String event) {
+        this.log(event, new HashMap<>());
+    }
+
     private static class LoggerHolder {
         @SuppressLint("StaticFieldLeak")
         public static final Logger instance = new Logger();

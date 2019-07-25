@@ -6,12 +6,15 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.audacious_software.passive_data_kit.activities.MaintenanceActivity;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
@@ -24,6 +27,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
@@ -37,6 +41,17 @@ public class PassiveDataKit {
     public static final String NOTIFICATION_ICON_ID = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_ICON_ID";
     public static final String NOTIFICATION_COLOR = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_COLOR";
     private static final String FIREBASE_DEVICE_TOKEN = "com.audacious_software.passive_data_kit.PassiveDataKit.FIREBASE_DEVICE_TOKEN";
+
+    private static final String MAINTENANCE_DIALOG_ENABLED = "com.audacious_software.passive_data_kit.PassiveDataKit.MAINTENANCE_DIALOG_ENABLED";
+    private static final boolean MAINTENANCE_DIALOG_ENABLED_DEFAULT = false;
+    private static final String MAINTENANCE_DIALOG_MESSAGE = "com.audacious_software.passive_data_kit.PassiveDataKit.MAINTENANCE_DIALOG_MESSAGE";
+    private static final String MAINTENANCE_DIALOG_START_HOUR = "com.audacious_software.passive_data_kit.PassiveDataKit.MAINTENANCE_DIALOG_START_HOUR";
+    private static final int MAINTENANCE_DIALOG_START_HOUR_DEFAULT = 3;
+    private static final String MAINTENANCE_DIALOG_DURATION = "com.audacious_software.passive_data_kit.PassiveDataKit.MAINTENANCE_DIALOG_DURATION";
+    private static final long MAINTENANCE_DIALOG_DURATION_DEFAULT = 3 * 60 * 60 * 1000;
+    private static final String MAINTENANCE_DIALOG_FORCE_INTERVAL = "com.audacious_software.passive_data_kit.PassiveDataKit.MAINTENANCE_DIALOG_FORCE_INTERVAL";
+    private static final long MAINTENANCE_DIALOG_FORCE_INTERVAL_DEFAULT = 2 * 24 * 60 * 60 * 1000;
+    private static final String MAINTENANCE_LAST_APPEARANCE = "com.audacious_software.passive_data_kit.PassiveDataKit.MAINTENANCE_LAST_APPEARANCE";;
 
     private Context mContext = null;
     private boolean mStarted = false;
@@ -301,5 +316,98 @@ public class PassiveDataKit {
         }
 
         return transmitters;
+    }
+
+    public void logMaintenanceAppearance(String source, long timestamp) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(PassiveDataKit.MAINTENANCE_LAST_APPEARANCE, timestamp);
+        e.apply();
+
+        HashMap<String, Object> payload = new HashMap<>();
+        payload.put("source", source);
+
+        Logger.getInstance(this.mContext).log("pdk-log-app-appearance", payload);
+    }
+
+    public void nudgeMaintenanceDialogs() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        if (prefs.getBoolean(PassiveDataKit.MAINTENANCE_DIALOG_ENABLED, PassiveDataKit.MAINTENANCE_DIALOG_ENABLED_DEFAULT)) {
+            int hour = prefs.getInt(PassiveDataKit.MAINTENANCE_DIALOG_START_HOUR, PassiveDataKit.MAINTENANCE_DIALOG_START_HOUR_DEFAULT);
+            long interval = prefs.getLong(PassiveDataKit.MAINTENANCE_DIALOG_DURATION, PassiveDataKit.MAINTENANCE_DIALOG_DURATION_DEFAULT);
+            long forceInterval = prefs.getLong(PassiveDataKit.MAINTENANCE_DIALOG_FORCE_INTERVAL, PassiveDataKit.MAINTENANCE_DIALOG_FORCE_INTERVAL_DEFAULT);
+            String message = prefs.getString(PassiveDataKit.MAINTENANCE_DIALOG_MESSAGE, null);
+
+            long now = System.currentTimeMillis();
+
+            long lastAppearance = prefs.getLong(PassiveDataKit.MAINTENANCE_LAST_APPEARANCE, 0);
+
+            long elapsed = now - lastAppearance;
+
+            if (lastAppearance == 0) {
+                this.logMaintenanceAppearance("pdk-initial-launch", System.currentTimeMillis());
+            } else {
+                Intent launchIntent = new Intent(this.mContext, MaintenanceActivity.class);
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                if (message != null) {
+                    launchIntent.putExtra(MaintenanceActivity.MESSAGE_TEXT, message);
+                }
+
+                if (elapsed > forceInterval) {
+                    this.logMaintenanceAppearance("force-immediate-launch", System.currentTimeMillis());
+
+                    this.mContext.startActivity(launchIntent);
+
+                    Logger.getInstance(this.mContext).log("pdk-maintenance-force-appearance", new HashMap<>());
+                } else if (elapsed > ((interval * 4) / 5)) {
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.set(Calendar.HOUR_OF_DAY, hour);
+                    calendar.set(Calendar.MINUTE, 0);
+                    calendar.set(Calendar.SECOND, 0);
+                    calendar.set(Calendar.MILLISECOND, 0);
+
+                    long intervalStart = calendar.getTimeInMillis();
+                    long intervalEnd = intervalStart + interval;
+
+                    if (now >= intervalStart && now <= intervalEnd) {
+                        Intent intent = this.mContext.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+
+                        int plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
+
+                        if (plugged == BatteryManager.BATTERY_PLUGGED_AC || plugged == BatteryManager.BATTERY_PLUGGED_USB || plugged == BatteryManager.BATTERY_PLUGGED_WIRELESS) {
+                            this.logMaintenanceAppearance("force-opportunistic-launch", System.currentTimeMillis());
+
+                            this.mContext.startActivity(launchIntent);
+
+                            Logger.getInstance(this.mContext).log("pdk-maintenance-opportunistic-appearance", new HashMap<>());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+     public void enableMaintenanceDialogs(boolean enable) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(PassiveDataKit.MAINTENANCE_DIALOG_ENABLED, enable);
+        e.apply();
+    }
+
+    public void configureMaintenanceDialog(String message, int hour, long duration, long forceInterval) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        SharedPreferences.Editor e = prefs.edit();
+        e.putString(PassiveDataKit.MAINTENANCE_DIALOG_MESSAGE, message);
+        e.putInt(PassiveDataKit.MAINTENANCE_DIALOG_START_HOUR, hour);
+        e.putLong(PassiveDataKit.MAINTENANCE_DIALOG_DURATION, duration);
+        e.putLong(PassiveDataKit.MAINTENANCE_DIALOG_FORCE_INTERVAL, forceInterval);
+
+        e.apply();
     }
 }

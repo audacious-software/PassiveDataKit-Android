@@ -39,5 +39,6 @@
     <string name="action_upload_wifi">Only Upload With WiFi</string>
     <string name="label_storage_unknown">Usage Unknown</string>
     <string name="label_storage_date_card">%1$s &#8226; %2$s</string>
+    <string name="message_default_maintenance">Performing maintenance&#8230;</string>
 </resources>
 
