@@ -39,7 +39,7 @@ public class MaintenanceActivity extends Activity {
 
         progress.setIndeterminate(true);
 
-        TextView message = this.findViewById(R.id.maintenance_message);
+        TextView message = content.findViewById(R.id.maintenance_message);
 
         String messageText = intent.getStringExtra(MaintenanceActivity.MESSAGE_TEXT);
 
