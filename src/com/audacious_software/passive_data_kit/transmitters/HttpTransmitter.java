@@ -285,6 +285,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                             }
                         });
 
+
                         if (filenames == null) {
                             filenames = new String[0];
                         }
@@ -635,7 +636,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 if (child.isDirectory()) {
                     dirs.add(child);
                 } else {
-                    result += 1;
+                    if (child.getAbsolutePath().endsWith(HttpTransmitter.JSON_EXTENSION)) {
+                        result += 1;
+                    }
                 }
             }
         }
