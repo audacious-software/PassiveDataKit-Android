@@ -47,7 +47,7 @@ public class User extends Generator {
     private SQLiteDatabase mDatabase = null;
 
     @SuppressWarnings("WeakerAccess")
-    public static User getInstance(Context context) {
+    public static synchronized User getInstance(Context context) {
         if (User.sInstance == null) {
             User.sInstance = new User(context.getApplicationContext());
         }

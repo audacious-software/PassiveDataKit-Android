@@ -92,7 +92,7 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         return TimeOfDay.GENERATOR_IDENTIFIER;
     }
 
-    public static TimeOfDay getInstance(Context context) {
+    public static synchronized TimeOfDay getInstance(Context context) {
         if (TimeOfDay.sInstance == null) {
             TimeOfDay.sInstance = new TimeOfDay(context.getApplicationContext());
         }

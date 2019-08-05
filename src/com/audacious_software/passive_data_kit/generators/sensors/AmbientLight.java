@@ -110,7 +110,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static AmbientLight getInstance(Context context) {
+    public static synchronized AmbientLight getInstance(Context context) {
         if (AmbientLight.sInstance == null) {
             AmbientLight.sInstance = new AmbientLight(context.getApplicationContext());
         }

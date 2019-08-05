@@ -92,7 +92,7 @@ public class GoogleFit extends Generator {
 
     private Map<DataType, Long> mLastReadings = new HashMap<>();
 
-    public static GoogleFit getInstance(Context context) {
+    public static synchronized GoogleFit getInstance(Context context) {
         if (GoogleFit.sInstance == null) {
             GoogleFit.sInstance = new GoogleFit(context.getApplicationContext());
         }

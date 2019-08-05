@@ -149,7 +149,7 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         return Location.GENERATOR_IDENTIFIER;
     }
 
-    public static Location getInstance(Context context) {
+    public static synchronized Location getInstance(Context context) {
         if (Location.sInstance == null) {
             Location.sInstance = new Location(context.getApplicationContext());
         }

@@ -85,7 +85,7 @@ public class DarkSkyWeather extends Generator {
         return DarkSkyWeather.GENERATOR_IDENTIFIER;
     }
 
-    public static DarkSkyWeather getInstance(Context context) {
+    public static synchronized DarkSkyWeather getInstance(Context context) {
         if (DarkSkyWeather.sInstance == null) {
             DarkSkyWeather.sInstance = new DarkSkyWeather(context.getApplicationContext());
         }

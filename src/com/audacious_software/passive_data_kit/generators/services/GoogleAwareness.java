@@ -216,7 +216,7 @@ public class GoogleAwareness extends Generator {
     private int mPendingRequests = 0;
 
     @SuppressWarnings("WeakerAccess")
-    public static GoogleAwareness getInstance(Context context) {
+    public static synchronized GoogleAwareness getInstance(Context context) {
         if (GoogleAwareness.sInstance == null) {
             GoogleAwareness.sInstance = new GoogleAwareness(context.getApplicationContext());
         }

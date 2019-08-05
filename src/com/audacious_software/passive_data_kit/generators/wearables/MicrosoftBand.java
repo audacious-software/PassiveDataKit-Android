@@ -173,7 +173,7 @@ public class MicrosoftBand extends Generator
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static MicrosoftBand getInstance(Context context) {
+    public static synchronized MicrosoftBand getInstance(Context context) {
         if (MicrosoftBand.sInstance == null) {
             MicrosoftBand.sInstance = new MicrosoftBand(context.getApplicationContext());
         }

@@ -122,7 +122,7 @@ public class Battery extends Generator {
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static Battery getInstance(Context context) {
+    public static synchronized Battery getInstance(Context context) {
         if (Battery.sInstance == null) {
             Battery.sInstance = new Battery(context.getApplicationContext());
         }
