@@ -221,8 +221,8 @@ public class PassiveDataKit {
 
         List<Transmitter> transmitters = Generators.getInstance(this.mContext).activeTransmitters();
 
-        for (Transmitter transmitted : transmitters) {
-            pending += transmitted.pendingTransmissions();
+        for (Transmitter transmitter : transmitters) {
+            pending += transmitter.pendingTransmissions();
         }
 
         return pending;
