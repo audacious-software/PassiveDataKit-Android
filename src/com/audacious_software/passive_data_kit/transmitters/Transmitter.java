@@ -10,7 +10,7 @@ public abstract class Transmitter {
     public abstract void initialize(Context context, HashMap<String, String> options);
 
     @SuppressWarnings({"SameParameterValue", "unused"})
-    public abstract void transmit(boolean force);
+    public abstract boolean transmit(boolean force);
 
     @SuppressWarnings("unused")
     public abstract long pendingSize();

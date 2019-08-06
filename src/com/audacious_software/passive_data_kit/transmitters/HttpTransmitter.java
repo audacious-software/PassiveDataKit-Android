@@ -27,6 +27,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FilenameFilter;
@@ -46,6 +47,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -72,6 +74,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     public static final String WIFI_ONLY = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.WIFI_ONLY";
     public static final String CHARGING_ONLY = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.CHARGING_ONLY";
     public static final String USE_EXTERNAL_STORAGE = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.USE_EXTERNAL_STORAGE";
+    public static final String COMPRESS_PAYLOADS = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.COMPRESS_PAYLOADS";
+
     private static final String STORAGE_FOLDER_NAME = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.STORAGE_FOLDER_NAME";
     public static final String USER_AGENT_NAME = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.USER_AGENT_NAME";
 
@@ -85,6 +89,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     private static final int RESULT_SUCCESS = 0;
     private static final int RESULT_ERROR = 1;
 
+    private static final String COMPRESSION_GZIP = "gzip";
+    private static final String COMPRESSION_NONE = "none";
+
     protected Uri mUploadUri = null;
     protected String mUserId = null;
     private String mHashAlgorithm = null;
@@ -96,6 +103,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     protected boolean mWifiOnly = false;
     protected boolean mChargingOnly = false;
     protected boolean mUseExternalStorage = false;
+    private boolean mCompressPayloads = false;
+
     private String mFolderName = "http-transmitter";
     private String mUserAgent = "http-transmitter";
 
@@ -199,6 +208,10 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             this.mChargingOnly = "true".equals(options.get(HttpTransmitter.CHARGING_ONLY).toLowerCase(Locale.ENGLISH));
         }
 
+        if (options.containsKey(HttpTransmitter.COMPRESS_PAYLOADS)) {
+            this.mCompressPayloads = "true".equals(options.get(HttpTransmitter.COMPRESS_PAYLOADS).toLowerCase(Locale.ENGLISH));
+        }
+
         if (options.containsKey(HttpTransmitter.USE_EXTERNAL_STORAGE)) {
             this.mUseExternalStorage = "true".equals(options.get(HttpTransmitter.USE_EXTERNAL_STORAGE).toLowerCase(Locale.ENGLISH));
         }
@@ -222,6 +235,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         if (force) {
             return true;
         }
+
         if (this.mWifiOnly) {
             if (DeviceInformation.wifiAvailable(this.mContext) == false) {
                 return false;
@@ -238,9 +252,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     }
 
     @Override
-    public void transmit(boolean force) {
+    public boolean transmit(boolean force) {
         if (this.mContext == null) {
-            return;
+            return false;
         }
 
         long now = System.currentTimeMillis();
@@ -250,7 +264,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         }
 
         if (this.mHandler == null || now - this.mLastAttempt < this.mUploadInterval || !this.shouldAttemptUpload(force)) {
-            return;
+            return false;
         }
 
         this.mLastAttempt = now;
@@ -356,6 +370,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         };
 
         this.mHandler.post(r);
+
+        return true;
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -437,9 +453,36 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 }
             }
 
-            if (this.mPublicKey != null) {
-                String payloadString = (new JSONArray(payload)).toString(2);
+            boolean compressed = false;
 
+            String payloadString = (new JSONArray(payload)).toString(2);
+
+            if (this.mCompressPayloads) {
+                // Compress payload string
+
+                try {
+                    byte[] input = payloadString.getBytes("UTF-8");
+
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    GZIPOutputStream gzip = new GZIPOutputStream(baos);
+
+                    gzip.write(input, 0, input.length);
+                    gzip.flush();
+
+                    gzip.close();
+                    baos.close();
+
+                    byte[] compressedBytes = baos.toByteArray();
+
+                    payloadString = Toolbox.encodeBase64(compressedBytes);
+
+                    compressed = true;
+                } catch (java.io.UnsupportedEncodingException ex) {
+                    // handle
+                }
+            }
+
+            if (this.mPublicKey != null) {
                 byte[] nonce = Toolbox.randomNonce();
 
                 String encryptedString = Toolbox.encrypt(this.mPrivateKey, this.mPublicKey, nonce, payloadString);
@@ -448,7 +491,13 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"encrypted\""), RequestBody.create(null, "true"));
                 builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"nonce\""), RequestBody.create(null, Toolbox.encodeBase64(nonce)));
             } else {
-                builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, (new JSONArray(payload)).toString(2)));
+                builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"payload\""), RequestBody.create(null, payloadString));
+            }
+
+            if (compressed) {
+                builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"compression\""), RequestBody.create(null, HttpTransmitter.COMPRESSION_GZIP));
+            } else {
+                builder = builder.addPart(Headers.of("Content-Disposition", "form-data; name=\"compression\""), RequestBody.create(null, HttpTransmitter.COMPRESSION_NONE));
             }
 
             RequestBody requestBody = builder.build();
