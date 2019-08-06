@@ -126,7 +126,7 @@ public class Geofences extends Generator {
         return Geofences.GENERATOR_IDENTIFIER;
     }
 
-    public static Geofences getInstance(Context context) {
+    public static synchronized Geofences getInstance(Context context) {
         context = context.getApplicationContext();
 
         if (Geofences.sInstance == null) {

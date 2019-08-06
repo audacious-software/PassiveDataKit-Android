@@ -125,7 +125,7 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static Accelerometer getInstance(Context context) {
+    public static synchronized Accelerometer getInstance(Context context) {
         if (Accelerometer.sInstance == null) {
             Accelerometer.sInstance = new Accelerometer(context.getApplicationContext());
         }

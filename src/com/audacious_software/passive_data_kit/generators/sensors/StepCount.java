@@ -74,7 +74,7 @@ public class StepCount extends SensorGenerator implements SensorEventListener {
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static StepCount getInstance(Context context) {
+    public static synchronized StepCount getInstance(Context context) {
         if (StepCount.sInstance == null) {
             StepCount.sInstance = new StepCount(context.getApplicationContext());
         }

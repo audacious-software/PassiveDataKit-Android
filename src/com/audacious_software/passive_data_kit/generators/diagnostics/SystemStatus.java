@@ -100,7 +100,7 @@ public class SystemStatus extends Generator {
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static SystemStatus getInstance(Context context) {
+    public static synchronized SystemStatus getInstance(Context context) {
         if (SystemStatus.sInstance == null) {
             SystemStatus.sInstance = new SystemStatus(context.getApplicationContext());
         }

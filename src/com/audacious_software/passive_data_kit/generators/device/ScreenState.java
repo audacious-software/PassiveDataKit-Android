@@ -85,7 +85,7 @@ public class ScreenState extends Generator{
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static ScreenState getInstance(Context context) {
+    public static synchronized ScreenState getInstance(Context context) {
         if (ScreenState.sInstance == null) {
             ScreenState.sInstance = new ScreenState(context.getApplicationContext());
         }

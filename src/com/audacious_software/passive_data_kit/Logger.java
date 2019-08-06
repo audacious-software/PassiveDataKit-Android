@@ -30,7 +30,7 @@ public class Logger {
     }
 
     @SuppressWarnings("SameReturnValue")
-    public static Logger getInstance(Context context) {
+    public static synchronized Logger getInstance(Context context) {
         LoggerHolder.instance.setContext(context.getApplicationContext());
 
         return LoggerHolder.instance;

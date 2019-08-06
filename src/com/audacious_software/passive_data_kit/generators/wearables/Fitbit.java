@@ -230,7 +230,7 @@ public class Fitbit extends Generator {
         return Fitbit.GENERATOR_IDENTIFIER;
     }
 
-    public static Fitbit getInstance(Context context) {
+    public static synchronized Fitbit getInstance(Context context) {
         if (Fitbit.sInstance == null) {
             Fitbit.sInstance = new Fitbit(context.getApplicationContext());
         }

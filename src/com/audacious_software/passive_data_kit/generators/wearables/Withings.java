@@ -275,7 +275,7 @@ public class Withings extends Generator {
         return Withings.GENERATOR_IDENTIFIER;
     }
 
-    public static Withings getInstance(Context context) {
+    public static synchronized Withings getInstance(Context context) {
         if (Withings.sInstance == null) {
             Withings.sInstance = new Withings(context.getApplicationContext());
         }

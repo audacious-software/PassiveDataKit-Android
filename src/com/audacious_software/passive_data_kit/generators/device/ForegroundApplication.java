@@ -99,7 +99,7 @@ public class ForegroundApplication extends Generator{
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static ForegroundApplication getInstance(Context context) {
+    public static synchronized ForegroundApplication getInstance(Context context) {
         if (ForegroundApplication.sInstance == null) {
             ForegroundApplication.sInstance = new ForegroundApplication(context.getApplicationContext());
         }

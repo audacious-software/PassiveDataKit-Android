@@ -38,7 +38,7 @@ public class DaydreamViewController extends Generator  {
 //    private Controller mController = null;
 
     @SuppressWarnings("WeakerAccess")
-    public static DaydreamViewController getInstance(Context context) {
+    public static synchronized DaydreamViewController getInstance(Context context) {
         if (DaydreamViewController.sInstance == null) {
             DaydreamViewController.sInstance = new DaydreamViewController(context.getApplicationContext());
         }

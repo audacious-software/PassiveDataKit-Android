@@ -82,7 +82,7 @@ public class AppEvent extends Generator{
         return AppEvent.GENERATOR_IDENTIFIER;
     }
 
-    public static AppEvent getInstance(Context context) {
+    public static synchronized AppEvent getInstance(Context context) {
         if (AppEvent.sInstance == null) {
             AppEvent.sInstance = new AppEvent(context.getApplicationContext());
         }

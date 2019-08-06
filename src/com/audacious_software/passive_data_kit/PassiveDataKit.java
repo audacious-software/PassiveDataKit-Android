@@ -205,7 +205,7 @@ public class PassiveDataKit {
     }
 
     @SuppressWarnings("SameReturnValue")
-    public static PassiveDataKit getInstance(Context context)
+    public static synchronized PassiveDataKit getInstance(Context context)
     {
         PassiveDataKitHolder.instance.setContext(context.getApplicationContext());
 
