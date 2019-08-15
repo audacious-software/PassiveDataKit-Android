@@ -38,6 +38,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -637,6 +638,51 @@ public class ForegroundApplication extends Generator{
 
         return usages;
     }
+
+    public int fetchUsageDaysBetween(long start, long end, boolean screenActive) {
+        int days = 0;
+
+        if (this.mDatabase == null) {
+            return days;
+        }
+
+        int isActive = 0;
+
+        if (screenActive) {
+            isActive = 1;
+        }
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(start);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+        start = cal.getTimeInMillis();
+
+        while (start < end) {
+            cal.add(Calendar.DATE, 1);
+
+            long dayEnd = cal.getTimeInMillis();
+
+            String where = ForegroundApplication.HISTORY_OBSERVED + " >= ? AND " + ForegroundApplication.HISTORY_OBSERVED + " < ? AND " + ForegroundApplication.HISTORY_SCREEN_ACTIVE + " = ?";
+            String[] args = {"" + start, "" + dayEnd, "" + isActive};
+
+            Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
+
+            if (c.getCount() > 0) {
+                days += 1;
+            }
+
+            c.close();
+
+            start = dayEnd;
+        }
+
+        return days;
+    }
+
 
     public long earliestTimestamp() {
         if (this.mEarliestTimestamp == 0) {

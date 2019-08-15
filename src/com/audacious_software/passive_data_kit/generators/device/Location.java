@@ -159,6 +159,25 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     private Location(Context context) {
         super(context);
+
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, Location.DATABASE_PATH);
+
+        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+
+        int version = this.getDatabaseVersion(this.mDatabase);
+
+        switch (version) {
+            case 0:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_location_create_history_table));
+        }
+
+        if (version != Location.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, Location.DATABASE_VERSION);
+        }
+
+        Generators.getInstance(this.mContext).registerCustomViewClass(Location.GENERATOR_IDENTIFIER, Location.class);
     }
 
     @SuppressWarnings("unused")
@@ -200,25 +219,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         Thread t = new Thread(r);
         t.start();
-
-        Generators.getInstance(this.mContext).registerCustomViewClass(Location.GENERATOR_IDENTIFIER, Location.class);
-
-        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
-
-        path = new File(path, Location.DATABASE_PATH);
-
-        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
-
-        int version = this.getDatabaseVersion(this.mDatabase);
-
-        switch (version) {
-            case 0:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_location_create_history_table));
-        }
-
-        if (version != Location.DATABASE_VERSION) {
-            this.setDatabaseVersion(this.mDatabase, Location.DATABASE_VERSION);
-        }
     }
 
     public void stopGenerator() {
@@ -1102,18 +1102,22 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
         android.location.Location lastLocation = null;
 
-        Cursor c = this.mDatabase.query(Location.TABLE_HISTORY, null, null, null, null, null, Location.HISTORY_OBSERVED + " DESC");
+        if (this.mDatabase != null) {
+            Cursor c = this.mDatabase.query(Location.TABLE_HISTORY, null, null, null, null, null, Location.HISTORY_OBSERVED + " DESC");
 
-        if (c.moveToNext()) {
-            double latitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LATITUDE));
-            double longitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LONGITUDE));
+            if (c.moveToNext()) {
+                double latitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LATITUDE));
+                double longitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LONGITUDE));
 
-            lastLocation = new android.location.Location("Passive-Data-Kit");
-            lastLocation.setLatitude(latitude);
-            lastLocation.setLongitude(longitude);
+                lastLocation = new android.location.Location("Passive-Data-Kit");
+                lastLocation.setLatitude(latitude);
+                lastLocation.setLongitude(longitude);
+            }
+
+            c.close();
+        } else {
+            return null;
         }
-
-        c.close();
 
         if (lastLocation != null) {
             return lastLocation;

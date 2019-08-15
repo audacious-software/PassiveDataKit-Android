@@ -92,7 +92,7 @@ android {
         api 'com.google.firebase:firebase-core:17.0.1'
         implementation 'com.google.firebase:firebase-messaging:19.0.1'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
-        api 'com.squareup.okhttp3:okhttp:3.14.0'
+        api 'com.squareup.okhttp3:okhttp:3.12.3' // Older version for Android 4 support
         implementation 'commons-io:commons-io:2.6'
         implementation 'commons-codec:commons-codec:1.12'
         api 'org.apache.commons:commons-lang3:3.9'
