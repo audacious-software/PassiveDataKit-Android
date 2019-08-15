@@ -169,6 +169,10 @@ public class TextMessages extends Generator {
 
                         String body = c.getString(c.getColumnIndex(TextMessages.SMS_BODY));
 
+                        if (body == null) {
+                            body = "";
+                        }
+
                         values.put(TextMessages.HISTORY_LENGTH, body.length());
                         values.put(TextMessages.HISTORY_BODY, body);
 

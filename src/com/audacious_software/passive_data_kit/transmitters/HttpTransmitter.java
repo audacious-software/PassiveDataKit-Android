@@ -2,6 +2,7 @@ package com.audacious_software.passive_data_kit.transmitters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.BadParcelableException;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Parcel;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.audacious_software.passive_data_kit.DeviceInformation;
@@ -81,6 +83,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     public static final String PUBLIC_KEY = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.PUBLIC_KEY";
     public static final String PRIVATE_KEY = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.PRIVATE_KEY";
+
+    private static final String LAST_SUCCESSFUL_TRANSMISSION = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.LAST_SUCCESSFUL_TRANSMISSION";
 
     private static final String ERROR_FILE_EXTENSION = ".error";
     private static final String JSON_EXTENSION = ".json";
@@ -337,6 +341,11 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                     me.mTransmitted += payloadFile.length();
 
                                     payloadFile.delete();
+
+                                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+                                    SharedPreferences.Editor e = prefs.edit();
+                                    e.putLong(HttpTransmitter.LAST_SUCCESSFUL_TRANSMISSION, System.currentTimeMillis());
+                                    e.apply();
                                 } else {
                                     try {
                                         new JSONArray(payload);
@@ -955,4 +964,11 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             super(message);
         }
     }
+
+    public long lastSuccessfulTransmission() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        return prefs.getLong(HttpTransmitter.LAST_SUCCESSFUL_TRANSMISSION, 0);
+    }
+
 }

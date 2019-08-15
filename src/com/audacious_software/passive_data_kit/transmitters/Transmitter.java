@@ -19,4 +19,6 @@ public abstract class Transmitter {
     public abstract long transmittedSize();
 
     public abstract long pendingTransmissions();
+
+    public abstract long lastSuccessfulTransmission();
 }

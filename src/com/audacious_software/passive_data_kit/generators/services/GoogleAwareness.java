@@ -497,7 +497,13 @@ public class GoogleAwareness extends Generator {
                                     me.mWeatherIsWindy = false;
                                     me.mWeatherIsUnknown = false;
 
-                                    for (int condition : weather.getConditions()) {
+                                    int[] conditions = weather.getConditions();
+
+                                    if (conditions == null) {
+                                        conditions = new int[0];
+                                    }
+
+                                    for (int condition : conditions) {
                                         switch (condition) {
                                             case Weather.CONDITION_CLEAR:
                                                 me.mWeatherIsClear = true;

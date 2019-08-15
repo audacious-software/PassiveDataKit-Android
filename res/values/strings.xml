@@ -40,5 +40,11 @@
     <string name="label_storage_unknown">Usage Unknown</string>
     <string name="label_storage_date_card">%1$s &#8226; %2$s</string>
     <string name="message_default_maintenance">Performing maintenance&#8230;</string>
+
+    <string name="title_transmission_overdue">Overdue Data Transmission</string>
+    <string name="message_transmission_overdue">%1$s has not yet been able to transmit data since %2$s.\n\nPlease verify that an active Internet connection is available.</string>
+    <string name="action_transmit_now">Transmit Now</string>
+    <string name="action_transmit_later">Later</string>
+    <string name="toast_attempting_transmission_data">Attempting data transmission&#8230;</string>
 </resources>
 

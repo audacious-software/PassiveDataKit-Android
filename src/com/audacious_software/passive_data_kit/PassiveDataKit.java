@@ -15,6 +15,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.audacious_software.passive_data_kit.activities.MaintenanceActivity;
+import com.audacious_software.passive_data_kit.activities.TransmissionActivity;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
@@ -28,6 +29,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -52,6 +54,17 @@ public class PassiveDataKit {
     private static final String MAINTENANCE_DIALOG_FORCE_INTERVAL = "com.audacious_software.passive_data_kit.PassiveDataKit.MAINTENANCE_DIALOG_FORCE_INTERVAL";
     private static final long MAINTENANCE_DIALOG_FORCE_INTERVAL_DEFAULT = 2 * 24 * 60 * 60 * 1000;
     private static final String MAINTENANCE_LAST_APPEARANCE = "com.audacious_software.passive_data_kit.PassiveDataKit.MAINTENANCE_LAST_APPEARANCE";;
+
+    private static final String LAST_TRANSMISSION_DIALOG_ENABLED = "com.audacious_software.passive_data_kit.PassiveDataKit.LAST_TRANSMISSION_DIALOG_ENABLED";
+    private static final boolean LAST_TRANSMISSION_DIALOG_ENABLED_DEFAULT = false;
+
+    private static final String LAST_TRANSMISSION_WARNING_TRANSMISSION_INTERVAL = "com.audacious_software.passive_data_kit.PassiveDataKit.LAST_TRANSMISSION_WARNING_TRANSMISSION_INTERVAL";
+    private static final long LAST_TRANSMISSION_WARNING_TRANSMISSION_INTERVAL_DEFAULT = 24 * 60 * 60 * 1000;
+
+    private static final String LAST_TRANSMISSION_WARNING_DIALOG_INTERVAL = "com.audacious_software.passive_data_kit.PassiveDataKit.LAST_TRANSMISSION_WARNING_DIALOG_INTERVAL";
+    private static final long LAST_TRANSMISSION_WARNING_DIALOG_INTERVAL_DEFAULT = 24 * 60 * 60 * 1000;
+
+    private static final String LAST_TRANSMISSION_WARNING_LAST_DIALOG = "com.audacious_software.passive_data_kit.PassiveDataKit.LAST_TRANSMISSION_WARNING_LAST_DIALOG";
 
     private Context mContext = null;
     private boolean mStarted = false;
@@ -205,9 +218,10 @@ public class PassiveDataKit {
     }
 
     @SuppressWarnings("SameReturnValue")
-    public static synchronized PassiveDataKit getInstance(Context context)
-    {
-        PassiveDataKitHolder.instance.setContext(context.getApplicationContext());
+    public static synchronized PassiveDataKit getInstance(Context context) {
+        if (context != null) {
+            PassiveDataKitHolder.instance.setContext(context.getApplicationContext());
+        }
 
         return PassiveDataKitHolder.instance;
     }
@@ -409,5 +423,79 @@ public class PassiveDataKit {
         e.putLong(PassiveDataKit.MAINTENANCE_DIALOG_FORCE_INTERVAL, forceInterval);
 
         e.apply();
+    }
+
+    public void enableLastTransmissionDialog(boolean enable, long warningInterval, long dialogInterval) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(PassiveDataKit.LAST_TRANSMISSION_DIALOG_ENABLED, enable);
+        e.putLong(PassiveDataKit.LAST_TRANSMISSION_WARNING_TRANSMISSION_INTERVAL, warningInterval);
+        e.putLong(PassiveDataKit.LAST_TRANSMISSION_WARNING_DIALOG_INTERVAL, warningInterval);
+        e.apply();
+    }
+
+    public synchronized void nudgeLastTransmissionDialogs() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        if (prefs.getBoolean(PassiveDataKit.LAST_TRANSMISSION_DIALOG_ENABLED, PassiveDataKit.LAST_TRANSMISSION_DIALOG_ENABLED_DEFAULT)) {
+            long now = System.currentTimeMillis();
+
+            boolean showDialog = false;
+
+            List<Transmitter> transmitters = Generators.getInstance(this.mContext).activeTransmitters();
+
+            long transmissionInterval = prefs.getLong(PassiveDataKit.LAST_TRANSMISSION_WARNING_TRANSMISSION_INTERVAL, PassiveDataKit.LAST_TRANSMISSION_WARNING_TRANSMISSION_INTERVAL_DEFAULT);
+
+            long latestTransmission = 0;
+
+            for (Transmitter transmitter : transmitters) {
+                long lastTransmission = transmitter.lastSuccessfulTransmission();
+
+                if (lastTransmission > latestTransmission) {
+                    latestTransmission = lastTransmission;
+                }
+
+                if (now - lastTransmission > transmissionInterval) {
+                    showDialog = true;
+                }
+            }
+
+            Log.e("PDK", "LATEST TRANSMISSION: " + (new Date(latestTransmission)));
+
+            if (showDialog && latestTransmission > 0) {
+                long dialogInterval = prefs.getLong(PassiveDataKit.LAST_TRANSMISSION_WARNING_DIALOG_INTERVAL, PassiveDataKit.LAST_TRANSMISSION_WARNING_DIALOG_INTERVAL_DEFAULT);
+
+                long lastDialog = prefs.getLong(PassiveDataKit.LAST_TRANSMISSION_WARNING_LAST_DIALOG, 0);
+
+                if (now - lastDialog > dialogInterval) {
+                    SharedPreferences.Editor e = prefs.edit();
+                    e.putLong(PassiveDataKit.LAST_TRANSMISSION_WARNING_LAST_DIALOG, now);
+                    e.apply();
+
+                    Intent launchIntent = new Intent(this.mContext, TransmissionActivity.class);
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    launchIntent.putExtra(TransmissionActivity.LAST_TRANSMISSION, latestTransmission);
+
+                    String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
+                    launchIntent.putExtra(TransmissionActivity.APP_NAME, appName);
+
+                    this.mContext.startActivity(launchIntent);
+
+                    HashMap<String, Object> payload = new HashMap<>();
+                    payload.put("last_transmission", latestTransmission);
+
+                    Logger.getInstance(this.mContext).log("pdk-dialog-upload-overdue", payload);
+                }
+            }
+        }
+    }
+
+    public void transmitData(boolean force) {
+        List<Transmitter> transmitters = Generators.getInstance(this.mContext).activeTransmitters();
+
+        for (Transmitter transmitter : transmitters) {
+            transmitter.transmit(force);
+        }
     }
 }

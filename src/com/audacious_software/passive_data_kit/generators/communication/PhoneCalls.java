@@ -86,8 +86,6 @@ public class PhoneCalls extends Generator {
     private static final String CALL_PRESENTATION_PAYPHONE = "payphone";
     private static final String CALL_PRESENTATION_UNKNOWN = "unknown";
 
-    private static final int DATABASE_VERSION = 2;
-
     private static final String TABLE_HISTORY = "history";
     private static final String HISTORY_OBSERVED = "observed";
     private static final String HISTORY_DURATION = "duration";
@@ -110,6 +108,7 @@ public class PhoneCalls extends Generator {
     private Context mContext = null;
 
     private static final String DATABASE_PATH = "pdk-phone-calls.sqlite";
+    private static final int DATABASE_VERSION = 3;
 
     private SQLiteDatabase mDatabase = null;
     private long mSampleInterval = 60000;
@@ -204,9 +203,24 @@ public class PhoneCalls extends Generator {
                             }
 
                             int typeInt = c.getInt(c.getColumnIndex(CallLog.Calls.TYPE));
+
                             String type = PhoneCalls.CALL_TYPE_UNKNOWN;
 
-                            switch (Build.VERSION.SDK_INT) {
+                            int sdkInt = Build.VERSION.SDK_INT;
+
+                            if (sdkInt > 25) {
+                                sdkInt = 25;
+                            } else if (sdkInt < 24 && sdkInt > 21) {
+                                sdkInt = 21;
+                            } else if (sdkInt < 21 && sdkInt > 19) {
+                                sdkInt = 19;
+                            } else if (sdkInt < 19 && sdkInt > 14) {
+                                sdkInt = 14;
+                            } else if (sdkInt < 14 && sdkInt > 1) {
+                                sdkInt = 1;
+                            }
+
+                            switch (sdkInt) {
                                 case 25:
                                     if (typeInt == CallLog.Calls.ANSWERED_EXTERNALLY_TYPE) {
                                         type = PhoneCalls.CALL_TYPE_ANSWERED_EXTERNALLY;
@@ -329,6 +343,8 @@ public class PhoneCalls extends Generator {
             case 0:
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_phone_calls_create_history_table));
             case 1:
+                this.mDatabase.delete(PhoneCalls.TABLE_HISTORY, null, null);
+            case 2:
                 this.mDatabase.delete(PhoneCalls.TABLE_HISTORY, null, null);
         }
 

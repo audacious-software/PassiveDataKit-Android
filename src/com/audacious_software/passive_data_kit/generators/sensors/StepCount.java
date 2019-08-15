@@ -128,7 +128,6 @@ public class StepCount extends SensorGenerator implements SensorEventListener {
             @Override
             public void run() {
                 synchronized(me) {
-
 //                    Generators.getInstance(me.mContext).registerCustomViewClass(StepCount.GENERATOR_IDENTIFIER, StepCount.class);
 
                     File path = PassiveDataKit.getGeneratorsStorage(me.mContext);
@@ -151,6 +150,14 @@ public class StepCount extends SensorGenerator implements SensorEventListener {
                     }
 
                     if (StepCount.isEnabled(me.mContext)) {
+                        if (me.mHandler == null) {
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        };
+
                         me.mHandler.post(new Runnable() {
                                              @Override
                                              public void run() {
