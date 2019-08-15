@@ -95,13 +95,7 @@ public class DarkSkyWeather extends Generator {
 
     public DarkSkyWeather(Context context) {
         super(context);
-    }
 
-    public static void start(final Context context) {
-        DarkSkyWeather.getInstance(context).startGenerator();
-    }
-
-    private void startGenerator() {
         File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
 
         path = new File(path, DarkSkyWeather.DATABASE_PATH);
@@ -121,6 +115,13 @@ public class DarkSkyWeather extends Generator {
         }
 
         Generators.getInstance(this.mContext).registerCustomViewClass(DarkSkyWeather.GENERATOR_IDENTIFIER, DarkSkyWeather.class);
+    }
+
+    public static void start(final Context context) {
+        DarkSkyWeather.getInstance(context).startGenerator();
+    }
+
+    private void startGenerator() {
     }
 
     private void stopGenerator() {
@@ -248,11 +249,11 @@ public class DarkSkyWeather extends Generator {
         long now = System.currentTimeMillis();
 
         if (now - this.mLastWeatherFetch > this.mFetchInterval) {
-            this.mLastWeatherFetch = now;
-
             android.location.Location lastPlace = Location.getInstance(this.mContext).getLastKnownLocation();
 
             if (lastPlace != null) {
+                this.mLastWeatherFetch = now;
+
                 String key = this.mContext.getString(R.string.dark_sky_api_key);
                 String fetchUrl = this.mContext.getString(R.string.generator_dark_sky_url, key, lastPlace.getLatitude(), lastPlace.getLongitude(), now / 1000);
 
