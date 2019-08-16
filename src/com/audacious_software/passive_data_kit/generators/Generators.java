@@ -276,10 +276,14 @@ public class Generators {
     public void notifyGeneratorUpdated(String identifier, Bundle bundle) {
         long timestamp = System.currentTimeMillis();
 
+        HashSet<GeneratorUpdatedListener> listeners = new HashSet<>();
+
         synchronized(this.mGeneratorUpdatedListeners) {
-            for (GeneratorUpdatedListener listener : this.mGeneratorUpdatedListeners) {
-                listener.onGeneratorUpdated(identifier, timestamp, bundle);
-            }
+            listeners.addAll(this.mGeneratorUpdatedListeners);
+        }
+
+        for (GeneratorUpdatedListener listener : listeners) {
+            listener.onGeneratorUpdated(identifier, timestamp, bundle);
         }
     }
 
