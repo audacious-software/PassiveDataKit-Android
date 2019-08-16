@@ -486,62 +486,64 @@ public class GoogleAwareness extends Generator {
                                 if (task.isSuccessful()) {
                                     Weather weather = task.getResult().getWeather();
 
-                                    me.mWeatherIsClear = false;
-                                    me.mWeatherIsCloudy = false;
-                                    me.mWeatherIsFoggy = false;
-                                    me.mWeatherIsHazy = false;
-                                    me.mWeatherIsIcy = false;
-                                    me.mWeatherIsRainy = false;
-                                    me.mWeatherIsSnowy = false;
-                                    me.mWeatherIsStormy = false;
-                                    me.mWeatherIsWindy = false;
-                                    me.mWeatherIsUnknown = false;
+                                    if (weather != null) {
+                                        me.mWeatherIsClear = false;
+                                        me.mWeatherIsCloudy = false;
+                                        me.mWeatherIsFoggy = false;
+                                        me.mWeatherIsHazy = false;
+                                        me.mWeatherIsIcy = false;
+                                        me.mWeatherIsRainy = false;
+                                        me.mWeatherIsSnowy = false;
+                                        me.mWeatherIsStormy = false;
+                                        me.mWeatherIsWindy = false;
+                                        me.mWeatherIsUnknown = false;
 
-                                    int[] conditions = weather.getConditions();
+                                        int[] conditions = weather.getConditions();
 
-                                    if (conditions == null) {
-                                        conditions = new int[0];
-                                    }
-
-                                    for (int condition : conditions) {
-                                        switch (condition) {
-                                            case Weather.CONDITION_CLEAR:
-                                                me.mWeatherIsClear = true;
-                                                break;
-                                            case Weather.CONDITION_CLOUDY:
-                                                me.mWeatherIsCloudy = true;
-                                                break;
-                                            case Weather.CONDITION_FOGGY:
-                                                me.mWeatherIsFoggy = true;
-                                                break;
-                                            case Weather.CONDITION_HAZY:
-                                                me.mWeatherIsHazy = true;
-                                                break;
-                                            case Weather.CONDITION_ICY:
-                                                me.mWeatherIsIcy = true;
-                                                break;
-                                            case Weather.CONDITION_RAINY:
-                                                me.mWeatherIsRainy = true;
-                                                break;
-                                            case Weather.CONDITION_SNOWY:
-                                                me.mWeatherIsSnowy = true;
-                                                break;
-                                            case Weather.CONDITION_STORMY:
-                                                me.mWeatherIsStormy = true;
-                                                break;
-                                            case Weather.CONDITION_WINDY:
-                                                me.mWeatherIsWindy = true;
-                                                break;
-                                            case Weather.CONDITION_UNKNOWN:
-                                                me.mWeatherIsUnknown = true;
-                                                break;
+                                        if (conditions == null) {
+                                            conditions = new int[0];
                                         }
-                                    }
 
-                                    me.mDewPoint = weather.getDewPoint(Weather.CELSIUS);
-                                    me.mPerceivedTemperature = weather.getFeelsLikeTemperature(Weather.CELSIUS);
-                                    me.mTemperature = weather.getTemperature(Weather.CELSIUS);
-                                    me.mHumidity = weather.getHumidity();
+                                        for (int condition : conditions) {
+                                            switch (condition) {
+                                                case Weather.CONDITION_CLEAR:
+                                                    me.mWeatherIsClear = true;
+                                                    break;
+                                                case Weather.CONDITION_CLOUDY:
+                                                    me.mWeatherIsCloudy = true;
+                                                    break;
+                                                case Weather.CONDITION_FOGGY:
+                                                    me.mWeatherIsFoggy = true;
+                                                    break;
+                                                case Weather.CONDITION_HAZY:
+                                                    me.mWeatherIsHazy = true;
+                                                    break;
+                                                case Weather.CONDITION_ICY:
+                                                    me.mWeatherIsIcy = true;
+                                                    break;
+                                                case Weather.CONDITION_RAINY:
+                                                    me.mWeatherIsRainy = true;
+                                                    break;
+                                                case Weather.CONDITION_SNOWY:
+                                                    me.mWeatherIsSnowy = true;
+                                                    break;
+                                                case Weather.CONDITION_STORMY:
+                                                    me.mWeatherIsStormy = true;
+                                                    break;
+                                                case Weather.CONDITION_WINDY:
+                                                    me.mWeatherIsWindy = true;
+                                                    break;
+                                                case Weather.CONDITION_UNKNOWN:
+                                                    me.mWeatherIsUnknown = true;
+                                                    break;
+                                            }
+                                        }
+
+                                        me.mDewPoint = weather.getDewPoint(Weather.CELSIUS);
+                                        me.mPerceivedTemperature = weather.getFeelsLikeTemperature(Weather.CELSIUS);
+                                        me.mTemperature = weather.getTemperature(Weather.CELSIUS);
+                                        me.mHumidity = weather.getHumidity();
+                                    }
                                 } else {
                                     me.mWeatherIsUnknown = true;
 
