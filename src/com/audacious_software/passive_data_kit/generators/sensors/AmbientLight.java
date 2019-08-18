@@ -358,7 +358,6 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             chart.setNoDataTextColor(0xFFE0E0E0);
 
             Runnable r = new Runnable() {
-                @SuppressWarnings("ConstantConditions")
                 @Override
                 public void run() {
                     final ArrayList<Entry> lowValues = new ArrayList<>();
