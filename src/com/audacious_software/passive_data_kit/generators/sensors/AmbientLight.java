@@ -663,20 +663,36 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
         final AmbientLight me = this;
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-
-        long retentionPeriod = prefs.getLong(AmbientLight.DATA_RETENTION_PERIOD, AmbientLight.DATA_RETENTION_PERIOD_DEFAULT);
-
-        long start = (System.currentTimeMillis() - retentionPeriod) * 1000 * 1000;
-
-        final String where = AmbientLight.HISTORY_OBSERVED + " < ?";
-        final String[] args = { "" + start };
-
         Runnable r = new Runnable() {
             @Override
             public void run() {
                 synchronized(me) {
                     try {
+                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+
+                        long retentionPeriod = prefs.getLong(AmbientLight.DATA_RETENTION_PERIOD, AmbientLight.DATA_RETENTION_PERIOD_DEFAULT);
+
+                        long start = (System.currentTimeMillis() - retentionPeriod) * 1000 * 1000;
+
+                        // Add slower deletion so larger deletions don't accidentally fill up the local storage.
+
+                        long earliest = Long.MAX_VALUE;
+
+                        Cursor c = me.mDatabase.query(AmbientLight.TABLE_HISTORY, null, null, null, null, null, AmbientLight.HISTORY_OBSERVED + " DESC", "1");
+
+                        if (c.moveToNext()) {
+                            earliest = c.getLong(c.getColumnIndex(AmbientLight.HISTORY_OBSERVED));
+                        }
+
+                        c.close();
+
+                        if ((start - earliest) > (retentionPeriod * 1000 * 1000)) {
+                            start = earliest + (retentionPeriod * 1000 * 1000);
+                        }
+
+                        final String where = AmbientLight.HISTORY_OBSERVED + " < ?";
+                        final String[] args = { "" + start };
+
                         me.mDatabase.delete(AmbientLight.TABLE_HISTORY, where, args);
                     } catch (SQLiteDatabaseLockedException e) {
                         Log.e("PDK", "Ambient Light database is locked. Will try again later...");

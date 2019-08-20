@@ -883,20 +883,36 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
         final Accelerometer me = this;
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-
-        long retentionPeriod = prefs.getLong(Accelerometer.DATA_RETENTION_PERIOD, Accelerometer.DATA_RETENTION_PERIOD_DEFAULT);
-
-        long start = (System.currentTimeMillis() - retentionPeriod) * 1000 * 1000;
-
-        final String where = Accelerometer.HISTORY_OBSERVED + " < ?";
-        final String[] args = { "" + start };
-
         Runnable r = new Runnable() {
             @Override
             public void run() {
                 synchronized(me) {
                     try {
+                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+
+                        long retentionPeriod = prefs.getLong(Accelerometer.DATA_RETENTION_PERIOD, Accelerometer.DATA_RETENTION_PERIOD_DEFAULT);
+
+                        long start = (System.currentTimeMillis() - retentionPeriod) * 1000 * 1000;
+
+                        // Add slower deletion so larger deletions don't accidentally fill up the local storage.
+
+                        long earliest = Long.MAX_VALUE;
+
+                        Cursor c = me.mDatabase.query(Accelerometer.TABLE_HISTORY, null, null, null, null, null, Accelerometer.HISTORY_OBSERVED + " DESC", "1");
+
+                        if (c.moveToNext()) {
+                            earliest = c.getLong(c.getColumnIndex(Accelerometer.HISTORY_OBSERVED));
+                        }
+
+                        c.close();
+
+                        if ((start - earliest) > (retentionPeriod * 1000 * 1000)) {
+                            start = earliest + (retentionPeriod * 1000 * 1000);
+                        }
+
+                        final String where = Accelerometer.HISTORY_OBSERVED + " < ?";
+                        final String[] args = { "" + start };
+
                         me.mDatabase.delete(Accelerometer.TABLE_HISTORY, where, args);
                     } catch (SQLiteDatabaseLockedException e) {
                         Log.e("PDK", "Accelerometer database is locked. Will try again later...");
