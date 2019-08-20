@@ -111,6 +111,29 @@ public class ForegroundApplication extends Generator{
     @SuppressWarnings("WeakerAccess")
     public ForegroundApplication(Context context) {
         super(context);
+
+        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+
+        path = new File(path, ForegroundApplication.DATABASE_PATH);
+
+        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+
+        int version = this.getDatabaseVersion(this.mDatabase);
+
+        switch (version) {
+            case 0:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_create_history_table));
+            case 1:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_duration));
+            case 2:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_screen_active));
+            case 3:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_display_state));
+        }
+
+        if (version != ForegroundApplication.DATABASE_VERSION) {
+            this.setDatabaseVersion(this.mDatabase, ForegroundApplication.DATABASE_VERSION);
+        }
     }
 
     @SuppressWarnings("unused")
@@ -237,29 +260,6 @@ public class ForegroundApplication extends Generator{
         this.mAppChecker.timeout((int) sampleInterval);
         this.mAppChecker.start(this.mContext);
 
-        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
-
-        path = new File(path, ForegroundApplication.DATABASE_PATH);
-
-        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
-
-        int version = this.getDatabaseVersion(this.mDatabase);
-
-        switch (version) {
-            case 0:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_create_history_table));
-            case 1:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_duration));
-            case 2:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_screen_active));
-            case 3:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_display_state));
-        }
-
-        if (version != ForegroundApplication.DATABASE_VERSION) {
-            this.setDatabaseVersion(this.mDatabase, ForegroundApplication.DATABASE_VERSION);
-        }
-
         Generators.getInstance(this.mContext).registerCustomViewClass(ForegroundApplication.GENERATOR_IDENTIFIER, ForegroundApplication.class);
 
         this.flushCachedData();
@@ -299,9 +299,11 @@ public class ForegroundApplication extends Generator{
     }
 
     public static void fetchPermissions(final Context context) {
-        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        }
     }
 
     public static boolean hasPermissions(final Context context) {

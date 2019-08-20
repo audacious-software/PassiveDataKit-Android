@@ -266,6 +266,14 @@ public class PassiveDataKit {
                             options.put(HttpTransmitter.UPLOAD_URI, transmitterDef.getString("upload-uri"));
                         }
 
+                        if (transmitterDef.has("compression")) {
+                            if (transmitterDef.getBoolean("compression")) {
+                                options.put(HttpTransmitter.COMPRESS_PAYLOADS, "true");
+                            } else {
+                                options.put(HttpTransmitter.COMPRESS_PAYLOADS, "false");
+                            }
+                        }
+
                         if (transmitterDef.has("wifi-only")) {
                             boolean wifiOnly = transmitterDef.getBoolean("wifi-only");
 
@@ -460,8 +468,6 @@ public class PassiveDataKit {
                     showDialog = true;
                 }
             }
-
-            Log.e("PDK", "LATEST TRANSMISSION: " + (new Date(latestTransmission)));
 
             if (showDialog && latestTransmission > 0) {
                 long dialogInterval = prefs.getLong(PassiveDataKit.LAST_TRANSMISSION_WARNING_DIALOG_INTERVAL, PassiveDataKit.LAST_TRANSMISSION_WARNING_DIALOG_INTERVAL_DEFAULT);
