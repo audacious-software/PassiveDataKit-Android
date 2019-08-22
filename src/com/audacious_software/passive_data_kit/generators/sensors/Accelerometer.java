@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteFullException;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -907,13 +908,17 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                         c.close();
 
                         if ((start - earliest) > (retentionPeriod * 1000 * 1000)) {
-                            start = earliest + (retentionPeriod * 1000 * 1000);
+                            start = earliest + ((retentionPeriod * 1000 * 1000) / 16);
                         }
 
                         final String where = Accelerometer.HISTORY_OBSERVED + " < ?";
                         final String[] args = { "" + start };
 
-                        me.mDatabase.delete(Accelerometer.TABLE_HISTORY, where, args);
+                        try {
+                            me.mDatabase.delete(Accelerometer.TABLE_HISTORY, where, args);
+                        } catch (SQLiteFullException ex) {
+                            Logger.getInstance(me.mContext).logThrowable(ex);
+                        }
                     } catch (SQLiteDatabaseLockedException e) {
                         Log.e("PDK", "Accelerometer database is locked. Will try again later...");
                     }

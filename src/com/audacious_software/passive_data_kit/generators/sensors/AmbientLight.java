@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteFullException;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -28,6 +29,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
@@ -103,6 +105,8 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
     private Thread mLooperThread = null;
     private Handler mHandler = null;
+    private float mLastValue = -1;
+    private float mReportingThreshold = 5;
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -562,6 +566,14 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
+        float value = sensorEvent.values[0];
+
+        if (Math.abs(value - this.mLastValue) < this.mReportingThreshold) {
+            return;
+        }
+
+        this.mLastValue = value;
+
         long rawTimestamp = sensorEvent.timestamp;
 
         if (this.mBaseTimestamp == 0) {
@@ -570,7 +582,6 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
         int accuracy = sensorEvent.accuracy;
         long normalizedTimestamp = this.mBaseTimestamp + rawTimestamp;
-        float value = sensorEvent.values[0];
 
         if (this.mCurrentBufferIndex >= AmbientLight.BUFFER_SIZE) {
             this.saveBuffer(this.mActiveBuffersIndex, this.mCurrentBufferIndex);
@@ -686,13 +697,17 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                         c.close();
 
                         if ((start - earliest) > (retentionPeriod * 1000 * 1000)) {
-                            start = earliest + (retentionPeriod * 1000 * 1000);
+                            start = earliest + ((retentionPeriod * 1000 * 1000) / 16);
                         }
 
                         final String where = AmbientLight.HISTORY_OBSERVED + " < ?";
                         final String[] args = { "" + start };
 
-                        me.mDatabase.delete(AmbientLight.TABLE_HISTORY, where, args);
+                        try {
+                            me.mDatabase.delete(AmbientLight.TABLE_HISTORY, where, args);
+                        } catch (SQLiteFullException ex) {
+                            Logger.getInstance(me.mContext).logThrowable(ex);
+                        }
                     } catch (SQLiteDatabaseLockedException e) {
                         Log.e("PDK", "Ambient Light database is locked. Will try again later...");
                     }

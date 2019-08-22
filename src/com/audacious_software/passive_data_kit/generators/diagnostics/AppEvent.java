@@ -101,21 +101,23 @@ public class AppEvent extends Generator{
     private void openDatabase() {
         this.mWorking = true;
 
-        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+        synchronized (this) {
+            File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
 
-        path = new File(path, AppEvent.DATABASE_PATH);
+            path = new File(path, AppEvent.DATABASE_PATH);
 
-        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+            this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
 
-        int version = this.getDatabaseVersion(this.mDatabase);
+            int version = this.getDatabaseVersion(this.mDatabase);
 
-        switch (version) {
-            case 0:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_app_events_create_history_table));
-        }
+            switch (version) {
+                case 0:
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_app_events_create_history_table));
+            }
 
-        if (version != AppEvent.DATABASE_VERSION) {
-            this.setDatabaseVersion(this.mDatabase, AppEvent.DATABASE_VERSION);
+            if (version != AppEvent.DATABASE_VERSION) {
+                this.setDatabaseVersion(this.mDatabase, AppEvent.DATABASE_VERSION);
+            }
         }
 
         this.mWorking = false;
