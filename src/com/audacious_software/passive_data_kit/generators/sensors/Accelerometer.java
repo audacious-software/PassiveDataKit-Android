@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteFullException;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -894,10 +895,30 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
 
                         long start = (System.currentTimeMillis() - retentionPeriod) * 1000 * 1000;
 
+                        // Add slower deletion so larger deletions don't accidentally fill up the local storage.
+
+                        long earliest = Long.MAX_VALUE;
+
+                        Cursor c = me.mDatabase.query(Accelerometer.TABLE_HISTORY, null, null, null, null, null, Accelerometer.HISTORY_OBSERVED + " DESC", "1");
+
+                        if (c.moveToNext()) {
+                            earliest = c.getLong(c.getColumnIndex(Accelerometer.HISTORY_OBSERVED));
+                        }
+
+                        c.close();
+
+                        if ((start - earliest) > (retentionPeriod * 1000 * 1000)) {
+                            start = earliest + ((retentionPeriod * 1000 * 1000) / 16);
+                        }
+
                         final String where = Accelerometer.HISTORY_OBSERVED + " < ?";
                         final String[] args = { "" + start };
 
-                        me.mDatabase.delete(Accelerometer.TABLE_HISTORY, where, args);
+                        try {
+                            me.mDatabase.delete(Accelerometer.TABLE_HISTORY, where, args);
+                        } catch (SQLiteFullException ex) {
+                            Logger.getInstance(me.mContext).logThrowable(ex);
+                        }
                     } catch (SQLiteDatabaseLockedException e) {
                         Log.e("PDK", "Accelerometer database is locked. Will try again later...");
                     }

@@ -13,7 +13,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.2'
+        classpath 'com.android.tools.build:gradle:3.5.0'
     }
 }
 repositories {
@@ -90,13 +90,14 @@ android {
         api 'com.google.android.gms:play-services-maps:16.1.0'
         api 'com.google.android.gms:play-services-awareness:16.0.0'
         api 'com.google.firebase:firebase-core:17.0.1'
-        implementation 'com.google.firebase:firebase-messaging:19.0.1'
+        implementation 'com.google.firebase:firebase-messaging:20.0.0'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
-        api 'com.squareup.okhttp3:okhttp:3.12.3' // Older version for Android 4 support
+        api 'com.squareup.okhttp3:okhttp:3.12.3' // Retaining older version for Android 4 support
         implementation 'commons-io:commons-io:2.6'
         implementation 'commons-codec:commons-codec:1.12'
         api 'org.apache.commons:commons-lang3:3.9'
         implementation 'com.fasterxml.jackson.core:jackson-core:2.9.9'
+        implementation 'com.fasterxml.jackson.datatype:jackson-datatype-json-org:2.9.9'
         api 'com.github.philjay:mpandroidchart:v3.1.0'
         implementation 'com.rvalerio:fgchecker:1.1.0'
         implementation 'com.luckycatlabs:SunriseSunsetCalculator:1.2'

@@ -21,6 +21,8 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -43,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -89,6 +92,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     private static final String ERROR_FILE_EXTENSION = ".error";
     private static final String JSON_EXTENSION = ".json";
     private static final String TEMP_EXTENSION = ".in-progress";
+    private static final String TOO_LARGE_FILE_EXTENSION = ".too-large";
+
 
     private static final int RESULT_SUCCESS = 0;
     private static final int RESULT_ERROR = 1;
@@ -285,6 +290,59 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
                         me.closeOpenSession();
 
+                        String[] largeFiles = pendingFolder.list(new FilenameFilter() {
+                            public boolean accept(File dir, String filename) {
+                                // Only return first 256 for performance reasons...
+                                if (filename.endsWith(HttpTransmitter.TOO_LARGE_FILE_EXTENSION)) {
+                                    return true;
+                                }
+
+                                return false;
+                            }
+                        });
+
+                        for (String filename : largeFiles) {
+                            try {
+                                File payloadFile = new File(pendingFolder, filename);
+
+                                ObjectMapper mapper = new ObjectMapper();
+                                mapper.registerModule(new JsonOrgModule());
+
+                                Iterator<JSONObject> iterator = mapper.readValues(new JsonFactory().createJsonParser(payloadFile), JSONObject.class);
+
+                                JSONArray newReadings = new JSONArray();
+
+                                int length = 0;
+
+                                while (iterator.hasNext()) {
+                                    JSONObject reading = iterator.next();
+
+                                    newReadings.put(reading);
+
+                                    length += reading.length();
+
+                                    if (newReadings.length() >= 200 || length > (512 * 1024)) {
+                                        File newFile = new File(pendingFolder, "" + System.currentTimeMillis() + HttpTransmitter.JSON_EXTENSION);
+
+                                        FileUtils.writeStringToFile(newFile, newReadings.toString(), "UTF-8");
+
+                                        newReadings = new JSONArray();
+                                        length = 0;
+                                    }
+                                }
+
+                                if (newReadings.length() > 1) {
+                                    File newFile = new File(pendingFolder, "" + System.currentTimeMillis() + HttpTransmitter.JSON_EXTENSION);
+
+                                    FileUtils.writeStringToFile(newFile, newReadings.toString(), "UTF-8");
+                                }
+
+                                payloadFile.delete();
+                            } catch (OutOfMemoryError e) {
+                                Log.e("PDK", "STILL TOO LARGE - SKIPPING");
+                            }
+                        }
+
                         final MutableInt found = new MutableInt(0);
 
                         String[] filenames = pendingFolder.list(new FilenameFilter() {
@@ -322,52 +380,75 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                             File payloadFile = new File(pendingFolder, filename);
 
                             if (payloadFile.exists()) {
-                                BufferedReader reader = new BufferedReader(new FileReader(payloadFile));
+                                try {
+                                    BufferedReader reader = new BufferedReader(new FileReader(payloadFile));
 
-                                StringBuilder builder = new StringBuilder();
-                                String line = null;
+                                    StringBuilder builder = new StringBuilder();
+                                    String line = null;
 
-                                while ((line = reader.readLine()) != null) {
-                                    builder.append(line).append("\n");
-                                }
+                                    char[] buffer = new char[1024];
 
-                                reader.close();
+                                    int read = 0;
 
-                                String payload = builder.toString();
 
-                                int result = me.transmitHttpPayload(payload);
-
-                                if (result == HttpTransmitter.RESULT_SUCCESS) {
-                                    me.mTransmitted += payloadFile.length();
-
-                                    payloadFile.delete();
-
-                                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
-                                    SharedPreferences.Editor e = prefs.edit();
-                                    e.putLong(HttpTransmitter.LAST_SUCCESSFUL_TRANSMISSION, System.currentTimeMillis());
-                                    e.apply();
-                                } else {
-                                    try {
-                                        new JSONArray(payload);
-
-                                        // JSON is valid
-                                    } catch (JSONException e) {
-                                        // Invalid JSON, log results.
-
-                                        Logger.getInstance(me.mContext).logThrowable(e);
-
-                                        HashMap<String, Object> details = new HashMap<>();
-                                        payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
-
-                                        details.put("name", payloadFile.getAbsolutePath());
-                                        details.put("size", payloadFile.length());
-
-                                        Logger.getInstance(me.mContext).log("corrupted_file", details);
+                                    while ((read = reader.read(buffer, 0, buffer.length)) != -1) {
+                                        for (int i = 0; i < read; i++) {
+                                            builder.append(buffer[i]);
+                                        }
                                     }
+
+//                                while ((line = reader.readLine()) != null) {
+//                                    builder.append(line).append("\n");
+//                                }
+
+                                    reader.close();
+
+                                    String payload = builder.toString();
+
+                                    String payloadString = (new JSONArray(payload)).toString();
+
+                                    int result = me.transmitHttpPayload(payload);
+
+                                    if (result == HttpTransmitter.RESULT_SUCCESS) {
+                                        me.mTransmitted += payloadFile.length();
+
+                                        payloadFile.delete();
+
+                                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+                                        SharedPreferences.Editor e = prefs.edit();
+                                        e.putLong(HttpTransmitter.LAST_SUCCESSFUL_TRANSMISSION, System.currentTimeMillis());
+                                        e.apply();
+                                    }
+                                } catch (JSONException e) {
+                                    // Invalid JSON, log results.
+
+                                    Logger.getInstance(me.mContext).logThrowable(e);
+
+                                    HashMap<String, Object> details = new HashMap<>();
+                                    payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
+
+                                    details.put("name", payloadFile.getAbsolutePath());
+                                    details.put("size", payloadFile.length());
+
+                                    Logger.getInstance(me.mContext).log("corrupted_file", details);
+                                } catch (OutOfMemoryError e) {
+                                    // File too large, rename for break-up and transmission later.
+
+                                    Logger.getInstance(me.mContext).logThrowable(e);
+
+                                    HashMap<String, Object> details = new HashMap<>();
+                                    payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.TOO_LARGE_FILE_EXTENSION));
+
+                                    details.put("name", payloadFile.getAbsolutePath());
+                                    details.put("size", payloadFile.length());
+
+                                    Logger.getInstance(me.mContext).log("tool_large_file", details);
                                 }
                             }
                         }
                     } catch (OutOfMemoryError e) {
+                        e.printStackTrace();
+
                         // Clean up memory and try again later...
 
                         System.gc();
@@ -464,7 +545,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
             boolean compressed = false;
 
-            String payloadString = (new JSONArray(payload)).toString(2);
+            String payloadString = (new JSONArray(payload)).toString();
 
             if (this.mCompressPayloads) {
                 // Compress payload string
@@ -695,6 +776,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                     dirs.add(child);
                 } else {
                     if (child.getAbsolutePath().endsWith(HttpTransmitter.JSON_EXTENSION)) {
+                        result += 1;
+                    } if (child.getAbsolutePath().endsWith(HttpTransmitter.TOO_LARGE_FILE_EXTENSION)) {
                         result += 1;
                     }
                 }
