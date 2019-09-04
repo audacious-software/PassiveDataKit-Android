@@ -728,14 +728,24 @@ public class ForegroundApplication extends Generator{
             args[2] = "" + isActive;
         }
 
-        String[] columns = { ForegroundApplication.HISTORY_DURATION };
+        String[] columns = { ForegroundApplication.HISTORY_DURATION, ForegroundApplication.HISTORY_OBSERVED };
 
         Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, columns, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
 
+        long observed = 0;
+
         int durationIndex = c.getColumnIndex(ForegroundApplication.HISTORY_DURATION);
+        int observedIndex = c.getColumnIndex(ForegroundApplication.HISTORY_OBSERVED);
+
+        // Added check for last observation date to guard against any potential double counting of duplicate samples...
 
         while (c.moveToNext()) {
-            duration += c.getLong(durationIndex);
+            long observation = c.getLong(observedIndex);
+
+            if (observation > observed) {
+                duration += c.getLong(durationIndex);
+                observed = observation;
+            }
         }
 
         c.close();
