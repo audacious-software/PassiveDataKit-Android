@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,11 +38,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import humanize.Humanize;
@@ -87,6 +91,7 @@ public class ForegroundApplication extends Generator{
     private long mEarliestTimestamp = 0;
 
     private HashMap<String, Long> mUsageDurations = new HashMap<>();
+    private HashMap<String, Integer> mUsageDaysCache = new HashMap<>();
 
     public static class ForegroundApplicationUsage {
         public long start;
@@ -161,7 +166,7 @@ public class ForegroundApplication extends Generator{
         final long sampleInterval = prefs.getLong(ForegroundApplication.SAMPLE_INTERVAL, ForegroundApplication.SAMPLE_INTERVAL_DEFAULT);
 
         this.mAppChecker = new AppChecker();
-        this.mAppChecker.other(new AppChecker.Listener() {
+        this.mAppChecker.whenAny(new AppChecker.Listener() {
             @Override
             public void onForeground(final String process) {
                 final long now = System.currentTimeMillis();
@@ -642,10 +647,8 @@ public class ForegroundApplication extends Generator{
     }
 
     public int fetchUsageDaysBetween(long start, long end, boolean screenActive) {
-        int days = 0;
-
         if (this.mDatabase == null) {
-            return days;
+            return 0;
         }
 
         int isActive = 0;
@@ -663,28 +666,50 @@ public class ForegroundApplication extends Generator{
 
         start = cal.getTimeInMillis();
 
-        while (start < end) {
-            cal.add(Calendar.DATE, 1);
+        HashSet<String> days = new HashSet<>();
+        DateFormat format = android.text.format.DateFormat.getDateFormat(this.mContext);
 
-            long dayEnd = cal.getTimeInMillis();
+        String key = "ALL-" + format.format(new Date(start)) + "--" + format.format(new Date(end));
 
-            String where = ForegroundApplication.HISTORY_OBSERVED + " >= ? AND " + ForegroundApplication.HISTORY_OBSERVED + " < ? AND " + ForegroundApplication.HISTORY_SCREEN_ACTIVE + " = ?";
-            String[] args = {"" + start, "" + dayEnd, "" + isActive};
-
-            Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, null, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
-
-            if (c.getCount() > 0) {
-                days += 1;
-            }
-
-            c.close();
-
-            start = dayEnd;
+        if (this.mUsageDaysCache.size() > 4096) {
+            this.mUsageDaysCache.clear();
         }
 
-        return days;
-    }
+        if (this.mUsageDaysCache.containsKey(key)) {
+            return this.mUsageDaysCache.get(key);
+        }
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        final long sampleInterval = prefs.getLong(ForegroundApplication.SAMPLE_INTERVAL, ForegroundApplication.SAMPLE_INTERVAL_DEFAULT);
+
+        String where = ForegroundApplication.HISTORY_OBSERVED + " >= ? AND " + ForegroundApplication.HISTORY_OBSERVED + " < ? AND " + ForegroundApplication.HISTORY_SCREEN_ACTIVE + " = ?";
+        String[] columns = { ForegroundApplication.HISTORY_OBSERVED };
+
+        String[] args = {"" + start, "" + end, "" + isActive};
+
+        Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_HISTORY, columns, where, args, null, null, ForegroundApplication.HISTORY_OBSERVED);
+
+        long lastObserved = 0;
+
+        while (c.moveToNext()) {
+            long observed = c.getLong(0);
+
+            if ((observed - lastObserved) > sampleInterval) {
+                days.add(format.format(new Date(observed)));
+                lastObserved = observed;
+            }
+        }
+
+        c.close();
+
+        int count = days.size();
+
+        if (count > 0) {
+            this.mUsageDaysCache.put(key, count);
+        }
+
+        return count;
+    }
 
     public long earliestTimestamp() {
         if (this.mEarliestTimestamp == 0) {

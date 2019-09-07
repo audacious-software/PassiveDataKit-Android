@@ -16,6 +16,7 @@ buildscript {
         classpath 'com.android.tools.build:gradle:3.5.0'
     }
 }
+
 repositories {
     google()
     jcenter()
@@ -29,9 +30,8 @@ repositories {
         dirs 'libs'
     }
 }
-android {
-    // useLibrary 'org.apache.http.legacy'
 
+android {
     defaultConfig {
         minSdkVersion 18
         targetSdkVersion 29
@@ -54,7 +54,6 @@ android {
         main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['src']
-//            resources.srcDirs = ['src']
             aidl.srcDirs = ['src']
             renderscript.srcDirs = ['src']
             res.srcDirs = ['res']
@@ -89,7 +88,7 @@ android {
         api 'com.google.android.gms:play-services-fitness:16.0.1'
         api 'com.google.android.gms:play-services-maps:16.1.0'
         api 'com.google.android.gms:play-services-awareness:16.0.0'
-        api 'com.google.firebase:firebase-core:17.0.1'
+        api 'com.google.firebase:firebase-core:17.2.0'
         implementation 'com.google.firebase:firebase-messaging:20.0.0'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         api 'com.squareup.okhttp3:okhttp:3.12.3' // Retaining older version for Android 4 support

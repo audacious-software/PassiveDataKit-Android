@@ -292,7 +292,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
                         String[] largeFiles = pendingFolder.list(new FilenameFilter() {
                             public boolean accept(File dir, String filename) {
-                                // Only return first 256 for performance reasons...
                                 if (filename.endsWith(HttpTransmitter.TOO_LARGE_FILE_EXTENSION)) {
                                     return true;
                                 }
@@ -300,6 +299,26 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                 return false;
                             }
                         });
+
+                        if (largeFiles == null) {
+                            largeFiles = new String[0];
+                        }
+
+                        if (largeFiles.length == 0) {
+                            largeFiles = pendingFolder.list(new FilenameFilter() {
+                                public boolean accept(File dir, String filename) {
+                                    if (filename.endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
+                                        return true;
+                                    }
+
+                                    return false;
+                                }
+                            });
+                        }
+
+                        if (largeFiles == null) {
+                            largeFiles = new String[0];
+                        }
 
                         for (String filename : largeFiles) {
                             try {
@@ -361,7 +380,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                             }
                         });
 
-
                         if (filenames == null) {
                             filenames = new String[0];
                         }
@@ -396,10 +414,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                             builder.append(buffer[i]);
                                         }
                                     }
-
-//                                while ((line = reader.readLine()) != null) {
-//                                    builder.append(line).append("\n");
-//                                }
 
                                     reader.close();
 
