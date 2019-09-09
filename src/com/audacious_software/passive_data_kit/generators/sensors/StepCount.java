@@ -34,8 +34,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import humanize.Humanize;
-
 public class StepCount extends SensorGenerator implements SensorEventListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-sensor-step-count";
 
