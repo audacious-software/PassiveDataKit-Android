@@ -788,9 +788,9 @@ public class ForegroundApplication extends Generator{
             if (cols == null) {
                 cols = new String[0];
             }
-
-            return new MatrixCursor(cols);
         }
+
+        return new MatrixCursor(cols);
     }
 
     public long storageUsed() {

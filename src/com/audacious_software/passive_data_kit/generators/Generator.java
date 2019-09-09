@@ -131,6 +131,10 @@ public abstract class Generator {
 
     @SuppressWarnings("unused")
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
+        if (cols == null) {
+            cols = new String[0];
+        }
+
         return new MatrixCursor(cols);
     }
 

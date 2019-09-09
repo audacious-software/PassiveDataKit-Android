@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
@@ -564,5 +565,17 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         }
 
         return -1;
+    }
+
+    public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
+        if (this.mDatabase != null) {
+            return this.mDatabase.query(TimeOfDay.TABLE_HISTORY, cols, where, args, null, null, orderBy);
+        } else {
+            if (cols == null) {
+                cols = new String[0];
+            }
+        }
+
+        return new MatrixCursor(cols);
     }
 }
