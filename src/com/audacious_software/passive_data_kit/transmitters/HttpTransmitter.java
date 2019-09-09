@@ -21,6 +21,7 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 
@@ -124,6 +125,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     protected Handler mHandler = null;
     private byte[] mPublicKey = null;
     private byte[] mPrivateKey = null;
+
+    private int mCurrentReadingCount = 0;
+    private int mMaxReadingCount = 256;
 
     public HttpTransmitter() {
         super();
@@ -301,6 +305,10 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                             }
                         });
 
+                        if (largeFiles == null) {
+                            largeFiles = new String[0];
+                        }
+
                         for (String filename : largeFiles) {
                             try {
                                 File payloadFile = new File(pendingFolder, filename);
@@ -314,21 +322,27 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
                                 int length = 0;
 
-                                while (iterator.hasNext()) {
-                                    JSONObject reading = iterator.next();
+                                try {
+                                    while (iterator.hasNext()) {
+                                        JSONObject reading = iterator.next();
 
-                                    newReadings.put(reading);
+                                        newReadings.put(reading);
 
-                                    length += reading.length();
+                                        length += reading.length();
 
-                                    if (newReadings.length() >= 200 || length > (512 * 1024)) {
-                                        File newFile = new File(pendingFolder, "" + System.currentTimeMillis() + HttpTransmitter.JSON_EXTENSION);
+                                        if (newReadings.length() >= 200 || length > (512 * 1024)) {
+                                            File newFile = new File(pendingFolder, "" + System.currentTimeMillis() + HttpTransmitter.JSON_EXTENSION);
 
-                                        FileUtils.writeStringToFile(newFile, newReadings.toString(), "UTF-8");
+                                            FileUtils.writeStringToFile(newFile, newReadings.toString(), "UTF-8");
 
-                                        newReadings = new JSONArray();
-                                        length = 0;
+                                            newReadings = new JSONArray();
+                                            length = 0;
+                                        }
                                     }
+                                } catch (JsonParseException ex) {
+                                    // Incomplete JSON in file...
+
+                                    payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
                                 }
 
                                 if (newReadings.length() > 1) {
@@ -799,6 +813,16 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             return;
         }
 
+        if (this.mCurrentReadingCount > this.mMaxReadingCount) {
+            try {
+                this.closeOpenSession();
+
+                this.mCurrentReadingCount = 0;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         final HttpTransmitter me = this;
 
         final Parcel p = Parcel.obtain();
@@ -850,6 +874,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
                         if (me.mJsonGenerator != null) {
                             HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
+
+                            me.mCurrentReadingCount += 1;
                         }
                     }
                 }
