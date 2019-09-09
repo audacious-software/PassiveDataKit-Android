@@ -296,7 +296,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
                         String[] largeFiles = pendingFolder.list(new FilenameFilter() {
                             public boolean accept(File dir, String filename) {
-                                // Only return first 256 for performance reasons...
                                 if (filename.endsWith(HttpTransmitter.TOO_LARGE_FILE_EXTENSION)) {
                                     return true;
                                 }
@@ -309,8 +308,26 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                             largeFiles = new String[0];
                         }
 
+                        if (largeFiles.length == 0) {
+                            largeFiles = pendingFolder.list(new FilenameFilter() {
+                                public boolean accept(File dir, String filename) {
+                                    if (filename.endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
+                                        return true;
+                                    }
+
+                                    return false;
+                                }
+                            });
+                        }
+
+                        if (largeFiles == null) {
+                            largeFiles = new String[0];
+                        }
+
                         for (String filename : largeFiles) {
                             try {
+                                Log.e("PDK", "FILE: " + filename);
+
                                 File payloadFile = new File(pendingFolder, filename);
 
                                 ObjectMapper mapper = new ObjectMapper();
@@ -339,10 +356,22 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                             length = 0;
                                         }
                                     }
+                                } catch (RuntimeException ex) {
+                                    // Bad JSON in file...
+
+                                    if (payloadFile.getAbsolutePath().endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
+
+                                    } else {
+                                        payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
+                                    }
                                 } catch (JsonParseException ex) {
                                     // Incomplete JSON in file...
 
-                                    payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
+                                    if (payloadFile.getAbsolutePath().endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
+
+                                    } else {
+                                        payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
+                                    }
                                 }
 
                                 if (newReadings.length() > 1) {
@@ -374,7 +403,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                 return false;
                             }
                         });
-
 
                         if (filenames == null) {
                             filenames = new String[0];
@@ -410,10 +438,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                             builder.append(buffer[i]);
                                         }
                                     }
-
-//                                while ((line = reader.readLine()) != null) {
-//                                    builder.append(line).append("\n");
-//                                }
 
                                     reader.close();
 
