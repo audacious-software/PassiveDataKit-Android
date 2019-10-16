@@ -168,6 +168,10 @@ public class ForegroundApplication extends Generator{
         this.mAppChecker.whenAny(new AppChecker.Listener() {
             @Override
             public void onForeground(final String process) {
+                if (process == null) {
+                    return;
+                }
+
                 final long now = System.currentTimeMillis();
 
                 WindowManager window = (WindowManager) me.mContext.getSystemService(Context.WINDOW_SERVICE);
