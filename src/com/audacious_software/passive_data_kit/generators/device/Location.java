@@ -37,6 +37,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amazon.geo.mapsv2.AmazonMap;
+
+import com.google.android.gms.maps.model.CameraPosition;
+import com.mapbox.android.core.permissions.PermissionsManager;
+import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.Point;
+import com.mapbox.mapboxsdk.location.LocationComponent;
+import com.mapbox.mapboxsdk.location.modes.CameraMode;
+
 import com.audacious_software.passive_data_kit.DeviceInformation;
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.DataDisclosureDetailActivity;
@@ -48,10 +57,12 @@ import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.pdk.passivedatakit.R;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationAvailability;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -62,6 +73,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.ui.IconGenerator;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.Style;
+import com.mapbox.mapboxsdk.style.expressions.Expression;
+import com.mapbox.mapboxsdk.style.layers.HeatmapLayer;
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
+import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,7 +97,7 @@ import androidx.core.graphics.drawable.DrawableCompat;
 
 import humanize.Humanize;
 
-public class Location extends Generator implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, android.location.LocationListener {
+public class Location extends Generator implements LocationListener, android.location.LocationListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-location";
     private static final String DATABASE_PATH = "pdk-location.sqlite";
 
@@ -92,6 +109,13 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     private static final String USE_GOOGLE_SERVICES = "com.audacious_software.passive_data_kit.generators.device.Location.USE_GOOGLE_SERVICES";
     private static final boolean USE_GOOGLE_SERVICES_DEFAULT = true;
+
+    private static final String USE_MAPBOX_MAPS = "com.audacious_software.passive_data_kit.generators.device.Location.USE_MAPBOX_MAPS";
+    private static final boolean USE_MAPBOX_MAPS_DEFAULT = false;
+
+    private static final String MAPBOX_HEATMAP_LAYER_ID = "mapbox-heatmap";
+    private static final String MAPBOX_HEATMAP_LAYER_SOURCE = "mapbox-location-generator";
+    private static final String MAPBOX_LOCATION_SOURCE_ID = "mapbox-locations";
 
     private static final String SETTING_DISPLAY_HYBRID_MAP = "com.audacious_software.passive_data_kit.generators.device.Location.SETTING_DISPLAY_HYBRID_MAP";
     private static final boolean SETTING_DISPLAY_HYBRID_MAP_DEFAULT = true;
@@ -122,7 +146,10 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     private static final String ACCURACY_MODE_USER_LOCATION_LONGITUDE = "com.audacious_software.passive_data_kit.generators.device.Location.ACCURACY_MODE_USER_LOCATION_LONGITUDE";
 
     private static Location sInstance = null;
-    private GoogleApiClient mGoogleApiClient = null;
+
+    private FusedLocationProviderClient mGoogleApiClient = null;
+    private LocationCallback mLocationCallback = null;
+
     private long mUpdateInterval = 60000;
     private float mMinimumDistance = 400;
 
@@ -202,13 +229,29 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                     }
                 } else if (Location.useGoogleLocationServices(me.mContext)) {
                     if (me.mGoogleApiClient == null) {
-                        GoogleApiClient.Builder builder = new GoogleApiClient.Builder(me.mContext);
-                        builder.addConnectionCallbacks(me);
-                        builder.addOnConnectionFailedListener(me);
-                        builder.addApi(LocationServices.API);
+                        me.mGoogleApiClient = LocationServices.getFusedLocationProviderClient(me.mContext);
 
-                        me.mGoogleApiClient = builder.build();
-                        me.mGoogleApiClient.connect();
+                        LocationRequest request = LocationRequest.create();
+                        request.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+
+                        request.setFastestInterval(me.mUpdateInterval);
+                        request.setInterval(me.mUpdateInterval);
+
+                        if (me.mLocationCallback == null) {
+                            me.mLocationCallback = new LocationCallback() {
+                                public void onLocationAvailability(LocationAvailability locationAvailability) {
+
+                                }
+
+                                public void onLocationResult(LocationResult result) {
+                                    for (android.location.Location location : result.getLocations()) {
+                                        me.onLocationChanged(location);
+                                    }
+                                }
+                            };
+                        }
+
+                        me.mGoogleApiClient.requestLocationUpdates(request, me.mLocationCallback, me.mContext.getMainLooper());
                     }
                 } else {
                     // TODO
@@ -223,7 +266,12 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
 
     public void stopGenerator() {
         if (this.mGoogleApiClient != null) {
-            this.mGoogleApiClient.disconnect();
+            if (this.mLocationCallback != null) {
+                this.mGoogleApiClient.removeLocationUpdates(this.mLocationCallback);
+
+                this.mLocationCallback = null;
+            }
+
             this.mGoogleApiClient = null;
         }
 
@@ -238,6 +286,29 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
 
         return prefs.getBoolean(Location.USE_GOOGLE_SERVICES, Location.USE_GOOGLE_SERVICES_DEFAULT);
+    }
+
+    public void setUseGoogleLocationServices(boolean useGoogle) {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(Location.USE_GOOGLE_SERVICES, useGoogle);
+        e.apply();
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public static boolean useMapboxMaps(Context context) {
+        SharedPreferences prefs = Generators.getInstance(context).getSharedPreferences(context);
+
+        return prefs.getBoolean(Location.USE_MAPBOX_MAPS, Location.USE_MAPBOX_MAPS_DEFAULT);
+    }
+
+    public void setUseMapboxMaps(boolean usesMapboxMaps) {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(Location.USE_MAPBOX_MAPS, usesMapboxMaps);
+        e.apply();
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -310,34 +381,6 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         }
 
         return actions;
-    }
-
-    @Override
-    public void onConnected(Bundle bundle) {
-        final LocationRequest request = LocationRequest.create();
-        request.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-
-        request.setFastestInterval(this.mUpdateInterval);
-        request.setInterval(this.mUpdateInterval);
-
-        if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected()) {
-            if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                //noinspection deprecation
-                LocationServices.FusedLocationApi.requestLocationUpdates(this.mGoogleApiClient, request, this, this.mContext.getMainLooper());
-            }
-        }
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        if (this.mGoogleApiClient != null && this.mGoogleApiClient.isConnected())
-            //noinspection deprecation
-            LocationServices.FusedLocationApi.removeLocationUpdates(this.mGoogleApiClient, this);
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        this.mGoogleApiClient = null;
     }
 
     @SuppressLint("TrulyRandom")
@@ -537,13 +580,140 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
         final DisplayMetrics metrics = new DisplayMetrics();
         ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
-        if (Location.useKindleLocationServices())
-        {
+        if (Location.useMapboxMaps(holder.itemView.getContext())) {
+            final com.mapbox.mapboxsdk.maps.MapView mapView = holder.itemView.findViewById(R.id.mapbox_map);
+
+            mapView.onCreate(null);
+
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+            final boolean useHybrid = prefs.getBoolean(Location.SETTING_DISPLAY_HYBRID_MAP, Location.SETTING_DISPLAY_HYBRID_MAP_DEFAULT);
+
+            SwitchCompat hybridSwitch = holder.itemView.findViewById(R.id.pdk_mapbox_map_type_hybrid);
+            hybridSwitch.setChecked(useHybrid);
+
+            hybridSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, final boolean checked) {
+                    SharedPreferences.Editor e = prefs.edit();
+                    e.putBoolean(Location.SETTING_DISPLAY_HYBRID_MAP, checked);
+                    e.apply();
+
+                    mapView.getMapAsync(new com.mapbox.mapboxsdk.maps.OnMapReadyCallback() {
+                        @Override
+                        public void onMapReady(@NonNull MapboxMap mapboxMap) {
+                            Style.OnStyleLoaded loaded = new Style.OnStyleLoaded() {
+                                @Override
+                                public void onStyleLoaded(@NonNull Style style) {
+                                    LocationComponent locationComponent = mapboxMap.getLocationComponent();
+
+                                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                        if (PermissionsManager.areLocationPermissionsGranted(context)) {
+                                            locationComponent.activateLocationComponent(context, style);
+                                            locationComponent.setLocationComponentEnabled(true);
+
+                                            if (c.getCount() <= 1) {
+                                                locationComponent.setCameraMode(CameraMode.TRACKING);
+                                            }
+                                        }
+                                    }
+
+                                    me.addHeatmapLayer(mapboxMap, style, locations);
+                                }
+                            };
+
+                            if (checked) {
+                                mapboxMap.setStyle(Style.SATELLITE_STREETS, loaded);
+                            } else {
+                                mapboxMap.setStyle(Style.MAPBOX_STREETS, loaded);
+                            }
+
+                        }
+                    });
+                }
+            });
+
+            ColorStateList buttonStates = new ColorStateList(
+                    new int[][]{
+                            new int[]{android.R.attr.state_checked},
+                            new int[]{-android.R.attr.state_enabled},
+                            new int[]{}
+                    },
+                    new int[]{
+                            0xfff1f1f1,
+                            0x1c000000,
+                            0xff33691E
+                    }
+            );
+
+            DrawableCompat.setTintList(hybridSwitch.getThumbDrawable(), buttonStates);
+
+            IconGenerator iconGen = new IconGenerator(context);
+
+            Drawable shapeDrawable = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_location_heatmap_marker, null);
+            iconGen.setBackground(shapeDrawable);
+
+            View view = new View(context);
+            view.setLayoutParams(new ViewGroup.LayoutParams(8, 8));
+            iconGen.setContentView(view);
+
+            final Bitmap bitmap = iconGen.makeIcon();
+
+            mapView.getMapAsync(new com.mapbox.mapboxsdk.maps.OnMapReadyCallback() {
+                @Override
+                public void onMapReady(@NonNull MapboxMap mapboxMap) {
+                    Style.OnStyleLoaded loaded = new Style.OnStyleLoaded() {
+                        @Override
+                        public void onStyleLoaded(@NonNull Style style) {
+                            LocationComponent locationComponent = mapboxMap.getLocationComponent();
+
+                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                if (PermissionsManager.areLocationPermissionsGranted(context)) {
+                                    locationComponent.activateLocationComponent(context, style);
+                                    locationComponent.setLocationComponentEnabled(true);
+
+                                    if (c.getCount() <= 1) {
+                                        locationComponent.setCameraMode(CameraMode.TRACKING);
+
+                                        com.mapbox.mapboxsdk.camera.CameraPosition.Builder cameraBuilder = new com.mapbox.mapboxsdk.camera.CameraPosition.Builder();
+
+                                        cameraBuilder.zoom(12);
+
+                                        mapboxMap.setCameraPosition(cameraBuilder.build());
+                                    }
+                                }
+                            }
+
+                            com.mapbox.mapboxsdk.geometry.LatLngBounds.Builder builder = new com.mapbox.mapboxsdk.geometry.LatLngBounds.Builder();
+
+                            for (LatLng latlng : locations) {
+                                builder.include(new com.mapbox.mapboxsdk.geometry.LatLng(latlng.latitude, latlng.longitude));
+                            }
+
+                            me.addHeatmapLayer(mapboxMap, style, locations);
+
+                            if (locations.size() > 0) {
+                                mapboxMap.moveCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
+                            }
+                        }
+                    };
+
+                    if (useHybrid) {
+                        mapboxMap.setStyle(Style.SATELLITE_STREETS, loaded);
+                    } else {
+                        mapboxMap.setStyle(Style.MAPBOX_STREETS, loaded);
+                    }
+
+                    mapboxMap.getUiSettings().setAllGesturesEnabled(false);
+                    mapboxMap.getUiSettings().setZoomGesturesEnabled(true);
+
+                    mapView.onResume();
+                }
+            });
+        } else if (Location.useKindleLocationServices()) {
             // TODO
             throw new RuntimeException("Throw rocks at developer to implement Kindle support.");
-        }
-        else if (Location.useGoogleLocationServices(holder.itemView.getContext()))
-        {
+        } else if (Location.useGoogleLocationServices(holder.itemView.getContext())) {
             final MapView mapView = holder.itemView.findViewById(R.id.map_view);
             mapView.onCreate(null);
 
@@ -640,12 +810,37 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
                     mapView.onResume();
                 }
             });
-        }
-        else
-        {
+        } else {
             // TODO
             throw new RuntimeException("Throw rocks at developer to implement generic location support.");
         }
+    }
+
+    private void addHeatmapLayer(MapboxMap mapboxMap, Style style, List<LatLng> locations) {
+        ArrayList<Feature> features = new ArrayList<>();
+
+        for (LatLng latlng : locations) {
+            Point location = Point.fromLngLat(latlng.longitude, latlng.latitude);
+
+            Feature feature = Feature.fromGeometry(location);
+
+            features.add(feature);
+        }
+
+        style.addSource(new GeoJsonSource(Location.MAPBOX_LOCATION_SOURCE_ID, FeatureCollection.fromFeatures(features)));
+
+        HeatmapLayer layer = new HeatmapLayer(MAPBOX_HEATMAP_LAYER_ID, MAPBOX_LOCATION_SOURCE_ID);
+        layer.setSourceLayer(MAPBOX_HEATMAP_LAYER_SOURCE);
+        layer.setProperties(
+                PropertyFactory.heatmapWeight(
+                        Expression.literal(0.25)
+                ),
+                PropertyFactory.heatmapRadius(
+                        Expression.literal(10)
+                )
+        );
+
+        style.addLayer(layer);
     }
 
     @Override
@@ -654,19 +849,15 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     }
 
     @SuppressWarnings("unused")
-    public static View fetchView(ViewGroup parent)
-    {
-        if (Location.useKindleLocationServices())
-        {
+    public static View fetchView(ViewGroup parent) {
+        if (Location.useMapboxMaps(parent.getContext())) {
+            return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_location_mapbox, parent, false);
+        } else if (Location.useKindleLocationServices()) {
             // TODO
             throw new RuntimeException("Throw rocks at developer to implement Kindle support.");
-        }
-        else if (Location.useGoogleLocationServices(parent.getContext()))
-        {
+        } else if (Location.useGoogleLocationServices(parent.getContext())) {
             return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_location_google, parent, false);
-        }
-        else
-        {
+        } else {
             // TODO
             throw new RuntimeException("Throw rocks at developer to implement generic location support.");
         }
@@ -883,8 +1074,101 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
     public static View getDisclosureDataView(final GeneratorViewHolder holder) {
         final Context context = holder.itemView.getContext();
 
-        if (Location.useKindleLocationServices())
-        {
+        if (Location.useMapboxMaps(holder.itemView.getContext())) {
+            /*
+
+            final MapView mapView = new MapView(context);
+
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            mapView.setLayoutParams(params);
+
+            mapView.onCreate(null);
+
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+            final boolean useHybrid = prefs.getBoolean(Location.SETTING_DISPLAY_HYBRID_MAP, Location.SETTING_DISPLAY_HYBRID_MAP_DEFAULT);
+
+            IconGenerator iconGen = new IconGenerator(context);
+
+            Drawable shapeDrawable = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_location_heatmap_marker, null);
+            iconGen.setBackground(shapeDrawable);
+
+            View view = new View(context);
+            view.setLayoutParams(new ViewGroup.LayoutParams(8, 8));
+            iconGen.setContentView(view);
+
+            final Bitmap bitmap = iconGen.makeIcon();
+
+            mapView.getMapAsync(new OnMapReadyCallback() {
+                @SuppressWarnings("UnusedAssignment")
+                public void onMapReady(GoogleMap googleMap) {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        googleMap.setMyLocationEnabled(true);
+                    }
+
+                    if (useHybrid) {
+                        googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                    } else {
+                        googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                    }
+
+                    googleMap.getUiSettings().setZoomControlsEnabled(true);
+                    googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+                    googleMap.getUiSettings().setMapToolbarEnabled(false);
+                    googleMap.getUiSettings().setAllGesturesEnabled(false);
+
+                    Location me = Location.getInstance(context);
+
+                    double lastLatitude = 0.0;
+                    double lastLongitude = 0.0;
+
+                    final List<LatLng> locations = new ArrayList<>();
+
+                    String where = Location.HISTORY_OBSERVED + " > ?";
+                    String[] args = { "" + (System.currentTimeMillis() - (1000 * 60 * 60 * 24)) };
+
+                    Cursor c = me.mDatabase.query(Location.TABLE_HISTORY, null, where, args, null, null, Location.HISTORY_OBSERVED);
+
+                    while (c.moveToNext()) {
+                        lastLatitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LATITUDE));
+                        lastLongitude = c.getDouble(c.getColumnIndex(Location.HISTORY_LONGITUDE));
+
+                        LatLng location = new LatLng(lastLatitude, lastLongitude);
+
+                        locations.add(location);
+                    }
+
+                    c.close();
+
+                    LatLngBounds.Builder builder = new LatLngBounds.Builder();
+
+                    for (LatLng latlng : locations) {
+                        builder.include(latlng);
+                    }
+
+                    final DisplayMetrics metrics = new DisplayMetrics();
+                    ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+                    if (locations.size() > 0) {
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
+                    }
+
+                    for (LatLng latLng : locations) {
+                        googleMap.addMarker(new MarkerOptions()
+                                .position(latLng)
+                                .icon(BitmapDescriptorFactory.fromBitmap(bitmap)));
+                    }
+
+                    mapView.onResume();
+                }
+            });
+
+            return mapView;
+
+             */
+
+        } else if (Location.useKindleLocationServices()) {
             final com.amazon.geo.mapsv2.MapView mapView = new com.amazon.geo.mapsv2.MapView(context);
 
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -1062,12 +1346,12 @@ public class Location extends Generator implements GoogleApiClient.ConnectionCal
             });
 
             return mapView;
-        }
-        else
-        {
+        } else {
             // TODO
             throw new RuntimeException("Throw rocks at developer to implement generic location support.");
         }
+
+        return  null;
     }
 
     @SuppressWarnings("unused")

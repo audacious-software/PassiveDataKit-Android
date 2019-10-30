@@ -164,63 +164,67 @@ public class TextMessages extends Generator {
 
                     Cursor c = me.mContext.getContentResolver().query(TextMessages.SMS_INBOX_URI, null, where, args, TextMessages.SMS_DATE);
 
-                    while (c.moveToNext()) {
-                        ContentValues values = new ContentValues();
-                        values.put(TextMessages.HISTORY_OBSERVED, c.getLong(c.getColumnIndex(TextMessages.SMS_DATE)));
+                    if (c != null) {
+                        while (c.moveToNext()) {
+                            ContentValues values = new ContentValues();
+                            values.put(TextMessages.HISTORY_OBSERVED, c.getLong(c.getColumnIndex(TextMessages.SMS_DATE)));
 
-                        String body = c.getString(c.getColumnIndex(TextMessages.SMS_BODY));
+                            String body = c.getString(c.getColumnIndex(TextMessages.SMS_BODY));
 
-                        if (body == null) {
-                            body = "";
+                            if (body == null) {
+                                body = "";
+                            }
+
+                            values.put(TextMessages.HISTORY_LENGTH, body.length());
+                            values.put(TextMessages.HISTORY_BODY, body);
+
+                            String name = c.getString(c.getColumnIndex(TextMessages.SMS_NUMBER_NAME));
+                            String number = c.getString(c.getColumnIndex(TextMessages.SMS_NUMBER));
+
+                            if (name == null) {
+                                name = number;
+                            }
+
+                            values.put(TextMessages.HISTORY_NUMBER_NAME, name);
+                            values.put(TextMessages.HISTORY_NUMBER, number);
+
+                            values.put(TextMessages.HISTORY_DIRECTION, TextMessages.HISTORY_DIRECTION_INCOMING);
+
+                            toTransmit.add(values);
                         }
 
-                        values.put(TextMessages.HISTORY_LENGTH, body.length());
-                        values.put(TextMessages.HISTORY_BODY, body);
-
-                        String name = c.getString(c.getColumnIndex(TextMessages.SMS_NUMBER_NAME));
-                        String number = c.getString(c.getColumnIndex(TextMessages.SMS_NUMBER));
-
-                        if (name == null) {
-                            name = number;
-                        }
-
-                        values.put(TextMessages.HISTORY_NUMBER_NAME, name);
-                        values.put(TextMessages.HISTORY_NUMBER, number);
-
-                        values.put(TextMessages.HISTORY_DIRECTION, TextMessages.HISTORY_DIRECTION_INCOMING);
-
-                        toTransmit.add(values);
+                        c.close();
                     }
-
-                    c.close();
 
                     c = me.mContext.getContentResolver().query(TextMessages.SMS_SENT_URI, null, where, args, TextMessages.SMS_DATE);
 
-                    while (c.moveToNext()) {
-                        ContentValues values = new ContentValues();
-                        values.put(TextMessages.HISTORY_OBSERVED, c.getLong(c.getColumnIndex(TextMessages.SMS_DATE)));
+                    if (c != null) {
+                        while (c.moveToNext()) {
+                            ContentValues values = new ContentValues();
+                            values.put(TextMessages.HISTORY_OBSERVED, c.getLong(c.getColumnIndex(TextMessages.SMS_DATE)));
 
-                        String body = c.getString(c.getColumnIndex(TextMessages.SMS_BODY));
+                            String body = c.getString(c.getColumnIndex(TextMessages.SMS_BODY));
 
-                        values.put(TextMessages.HISTORY_LENGTH, body.length());
-                        values.put(TextMessages.HISTORY_BODY, body);
+                            values.put(TextMessages.HISTORY_LENGTH, body.length());
+                            values.put(TextMessages.HISTORY_BODY, body);
 
-                        String name = c.getString(c.getColumnIndex(TextMessages.SMS_NUMBER_NAME));
-                        String number = c.getString(c.getColumnIndex(TextMessages.SMS_NUMBER));
+                            String name = c.getString(c.getColumnIndex(TextMessages.SMS_NUMBER_NAME));
+                            String number = c.getString(c.getColumnIndex(TextMessages.SMS_NUMBER));
 
-                        if (name == null) {
-                            name = number;
+                            if (name == null) {
+                                name = number;
+                            }
+
+                            values.put(TextMessages.HISTORY_NUMBER_NAME, name);
+                            values.put(TextMessages.HISTORY_NUMBER, number);
+
+                            values.put(TextMessages.HISTORY_DIRECTION, TextMessages.HISTORY_DIRECTION_OUTGOING);
+
+                            toTransmit.add(values);
                         }
 
-                        values.put(TextMessages.HISTORY_NUMBER_NAME, name);
-                        values.put(TextMessages.HISTORY_NUMBER, number);
-
-                        values.put(TextMessages.HISTORY_DIRECTION, TextMessages.HISTORY_DIRECTION_OUTGOING);
-
-                        toTransmit.add(values);
+                        c.close();
                     }
-
-                    c.close();
 
                     Collections.sort(toTransmit, new Comparator<ContentValues>() {
                         @Override
