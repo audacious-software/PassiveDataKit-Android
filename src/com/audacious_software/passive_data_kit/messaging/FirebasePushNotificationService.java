@@ -1,6 +1,7 @@
 package com.audacious_software.passive_data_kit.messaging;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.PassiveDataKit;

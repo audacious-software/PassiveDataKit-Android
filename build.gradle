@@ -50,6 +50,10 @@ android {
         ]
     }
 
+    packagingOptions {
+        exclude 'META-INF/INDEX.LIST'
+    }
+
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'

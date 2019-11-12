@@ -21,6 +21,10 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.passive_data_kit.transmitters.HttpTransmitter;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,6 +36,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 @SuppressWarnings("PointlessBooleanExpression")
@@ -189,6 +194,9 @@ public class PassiveDataKit {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
+        Log.e("PDK", "SET TOKEN: " + token);
+
+
         e.putString(PassiveDataKit.FIREBASE_DEVICE_TOKEN, token);
         e.apply();
 
@@ -197,6 +205,8 @@ public class PassiveDataKit {
     }
 
     public void transmitTokens() {
+        final PassiveDataKit me = this;
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
         if (prefs.contains(PassiveDataKit.FIREBASE_DEVICE_TOKEN)) {
@@ -208,6 +218,22 @@ public class PassiveDataKit {
 
                 Logger.getInstance(this.mContext).log("pdk-firebase-token", payload);
             }
+        } else {
+            FirebaseInstanceId.getInstance().getInstanceId()
+                    .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                            if (!task.isSuccessful()) {
+                                Log.w("PDK", "getInstanceId failed", task.getException());
+                                return;
+                            }
+
+                            // Get new Instance ID token
+                            String token = task.getResult().getToken();
+
+                            me.updateFirebaseDeviceToken(token);
+                        }
+                    });
         }
     }
 
