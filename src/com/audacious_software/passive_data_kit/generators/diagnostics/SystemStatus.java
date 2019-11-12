@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -61,6 +62,9 @@ public class SystemStatus extends Generator {
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
+    private static final String INSTALLED_APPS_ENABLED = "com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus.INSTALLED_APPS_ENABLED";
+    private static final boolean INSTALLED_APPS_ENABLED_DEFAULT = false;
+
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
@@ -82,6 +86,7 @@ public class SystemStatus extends Generator {
     private static final String HISTORY_LOCATION_GPS_ENABLED = "gps_enabled";
     private static final String HISTORY_LOCATION_NETWORK_ENABLED = "network_enabled";
     private static final String HISTORY_PENDING_TRANSMISSIONS = "pending_transmissions";
+    private static final String HISTORY_INSTALLED_PACKAGES = "installed_packages";
 
     private static final double GIGABYTE = (1024 * 1024 * 1024);
 
@@ -229,6 +234,25 @@ public class SystemStatus extends Generator {
                             }
                         }
 
+                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+                        if (prefs.getBoolean(SystemStatus.INSTALLED_APPS_ENABLED, SystemStatus.INSTALLED_APPS_ENABLED_DEFAULT)) {
+                            ArrayList<String> installed = new ArrayList<>();
+
+                            PackageManager packages = context.getPackageManager();
+                            List<ApplicationInfo> appsList = packages.getInstalledApplications(PackageManager.GET_META_DATA);
+
+                            for (ApplicationInfo info : appsList) {
+                                String packageName = info.packageName;
+
+                                if (installed.contains(packageName) == false) {
+                                    installed.add(packageName);
+                                }
+
+                                update.putStringArrayList(SystemStatus.HISTORY_INSTALLED_PACKAGES, installed);
+                            }
+                        }
+
                         me.mDatabase.insert(SystemStatus.TABLE_HISTORY, null, values);
 
                         Generators.getInstance(context).notifyGeneratorUpdated(SystemStatus.GENERATOR_IDENTIFIER, update);                    }
@@ -256,6 +280,15 @@ public class SystemStatus extends Generator {
         this.mContext.registerReceiver(this.mReceiver, filter);
 
         this.flushCachedData();
+    }
+
+
+    public void setEnableInstalledPackages(boolean enabled) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(SystemStatus.INSTALLED_APPS_ENABLED, enabled);
+        e.apply();
     }
 
     @SuppressWarnings("unused")
