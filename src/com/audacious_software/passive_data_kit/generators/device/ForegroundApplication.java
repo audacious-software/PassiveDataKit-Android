@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -92,6 +93,9 @@ public class ForegroundApplication extends Generator{
     private HashMap<String, Long> mUsageDurations = new HashMap<>();
     private HashMap<String, Integer> mUsageDaysCache = new HashMap<>();
 
+    private HashMap<String, String> mSubstitutions = new HashMap<>();
+    private HashMap<String, Boolean> mSubstituionReplacements = new HashMap<>();
+
     public static class ForegroundApplicationUsage {
         public long start;
         public long duration;
@@ -152,6 +156,115 @@ public class ForegroundApplication extends Generator{
         e.apply();
     }
 
+    private void logAppAppearance(String process, long when, long duration) {
+        String replacement = this.mSubstitutions.get(process);
+
+        if (replacement != null) {
+            this.logAppAppearance(replacement, when, duration);
+
+            boolean replaceOriginal = false;
+
+            if (this.mSubstituionReplacements.containsKey(process)) {
+                replaceOriginal = this.mSubstituionReplacements.get(process);
+            }
+
+            if (replaceOriginal) {
+                return;
+            }
+        }
+
+        final ForegroundApplication me = this;
+
+        WindowManager window = (WindowManager) this.mContext.getSystemService(Context.WINDOW_SERVICE);
+        final Display display = window.getDefaultDisplay();
+
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                synchronized (me.mUsageDurations) {
+                    boolean screenActive = true;
+
+                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                        if (display.getState() != Display.STATE_ON) {
+                            screenActive = false;
+                        }
+                    }
+
+                    ContentValues values = new ContentValues();
+                    values.put(ForegroundApplication.HISTORY_OBSERVED, when);
+                    values.put(ForegroundApplication.HISTORY_APPLICATION, process);
+                    values.put(ForegroundApplication.HISTORY_DURATION, duration);
+                    values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
+
+                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                        int state = display.getState();
+
+                        switch (state) {
+                            case Display.STATE_OFF:
+                                values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_OFF);
+                                break;
+                            case Display.STATE_ON:
+                                values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_ON);
+                                break;
+                            case Display.STATE_ON_SUSPEND:
+                                values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_ON_SUSPEND);
+                                break;
+                            case Display.STATE_DOZE:
+                                values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_DOZE);
+                                break;
+                            case Display.STATE_DOZE_SUSPEND:
+                                values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_DOZE_SUSPEND);
+                                break;
+                            case Display.STATE_VR:
+                                values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_VR);
+                                break;
+                            case Display.STATE_UNKNOWN:
+                                values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_UNKNOWN);
+                                break;
+                        }
+                    }
+
+                    synchronized(me) {
+                        if (me.mDatabase.isOpen()) {
+                            me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
+                        }
+                    }
+
+                    Bundle update = new Bundle();
+                    update.putLong(ForegroundApplication.HISTORY_OBSERVED, when);
+                    update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
+                    update.putLong(ForegroundApplication.HISTORY_DURATION, duration);
+                    update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
+
+                    if (values.containsKey(ForegroundApplication.HISTORY_DISPLAY_STATE)) {
+                        update.putString(ForegroundApplication.HISTORY_DISPLAY_STATE, values.getAsString(ForegroundApplication.HISTORY_DISPLAY_STATE));
+                    }
+
+                    Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
+
+                    ArrayList<String> toDelete = new ArrayList<>();
+
+                    for (String key : me.mUsageDurations.keySet()) {
+                        if (key.startsWith(process)) {
+                            toDelete.add(key);
+                        }
+                    }
+
+                    for (String key : toDelete) {
+                        me.mUsageDurations.remove(key);
+                    }
+                }
+            }
+        };
+
+        try {
+            Thread t = new Thread(r);
+            t.start();
+        } catch (OutOfMemoryError e) {
+            // Try again later...
+        }
+    }
+
     private void startGenerator() {
         final ForegroundApplication me = this;
 
@@ -168,96 +281,13 @@ public class ForegroundApplication extends Generator{
         this.mAppChecker.whenAny(new AppChecker.Listener() {
             @Override
             public void onForeground(final String process) {
+                if (process == null) {
+                    return;
+                }
+
                 final long now = System.currentTimeMillis();
 
-                WindowManager window = (WindowManager) me.mContext.getSystemService(Context.WINDOW_SERVICE);
-                final Display display = window.getDefaultDisplay();
-
-                Runnable r = new Runnable() {
-                    @Override
-                    public void run() {
-                        synchronized (me.mUsageDurations) {
-                            boolean screenActive = true;
-
-                            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                                if (display.getState() != Display.STATE_ON) {
-                                    screenActive = false;
-                                }
-                            }
-
-                            ContentValues values = new ContentValues();
-                            values.put(ForegroundApplication.HISTORY_OBSERVED, now);
-                            values.put(ForegroundApplication.HISTORY_APPLICATION, process);
-                            values.put(ForegroundApplication.HISTORY_DURATION, sampleInterval);
-                            values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
-
-                            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                                int state = display.getState();
-
-                                switch (state) {
-                                    case Display.STATE_OFF:
-                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_OFF);
-                                        break;
-                                    case Display.STATE_ON:
-                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_ON);
-                                        break;
-                                    case Display.STATE_ON_SUSPEND:
-                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_ON_SUSPEND);
-                                        break;
-                                    case Display.STATE_DOZE:
-                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_DOZE);
-                                        break;
-                                    case Display.STATE_DOZE_SUSPEND:
-                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_DOZE_SUSPEND);
-                                        break;
-                                    case Display.STATE_VR:
-                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_VR);
-                                        break;
-                                    case Display.STATE_UNKNOWN:
-                                        values.put(ForegroundApplication.HISTORY_DISPLAY_STATE, ForegroundApplication.HISTORY_DISPLAY_STATE_UNKNOWN);
-                                        break;
-                                }
-                            }
-
-                            synchronized(me) {
-                                if (me.mDatabase.isOpen()) {
-                                    me.mDatabase.insert(ForegroundApplication.TABLE_HISTORY, null, values);
-                                }
-                            }
-
-                            Bundle update = new Bundle();
-                            update.putLong(ForegroundApplication.HISTORY_OBSERVED, now);
-                            update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
-                            update.putLong(ForegroundApplication.HISTORY_DURATION, sampleInterval);
-                            update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
-
-                            if (values.containsKey(ForegroundApplication.HISTORY_DISPLAY_STATE)) {
-                                update.putString(ForegroundApplication.HISTORY_DISPLAY_STATE, values.getAsString(ForegroundApplication.HISTORY_DISPLAY_STATE));
-                            }
-
-                            Generators.getInstance(me.mContext).notifyGeneratorUpdated(ForegroundApplication.GENERATOR_IDENTIFIER, update);
-
-                            ArrayList<String> toDelete = new ArrayList<>();
-
-                            for (String key : me.mUsageDurations.keySet()) {
-                                if (key.startsWith(process)) {
-                                    toDelete.add(key);
-                                }
-                            }
-
-                            for (String key : toDelete) {
-                                me.mUsageDurations.remove(key);
-                            }
-                        }
-                    }
-                };
-
-                try {
-                    Thread t = new Thread(r);
-                    t.start();
-                } catch (OutOfMemoryError e) {
-                    // Try again later...
-                }
+                me.logAppAppearance(process, now, sampleInterval);
             }
         });
 
@@ -803,5 +833,15 @@ public class ForegroundApplication extends Generator{
         }
 
         return -1;
+    }
+
+    public void clearSubstitutions() {
+        this.mSubstitutions.clear();
+        this.mSubstituionReplacements.clear();
+    }
+
+    public void addSubstitution(String original, String replacement, boolean replaceOriginal) {
+        this.mSubstitutions.put(original, replacement);
+        this.mSubstituionReplacements.put(original, replaceOriginal);
     }
 }
