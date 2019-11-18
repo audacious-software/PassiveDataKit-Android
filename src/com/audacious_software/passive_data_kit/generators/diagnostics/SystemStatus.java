@@ -3,6 +3,7 @@ package com.audacious_software.passive_data_kit.generators.diagnostics;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
+import android.app.AppOpsManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
@@ -11,12 +12,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.os.StatFs;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
@@ -87,6 +90,10 @@ public class SystemStatus extends Generator {
     private static final String HISTORY_LOCATION_NETWORK_ENABLED = "network_enabled";
     private static final String HISTORY_PENDING_TRANSMISSIONS = "pending_transmissions";
     private static final String HISTORY_INSTALLED_PACKAGES = "installed_packages";
+    private static final String HISTORY_GRANTED_PERMISSIONS = "granted_permissions";
+    private static final String HISTORY_MISSING_PERMISSIONS = "missing_permissions";
+    private static final String HISTORY_HAS_APP_USAGE_PERMISSION = "has_app_usage_permission";
+    private static final String HISTORY_IGNORES_BATTERY_OPTIMIZATION = "ignores_battery_optimization";
 
     private static final double GIGABYTE = (1024 * 1024 * 1024);
 
@@ -235,11 +242,11 @@ public class SystemStatus extends Generator {
                         }
 
                         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+                        PackageManager packages = context.getPackageManager();
 
                         if (prefs.getBoolean(SystemStatus.INSTALLED_APPS_ENABLED, SystemStatus.INSTALLED_APPS_ENABLED_DEFAULT)) {
                             ArrayList<String> installed = new ArrayList<>();
 
-                            PackageManager packages = context.getPackageManager();
                             List<ApplicationInfo> appsList = packages.getInstalledApplications(PackageManager.GET_META_DATA);
 
                             for (ApplicationInfo info : appsList) {
@@ -248,14 +255,60 @@ public class SystemStatus extends Generator {
                                 if (installed.contains(packageName) == false) {
                                     installed.add(packageName);
                                 }
-
-                                update.putStringArrayList(SystemStatus.HISTORY_INSTALLED_PACKAGES, installed);
                             }
+
+                            update.putStringArrayList(SystemStatus.HISTORY_INSTALLED_PACKAGES, installed);
+                        }
+
+                        ArrayList<String> granted = new ArrayList<>();
+                        ArrayList<String> missing = new ArrayList<>();
+
+                        try {
+                            PackageInfo pi = packages.getPackageInfo(context.getPackageName(), PackageManager.GET_PERMISSIONS);
+
+                            for (int i = 0; i < pi.requestedPermissions.length; i++) {
+                                if ((pi.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) != 0) {
+                                    granted.add(pi.requestedPermissions[i]);
+                                } else {
+                                    missing.add(pi.requestedPermissions[i]);
+                                }
+                            }
+                        } catch (Exception e) {
+
+                        }
+
+                        update.putStringArrayList(SystemStatus.HISTORY_GRANTED_PERMISSIONS, granted);
+                        update.putStringArrayList(SystemStatus.HISTORY_MISSING_PERMISSIONS, missing);
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            boolean appUsagePermission = false;
+
+                            AppOpsManager appOps = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
+                            int mode = appOps.checkOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), context.getPackageName());
+
+                            if (mode == AppOpsManager.MODE_ALLOWED) {
+                                appUsagePermission = true;
+                            }
+
+                            update.putBoolean(SystemStatus.HISTORY_HAS_APP_USAGE_PERMISSION, appUsagePermission);
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            boolean ignoresBatteryOptimization = false;
+
+                            PowerManager power = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+
+                            if (power.isIgnoringBatteryOptimizations(context.getPackageName())) {
+                                ignoresBatteryOptimization = true;
+                            }
+
+                            update.putBoolean(SystemStatus.HISTORY_IGNORES_BATTERY_OPTIMIZATION, ignoresBatteryOptimization);
                         }
 
                         me.mDatabase.insert(SystemStatus.TABLE_HISTORY, null, values);
 
-                        Generators.getInstance(context).notifyGeneratorUpdated(SystemStatus.GENERATOR_IDENTIFIER, update);                    }
+                        Generators.getInstance(context).notifyGeneratorUpdated(SystemStatus.GENERATOR_IDENTIFIER, update);
+                    }
                 };
 
                 Thread t = new Thread(r);
