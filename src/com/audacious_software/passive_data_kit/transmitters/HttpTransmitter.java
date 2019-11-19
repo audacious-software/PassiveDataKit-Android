@@ -325,7 +325,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                         }
 
                         for (String filename : largeFiles) {
-                            try {
+//                            try {
                                 File payloadFile = new File(pendingFolder, filename);
 
                                 ObjectMapper mapper = new ObjectMapper();
@@ -379,9 +379,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                 }
 
                                 payloadFile.delete();
-                            } catch (OutOfMemoryError e) {
-                                Log.e("PDK", "STILL TOO LARGE - SKIPPING");
-                            }
+//                            } catch (OutOfMemoryError e) {
+//                                Log.e("PDK", "STILL TOO LARGE - SKIPPING");
+//                            }
                         }
 
                         final MutableInt found = new MutableInt(0);
@@ -1087,6 +1087,12 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     public void setPrivateKey(String privateKey) {
         this.mPrivateKey = Toolbox.decodeBase64(privateKey);
+    }
+
+    public void setMaxBundleSize(int size) {
+        this.mMaxReadingCount = size;
+
+        this.transmit(true);
     }
 
     @SuppressWarnings("unused")
