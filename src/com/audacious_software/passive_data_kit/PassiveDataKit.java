@@ -57,7 +57,7 @@ public class PassiveDataKit {
     private static final long MAINTENANCE_DIALOG_DURATION_DEFAULT = 3 * 60 * 60 * 1000;
     private static final String MAINTENANCE_DIALOG_FORCE_INTERVAL = "com.audacious_software.passive_data_kit.PassiveDataKit.MAINTENANCE_DIALOG_FORCE_INTERVAL";
     private static final long MAINTENANCE_DIALOG_FORCE_INTERVAL_DEFAULT = 2 * 24 * 60 * 60 * 1000;
-    private static final String MAINTENANCE_LAST_APPEARANCE = "com.audacious_software.passive_data_kit.PassiveDataKit.MAINTENANCE_LAST_APPEARANCE";;
+    private static final String MAINTENANCE_LAST_APPEARANCE = "com.audacious_software.passive_data_kit.PassiveDataKit.MAINTENANCE_LAST_APPEARANCE";
 
     private static final String LAST_TRANSMISSION_DIALOG_ENABLED = "com.audacious_software.passive_data_kit.PassiveDataKit.LAST_TRANSMISSION_DIALOG_ENABLED";
     private static final boolean LAST_TRANSMISSION_DIALOG_ENABLED_DEFAULT = false;
@@ -193,9 +193,6 @@ public class PassiveDataKit {
     public void updateFirebaseDeviceToken(String token) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
-
-        Log.e("PDK", "SET TOKEN: " + token);
-
 
         e.putString(PassiveDataKit.FIREBASE_DEVICE_TOKEN, token);
         e.apply();

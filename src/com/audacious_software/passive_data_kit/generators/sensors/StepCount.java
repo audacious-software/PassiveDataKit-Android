@@ -154,7 +154,7 @@ public class StepCount extends SensorGenerator implements SensorEventListener {
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                        };
+                        }
 
                         me.mHandler.post(new Runnable() {
                                              @Override

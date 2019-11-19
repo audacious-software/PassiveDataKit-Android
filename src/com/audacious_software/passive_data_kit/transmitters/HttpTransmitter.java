@@ -326,8 +326,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
                         for (String filename : largeFiles) {
                             try {
-                                Log.e("PDK", "FILE: " + filename);
-
                                 File payloadFile = new File(pendingFolder, filename);
 
                                 ObjectMapper mapper = new ObjectMapper();
