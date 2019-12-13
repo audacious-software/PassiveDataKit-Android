@@ -5,6 +5,8 @@ import android.content.Context;
 
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,6 +43,16 @@ public class Logger {
     }
 
     public void logThrowable(Throwable t) {
+        HashMap<String, Object> payload = new HashMap<>();
+
+        if (t.getMessage() != null) {
+            payload.put("message", t.getMessage());
+        }
+
+        payload.put("stack-trace", ExceptionUtils.getStackTrace(t));
+
         t.printStackTrace();
+
+        this.log("java-exception", payload);
     }
 }

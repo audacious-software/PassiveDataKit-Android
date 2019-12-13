@@ -54,9 +54,9 @@ public class AppEvent extends Generator{
     private static final String DATABASE_PATH = "pdk-app-event.sqlite";
     private static final int DATABASE_VERSION = 1;
 
-    private static final String HISTORY_OBSERVED = "observed";
-    private static final String HISTORY_EVENT_NAME = "event_name";
-    private static final String HISTORY_EVENT_DETAILS = "event_details";
+    public static final String HISTORY_OBSERVED = "observed";
+    public static final String HISTORY_EVENT_NAME = "event_name";
+    public static final String HISTORY_EVENT_DETAILS = "event_details";
     private static final String TABLE_HISTORY = "history";
 
     private static final int CARD_PAGE_SIZE = 8;

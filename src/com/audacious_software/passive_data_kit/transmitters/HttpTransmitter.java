@@ -355,11 +355,11 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                         }
                                     }
                                 } catch (RuntimeException ex) {
-                                    // Bad JSON in file...
-
                                     if (payloadFile.getAbsolutePath().endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
 
                                     } else {
+                                        Logger.getInstance(me.mContext).logThrowable(ex);
+
                                         payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
                                     }
                                 } catch (JsonParseException ex) {
@@ -368,6 +368,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                     if (payloadFile.getAbsolutePath().endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
 
                                     } else {
+                                        Logger.getInstance(me.mContext).logThrowable(ex);
+
                                         payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
                                     }
                                 }
@@ -478,7 +480,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                     details.put("name", payloadFile.getAbsolutePath());
                                     details.put("size", payloadFile.length());
 
-                                    Logger.getInstance(me.mContext).log("tool_large_file", details);
+                                    Logger.getInstance(me.mContext).log("too_large_file", details);
                                 }
                             }
                         }
