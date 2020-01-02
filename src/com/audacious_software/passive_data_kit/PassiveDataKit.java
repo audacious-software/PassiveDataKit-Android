@@ -194,9 +194,6 @@ public class PassiveDataKit {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
 
-        Log.e("PDK", "SET TOKEN: " + token);
-
-
         e.putString(PassiveDataKit.FIREBASE_DEVICE_TOKEN, token);
         e.apply();
 
