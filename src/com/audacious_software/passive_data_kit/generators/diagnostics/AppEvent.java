@@ -54,9 +54,9 @@ public class AppEvent extends Generator{
     private static final String DATABASE_PATH = "pdk-app-event.sqlite";
     private static final int DATABASE_VERSION = 1;
 
-    private static final String HISTORY_OBSERVED = "observed";
-    private static final String HISTORY_EVENT_NAME = "event_name";
-    private static final String HISTORY_EVENT_DETAILS = "event_details";
+    public static final String HISTORY_OBSERVED = "observed";
+    public static final String HISTORY_EVENT_NAME = "event_name";
+    public static final String HISTORY_EVENT_DETAILS = "event_details";
     private static final String TABLE_HISTORY = "history";
 
     private static final int CARD_PAGE_SIZE = 8;
@@ -464,6 +464,9 @@ public class AppEvent extends Generator{
                                 } else if (value instanceof Boolean) {
                                     detailsBundle.putBoolean(key, ((Boolean) value));
                                     detailsJson.put(key, ((Boolean) value).booleanValue());
+                                } else if (value instanceof HashMap) {
+                                    detailsBundle.putBundle(key, AppEvent.bundleForHashMap((HashMap<String, ?>) value));
+                                    detailsJson.put(key, AppEvent.jsonForHashMap((HashMap<String, ?>) value));
                                 } else if (value == null) {
                                     throw new NullPointerException("Value is null.");
                                 } else {
@@ -499,6 +502,86 @@ public class AppEvent extends Generator{
         this.mWorking = false;
 
         return true;
+    }
+
+    private static JSONObject jsonForHashMap(HashMap<String,?> map) {
+        JSONObject jsonObject = new JSONObject();
+
+        for (String key : map.keySet()) {
+            try {
+                Object value = map.get(key);
+
+                if (value instanceof Double) {
+                    Double doubleValue = ((Double) value);
+
+                    jsonObject.put(key, doubleValue.doubleValue());
+                } else if (value instanceof Float) {
+                    Float floatValue = ((Float) value);
+
+                    jsonObject.put(key, floatValue.doubleValue());
+                } else if (value instanceof Long) {
+                    Long longValue = ((Long) value);
+
+                    jsonObject.put(key, longValue.longValue());
+                } else if (value instanceof Integer) {
+                    Integer intValue = ((Integer) value);
+
+                    jsonObject.put(key, intValue.longValue());
+                } else if (value instanceof String) {
+                    jsonObject.put(key, value.toString());
+                } else if (value instanceof Boolean) {
+                    jsonObject.put(key, ((Boolean) value).booleanValue());
+                } else if (value instanceof HashMap) {
+                    jsonObject.put(key, AppEvent.jsonForHashMap((HashMap<String, ?>) value));
+                } else if (value == null) {
+                    throw new NullPointerException("Value is null.");
+                } else {
+                    jsonObject.put(key, "Unknown Class: " + value.getClass().getCanonicalName());
+                }
+            } catch (JSONException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return jsonObject;
+    }
+
+    private static Bundle bundleForHashMap(HashMap<String, ?> map) {
+        Bundle bundle = new Bundle();
+
+        for (String key : map.keySet()) {
+            Object value = map.get(key);
+
+            if (value instanceof Double) {
+                Double doubleValue = ((Double) value);
+
+                bundle.putDouble(key, doubleValue);
+            } else if (value instanceof Float) {
+                Float floatValue = ((Float) value);
+
+                bundle.putDouble(key, floatValue.doubleValue());
+            } else if (value instanceof Long) {
+                Long longValue = ((Long) value);
+
+                bundle.putLong(key, longValue);
+            } else if (value instanceof Integer) {
+                Integer intValue = ((Integer) value);
+
+                bundle.putLong(key, intValue.longValue());
+            } else if (value instanceof String) {
+                bundle.putString(key, value.toString());
+            } else if (value instanceof Boolean) {
+                bundle.putBoolean(key, ((Boolean) value));
+            } else if (value instanceof HashMap) {
+                bundle.putBundle(key, AppEvent.bundleForHashMap((HashMap<String, ?>) value));
+            } else if (value == null) {
+                throw new NullPointerException("Value is null.");
+            } else {
+                bundle.putString(key, "Unknown Class: " + value.getClass().getCanonicalName());
+            }
+        }
+
+        return bundle;
     }
 
     public void logThrowable(Throwable t) {

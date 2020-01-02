@@ -325,9 +325,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                         }
 
                         for (String filename : largeFiles) {
-                            try {
-                                Log.e("PDK", "FILE: " + filename);
-
+//                            try {
                                 File payloadFile = new File(pendingFolder, filename);
 
                                 ObjectMapper mapper = new ObjectMapper();
@@ -357,11 +355,11 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                         }
                                     }
                                 } catch (RuntimeException ex) {
-                                    // Bad JSON in file...
-
                                     if (payloadFile.getAbsolutePath().endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
 
                                     } else {
+                                        Logger.getInstance(me.mContext).logThrowable(ex);
+
                                         payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
                                     }
                                 } catch (JsonParseException ex) {
@@ -370,6 +368,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                     if (payloadFile.getAbsolutePath().endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
 
                                     } else {
+                                        Logger.getInstance(me.mContext).logThrowable(ex);
+
                                         payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
                                     }
                                 }
@@ -381,9 +381,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                 }
 
                                 payloadFile.delete();
-                            } catch (OutOfMemoryError e) {
-                                Log.e("PDK", "STILL TOO LARGE - SKIPPING");
-                            }
+//                            } catch (OutOfMemoryError e) {
+//                                Log.e("PDK", "STILL TOO LARGE - SKIPPING");
+//                            }
                         }
 
                         final MutableInt found = new MutableInt(0);
@@ -480,7 +480,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                     details.put("name", payloadFile.getAbsolutePath());
                                     details.put("size", payloadFile.length());
 
-                                    Logger.getInstance(me.mContext).log("tool_large_file", details);
+                                    Logger.getInstance(me.mContext).log("too_large_file", details);
                                 }
                             }
                         }
@@ -1089,6 +1089,12 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     public void setPrivateKey(String privateKey) {
         this.mPrivateKey = Toolbox.decodeBase64(privateKey);
+    }
+
+    public void setMaxBundleSize(int size) {
+        this.mMaxReadingCount = size;
+
+        this.transmit(true);
     }
 
     @SuppressWarnings("unused")

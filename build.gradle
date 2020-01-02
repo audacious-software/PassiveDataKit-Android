@@ -13,7 +13,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.1'
+        classpath 'com.android.tools.build:gradle:3.5.3'
     }
 }
 
@@ -80,7 +80,7 @@ android {
         api fileTree(dir: 'libs', include: ['*.jar'])
         // testCompile 'junit:junit:4.12'
         implementation 'androidx.appcompat:appcompat:1.1.0'
-        implementation 'androidx.recyclerview:recyclerview:1.0.0'
+        implementation 'androidx.recyclerview:recyclerview:1.1.0'
         implementation 'androidx.media:media:1.1.0'
         implementation 'androidx.legacy:legacy-support-v4:1.0.0'
         implementation 'androidx.cardview:cardview:1.0.0'
@@ -93,7 +93,7 @@ android {
         api 'com.google.android.gms:play-services-maps:17.0.0'
         api 'com.google.android.gms:play-services-awareness:17.1.0'
         api 'com.google.firebase:firebase-core:17.2.1'
-        implementation 'com.google.firebase:firebase-messaging:20.0.1'
+        implementation 'com.google.firebase:firebase-messaging:20.1.0'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         api 'com.squareup.okhttp3:okhttp:3.12.3' // Retaining older version for Android 4 support
         implementation 'commons-io:commons-io:2.6'
@@ -112,6 +112,6 @@ android {
 
         implementation 'com.google.android.material:material:1.0.0'
 
-        implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:8.4.0'
+        implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:8.5.0'
     }
 }

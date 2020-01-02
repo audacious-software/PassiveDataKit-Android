@@ -38,7 +38,6 @@ import android.widget.Toast;
 
 import com.amazon.geo.mapsv2.AmazonMap;
 
-import com.google.android.gms.maps.model.CameraPosition;
 import com.mapbox.android.core.permissions.PermissionsManager;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
