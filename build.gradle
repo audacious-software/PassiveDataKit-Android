@@ -84,10 +84,11 @@ android {
         implementation 'androidx.media:media:1.1.0'
         implementation 'androidx.legacy:legacy-support-v4:1.0.0'
         implementation 'androidx.cardview:cardview:1.0.0'
-        implementation 'androidx.browser:browser:1.0.0'
+        implementation 'androidx.browser:browser:1.2.0'
         implementation('androidx.work:work-runtime:2.0.1') {
             exclude group: 'com.google.guava', module: 'listenablefuture'
         }
+        implementation 'com.google.guava:guava:28.2-android'
         api 'com.google.android.gms:play-services-auth:17.0.0'
         api 'com.google.android.gms:play-services-fitness:18.0.0'
         api 'com.google.android.gms:play-services-maps:17.0.0'
