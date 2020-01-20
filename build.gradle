@@ -93,7 +93,7 @@ android {
         api 'com.google.android.gms:play-services-fitness:18.0.0'
         api 'com.google.android.gms:play-services-maps:17.0.0'
         api 'com.google.android.gms:play-services-awareness:17.1.0'
-        api 'com.google.firebase:firebase-core:17.2.1'
+        api 'com.google.firebase:firebase-core:17.2.2'
         implementation 'com.google.firebase:firebase-messaging:20.1.0'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         api 'com.squareup.okhttp3:okhttp:3.12.3' // Retaining older version for Android 4 support
