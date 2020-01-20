@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.generators.services;
 
+import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -8,12 +9,15 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import androidx.core.content.ContextCompat;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.RequestPermissionActivity;
@@ -23,6 +27,7 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.FitnessOptions;
 import com.google.android.gms.fitness.data.DataPoint;
@@ -36,6 +41,7 @@ import com.google.android.gms.tasks.Tasks;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -295,218 +301,219 @@ public class GoogleFit extends Generator {
 
                 me.mFetchHandler.postDelayed(this, me.mPollInterval);
 
-                long latestTimestamp = me.latestFetch();
+                if (me.isAuthenticated()) {
+                    long latestTimestamp = me.latestFetch();
 
-                if (latestTimestamp == 0) {
-                    latestTimestamp = now - me.mFetchBackInterval;
-                }
+                    if (latestTimestamp == 0) {
+                        latestTimestamp = now - me.mFetchBackInterval;
+                    }
 
-                FitnessOptions.Builder builder = FitnessOptions.builder();
-                DataReadRequest.Builder requestBuilder = new DataReadRequest.Builder();
-                requestBuilder.setTimeRange(latestTimestamp, now, TimeUnit.MILLISECONDS);
+                    FitnessOptions.Builder builder = FitnessOptions.builder();
+                    DataReadRequest.Builder requestBuilder = new DataReadRequest.Builder();
+                    requestBuilder.setTimeRange(latestTimestamp, now, TimeUnit.MILLISECONDS);
 
-                for (DataType dataType : me.mHistoryDataTypes) {
-                    builder.addDataType(dataType, FitnessOptions.ACCESS_READ);
-                    requestBuilder.read(dataType);
+                    for (DataType dataType : me.mHistoryDataTypes) {
+                        builder.addDataType(dataType, FitnessOptions.ACCESS_READ);
+                        requestBuilder.read(dataType);
 
-                    GoogleSignInAccount gsa = GoogleSignIn.getAccountForExtension(me.mContext, builder.build());
+                        GoogleSignInAccount gsa = GoogleSignIn.getAccountForExtension(me.mContext, builder.build());
 
-                    Task<DataReadResponse> response = Fitness.getHistoryClient(me.mContext, gsa).readData(requestBuilder.build());
+                        Task<DataReadResponse> response = Fitness.getHistoryClient(me.mContext, gsa).readData(requestBuilder.build());
 
-                    try {
-                        DataReadResponse readDataResult = Tasks.await(response);
+                        try {
+                            DataReadResponse readDataResult = Tasks.await(response);
+                            DataSet dataSet = readDataResult.getDataSet(dataType);
 
-                        DataSet dataSet = readDataResult.getDataSet(dataType);
+                            for (DataPoint point : dataSet.getDataPoints()) {
+                                DataType pointType = point.getDataType();
+                                String pointTypeName = pointType.getName();
 
-                        for (DataPoint point : dataSet.getDataPoints()) {
-                            DataType pointType = point.getDataType();
-                            String pointTypeName = pointType.getName();
+//                                for (Field field : point.getDataType().getFields()) {
+//                                    Log.e("PDK", field.getName() + "[" + pointType.getName() + "]: " + point.getValue(field) + " -- " + (new Date(point.getStartTime(TimeUnit.MILLISECONDS))));
+//                                }
 
-//                            for (Field field : point.getDataType().getFields()) {
-//                                Log.e("PDK", field.getName() + "[" + pointType.getName() + "]: " + point.getValue(field) + " -- " + (new Date(point.getStartTime(TimeUnit.MILLISECONDS))));
-//                            }
+                                if (DataType.TYPE_STEP_COUNT_DELTA.getName().equals(pointTypeName)) {
+                                    ContentValues values = new ContentValues();
+                                    values.put(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
 
-                            if (DataType.TYPE_STEP_COUNT_DELTA.getName().equals(pointTypeName)) {
-                                ContentValues values = new ContentValues();
-                                values.put(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
+                                    values.put(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
+                                    values.put(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
+                                    values.put(GoogleFit.STEP_COUNT_STEPS, point.getValue(Field.FIELD_STEPS).asInt());
 
-                                values.put(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
-                                values.put(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
-                                values.put(GoogleFit.STEP_COUNT_STEPS, point.getValue(Field.FIELD_STEPS).asInt());
+                                    String where = GoogleFit.DATE_START + " = ? AND " +
+                                            GoogleFit.DATE_END + " = ? AND " +
+                                            GoogleFit.STEP_COUNT_STEPS + " = ?";
 
-                                String where = GoogleFit.DATE_START + " = ? AND " +
-                                        GoogleFit.DATE_END + " = ? AND " +
-                                        GoogleFit.STEP_COUNT_STEPS + " = ?";
+                                    String[] args = {
+                                            "" + point.getStartTime(TimeUnit.MILLISECONDS),
+                                            "" + point.getEndTime(TimeUnit.MILLISECONDS),
+                                            "" + point.getValue(Field.FIELD_STEPS)
+                                    };
 
-                                String[] args = {
-                                        "" + point.getStartTime(TimeUnit.MILLISECONDS),
-                                        "" + point.getEndTime(TimeUnit.MILLISECONDS),
-                                        "" + point.getValue(Field.FIELD_STEPS)
-                                };
+                                    Cursor c = me.mDatabase.query(GoogleFit.STEP_COUNT_TABLE, null, where, args, null, null, null);
 
-                                Cursor c = me.mDatabase.query(GoogleFit.STEP_COUNT_TABLE, null, where, args, null, null, null);
+                                    if (c.getCount() == 0) {
+                                        me.mDatabase.insert(GoogleFit.STEP_COUNT_TABLE, null, values);
 
-                                if (c.getCount() == 0) {
-                                    me.mDatabase.insert(GoogleFit.STEP_COUNT_TABLE, null, values);
+                                        Bundle updated = new Bundle();
 
-                                    Bundle updated = new Bundle();
+                                        updated.putLong(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
+                                        updated.putLong(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
+                                        updated.putLong(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
+                                        updated.putInt(GoogleFit.STEP_COUNT_STEPS, point.getValue(Field.FIELD_STEPS).asInt());
+                                        updated.putString(GoogleFit.READING_TYPE, pointType.getName());
 
-                                    updated.putLong(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
-                                    updated.putLong(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
-                                    updated.putLong(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
-                                    updated.putInt(GoogleFit.STEP_COUNT_STEPS, point.getValue(Field.FIELD_STEPS).asInt());
-                                    updated.putString(GoogleFit.READING_TYPE, pointType.getName());
+                                        Generators.getInstance(me.mContext).notifyGeneratorUpdated(GoogleFit.GENERATOR_IDENTIFIER, updated);
+                                    }
 
-                                    Generators.getInstance(me.mContext).notifyGeneratorUpdated(GoogleFit.GENERATOR_IDENTIFIER, updated);
+                                    c.close();
+                                } else if (DataType.TYPE_STEP_COUNT_CADENCE.getName().equals(pointTypeName)) {
+                                    ContentValues values = new ContentValues();
+                                    values.put(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
+
+                                    values.put(GoogleFit.TIMESTAMP, point.getEndTime(TimeUnit.MILLISECONDS));
+                                    values.put(GoogleFit.STEP_CADENCE, point.getValue(Field.FIELD_STEPS).asFloat());
+
+                                    String where = GoogleFit.TIMESTAMP + " = ? AND " +
+                                            GoogleFit.STEP_CADENCE + " = ?";
+
+                                    String[] args = {
+                                            "" + point.getEndTime(TimeUnit.MILLISECONDS),
+                                            "" + point.getValue(Field.FIELD_STEPS)
+                                    };
+
+                                    Cursor c = me.mDatabase.query(GoogleFit.STEP_CADENCE_TABLE, null, where, args, null, null, null);
+
+                                    if (c.getCount() == 0) {
+                                        me.mDatabase.insert(GoogleFit.STEP_CADENCE_TABLE, null, values);
+
+                                        Bundle updated = new Bundle();
+
+                                        updated.putLong(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
+                                        updated.putLong(GoogleFit.TIMESTAMP, point.getEndTime(TimeUnit.MILLISECONDS));
+                                        updated.putFloat(GoogleFit.STEP_CADENCE, point.getValue(Field.FIELD_STEPS).asFloat());
+                                        updated.putString(GoogleFit.READING_TYPE, pointType.getName());
+
+                                        Generators.getInstance(me.mContext).notifyGeneratorUpdated(GoogleFit.GENERATOR_IDENTIFIER, updated);
+                                    }
+
+                                    c.close();
+                                } else if (DataType.TYPE_SPEED.getName().equals(pointTypeName)) {
+                                    ContentValues values = new ContentValues();
+                                    values.put(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
+
+                                    values.put(GoogleFit.TIMESTAMP, point.getEndTime(TimeUnit.MILLISECONDS));
+                                    values.put(GoogleFit.SPEED, point.getValue(Field.FIELD_SPEED).asFloat());
+
+                                    String where = GoogleFit.TIMESTAMP + " = ? AND " +
+                                            GoogleFit.SPEED + " = ?";
+
+                                    String[] args = {
+                                            "" + point.getEndTime(TimeUnit.MILLISECONDS),
+                                            "" + point.getValue(Field.FIELD_SPEED)
+                                    };
+
+                                    Cursor c = me.mDatabase.query(GoogleFit.SPEED_TABLE, null, where, args, null, null, null);
+
+                                    if (c.getCount() == 0) {
+                                        me.mDatabase.insert(GoogleFit.SPEED_TABLE, null, values);
+
+                                        Bundle updated = new Bundle();
+
+                                        updated.putLong(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
+                                        updated.putLong(GoogleFit.TIMESTAMP, point.getEndTime(TimeUnit.MILLISECONDS));
+                                        updated.putFloat(GoogleFit.SPEED, point.getValue(Field.FIELD_SPEED).asFloat());
+                                        updated.putString(GoogleFit.READING_TYPE, pointType.getName());
+
+                                        Generators.getInstance(me.mContext).notifyGeneratorUpdated(GoogleFit.GENERATOR_IDENTIFIER, updated);
+                                    }
+
+                                    c.close();
+                                } else if (DataType.TYPE_CALORIES_EXPENDED.getName().equals(pointTypeName)) {
+                                    ContentValues values = new ContentValues();
+                                    values.put(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
+
+                                    values.put(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
+                                    values.put(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
+                                    values.put(GoogleFit.CALORIES_EXPENDED, point.getValue(Field.FIELD_CALORIES).asFloat());
+
+                                    String where = GoogleFit.DATE_START + " = ? AND " +
+                                            GoogleFit.DATE_END + " = ? AND " +
+                                            GoogleFit.CALORIES_EXPENDED + " = ?";
+
+                                    String[] args = {
+                                            "" + point.getStartTime(TimeUnit.MILLISECONDS),
+                                            "" + point.getEndTime(TimeUnit.MILLISECONDS),
+                                            "" + point.getValue(Field.FIELD_CALORIES)
+                                    };
+
+                                    Cursor c = me.mDatabase.query(GoogleFit.CALORIES_EXPENDED_TABLE, null, where, args, null, null, null);
+
+                                    if (c.getCount() == 0) {
+                                        me.mDatabase.insert(GoogleFit.CALORIES_EXPENDED_TABLE, null, values);
+
+                                        Bundle updated = new Bundle();
+
+                                        updated.putLong(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
+                                        updated.putLong(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
+                                        updated.putLong(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
+                                        updated.putFloat(GoogleFit.CALORIES_EXPENDED, point.getValue(Field.FIELD_CALORIES).asFloat());
+                                        updated.putString(GoogleFit.READING_TYPE, pointType.getName());
+
+                                        Generators.getInstance(me.mContext).notifyGeneratorUpdated(GoogleFit.GENERATOR_IDENTIFIER, updated);
+                                    }
+
+                                    c.close();
+                                } else if (DataType.TYPE_DISTANCE_DELTA.getName().equals(pointTypeName)) {
+                                    ContentValues values = new ContentValues();
+                                    values.put(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
+
+                                    values.put(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
+                                    values.put(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
+                                    values.put(GoogleFit.DISTANCE, point.getValue(Field.FIELD_DISTANCE).asFloat());
+
+                                    String where = GoogleFit.DATE_START + " = ? AND " +
+                                            GoogleFit.DATE_END + " = ? AND " +
+                                            GoogleFit.DISTANCE + " = ?";
+
+                                    String[] args = {
+                                            "" + point.getStartTime(TimeUnit.MILLISECONDS),
+                                            "" + point.getEndTime(TimeUnit.MILLISECONDS),
+                                            "" + point.getValue(Field.FIELD_DISTANCE)
+                                    };
+
+                                    Cursor c = me.mDatabase.query(GoogleFit.DISTANCE_TABLE, null, where, args, null, null, null);
+
+                                    if (c.getCount() == 0) {
+                                        me.mDatabase.insert(GoogleFit.DISTANCE_TABLE, null, values);
+
+                                        Bundle updated = new Bundle();
+
+                                        updated.putLong(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
+                                        updated.putLong(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
+                                        updated.putLong(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
+                                        updated.putFloat(GoogleFit.DISTANCE, point.getValue(Field.FIELD_DISTANCE).asFloat());
+                                        updated.putString(GoogleFit.READING_TYPE, pointType.getName());
+
+                                        Generators.getInstance(me.mContext).notifyGeneratorUpdated(GoogleFit.GENERATOR_IDENTIFIER, updated);
+                                    }
+
+                                    c.close();
+                                } else {
+                                    Log.e("PDK", "TODO: Serialize Google Fit data type: " + pointType.getName());
                                 }
 
-                                c.close();
-                            } else if (DataType.TYPE_STEP_COUNT_CADENCE.getName().equals(pointTypeName)) {
-                                ContentValues values = new ContentValues();
-                                values.put(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
-
-                                values.put(GoogleFit.TIMESTAMP, point.getEndTime(TimeUnit.MILLISECONDS));
-                                values.put(GoogleFit.STEP_CADENCE, point.getValue(Field.FIELD_STEPS).asFloat());
-
-                                String where = GoogleFit.TIMESTAMP + " = ? AND " +
-                                        GoogleFit.STEP_CADENCE + " = ?";
-
-                                String[] args = {
-                                        "" + point.getEndTime(TimeUnit.MILLISECONDS),
-                                        "" + point.getValue(Field.FIELD_STEPS)
-                                };
-
-                                Cursor c = me.mDatabase.query(GoogleFit.STEP_CADENCE_TABLE, null, where, args, null, null, null);
-
-                                if (c.getCount() == 0) {
-                                    me.mDatabase.insert(GoogleFit.STEP_CADENCE_TABLE, null, values);
-
-                                    Bundle updated = new Bundle();
-
-                                    updated.putLong(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
-                                    updated.putLong(GoogleFit.TIMESTAMP, point.getEndTime(TimeUnit.MILLISECONDS));
-                                    updated.putFloat(GoogleFit.STEP_CADENCE, point.getValue(Field.FIELD_STEPS).asFloat());
-                                    updated.putString(GoogleFit.READING_TYPE, pointType.getName());
-
-                                    Generators.getInstance(me.mContext).notifyGeneratorUpdated(GoogleFit.GENERATOR_IDENTIFIER, updated);
+                                if (me.mLastReadings.get(pointType) == null || me.mLastReadings.get(pointType) < point.getEndTime(TimeUnit.MILLISECONDS)) {
+                                    me.mLastReadings.put(pointType, point.getEndTime(TimeUnit.MILLISECONDS));
                                 }
-
-                                c.close();
-                            } else if (DataType.TYPE_SPEED.getName().equals(pointTypeName)) {
-                                ContentValues values = new ContentValues();
-                                values.put(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
-
-                                values.put(GoogleFit.TIMESTAMP, point.getEndTime(TimeUnit.MILLISECONDS));
-                                values.put(GoogleFit.SPEED, point.getValue(Field.FIELD_SPEED).asFloat());
-
-                                String where = GoogleFit.TIMESTAMP + " = ? AND " +
-                                        GoogleFit.SPEED + " = ?";
-
-                                String[] args = {
-                                        "" + point.getEndTime(TimeUnit.MILLISECONDS),
-                                        "" + point.getValue(Field.FIELD_SPEED)
-                                };
-
-                                Cursor c = me.mDatabase.query(GoogleFit.SPEED_TABLE, null, where, args, null, null, null);
-
-                                if (c.getCount() == 0) {
-                                    me.mDatabase.insert(GoogleFit.SPEED_TABLE, null, values);
-
-                                    Bundle updated = new Bundle();
-
-                                    updated.putLong(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
-                                    updated.putLong(GoogleFit.TIMESTAMP, point.getEndTime(TimeUnit.MILLISECONDS));
-                                    updated.putFloat(GoogleFit.SPEED, point.getValue(Field.FIELD_SPEED).asFloat());
-                                    updated.putString(GoogleFit.READING_TYPE, pointType.getName());
-
-                                    Generators.getInstance(me.mContext).notifyGeneratorUpdated(GoogleFit.GENERATOR_IDENTIFIER, updated);
-                                }
-
-                                c.close();
-                            } else if (DataType.TYPE_CALORIES_EXPENDED.getName().equals(pointTypeName)) {
-                                ContentValues values = new ContentValues();
-                                values.put(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
-
-                                values.put(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
-                                values.put(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
-                                values.put(GoogleFit.CALORIES_EXPENDED, point.getValue(Field.FIELD_CALORIES).asFloat());
-
-                                String where = GoogleFit.DATE_START + " = ? AND " +
-                                        GoogleFit.DATE_END + " = ? AND " +
-                                        GoogleFit.CALORIES_EXPENDED + " = ?";
-
-                                String[] args = {
-                                        "" + point.getStartTime(TimeUnit.MILLISECONDS),
-                                        "" + point.getEndTime(TimeUnit.MILLISECONDS),
-                                        "" + point.getValue(Field.FIELD_CALORIES)
-                                };
-
-                                Cursor c = me.mDatabase.query(GoogleFit.CALORIES_EXPENDED_TABLE, null, where, args, null, null, null);
-
-                                if (c.getCount() == 0) {
-                                    me.mDatabase.insert(GoogleFit.CALORIES_EXPENDED_TABLE, null, values);
-
-                                    Bundle updated = new Bundle();
-
-                                    updated.putLong(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
-                                    updated.putLong(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
-                                    updated.putLong(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
-                                    updated.putFloat(GoogleFit.CALORIES_EXPENDED, point.getValue(Field.FIELD_CALORIES).asFloat());
-                                    updated.putString(GoogleFit.READING_TYPE, pointType.getName());
-
-                                    Generators.getInstance(me.mContext).notifyGeneratorUpdated(GoogleFit.GENERATOR_IDENTIFIER, updated);
-                                }
-
-                                c.close();
-                            } else if (DataType.TYPE_DISTANCE_DELTA.getName().equals(pointTypeName)) {
-                                ContentValues values = new ContentValues();
-                                values.put(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
-
-                                values.put(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
-                                values.put(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
-                                values.put(GoogleFit.DISTANCE, point.getValue(Field.FIELD_DISTANCE).asFloat());
-
-                                String where = GoogleFit.DATE_START + " = ? AND " +
-                                        GoogleFit.DATE_END + " = ? AND " +
-                                        GoogleFit.DISTANCE + " = ?";
-
-                                String[] args = {
-                                        "" + point.getStartTime(TimeUnit.MILLISECONDS),
-                                        "" + point.getEndTime(TimeUnit.MILLISECONDS),
-                                        "" + point.getValue(Field.FIELD_DISTANCE)
-                                };
-
-                                Cursor c = me.mDatabase.query(GoogleFit.DISTANCE_TABLE, null, where, args, null, null, null);
-
-                                if (c.getCount() == 0) {
-                                    me.mDatabase.insert(GoogleFit.DISTANCE_TABLE, null, values);
-
-                                    Bundle updated = new Bundle();
-
-                                    updated.putLong(GoogleFit.HISTORY_OBSERVED, System.currentTimeMillis());
-                                    updated.putLong(GoogleFit.DATE_START, point.getStartTime(TimeUnit.MILLISECONDS));
-                                    updated.putLong(GoogleFit.DATE_END, point.getEndTime(TimeUnit.MILLISECONDS));
-                                    updated.putFloat(GoogleFit.DISTANCE, point.getValue(Field.FIELD_DISTANCE).asFloat());
-                                    updated.putString(GoogleFit.READING_TYPE, pointType.getName());
-
-                                    Generators.getInstance(me.mContext).notifyGeneratorUpdated(GoogleFit.GENERATOR_IDENTIFIER, updated);
-                                }
-
-                                c.close();
-                            } else {
-                                Log.e("PDK", "TODO: Serialize Google Fit data type: " + pointType.getName());
                             }
 
-                            if (me.mLastReadings.get(pointType) == null || me.mLastReadings.get(pointType) < point.getEndTime(TimeUnit.MILLISECONDS)) {
-                                me.mLastReadings.put(pointType, point.getEndTime(TimeUnit.MILLISECONDS));
-                            }
+                            me.setLatestFetch(now);
+                        } catch (ExecutionException e) {
+                            e.printStackTrace();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
-
-                        me.setLatestFetch(now);
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
                 }
             }
@@ -604,5 +611,21 @@ public class GoogleFit extends Generator {
         e.remove(GoogleFit.LATEST_FETCH);
 
         e.apply();
+    }
+
+    public boolean hasPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public void requestPermissions() {
+        Intent intent = new Intent(this.mContext, RequestPermissionActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(RequestPermissionActivity.PERMISSION, Manifest.permission.ACTIVITY_RECOGNITION);
+
+        this.mContext.startActivity(intent);
     }
 }

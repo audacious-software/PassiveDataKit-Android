@@ -120,8 +120,6 @@ public class StepCount extends SensorGenerator implements SensorEventListener {
     private void startGenerator() {
         final StepCount me = this;
 
-        StepCount.isAvailable(me.mContext);
-
         Runnable r = new Runnable() {
             @Override
             public void run() {
