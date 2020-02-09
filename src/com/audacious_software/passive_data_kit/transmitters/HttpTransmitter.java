@@ -325,65 +325,61 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                         }
 
                         for (String filename : largeFiles) {
-//                            try {
-                                File payloadFile = new File(pendingFolder, filename);
+                            File payloadFile = new File(pendingFolder, filename);
 
-                                ObjectMapper mapper = new ObjectMapper();
-                                mapper.registerModule(new JsonOrgModule());
+                            ObjectMapper mapper = new ObjectMapper();
+                            mapper.registerModule(new JsonOrgModule());
 
-                                Iterator<JSONObject> iterator = mapper.readValues(new JsonFactory().createJsonParser(payloadFile), JSONObject.class);
+                            Iterator<JSONObject> iterator = mapper.readValues(new JsonFactory().createJsonParser(payloadFile), JSONObject.class);
 
-                                JSONArray newReadings = new JSONArray();
+                            JSONArray newReadings = new JSONArray();
 
-                                int length = 0;
+                            int length = 0;
 
-                                try {
-                                    while (iterator.hasNext()) {
-                                        JSONObject reading = iterator.next();
+                            try {
+                                while (iterator.hasNext()) {
+                                    JSONObject reading = iterator.next();
 
-                                        newReadings.put(reading);
+                                    newReadings.put(reading);
 
-                                        length += reading.length();
+                                    length += reading.length();
 
-                                        if (newReadings.length() >= 200 || length > (512 * 1024)) {
-                                            File newFile = new File(pendingFolder, "" + System.currentTimeMillis() + HttpTransmitter.JSON_EXTENSION);
+                                    if (newReadings.length() >= 200 || length > (512 * 1024)) {
+                                        File newFile = new File(pendingFolder, "" + System.currentTimeMillis() + HttpTransmitter.JSON_EXTENSION);
 
-                                            FileUtils.writeStringToFile(newFile, newReadings.toString(), "UTF-8");
+                                        FileUtils.writeStringToFile(newFile, newReadings.toString(), "UTF-8");
 
-                                            newReadings = new JSONArray();
-                                            length = 0;
-                                        }
-                                    }
-                                } catch (RuntimeException ex) {
-                                    if (payloadFile.getAbsolutePath().endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
-
-                                    } else {
-                                        Logger.getInstance(me.mContext).logThrowable(ex);
-
-                                        payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
-                                    }
-                                } catch (JsonParseException ex) {
-                                    // Incomplete JSON in file...
-
-                                    if (payloadFile.getAbsolutePath().endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
-
-                                    } else {
-                                        Logger.getInstance(me.mContext).logThrowable(ex);
-
-                                        payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
+                                        newReadings = new JSONArray();
+                                        length = 0;
                                     }
                                 }
+                            } catch (RuntimeException ex) {
+                                if (payloadFile.getAbsolutePath().endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
 
-                                if (newReadings.length() > 1) {
-                                    File newFile = new File(pendingFolder, "" + System.currentTimeMillis() + HttpTransmitter.JSON_EXTENSION);
+                                } else {
+                                    Logger.getInstance(me.mContext).logThrowable(ex);
 
-                                    FileUtils.writeStringToFile(newFile, newReadings.toString(), "UTF-8");
+                                    payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
                                 }
+                            } catch (JsonParseException ex) {
+                                // Incomplete JSON in file...
 
-                                payloadFile.delete();
-//                            } catch (OutOfMemoryError e) {
-//                                Log.e("PDK", "STILL TOO LARGE - SKIPPING");
-//                            }
+                                if (payloadFile.getAbsolutePath().endsWith(HttpTransmitter.ERROR_FILE_EXTENSION)) {
+
+                                } else {
+                                    Logger.getInstance(me.mContext).logThrowable(ex);
+
+                                    payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
+                                }
+                            }
+
+                            if (newReadings.length() > 1) {
+                                File newFile = new File(pendingFolder, "" + System.currentTimeMillis() + HttpTransmitter.JSON_EXTENSION);
+
+                                FileUtils.writeStringToFile(newFile, newReadings.toString(), "UTF-8");
+                            }
+
+                            payloadFile.delete();
                         }
 
                         final MutableInt found = new MutableInt(0);
@@ -460,7 +456,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                 } catch (JSONException e) {
                                     // Invalid JSON, log results.
 
-                                    Logger.getInstance(me.mContext).logThrowable(e);
+                                    // Logger.getInstance(me.mContext).logThrowable(e);
 
                                     HashMap<String, Object> details = new HashMap<>();
                                     payloadFile.renameTo(new File(payloadFile.getAbsolutePath() + HttpTransmitter.ERROR_FILE_EXTENSION));
