@@ -48,6 +48,19 @@ android {
         manifestPlaceholders = [
             appAuthRedirectScheme: "NOT-USED"
         ]
+
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_ARM_NEON=ON"
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+            version "3.10.2"
+        }
     }
 
     packagingOptions {
@@ -57,7 +70,7 @@ android {
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
-            java.srcDirs = ['src']
+            java.srcDirs = ['java/src']
             aidl.srcDirs = ['src']
             renderscript.srcDirs = ['src']
             res.srcDirs = ['res']
@@ -96,8 +109,8 @@ android {
         implementation 'com.google.firebase:firebase-messaging:20.1.0'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         api 'com.squareup.okhttp3:okhttp:3.12.3' // Retaining older version for Android 4 support
-        implementation 'commons-io:commons-io:2.6'
-        implementation 'commons-codec:commons-codec:1.13'
+        api 'commons-io:commons-io:2.6'
+        api 'commons-codec:commons-codec:1.13'
         api 'org.apache.commons:commons-lang3:3.9'
         implementation 'com.fasterxml.jackson.core:jackson-core:2.9.9'
         implementation 'com.fasterxml.jackson.datatype:jackson-datatype-json-org:2.9.9'
@@ -107,11 +120,16 @@ android {
         implementation 'net.openid:appauth:0.7.0'
         implementation 'com.github.mfornos:humanize-slim:1.2.2'
         implementation 'com.google.guava:guava:28.2-android'
-        implementation 'com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2'
+        api 'com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2'
         api 'com.google.code.findbugs:jsr305:3.0.2'
         api(name: 'amazon-maps-api-v2', ext: 'aar')
 
+        api 'com.googlecode.libphonenumber:libphonenumber:8.11.3'
+
         implementation 'com.google.android.material:material:1.1.0'
+
         implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:8.5.0'
+
+        // implementation "org.webrtc:google-webrtc:1.0.30039"
     }
 }

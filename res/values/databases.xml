@@ -76,5 +76,21 @@
     <!-- Dark Sky Weather Generator -->
     <string name="pdk_generator_dark_sky_weather_create_history_table">CREATE TABLE dark_sky_weather_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, summary TEXT, temperature REAL, apparent_temperature REAL, ozone REAL, humidity REAL, dew_point REAL, wind_speed REAL, wind_gust_speed REAL, wind_bearing REAL, cloud_cover REAL, uv_index REAL, air_pressure REAL, visibility REAL, precipitation_intensity REAL, precipitation_probability REAL, full_reading TEXT);</string>
 
+    <!-- Step Counts -->
     <string name="pdk_generator_step_count_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, step_count REAL, elapsed_runtime INTEGER);</string>
+
+    <!-- Notification Events -->
+    <string name="pdk_generator_notification_events_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, package TEXT, channel TEXT, action TEXT, reason TEXT);</string>
+
+    <!-- Voice Activity Detection -->
+    <string name="pdk_generator_diagnostics_voice_activity_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, voices_present INTEGER);</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_level">ALTER TABLE history ADD level REAL;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_sampling_rate">ALTER TABLE history ADD sampling_rate INTEGER;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_smooth_window">ALTER TABLE history ADD smooth_window INTEGER;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_smoothing_mode">ALTER TABLE history ADD smooth_mode TEXT;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_evaluation_interval">ALTER TABLE history ADD evaluation_interval INTEGER;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_evaluation_count">ALTER TABLE history ADD evaluation_count INTEGER;</string>
+
+   <!-- Bluetooth Devices -->
+    <string name="pdk_generator_bluetooth_devices_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, address TEXT, device_class TEXT, pair_status TEXT, name TEXT, device_type TEXT)</string>
 </resources>

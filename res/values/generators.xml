@@ -17,6 +17,9 @@
         <item>com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus</item>
         <item>com.audacious_software.passive_data_kit.generators.environment.TimeOfDay</item>
         <item>com.audacious_software.passive_data_kit.generators.device.User</item>
+        <item>com.audacious_software.passive_data_kit.generators.device.NotificationEvents</item>
+        <item>com.audacious_software.passive_data_kit.generators.environment.VoiceActivityGenerator</item>
+        <item>com.audacious_software.passive_data_kit.generators.environment.BluetoothDevices</item>
     </string-array>
 
     <string-array name="pdk_app_generators" tools:ignore="InconsistentArrays"></string-array>
@@ -317,5 +320,13 @@
 
     <!-- Step Counter -->
     <string name="generator_sensors_step_count">Step Count</string>
+
+    <!-- Notification Events -->
+    <string name="generator_notification_events">Notification Events</string>
+
+    <!-- Voice Detection -->
+    <string name="generator_voice_detection">Voice Detection</string>
+
+
 </resources>
 
