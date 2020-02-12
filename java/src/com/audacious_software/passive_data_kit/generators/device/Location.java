@@ -94,6 +94,9 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import humanize.Humanize;
 
 public class Location extends Generator implements LocationListener, android.location.LocationListener {
@@ -1552,6 +1555,45 @@ public class Location extends Generator implements LocationListener, android.loc
 
         if (actions.size() > 0) {
             actions.get(0).run();
+        }
+    }
+
+    public void updateConfig(JSONObject config) {
+        try {
+            if (config.has("update-interval")) {
+                this.setUpdateInterval(config.getLong("update-interval"));
+
+                config.remove("update-interval");
+            }
+
+            if (config.has("use-mapbox-maps")) {
+                this.setUseMapboxMaps(config.getBoolean("use-mapbox-maps"));
+
+                config.remove("use-mapbox-maps");
+            }
+
+            if (config.has("use-google-location-services")) {
+                this.setUseGoogleLocationServices(config.getBoolean("use-google-location-services"));
+
+                config.remove("use-google-location-services");
+            }
+
+            if (config.has("accuracy")) {
+                String accuracy = config.getString("accuracy");
+
+                if ("best".equals(accuracy)) {
+                    this.setAccuracyMode(Location.ACCURACY_BEST);
+                } else if ("randomized".equals(accuracy)) {
+                    this.setAccuracyMode(Location.ACCURACY_RANDOMIZED);
+                } else if ("user".equals(accuracy)) {
+                    this.setAccuracyMode(Location.ACCURACY_USER);
+                } else if ("disabled".equals(accuracy)) {
+                    this.setAccuracyMode(Location.ACCURACY_DISABLED);
+                }
+                config.remove("accuracy");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 }

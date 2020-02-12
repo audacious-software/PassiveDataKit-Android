@@ -68,10 +68,16 @@ public class ForegroundService extends Service {
         if (pendingIntent == null) {
             Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getApplicationContext().getPackageName());
 
-            pendingIntent = PendingIntent.getActivity(context, 0, launchIntent, 0);
+            PassiveDataKit.getInstance(context).annotateForegroundIntent(launchIntent);
+
+            if (launchIntent != null) {
+                pendingIntent = PendingIntent.getActivity(context, 0, launchIntent, 0);
+            }
         }
 
-        builder.setContentIntent(pendingIntent);
+        if (pendingIntent != null) {
+            builder.setContentIntent(pendingIntent);
+        }
 
         return builder.build();
     }

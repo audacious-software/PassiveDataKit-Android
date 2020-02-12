@@ -49,9 +49,13 @@ public class Logger {
             payload.put("message", t.getMessage());
         }
 
-        payload.put("stack-trace", ExceptionUtils.getStackTrace(t));
+        try {
+            payload.put("stack-trace", ExceptionUtils.getStackTrace(t));
 
-        t.printStackTrace();
+            t.printStackTrace();
+        } catch (StackOverflowError ex) {
+            payload.put("stack-trace", "(Circular Stack Trace)");
+        }
 
         this.log("java-exception", payload);
     }

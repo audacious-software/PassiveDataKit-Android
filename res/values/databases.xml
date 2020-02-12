@@ -90,6 +90,7 @@
     <string name="pdk_generator_diagnostics_voice_activity_history_table_add_smoothing_mode">ALTER TABLE history ADD smooth_mode TEXT;</string>
     <string name="pdk_generator_diagnostics_voice_activity_history_table_add_evaluation_interval">ALTER TABLE history ADD evaluation_interval INTEGER;</string>
     <string name="pdk_generator_diagnostics_voice_activity_history_table_add_evaluation_count">ALTER TABLE history ADD evaluation_count INTEGER;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_power">ALTER TABLE history ADD power REAL;</string>
 
    <!-- Bluetooth Devices -->
     <string name="pdk_generator_bluetooth_devices_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, address TEXT, device_class TEXT, pair_status TEXT, name TEXT, device_type TEXT)</string>

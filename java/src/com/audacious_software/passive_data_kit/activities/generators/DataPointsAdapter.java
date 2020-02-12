@@ -39,8 +39,6 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
             return new DataPointViewHolder(view);
         } catch (Exception e) {
-            e.printStackTrace();
-
             try {
                 generatorClass = Generator.class;
 
@@ -49,11 +47,11 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
                 return new DataPointViewHolder(view);
             } catch (NoSuchMethodException e1) {
-                Logger.getInstance(parent.getContext()).logThrowable(e1);
+                // Logger.getInstance(parent.getContext()).logThrowable(e1);
             } catch (InvocationTargetException e1) {
-                Logger.getInstance(parent.getContext()).logThrowable(e1);
+                // Logger.getInstance(parent.getContext()).logThrowable(e1);
             } catch (IllegalAccessException e1) {
-                Logger.getInstance(parent.getContext()).logThrowable(e1);
+                // Logger.getInstance(parent.getContext()).logThrowable(e1);
             }
         }
 
@@ -83,18 +81,18 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
             Method bindViewHolder = generatorClass.getDeclaredMethod("bindViewHolder", DataPointViewHolder.class);
             bindViewHolder.invoke(null, holder);
         } catch (Exception e) {
-            AppEvent.getInstance(this.mContext).logThrowable(e);
+            // AppEvent.getInstance(this.mContext).logThrowable(e);
 
             try {
                 Method bindViewHolder = Generator.class.getDeclaredMethod("bindViewHolder", DataPointViewHolder.class, Class.class);
 
                 bindViewHolder.invoke(null, holder, generatorClass);
             } catch (NoSuchMethodException e1) {
-                Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
+                // Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
             } catch (InvocationTargetException e1) {
-                Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
+                // Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
             } catch (IllegalAccessException e1) {
-                Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
+                // Logger.getInstance(holder.itemView.getContext()).logThrowable(e1);
             }
         }
     }

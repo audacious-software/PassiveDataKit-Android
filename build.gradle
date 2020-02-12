@@ -71,7 +71,7 @@ android {
         main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['java/src']
-            aidl.srcDirs = ['src']
+            // aidl.srcDirs = ['src']
             renderscript.srcDirs = ['src']
             res.srcDirs = ['res']
             assets.srcDirs = ['assets']
@@ -99,6 +99,7 @@ android {
         implementation 'androidx.cardview:cardview:1.0.0'
         implementation 'androidx.browser:browser:1.2.0'
         implementation 'androidx.work:work-runtime:2.3.1'
+
         api 'com.google.guava:guava:28.2-android'
         implementation 'com.google.guava:guava:28.2-android'
         api 'com.google.android.gms:play-services-auth:17.0.0'
@@ -128,7 +129,7 @@ android {
 
         implementation 'com.google.android.material:material:1.1.0'
 
-        implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:8.5.0'
+        implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:8.4.0'  // Retaining older version due to crashes in 8.6.x and earlier
 
         // implementation "org.webrtc:google-webrtc:1.0.30039"
     }

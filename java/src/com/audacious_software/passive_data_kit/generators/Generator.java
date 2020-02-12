@@ -17,6 +17,7 @@ import com.audacious_software.passive_data_kit.activities.generators.DataPointVi
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.pdk.passivedatakit.R;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Calendar;
@@ -206,6 +207,12 @@ public abstract class Generator {
 
     public void updateConfig(JSONObject config) {
         Log.e("PDK", "No updateConfig implemented for " + this.getClass().getCanonicalName());
+
+        try {
+            Log.e("PDK", "Configuration: " + config.toString(2));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public long storageUsed() {
