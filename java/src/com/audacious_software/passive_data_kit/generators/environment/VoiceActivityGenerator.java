@@ -29,10 +29,15 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.device.ScreenState;
 import com.audacious_software.pdk.passivedatakit.R;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,12 +54,13 @@ public class VoiceActivityGenerator extends Generator {
 
 
     private static final String DATABASE_PATH = "pdk-voice-activity.sqlite";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     private static final String TABLE_HISTORY = "history";
 
     public static final String HISTORY_OBSERVED = "observed";
     public static final String HISTORY_LEVEL = "level";
+    public static final String HISTORY_POWER = "power";
     private static final String HISTORY_VOICES_PRESENT = "voices_present";
 
     public static final int SMOOTHING_MEDIAN = 0;
@@ -87,6 +93,8 @@ public class VoiceActivityGenerator extends Generator {
     private int mSmoothMode = VoiceActivityGenerator.SMOOTHING_MEDIAN;
     private int mSmoothWindow = 13;
 
+    private boolean mLogReadings = false;
+
     private PendingIntent mHeartbeatIntent = null;
 
     @SuppressWarnings("unused")
@@ -113,78 +121,111 @@ public class VoiceActivityGenerator extends Generator {
         VoiceActivityGenerator.getInstance(context).startGenerator();
     }
 
-    private double voicePresence() {
+    private byte[] fetchSample() {
         if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            double detected = 0;
-            double runs = 0;
+            int bufferSize = 2 * AudioRecord.getMinBufferSize(this.mSampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
 
-            for (int i = 0; i < this.mScanCount; i++) {
-                VadUtil vadUtil = new VadUtil();
+            if (bufferSize > 0) {
+                AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
+                        this.mSampleRate,
+                        AudioFormat.CHANNEL_IN_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT,
+                        bufferSize);
 
-                int bufferSize = 2 * AudioRecord.getMinBufferSize(this.mSampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 
-                if (bufferSize > 0) {
-                    AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
-                            this.mSampleRate,
-                            AudioFormat.CHANNEL_IN_MONO,
-                            AudioFormat.ENCODING_PCM_16BIT,
-                            bufferSize);
+                byte[] buffer = new byte[bufferSize];
+                boolean run = true;
+                int read;
+                long total = 0;
 
-                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
+                    audioRecord.startRecording();
 
-                    byte[] buffer = new byte[bufferSize];
-                    boolean run = true;
-                    int read;
-                    long total = 0;
+                    boolean completed = false;
 
-                    if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
-                        audioRecord.startRecording();
+                    try {
+                        while (run) {
+                            read = audioRecord.read(buffer, 0, buffer.length);
 
-                        boolean completed = false;
+                            bytes.write(buffer, 0, read);
 
-                        try {
-                            while (run) {
-                                read = audioRecord.read(buffer, 0, buffer.length);
+                            total += read;
 
-                                bytes.write(buffer, 0, read);
-
-                                total += read;
-
-                                if (total > this.mSampleRate * 3) { // Record 3 seconds...
-                                    run = false;
-                                }
-                            }
-
-                            completed = true;
-                        } catch (IndexOutOfBoundsException ex) {
-                            // Try again next time.
-                        } finally {
-                            if (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
-                                audioRecord.stop();
-                            }
-
-                            if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
-                                audioRecord.release();
+                            if (total > this.mSampleRate * 3) { // Record 3 seconds...
+                                run = false;
                             }
                         }
 
-                        if (completed) {
-                            byte[] samples = bytes.toByteArray();
-
-                            if (vadUtil.detectVoice(samples, samples.length / 2, this.mSampleRate, this.mSmoothMode, this.mSmoothWindow) != 0) {
-                                detected += 1;
-                            }
-
-                            runs += 1;
+                        completed = true;
+                    } catch (IndexOutOfBoundsException ex) {
+                        // Try again next time.
+                    } finally {
+                        if (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+                            audioRecord.stop();
                         }
+
+                        if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
+                            audioRecord.release();
+                        }
+                    }
+
+                    if (completed) {
+                        return bytes.toByteArray();
                     }
                 }
             }
-
-            return detected / runs;
         }
 
-        return -1;
+        return null;
+    }
+
+    private double voicePresence(List<byte[]> samples) {
+        double detected = 0;
+        double runs = 0;
+
+        for (int i = 0; i < samples.size(); i++) {
+            byte[] sample = samples.get(i);
+
+            VadUtil vadUtil = new VadUtil();
+
+            if (vadUtil.detectVoice(sample, sample.length / 2, this.mSampleRate, this.mSmoothMode, this.mSmoothWindow) != 0) {
+                detected += 1;
+            }
+
+            runs += 1;
+        }
+
+        return detected / runs;
+    }
+
+    private double signalPower(List<byte[]> samples) {
+        BigInteger sum = BigInteger.ZERO;
+        long seen = 0;
+
+        for (int i = 0; i < samples.size(); i++) {
+            byte[] sample = samples.get(i);
+
+            ByteBuffer bytes = ByteBuffer.wrap(sample).order(ByteOrder.LITTLE_ENDIAN);
+
+            short[] shorts = new short[sample.length / 2];
+
+            ShortBuffer shortBuffer = bytes.asShortBuffer();
+
+            while (shortBuffer.hasRemaining()) {
+                sum = sum.add(BigInteger.valueOf(Math.abs(shortBuffer.get())));
+
+                seen += 1;
+            }
+        }
+
+        if (seen == 0) {
+            return 0;
+        }
+
+        sum = sum.divide(BigInteger.valueOf(seen));
+
+        return sum.doubleValue();
     }
 
     private void stopGenerator() {
@@ -225,10 +266,21 @@ public class VoiceActivityGenerator extends Generator {
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_voice_activity_history_table_add_smoothing_mode));
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_voice_activity_history_table_add_evaluation_interval));
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_voice_activity_history_table_add_evaluation_count));
+            case 3:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_diagnostics_voice_activity_history_table_add_power));
         }
 
         if (version != VoiceActivityGenerator.DATABASE_VERSION) {
             this.setDatabaseVersion(this.mDatabase, VoiceActivityGenerator.DATABASE_VERSION);
+        }
+
+        int[] sampleRates = { 32000, 16000, 8000 };
+        int bufferSize = -1;
+
+        for (int i = 0; i < sampleRates.length && bufferSize < 1; i++) {
+            this.mSampleRate = sampleRates[i];
+
+            bufferSize = AudioRecord.getMinBufferSize(this.mSampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
         }
 
         this.mReceiver = new BroadcastReceiver() {
@@ -243,51 +295,70 @@ public class VoiceActivityGenerator extends Generator {
 
                         PassiveDataKit.getInstance(context).start();
 
-                        double voicePresence = me.voicePresence();
+                        ArrayList<byte[]> samples = new ArrayList<>();
 
-                        if (voicePresence >= 0) {
-                            Log.e("PDK", "VOICES: " + voicePresence);
+                        while (samples.size() < me.mScanCount) {
+                            byte[] sample = me.fetchSample();
 
-                            ContentValues values = new ContentValues();
-                            values.put(VoiceActivityGenerator.HISTORY_OBSERVED, now);
-                            values.put(VoiceActivityGenerator.HISTORY_LEVEL, voicePresence);
-                            values.put(VoiceActivityGenerator.HISTORY_VOICES_PRESENT, (voicePresence > 0));
-                            values.put(VoiceActivityGenerator.HISTORY_SAMPLING_RATE, me.mSampleRate);
-                            values.put(VoiceActivityGenerator.HISTORY_SMOOTH_WINDOW, me.mSmoothWindow);
-                            values.put(VoiceActivityGenerator.HISTORY_EVALUATION_INTERVAL, me.mRefreshInterval);
-                            values.put(VoiceActivityGenerator.HISTORY_EVALUATION_COUNT, me.mScanCount);
-
-                            if (me.mSmoothMode == VoiceActivityGenerator.SMOOTHING_MEAN) {
-                                values.put(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_MEAN);
-                            } else if (me.mSmoothMode == VoiceActivityGenerator.SMOOTHING_MEDIAN) {
-                                values.put(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_MEDIAN);
+                            if (sample != null) {
+                                samples.add(sample);
                             } else {
-                                values.put(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_UNKNOWN);
+                                break;
                             }
+                        }
 
-                            Bundle update = new Bundle();
-                            update.putLong(VoiceActivityGenerator.HISTORY_OBSERVED, now);
-                            update.putFloat(VoiceActivityGenerator.HISTORY_LEVEL, (float) voicePresence);
-                            update.putBoolean(VoiceActivityGenerator.HISTORY_VOICES_PRESENT, (voicePresence > 0));
+                        if (samples.size() >= me.mScanCount) {
+                            double presence = me.voicePresence(samples);
+                            double power = me.signalPower(samples);
 
-                            update.putLong(VoiceActivityGenerator.HISTORY_SAMPLING_RATE, me.mSampleRate);
-                            update.putLong(VoiceActivityGenerator.HISTORY_SMOOTH_WINDOW, me.mSmoothWindow);
-                            update.putLong(VoiceActivityGenerator.HISTORY_EVALUATION_INTERVAL, me.mRefreshInterval);
-                            update.putLong(VoiceActivityGenerator.HISTORY_EVALUATION_COUNT, me.mScanCount);
+                            if (presence >= 0 && power >= 0) {
+                                if (me.mLogReadings) {
+                                    Log.e("PDK", "pdk-voice-activity: " + presence + " voice score; " + power + " signal power");
+                                }
 
-                            if (me.mSmoothMode == VoiceActivityGenerator.SMOOTHING_MEAN) {
-                                update.putString(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_MEAN);
-                            } else if (me.mSmoothMode == VoiceActivityGenerator.SMOOTHING_MEDIAN) {
-                                update.putString(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_MEDIAN);
+                                ContentValues values = new ContentValues();
+                                values.put(VoiceActivityGenerator.HISTORY_OBSERVED, now);
+                                values.put(VoiceActivityGenerator.HISTORY_LEVEL, presence);
+                                values.put(VoiceActivityGenerator.HISTORY_POWER, power);
+                                values.put(VoiceActivityGenerator.HISTORY_VOICES_PRESENT, (presence > 0));
+                                values.put(VoiceActivityGenerator.HISTORY_SAMPLING_RATE, me.mSampleRate);
+                                values.put(VoiceActivityGenerator.HISTORY_SMOOTH_WINDOW, me.mSmoothWindow);
+                                values.put(VoiceActivityGenerator.HISTORY_EVALUATION_INTERVAL, me.mRefreshInterval);
+                                values.put(VoiceActivityGenerator.HISTORY_EVALUATION_COUNT, me.mScanCount);
+
+                                if (me.mSmoothMode == VoiceActivityGenerator.SMOOTHING_MEAN) {
+                                    values.put(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_MEAN);
+                                } else if (me.mSmoothMode == VoiceActivityGenerator.SMOOTHING_MEDIAN) {
+                                    values.put(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_MEDIAN);
+                                } else {
+                                    values.put(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_UNKNOWN);
+                                }
+
+                                Bundle update = new Bundle();
+                                update.putLong(VoiceActivityGenerator.HISTORY_OBSERVED, now);
+                                update.putFloat(VoiceActivityGenerator.HISTORY_LEVEL, (float) presence);
+                                update.putFloat(VoiceActivityGenerator.HISTORY_POWER, (float) power);
+                                update.putBoolean(VoiceActivityGenerator.HISTORY_VOICES_PRESENT, (presence > 0));
+
+                                update.putLong(VoiceActivityGenerator.HISTORY_SAMPLING_RATE, me.mSampleRate);
+                                update.putLong(VoiceActivityGenerator.HISTORY_SMOOTH_WINDOW, me.mSmoothWindow);
+                                update.putLong(VoiceActivityGenerator.HISTORY_EVALUATION_INTERVAL, me.mRefreshInterval);
+                                update.putLong(VoiceActivityGenerator.HISTORY_EVALUATION_COUNT, me.mScanCount);
+
+                                if (me.mSmoothMode == VoiceActivityGenerator.SMOOTHING_MEAN) {
+                                    update.putString(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_MEAN);
+                                } else if (me.mSmoothMode == VoiceActivityGenerator.SMOOTHING_MEDIAN) {
+                                    update.putString(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_MEDIAN);
+                                } else {
+                                    update.putString(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_UNKNOWN);
+                                }
+
+                                me.mDatabase.insert(VoiceActivityGenerator.TABLE_HISTORY, null, values);
+
+                                Generators.getInstance(context).notifyGeneratorUpdated(VoiceActivityGenerator.GENERATOR_IDENTIFIER, update);
                             } else {
-                                update.putString(VoiceActivityGenerator.HISTORY_SMOOTH_MODE, VoiceActivityGenerator.HISTORY_SMOOTH_MODE_UNKNOWN);
+                                // Permission not granted.
                             }
-
-                            me.mDatabase.insert(VoiceActivityGenerator.TABLE_HISTORY, null, values);
-
-                            Generators.getInstance(context).notifyGeneratorUpdated(VoiceActivityGenerator.GENERATOR_IDENTIFIER, update);
-                        } else {
-                            // Permission not granted.
                         }
                     }
                 };
@@ -397,12 +468,48 @@ public class VoiceActivityGenerator extends Generator {
         return VoiceActivityGenerator.GENERATOR_IDENTIFIER;
     }
 
-    public void updateConfig(JSONObject config) {
-        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
-        SharedPreferences.Editor e = prefs.edit();
-        e.putBoolean(VoiceActivityGenerator.ENABLED, true);
-        e.apply();
-    }
+     public void updateConfig(JSONObject config) {
+         try {
+             if (config.has("smooth-mode")) {
+                 String mode = config.getString("smooth-mode");
+
+                 if (VoiceActivityGenerator.HISTORY_SMOOTH_MODE_MEAN.equals(mode)) {
+                     this.mSmoothMode = VoiceActivityGenerator.SMOOTHING_MEAN;
+                 } else {
+                     this.mSmoothMode = VoiceActivityGenerator.SMOOTHING_MEDIAN;
+                 }
+
+                 config.remove("smooth-mode");
+             }
+
+             if (config.has("scan-count")) {
+                 this.mScanCount = config.getInt("scan-count");
+
+                 config.remove("scan-count");
+             }
+
+             if (config.has("refresh-interval")) {
+                 this.mRefreshInterval = config.getLong("refresh-interval");
+
+                 config.remove("refresh-interval");
+             }
+
+             if (config.has("smooth-window")) {
+                 this.mSmoothWindow = config.getInt("smooth-window");
+
+                 config.remove("smooth-window");
+             }
+
+             if (config.has("log-readings")) {
+                 this.mLogReadings = config.getBoolean("log-readings");
+
+                 config.remove("log-readings");
+             }
+
+         } catch (JSONException e) {
+             e.printStackTrace();
+         }
+     }
 
     public long storageUsed() {
         File path = PassiveDataKit.getGeneratorsStorage(this.mContext);

@@ -32,13 +32,22 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 @SuppressWarnings("PointlessBooleanExpression")
 public class PassiveDataKit {
@@ -70,6 +79,16 @@ public class PassiveDataKit {
     private static final long LAST_TRANSMISSION_WARNING_DIALOG_INTERVAL_DEFAULT = 24 * 60 * 60 * 1000;
 
     private static final String LAST_TRANSMISSION_WARNING_LAST_DIALOG = "com.audacious_software.passive_data_kit.PassiveDataKit.LAST_TRANSMISSION_WARNING_LAST_DIALOG";
+
+    private static final String REMOTE_CONFIGURATION_URL = "com.audacious_software.passive_data_kit.PassiveDataKit.REMOTE_CONFIGURATION_URL";
+    private static final String REMOTE_CONFIGURATION_UPDATE_INTERVAL = "com.audacious_software.passive_data_kit.PassiveDataKit.REMOTE_CONFIGURATION_UPDATE_INTERVAL";
+    private static final long REMOTE_CONFIGURATION_UPDATE_INTERVAL_DEFAULT = 60 * 60 * 1000;
+
+    private static final String REMOTE_CONFIGURATION_LAST_UPDATE = "com.audacious_software.passive_data_kit.PassiveDataKit.REMOTE_CONFIGURATION_LAST_UPDATE";
+    private static final String CACHED_REMOTE_CONFIGURATION = "com.audacious_software.passive_data_kit.PassiveDataKit.CACHED_REMOTE_CONFIGURATION";
+
+    private static final String REMOTE_CONFIGURATION_IDENTIFIER = "com.audacious_software.passive_data_kit.PassiveDataKit.REMOTE_CONFIGURATION_IDENTIFIER";
+    private static final String REMOTE_CONFIGURATION_CONTEXT = "com.audacious_software.passive_data_kit.PassiveDataKit.REMOTE_CONFIGURATION_CONTEXT";
 
     private Context mContext = null;
     private boolean mStarted = false;
@@ -121,11 +140,28 @@ public class PassiveDataKit {
         }
 
         if (this.mAlwaysNotify && notificationStarted == false) {
-            Notification note = ForegroundService.getForegroundNotification(this.mContext, intent);
+            final PassiveDataKit me = this;
 
-            NotificationManager notes = (NotificationManager) this.mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+            Runnable r = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
 
-            notes.notify(ForegroundService.getNotificationId(), note);
+                    Notification note = ForegroundService.getForegroundNotification(me.mContext, intent);
+
+
+                    NotificationManager notes = (NotificationManager) me.mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+
+                    notes.notify(ForegroundService.getNotificationId(), note);
+                }
+            };
+
+            Thread t = new Thread(r, "pdk-notification-init");
+            t.start();
         }
     }
 
@@ -538,5 +574,161 @@ public class PassiveDataKit {
         for (Transmitter transmitter : transmitters) {
             transmitter.transmit(force);
         }
+    }
+
+    public void setRemoteOptionsUrl(String remoteConfigurationUrl, boolean forceUpdate) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        SharedPreferences.Editor e = prefs.edit();
+        e.putString(PassiveDataKit.REMOTE_CONFIGURATION_URL, remoteConfigurationUrl);
+
+        if (forceUpdate) {
+            e.remove(PassiveDataKit.REMOTE_CONFIGURATION_LAST_UPDATE);
+            e.apply();
+
+        }
+
+        e.apply();
+
+        this.updateRemoteOptions();
+    }
+
+    public void updateRemoteOptions() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        String configUrl = prefs.getString(PassiveDataKit.REMOTE_CONFIGURATION_URL, null);
+        String identifier = this.getRemoteConfigurationIdentifier();
+
+        long now = System.currentTimeMillis();
+
+        long lastUpdate = prefs.getLong(PassiveDataKit.REMOTE_CONFIGURATION_LAST_UPDATE, 0);
+        long interval = prefs.getLong(PassiveDataKit.REMOTE_CONFIGURATION_UPDATE_INTERVAL, PassiveDataKit.REMOTE_CONFIGURATION_UPDATE_INTERVAL_DEFAULT);
+
+        if (identifier != null && configUrl != null && now - lastUpdate > interval) {
+            String context = this.getRemoteConfigurationContext();
+
+            SharedPreferences.Editor e = prefs.edit();
+            e.putLong(PassiveDataKit.REMOTE_CONFIGURATION_LAST_UPDATE, now);
+            e.apply();
+
+            try {
+                OkHttpClient client = new OkHttpClient.Builder()
+                        .connectTimeout(3, TimeUnit.MINUTES)
+                        .readTimeout(3, TimeUnit.MINUTES)
+                        .build();
+
+                MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
+
+                builder = builder.addFormDataPart("id", identifier);
+
+                if (context != null) {
+                    builder = builder.addFormDataPart("context", context);
+                }
+
+                RequestBody requestBody = builder.build();
+
+                String version = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0).versionName;
+                String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
+
+                String userAgent = appName + " " + version;
+
+                Request request = new Request.Builder()
+                        .removeHeader("User-Agent")
+                        .addHeader("User-Agent", userAgent)
+                        .url(configUrl)
+                        .post(requestBody)
+                        .build();
+
+                Response response = client.newCall(request).execute();
+
+                int code = response.code();
+
+                ResponseBody body = response.body();
+
+                String bodyString = body.string();
+
+                response.body().close();
+
+                if (code >= 200 && code < 300) {
+                    JSONObject responseObject = new JSONObject(bodyString);
+
+                    if (responseObject.has("generators") || responseObject.has("transmitters")) {
+                        e = prefs.edit();
+                        e.putString(PassiveDataKit.CACHED_REMOTE_CONFIGURATION, responseObject.toString(2));
+                        e.apply();
+                    }
+                }
+            } catch (JSONException ex) {
+
+            } catch (PackageManager.NameNotFoundException ex) {
+
+            } catch (IOException ex) {
+
+            }
+        }
+
+        try {
+            JSONObject configuration = new JSONObject(prefs.getString(PassiveDataKit.CACHED_REMOTE_CONFIGURATION, "{}"));
+
+            if (configuration.has("generators")) {
+                Generators.getInstance(this.mContext).updateGenerators(configuration);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public JSONObject remoteOptions() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        String configuration = prefs.getString(PassiveDataKit.CACHED_REMOTE_CONFIGURATION, "{}");
+
+        try {
+            return new JSONObject(configuration);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return new JSONObject();
+    }
+
+    public String getRemoteConfigurationIdentifier() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        return prefs.getString(PassiveDataKit.REMOTE_CONFIGURATION_IDENTIFIER, null);
+    }
+
+    public void setRemoteConfigurationIdentifier(String identifier) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        SharedPreferences.Editor e = prefs.edit();
+
+        if (identifier == null) {
+            e.remove(PassiveDataKit.REMOTE_CONFIGURATION_IDENTIFIER);
+        } else {
+            e.putString(PassiveDataKit.REMOTE_CONFIGURATION_IDENTIFIER, identifier);
+        }
+
+        e.apply();
+    }
+
+    public String getRemoteConfigurationContext() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        return prefs.getString(PassiveDataKit.REMOTE_CONFIGURATION_CONTEXT, null);
+    }
+
+    public void setRemoteConfigurationContext(String identifier) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        SharedPreferences.Editor e = prefs.edit();
+
+        if (identifier == null) {
+            e.remove(PassiveDataKit.REMOTE_CONFIGURATION_CONTEXT);
+        } else {
+            e.putString(PassiveDataKit.REMOTE_CONFIGURATION_CONTEXT, identifier);
+        }
+
+        e.apply();
     }
 }

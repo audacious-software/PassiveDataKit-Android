@@ -23,6 +23,9 @@ import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.pdk.passivedatakit.R;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -100,7 +103,7 @@ public class BluetoothDevices extends Generator {
 
     private static BluetoothDevices sInstance = null;
 
-    private long mUpdateInterval = (5 * 60 * 1000);
+    private long mUpdateInterval = (15 * 60 * 1000);
     private long mScanDuration = (30 * 1000);
 
     private SQLiteDatabase mDatabase = null;
@@ -565,6 +568,10 @@ public class BluetoothDevices extends Generator {
         this.mUpdateInterval = interval;
     }
 
+    public void setScanDuration(long duration) {
+        this.mScanDuration = duration;
+    }
+
     @Override
     public String getIdentifier() {
         return BluetoothDevices.GENERATOR_IDENTIFIER;
@@ -592,5 +599,23 @@ public class BluetoothDevices extends Generator {
         }
 
         return new MatrixCursor(cols);
+    }
+
+    public void updateConfig(JSONObject config) {
+        try {
+            if (config.has("update-interval")) {
+                this.setUpdateInterval(config.getLong("update-interval"));
+
+                config.remove("update-interval");
+            }
+
+            if (config.has("scan-duration")) {
+                this.setScanDuration(config.getLong("scan-duration"));
+
+                config.remove("scan-duration");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

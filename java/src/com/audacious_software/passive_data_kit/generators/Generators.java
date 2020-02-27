@@ -324,7 +324,7 @@ public class Generators {
                 JSONArray generatorDefs = config.getJSONArray("generators");
 
                 for (int i = 0; i < generatorDefs.length(); i++) {
-                    JSONObject generatorDef = generatorDefs.getJSONObject(i);
+                    JSONObject generatorDef = new JSONObject(generatorDefs.getJSONObject(i).toString());
                     String generatorId = generatorDef.getString("identifier");
 
                     for (String className : availableGenerators) {
@@ -337,17 +337,25 @@ public class Generators {
                             Generator generator = (Generator) getInstance.invoke(null, this.mContext);
 
                             if (generatorId.equals(generator.getIdentifier())) {
+                                generatorDef.remove("identifier");
+
                                 generator.updateConfig(generatorDef);
                             }
                         } catch (ClassNotFoundException e) {
-//                e.printStackTrace();
+                            e.printStackTrace();
                         } catch (NoSuchMethodException e) {
-//                e.printStackTrace();
+                            e.printStackTrace();
                         } catch (IllegalAccessException e) {
-//                e.printStackTrace();
+                            e.printStackTrace();
                         } catch (InvocationTargetException e) {
-//                e.printStackTrace();
+                            e.printStackTrace();
                         }
+                    }
+
+                    if (generatorDef.length() > 0) {
+                        Log.e("PDK", "Incomplete configuration for " + generatorId + ": " + generatorDef.toString(2));
+                    } else {
+                        Log.e("PDK", "Configured " + generatorId + ".");
                     }
                 }
             } catch (JSONException e) {

@@ -71,7 +71,7 @@ android {
         main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['java/src']
-            aidl.srcDirs = ['src']
+            // aidl.srcDirs = ['src']
             renderscript.srcDirs = ['src']
             res.srcDirs = ['res']
             assets.srcDirs = ['assets']
@@ -128,7 +128,7 @@ android {
 
         implementation 'com.google.android.material:material:1.1.0'
 
-        implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:8.5.0'
+        implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:8.4.0'  // Retaining older version due to crashes in 8.6.x and earlier
 
         // implementation "org.webrtc:google-webrtc:1.0.30039"
     }

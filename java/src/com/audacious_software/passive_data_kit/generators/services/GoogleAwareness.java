@@ -50,6 +50,9 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class GoogleAwareness extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-google-awareness";
 
@@ -1591,6 +1594,42 @@ public class GoogleAwareness extends Generator {
     @Override
     public String getIdentifier() {
         return GoogleAwareness.GENERATOR_IDENTIFIER;
+    }
+
+    public void updateConfig(JSONObject config) {
+        try {
+            if (config.has("include-headphones")) {
+                this.setIncludeHeadphones(config.getBoolean("include-headphones"));
+
+                config.remove("include-headphones");
+            }
+
+            if (config.has("include-places")) {
+                this.setIncludePlaces(config.getBoolean("include-places"));
+
+                config.remove("include-places");
+            }
+
+            if (config.has("include-weather")) {
+                this.setIncludeWeather(config.getBoolean("include-weather"));
+
+                config.remove("include-weather");
+            }
+
+            if (config.has("include-time-of-day")) {
+                this.setIncludeTimeOfDay(config.getBoolean("include-time-of-day"));
+
+                config.remove("include-time-of-day");
+            }
+
+            if (config.has("include-activity")) {
+                this.setIncludeActivity(config.getBoolean("include-activity"));
+
+                config.remove("include-activity");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }
 

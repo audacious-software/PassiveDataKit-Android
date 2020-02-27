@@ -94,6 +94,7 @@ public class SystemStatus extends Generator {
     private static final String HISTORY_MISSING_PERMISSIONS = "missing_permissions";
     private static final String HISTORY_HAS_APP_USAGE_PERMISSION = "has_app_usage_permission";
     private static final String HISTORY_IGNORES_BATTERY_OPTIMIZATION = "ignores_battery_optimization";
+    private static final String HISTORY_REMOTE_OPTIONS = "remote_options";
 
     private static final double GIGABYTE = (1024 * 1024 * 1024);
 
@@ -306,6 +307,10 @@ public class SystemStatus extends Generator {
                         }
 
                         me.mDatabase.insert(SystemStatus.TABLE_HISTORY, null, values);
+
+                        JSONObject options = PassiveDataKit.getInstance(context).remoteOptions();
+
+                        update.putString(SystemStatus.HISTORY_REMOTE_OPTIONS, options.toString());
 
                         Generators.getInstance(context).notifyGeneratorUpdated(SystemStatus.GENERATOR_IDENTIFIER, update);
                     }
