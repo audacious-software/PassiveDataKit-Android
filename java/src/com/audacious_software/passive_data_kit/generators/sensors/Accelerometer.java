@@ -53,6 +53,9 @@ import java.util.List;
 
 import androidx.core.content.ContextCompat;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import humanize.Humanize;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
@@ -271,6 +274,8 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                                                 try {
                                                     while (Accelerometer.isEnabled(me.mContext)) {
                                                         Thread.sleep(refreshDuration);
+
+                                                        me.saveBuffer(me.mActiveBuffersIndex, me.mCurrentBufferIndex);
 
                                                         sensors.unregisterListener(me, me.mSensor);
 
@@ -811,6 +816,10 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                 long now = System.currentTimeMillis();
 
                 synchronized (me) {
+                    if (me.mSensor == null || me.mXValueBuffers == null || me.mYValueBuffers == null || me.mZValueBuffers == null) {
+                        return;
+                    }
+
                     try {
                         me.mDatabase.beginTransaction();
 
@@ -954,5 +963,41 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
         }
 
         return -1;
+    }
+
+    public void updateConfig(JSONObject config) {
+        try {
+            if (config.has("enabled")) {
+                boolean enabled = config.getBoolean("enabled");
+
+                SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+                SharedPreferences.Editor e = prefs.edit();
+
+                e.putBoolean(Accelerometer.ENABLED, enabled);
+                e.apply();
+
+                if (enabled && Accelerometer.isRunning(this.mContext) == false) {
+                    this.startGenerator();
+                } else if (enabled == false && Accelerometer.isRunning(this.mContext)) {
+                    this.stopGenerator();
+                }
+
+                config.remove("enabled");
+            }
+
+            if (config.has("refresh-interval")) {
+                this.setRefreshInterval(config.getLong("refresh-interval"));
+
+                config.remove("refresh-interval");
+            }
+
+            if (config.has("refresh-duration")) {
+                this.setRefreshDuration(config.getLong("refresh-duration"));
+
+                config.remove("refresh-duration");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -16,11 +16,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus;
 import com.audacious_software.pdk.passivedatakit.R;
 
 import org.json.JSONException;
@@ -39,6 +41,8 @@ public class BluetoothDevices extends Generator {
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.environment.BluetoothDevices.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
+
+    private static final String LAST_SCAN_STARTED = "com.audacious_software.passive_data_kit.generators.environment.BluetoothDevices.LAST_SCAN_STARTED";
 
     private static final String PAIR_STATUS_PAIRED = "paired";
     private static final String PAIR_STATUS_PAIRING = "pairing";
@@ -105,6 +109,8 @@ public class BluetoothDevices extends Generator {
 
     private long mUpdateInterval = (15 * 60 * 1000);
     private long mScanDuration = (30 * 1000);
+
+    private long mThrottleInterval = (5 * 60 * 1000);
 
     private SQLiteDatabase mDatabase = null;
     private static final int DATABASE_VERSION = 1;
@@ -392,28 +398,42 @@ public class BluetoothDevices extends Generator {
         final Runnable scanDevices = new Runnable() {
             @Override
             public void run() {
-                BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+                long now = System.currentTimeMillis();
 
-                if (bluetoothAdapter != null) {
-                    for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
-                        Intent intent = new Intent(BluetoothDevice.ACTION_FOUND);
-                        intent.putExtra(BluetoothDevice.EXTRA_DEVICE, device);
-                        intent.putExtra(BluetoothDevice.EXTRA_CLASS, device.getBluetoothClass());
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
-                        me.mReceiver.onReceive(me.mContext, intent);
+                long lastRun = prefs.getLong(BluetoothDevices.LAST_SCAN_STARTED, 0);
+
+                if (now - lastRun > me.mThrottleInterval) {
+                    SharedPreferences.Editor e = prefs.edit();
+                    e.putLong(BluetoothDevices.LAST_SCAN_STARTED, now);
+                    e.apply();
+
+                    BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+                    if (bluetoothAdapter != null) {
+                        for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
+                            Intent intent = new Intent(BluetoothDevice.ACTION_FOUND);
+                            intent.putExtra(BluetoothDevice.EXTRA_DEVICE, device);
+                            intent.putExtra(BluetoothDevice.EXTRA_CLASS, device.getBluetoothClass());
+
+                            me.mReceiver.onReceive(me.mContext, intent);
+                        }
+
+                        bluetoothAdapter.startDiscovery();
+
+                        me.mHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                bluetoothAdapter.cancelDiscovery();
+                            }
+                        }, me.mScanDuration);
                     }
 
-                    bluetoothAdapter.startDiscovery();
+                    me.mHandler.postDelayed(this, me.mUpdateInterval);
+                } else {
+                    Log.e("PDK", "Skipping Bluetooth scan: built-in throttle time remaing: " + (now - lastRun) + " ms.");
                 }
-
-                me.mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        bluetoothAdapter.cancelDiscovery();
-                    }
-                }, me.mScanDuration);
-
-                me.mHandler.postDelayed(this, me.mUpdateInterval);
             }
         };
 

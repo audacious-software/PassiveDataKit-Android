@@ -25,9 +25,7 @@ public class ForegroundService extends Service {
 
         Notification note = ForegroundService.getForegroundNotification(this, intent);
 
-        if (note != null) {
-            this.startForeground(ForegroundService.NOTIFICATION_ID, note);
-        }
+        this.startForeground(ForegroundService.NOTIFICATION_ID, note);
 
         return Service.START_STICKY;
     }

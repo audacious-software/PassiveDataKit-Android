@@ -319,8 +319,10 @@ public class Generators {
         Collections.addAll(availableGenerators, this.mContext.getResources().getStringArray(R.array.pdk_available_generators));
         Collections.addAll(availableGenerators, this.mContext.getResources().getStringArray(R.array.pdk_app_generators));
 
-        if (config.has("generators")) {
-            try {
+        try {
+            Log.e("PDK", "Using configuration: " + config.toString(2));
+
+            if (config.has("generators")) {
                 JSONArray generatorDefs = config.getJSONArray("generators");
 
                 for (int i = 0; i < generatorDefs.length(); i++) {
@@ -358,9 +360,9 @@ public class Generators {
                         Log.e("PDK", "Configured " + generatorId + ".");
                     }
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 

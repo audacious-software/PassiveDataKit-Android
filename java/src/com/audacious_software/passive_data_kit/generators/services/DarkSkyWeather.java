@@ -125,8 +125,7 @@ public class DarkSkyWeather extends Generator {
     }
 
     private void stopGenerator() {
-        this.mDatabase.close();
-        this.mDatabase = null;
+
     }
 
     public static boolean isEnabled(Context context) {

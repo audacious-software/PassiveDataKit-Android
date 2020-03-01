@@ -124,7 +124,7 @@ public class PassiveDataKit {
         }
     }
 
-    private void initializeNotifications() {
+    public void initializeNotifications() {
         boolean notificationStarted = false;
 
         Intent intent = new Intent(ForegroundService.ACTION_START_SERVICE, null, this.mContext, ForegroundService.class);
@@ -152,7 +152,6 @@ public class PassiveDataKit {
                     }
 
                     Notification note = ForegroundService.getForegroundNotification(me.mContext, intent);
-
 
                     NotificationManager notes = (NotificationManager) me.mContext.getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -594,88 +593,98 @@ public class PassiveDataKit {
     }
 
     public void updateRemoteOptions() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        final PassiveDataKit me = this;
 
-        String configUrl = prefs.getString(PassiveDataKit.REMOTE_CONFIGURATION_URL, null);
-        String identifier = this.getRemoteConfigurationIdentifier();
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
-        long now = System.currentTimeMillis();
+                String configUrl = prefs.getString(PassiveDataKit.REMOTE_CONFIGURATION_URL, null);
+                String identifier = me.getRemoteConfigurationIdentifier();
 
-        long lastUpdate = prefs.getLong(PassiveDataKit.REMOTE_CONFIGURATION_LAST_UPDATE, 0);
-        long interval = prefs.getLong(PassiveDataKit.REMOTE_CONFIGURATION_UPDATE_INTERVAL, PassiveDataKit.REMOTE_CONFIGURATION_UPDATE_INTERVAL_DEFAULT);
+                long now = System.currentTimeMillis();
 
-        if (identifier != null && configUrl != null && now - lastUpdate > interval) {
-            String context = this.getRemoteConfigurationContext();
+                long lastUpdate = prefs.getLong(PassiveDataKit.REMOTE_CONFIGURATION_LAST_UPDATE, 0);
+                long interval = prefs.getLong(PassiveDataKit.REMOTE_CONFIGURATION_UPDATE_INTERVAL, PassiveDataKit.REMOTE_CONFIGURATION_UPDATE_INTERVAL_DEFAULT);
 
-            SharedPreferences.Editor e = prefs.edit();
-            e.putLong(PassiveDataKit.REMOTE_CONFIGURATION_LAST_UPDATE, now);
-            e.apply();
+                if (identifier != null && configUrl != null && now - lastUpdate > interval) {
+                    String context = me.getRemoteConfigurationContext();
 
-            try {
-                OkHttpClient client = new OkHttpClient.Builder()
-                        .connectTimeout(3, TimeUnit.MINUTES)
-                        .readTimeout(3, TimeUnit.MINUTES)
-                        .build();
+                    SharedPreferences.Editor e = prefs.edit();
+                    e.putLong(PassiveDataKit.REMOTE_CONFIGURATION_LAST_UPDATE, now);
+                    e.apply();
 
-                MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
+                    try {
+                        OkHttpClient client = new OkHttpClient.Builder()
+                                .connectTimeout(3, TimeUnit.MINUTES)
+                                .readTimeout(3, TimeUnit.MINUTES)
+                                .build();
 
-                builder = builder.addFormDataPart("id", identifier);
+                        MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
 
-                if (context != null) {
-                    builder = builder.addFormDataPart("context", context);
-                }
+                        builder = builder.addFormDataPart("id", identifier);
 
-                RequestBody requestBody = builder.build();
+                        if (context != null) {
+                            builder = builder.addFormDataPart("context", context);
+                        }
 
-                String version = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0).versionName;
-                String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
+                        RequestBody requestBody = builder.build();
 
-                String userAgent = appName + " " + version;
+                        String version = me.mContext.getPackageManager().getPackageInfo(me.mContext.getPackageName(), 0).versionName;
+                        String appName = me.mContext.getString(me.mContext.getApplicationInfo().labelRes);
 
-                Request request = new Request.Builder()
-                        .removeHeader("User-Agent")
-                        .addHeader("User-Agent", userAgent)
-                        .url(configUrl)
-                        .post(requestBody)
-                        .build();
+                        String userAgent = appName + " " + version;
 
-                Response response = client.newCall(request).execute();
+                        Request request = new Request.Builder()
+                                .removeHeader("User-Agent")
+                                .addHeader("User-Agent", userAgent)
+                                .url(configUrl)
+                                .post(requestBody)
+                                .build();
 
-                int code = response.code();
+                        Response response = client.newCall(request).execute();
 
-                ResponseBody body = response.body();
+                        int code = response.code();
 
-                String bodyString = body.string();
+                        ResponseBody body = response.body();
 
-                response.body().close();
+                        String bodyString = body.string();
 
-                if (code >= 200 && code < 300) {
-                    JSONObject responseObject = new JSONObject(bodyString);
+                        response.body().close();
 
-                    if (responseObject.has("generators") || responseObject.has("transmitters")) {
-                        e = prefs.edit();
-                        e.putString(PassiveDataKit.CACHED_REMOTE_CONFIGURATION, responseObject.toString(2));
-                        e.apply();
+                        if (code >= 200 && code < 300) {
+                            JSONObject responseObject = new JSONObject(bodyString);
+
+                            if (responseObject.has("generators") || responseObject.has("transmitters")) {
+                                e = prefs.edit();
+                                e.putString(PassiveDataKit.CACHED_REMOTE_CONFIGURATION, responseObject.toString(2));
+                                e.apply();
+                            }
+                        }
+                    } catch (JSONException ex) {
+
+                    } catch (PackageManager.NameNotFoundException ex) {
+
+                    } catch (IOException ex) {
+
                     }
                 }
-            } catch (JSONException ex) {
 
-            } catch (PackageManager.NameNotFoundException ex) {
+                try {
+                    JSONObject configuration = new JSONObject(prefs.getString(PassiveDataKit.CACHED_REMOTE_CONFIGURATION, "{}"));
 
-            } catch (IOException ex) {
-
+                    if (configuration.has("generators")) {
+                        Generators.getInstance(me.mContext).updateGenerators(configuration);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
-        }
+        };
 
-        try {
-            JSONObject configuration = new JSONObject(prefs.getString(PassiveDataKit.CACHED_REMOTE_CONFIGURATION, "{}"));
-
-            if (configuration.has("generators")) {
-                Generators.getInstance(this.mContext).updateGenerators(configuration);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        Thread t = new Thread(r, "pdk-configuration-refresh");
+        t.start();
     }
 
     public JSONObject remoteOptions() {

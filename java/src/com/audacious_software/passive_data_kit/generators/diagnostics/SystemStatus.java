@@ -34,6 +34,7 @@ import com.audacious_software.passive_data_kit.activities.generators.GeneratorVi
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.generators.communication.TextMessages;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.github.mikephil.charting.charts.LineChart;
@@ -48,6 +49,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.text.DateFormat;
+import java.util.AbstractSequentialList;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -96,6 +98,8 @@ public class SystemStatus extends Generator {
     private static final String HISTORY_IGNORES_BATTERY_OPTIMIZATION = "ignores_battery_optimization";
     private static final String HISTORY_REMOTE_OPTIONS = "remote_options";
 
+    private static final String STATUS_ANNOTATIONS = "annotations";
+
     private static final double GIGABYTE = (1024 * 1024 * 1024);
 
     private static SystemStatus sInstance = null;
@@ -106,6 +110,8 @@ public class SystemStatus extends Generator {
 
     private long mLastTimestamp = 0;
     private long mRefreshInterval = (5 * 60 * 1000);
+
+    private List<SystemStatus.StatusAnnotator> mStatusAnnotators = new ArrayList<>();
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -311,6 +317,22 @@ public class SystemStatus extends Generator {
                         JSONObject options = PassiveDataKit.getInstance(context).remoteOptions();
 
                         update.putString(SystemStatus.HISTORY_REMOTE_OPTIONS, options.toString());
+
+                        if (me.mStatusAnnotators.size() > 0) {
+                            ArrayList<Bundle> annotationBundles = new ArrayList<>();
+
+                            for (SystemStatus.StatusAnnotator annotator : me.mStatusAnnotators) {
+                                Bundle annotations = annotator.annotateStatus(update);
+
+                                if (annotations != null) {
+                                    annotationBundles.add(annotations);
+                                }
+                            }
+
+                            if (annotationBundles.size() > 0) {
+                                update.putParcelableArrayList(SystemStatus.STATUS_ANNOTATIONS, annotationBundles);
+                            }
+                        }
 
                         Generators.getInstance(context).notifyGeneratorUpdated(SystemStatus.GENERATOR_IDENTIFIER, update);
                     }
@@ -713,4 +735,13 @@ public class SystemStatus extends Generator {
 
         return -1;
     }
+
+    public void addStatusAnnotator(SystemStatus.StatusAnnotator annotator) {
+        this.mStatusAnnotators.add(annotator);
+    }
+
+    public static abstract class StatusAnnotator {
+        public abstract Bundle annotateStatus(Bundle reading);
+    }
+
 }

@@ -23,6 +23,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -275,11 +276,6 @@ public class Location extends Generator implements LocationListener, android.loc
             }
 
             this.mGoogleApiClient = null;
-        }
-
-        if (this.mDatabase != null) {
-            this.mDatabase.close();
-            this.mDatabase = null;
         }
     }
 
@@ -1465,6 +1461,8 @@ public class Location extends Generator implements LocationListener, android.loc
     }
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
+        Log.e("PDK", "DATABASE: " + this.mDatabase);
+
         return this.mDatabase.query(Location.TABLE_HISTORY, cols, where, args, null, null, orderBy);
     }
 
@@ -1590,6 +1588,7 @@ public class Location extends Generator implements LocationListener, android.loc
                 } else if ("disabled".equals(accuracy)) {
                     this.setAccuracyMode(Location.ACCURACY_DISABLED);
                 }
+
                 config.remove("accuracy");
             }
         } catch (JSONException e) {

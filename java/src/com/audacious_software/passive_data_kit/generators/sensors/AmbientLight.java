@@ -53,6 +53,9 @@ import java.util.List;
 
 import androidx.core.content.ContextCompat;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import humanize.Humanize;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
@@ -67,6 +70,16 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
     private static final String IGNORE_POWER_MANAGEMENT = "com.audacious_software.passive_data_kit.generators.sensors.AmbientLight.IGNORE_POWER_MANAGEMENT";
     private static final boolean IGNORE_POWER_MANAGEMENT_DEFAULT = true;
+
+    private static final String REFRESH_INTERVAL = "com.audacious_software.passive_data_kit.generators.sensors.AmbientLight.REFRESH_INTERVAL";
+    private static final long REFRESH_INTERVAL_DEFAULT = 0;
+
+    private static final String REFRESH_DURATION = "com.audacious_software.passive_data_kit.generators.sensors.AmbientLight.REFRESH_DURATION";
+    private static final long REFRESH_DURATION_DEFAULT = (5 * 60 * 1000);
+
+
+    private static final String REPORTING_THRESHOLD = "com.audacious_software.passive_data_kit.generators.sensors.AmbientLight.REPORTING_THRESHOLD";
+    private static final float REPORTING_THRESHOLD_DEFAULT = 5;
 
     private static final String DATABASE_PATH = "pdk-sensor-ambient-light.sqlite";
     private static final int DATABASE_VERSION = 1;
@@ -106,7 +119,10 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     private Thread mLooperThread = null;
     private Handler mHandler = null;
     private float mLastValue = -1;
-    private float mReportingThreshold = 5;
+
+    private Thread mIntervalThread = null;
+    private float mReportingThreshold = AmbientLight.REPORTING_THRESHOLD_DEFAULT;
+
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -158,11 +174,180 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     }
 
     @SuppressWarnings("unused")
+    public void setRefreshInterval(long interval) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(AmbientLight.REFRESH_INTERVAL, interval);
+        e.apply();
+
+        this.stopGenerator();
+        this.startGenerator();
+    }
+
+    @SuppressWarnings("unused")
+    public void setRefreshDuration(long duration) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putLong(AmbientLight.REFRESH_DURATION, duration);
+        e.apply();
+
+        this.stopGenerator();
+        this.startGenerator();
+    }
+
+    @SuppressWarnings("unused")
+    public void setReportingThreshold(float threshold) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putFloat(AmbientLight.REPORTING_THRESHOLD, threshold);
+        e.apply();
+    }
+
+    @SuppressWarnings("unused")
     public static void start(final Context context) {
         AmbientLight.getInstance(context).startGenerator();
     }
 
     private void startGenerator() {
+        final AmbientLight me = this;
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                synchronized(me) {
+                    final SensorManager sensors = (SensorManager) me.mContext.getSystemService(Context.SENSOR_SERVICE);
+
+                    Generators.getInstance(me.mContext).registerCustomViewClass(AmbientLight.GENERATOR_IDENTIFIER, AmbientLight.class);
+
+                    File path = PassiveDataKit.getGeneratorsStorage(me.mContext);
+
+                    path = new File(path, AmbientLight.DATABASE_PATH);
+
+                    if (me.mDatabase == null) {
+                        me.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+
+                        int version = me.getDatabaseVersion(me.mDatabase);
+
+                        switch (version) {
+                            case 0:
+                                me.mDatabase.execSQL(me.mContext.getString(R.string.pdk_generator_ambient_light_create_history_table));
+                        }
+
+                        if (version != AmbientLight.DATABASE_VERSION) {
+                            me.setDatabaseVersion(me.mDatabase, AmbientLight.DATABASE_VERSION);
+                        }
+                    }
+
+                    if (AmbientLight.isEnabled(me.mContext)) {
+                        me.mSensor = sensors.getDefaultSensor(Sensor.TYPE_LIGHT);
+
+                        me.mReportingThreshold = prefs.getFloat(AmbientLight.REPORTING_THRESHOLD, AmbientLight.REPORTING_THRESHOLD_DEFAULT);
+
+                        Runnable r = new Runnable() {
+                            public void run() {
+                                Looper.prepare();
+
+                                synchronized(me) {
+                                    me.mValueBuffers = new float[AmbientLight.NUM_BUFFERS][AmbientLight.BUFFER_SIZE];
+                                    me.mAccuracyBuffers = new int[AmbientLight.NUM_BUFFERS][AmbientLight.BUFFER_SIZE];
+                                    me.mRawTimestampBuffers = new long[AmbientLight.NUM_BUFFERS][AmbientLight.BUFFER_SIZE];
+                                    me.mTimestampBuffers = new long[AmbientLight.NUM_BUFFERS][AmbientLight.BUFFER_SIZE];
+
+                                    me.mActiveBuffersIndex = 0;
+                                    me.mCurrentBufferIndex = 0;
+
+                                    AmbientLight.sHandler = new Handler();
+
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                                        sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, 0, AmbientLight.sHandler);
+                                    } else {
+                                        sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, AmbientLight.sHandler);
+                                    }
+
+                                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+
+                                    final long refreshInterval = prefs.getLong(AmbientLight.REFRESH_INTERVAL, AmbientLight.REFRESH_INTERVAL_DEFAULT);
+
+                                    if (refreshInterval > 0) {
+                                        final long refreshDuration = prefs.getLong(AmbientLight.REFRESH_DURATION, AmbientLight.REFRESH_DURATION_DEFAULT);
+
+                                        if (me.mIntervalThread != null) {
+                                            me.mIntervalThread.interrupt();
+                                            me.mIntervalThread = null;
+                                        }
+
+                                        Runnable managerRunnable = new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                try {
+                                                    while (AmbientLight.isEnabled(me.mContext)) {
+                                                        Thread.sleep(refreshDuration);
+
+                                                        sensors.unregisterListener(me, me.mSensor);
+
+                                                        me.saveBuffer(me.mActiveBuffersIndex, me.mCurrentBufferIndex);
+
+                                                        Thread.sleep(refreshInterval - refreshDuration);
+
+                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+                                                            sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, 0, AmbientLight.sHandler);
+                                                        else
+                                                            sensors.registerListener(me, me.mSensor, SensorManager.SENSOR_DELAY_NORMAL, AmbientLight.sHandler);
+                                                    }
+
+                                                    sensors.unregisterListener(me, me.mSensor);
+                                                } catch (InterruptedException e) {
+                                                    // e.printStackTrace();
+                                                }
+                                            }
+                                        };
+
+                                        me.mIntervalThread = new Thread(managerRunnable, "ambient-light-interval");
+
+                                        try {
+                                            me.mIntervalThread.start();
+                                        } catch (NullPointerException e) {
+                                            // Thread not created...
+                                        } catch (IllegalThreadStateException e) {
+                                            // Thread already started...
+                                        }
+                                    }
+                                }
+
+                                Looper.loop();
+                            }
+                        };
+
+                        Thread t = new Thread(r, "ambient-light");
+                        t.start();
+
+                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+
+                        if (prefs.getBoolean(AmbientLight.IGNORE_POWER_MANAGEMENT, AmbientLight.IGNORE_POWER_MANAGEMENT_DEFAULT)) {
+                            Generators.getInstance(me.mContext).acquireWakeLock(AmbientLight.IDENTIFIER, PowerManager.PARTIAL_WAKE_LOCK);
+                        } else {
+                            Generators.getInstance(me.mContext).releaseWakeLock(AmbientLight.IDENTIFIER);
+                        }
+                    } else {
+                        me.stopGenerator();
+                    }
+
+                    me.flushCachedData();
+                }
+            }
+        };
+
+        Thread t = new Thread(r, "light-start");
+        t.start();
+    }
+
+    /*
+    private void legacyStartGenerator() {
         final SensorManager sensors = (SensorManager) this.mContext.getSystemService(Context.SENSOR_SERVICE);
 
         final AmbientLight me = this;
@@ -231,6 +416,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
 
         this.flushCachedData();
     }
+     */
 
     private void stopGenerator() {
         final SensorManager sensors = (SensorManager) this.mContext.getSystemService(Context.SENSOR_SERVICE);
@@ -610,50 +796,56 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                long now = System.currentTimeMillis();
-
-                try {
-                    me.mDatabase.beginTransaction();
-
-                    for (int i = 0; i < bufferSize; i++) {
-                        ContentValues values = new ContentValues();
-
-                        values.put(AmbientLight.HISTORY_LEVEL, me.mValueBuffers[bufferIndex][i]);
-                        values.put(AmbientLight.HISTORY_OBSERVED, me.mTimestampBuffers[bufferIndex][i]);
-                        values.put(AmbientLight.HISTORY_RAW_TIMESTAMP, me.mRawTimestampBuffers[bufferIndex][i]);
-                        values.put(AmbientLight.HISTORY_ACCURACY, me.mAccuracyBuffers[bufferIndex][i]);
-
-                        me.mDatabase.insert(AmbientLight.TABLE_HISTORY, null, values);
+                synchronized (me) {
+                    if (me.mSensor == null || me.mValueBuffers == null) {
+                        return;
                     }
 
-                    me.mDatabase.setTransactionSuccessful();
-                } finally {
+                    long now = System.currentTimeMillis();
+
                     try {
-                        me.mDatabase.endTransaction();
-                    } catch (SQLiteException e) {
-                        // No transaction is active...
+                        me.mDatabase.beginTransaction();
+
+                        for (int i = 0; i < bufferSize; i++) {
+                            ContentValues values = new ContentValues();
+
+                            values.put(AmbientLight.HISTORY_LEVEL, me.mValueBuffers[bufferIndex][i]);
+                            values.put(AmbientLight.HISTORY_OBSERVED, me.mTimestampBuffers[bufferIndex][i]);
+                            values.put(AmbientLight.HISTORY_RAW_TIMESTAMP, me.mRawTimestampBuffers[bufferIndex][i]);
+                            values.put(AmbientLight.HISTORY_ACCURACY, me.mAccuracyBuffers[bufferIndex][i]);
+
+                            me.mDatabase.insert(AmbientLight.TABLE_HISTORY, null, values);
+                        }
+
+                        me.mDatabase.setTransactionSuccessful();
+                    } finally {
+                        try {
+                            me.mDatabase.endTransaction();
+                        } catch (SQLiteException e) {
+                            // No transaction is active...
+                        }
                     }
-                }
 
-                Bundle update = new Bundle();
-                update.putLong(AmbientLight.HISTORY_OBSERVED, now);
+                    Bundle update = new Bundle();
+                    update.putLong(AmbientLight.HISTORY_OBSERVED, now);
 
-                Bundle sensorReadings = new Bundle();
+                    Bundle sensorReadings = new Bundle();
 
-                sensorReadings.putFloatArray(AmbientLight.HISTORY_LEVEL, me.mValueBuffers[bufferIndex]);
-                sensorReadings.putLongArray(AmbientLight.HISTORY_RAW_TIMESTAMP, me.mRawTimestampBuffers[bufferIndex]);
-                sensorReadings.putLongArray(AmbientLight.HISTORY_OBSERVED, me.mTimestampBuffers[bufferIndex]);
-                sensorReadings.putIntArray(AmbientLight.HISTORY_ACCURACY, me.mAccuracyBuffers[bufferIndex]);
+                    sensorReadings.putFloatArray(AmbientLight.HISTORY_LEVEL, me.mValueBuffers[bufferIndex]);
+                    sensorReadings.putLongArray(AmbientLight.HISTORY_RAW_TIMESTAMP, me.mRawTimestampBuffers[bufferIndex]);
+                    sensorReadings.putLongArray(AmbientLight.HISTORY_OBSERVED, me.mTimestampBuffers[bufferIndex]);
+                    sensorReadings.putIntArray(AmbientLight.HISTORY_ACCURACY, me.mAccuracyBuffers[bufferIndex]);
 
-                update.putBundle(SensorGenerator.SENSOR_DATA, sensorReadings);
-                SensorGenerator.addSensorMetadata(update, me.mSensor);
+                    update.putBundle(SensorGenerator.SENSOR_DATA, sensorReadings);
+                    SensorGenerator.addSensorMetadata(update, me.mSensor);
 
-                Generators.getInstance(me.mContext).notifyGeneratorUpdated(AmbientLight.GENERATOR_IDENTIFIER, update);
+                    Generators.getInstance(me.mContext).notifyGeneratorUpdated(AmbientLight.GENERATOR_IDENTIFIER, update);
 
-                if (now - me.mLastCleanup > me.mCleanupInterval) {
-                    me.mLastCleanup = now;
+                    if (now - me.mLastCleanup > me.mCleanupInterval) {
+                        me.mLastCleanup = now;
 
-                    me.flushCachedData();
+                        me.flushCachedData();
+                    }
                 }
             }
         };
@@ -743,5 +935,47 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
         }
 
         return -1;
+    }
+
+    public void updateConfig(JSONObject config) {
+        try {
+            if (config.has("enabled")) {
+                boolean enabled = config.getBoolean("enabled");
+
+                SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+                SharedPreferences.Editor e = prefs.edit();
+
+                e.putBoolean(AmbientLight.ENABLED, enabled);
+                e.apply();
+
+                if (enabled && AmbientLight.isRunning(this.mContext) == false) {
+                    this.startGenerator();
+                } else if (enabled == false && AmbientLight.isRunning(this.mContext)) {
+                    this.stopGenerator();
+                }
+
+                config.remove("enabled");
+            }
+
+            if (config.has("refresh-interval")) {
+                this.setRefreshInterval(config.getLong("refresh-interval"));
+
+                config.remove("refresh-interval");
+            }
+
+            if (config.has("refresh-duration")) {
+                this.setRefreshDuration(config.getLong("refresh-duration"));
+
+                config.remove("refresh-duration");
+            }
+
+            if (config.has("reporting-threshold")) {
+                this.setReportingThreshold(config.getLong("reporting-threshold"));
+
+                config.remove("reporting-threshold");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }
