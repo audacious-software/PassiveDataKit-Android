@@ -410,7 +410,7 @@ public class AppEvent extends Generator{
     public boolean logEvent(String eventName, Map<String, ?> eventDetails) {
         Map<String, Object> details = (Map<String, Object>) eventDetails;
 
-        details.put(AppEvent.EVENT_RECEIVED_KEY, System.currentTimeMillis());
+        details.put(AppEvent.EVENT_RECEIVED_KEY, Long.valueOf(System.currentTimeMillis()));
 
         HashMap<String, Map<String, ?>> item = new HashMap<>();
         item.put(eventName, details);
@@ -432,10 +432,14 @@ public class AppEvent extends Generator{
                         Map<String, ?> savedEventDetails = savedItem.get(savedEventName);
 
                         try {
-                            long now = (Long) savedEventDetails.remove(AppEvent.EVENT_RECEIVED_KEY);
+                            Long now = (Long) savedEventDetails.remove(AppEvent.EVENT_RECEIVED_KEY);
+
+                            if (now == null) {
+                                now = Long.valueOf(System.currentTimeMillis());
+                            }
 
                             ContentValues values = new ContentValues();
-                            values.put(AppEvent.HISTORY_OBSERVED, now);
+                            values.put(AppEvent.HISTORY_OBSERVED, now.longValue());
                             values.put(AppEvent.HISTORY_EVENT_NAME, savedEventName);
 
                             Bundle detailsBundle = new Bundle();
