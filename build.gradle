@@ -13,7 +13,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.6.0'
+        classpath 'com.android.tools.build:gradle:3.6.1'
     }
 }
 
@@ -98,7 +98,7 @@ android {
         implementation 'androidx.legacy:legacy-support-v4:1.0.0'
         implementation 'androidx.cardview:cardview:1.0.0'
         implementation 'androidx.browser:browser:1.2.0'
-        implementation 'androidx.work:work-runtime:2.3.2'
+        implementation 'androidx.work:work-runtime:2.3.4'
 
         api 'com.google.guava:guava:28.2-android'
         implementation 'com.google.guava:guava:28.2-android'
@@ -106,8 +106,8 @@ android {
         api 'com.google.android.gms:play-services-fitness:18.0.0'
         api 'com.google.android.gms:play-services-maps:17.0.0'
         api 'com.google.android.gms:play-services-awareness:17.1.0'
-        api 'com.google.firebase:firebase-core:17.2.2'
-        implementation 'com.google.firebase:firebase-messaging:20.1.0'
+        api 'com.google.firebase:firebase-core:17.2.3'
+        implementation 'com.google.firebase:firebase-messaging:20.1.3'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         api 'com.squareup.okhttp3:okhttp:3.12.3' // Retaining older version for Android 4 support
         api 'commons-io:commons-io:2.6'
