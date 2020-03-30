@@ -66,6 +66,8 @@ public class AppEvent extends Generator{
     private static final String DETAILS_THROWABLE_MESSAGE = "message";
     private static final String EVENT_LOG_THROWABLE = "log_throwable";
 
+    private static final String EVENT_RECEIVED_KEY = "com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent.EVENT_RECEIVED_KEY";
+
     private static AppEvent sInstance = null;
     private static int MAX_EVENT_COUNT = 256 * 1024;
 
@@ -406,10 +408,14 @@ public class AppEvent extends Generator{
 
     @SuppressWarnings("UnusedReturnValue")
     public boolean logEvent(String eventName, Map<String, ?> eventDetails) {
-        synchronized (this.mPending) {
-            HashMap<String, Map<String, ?>> item = new HashMap<>();
-            item.put(eventName, eventDetails);
+        Map<String, Object> details = (Map<String, Object>) eventDetails;
 
+        details.put(AppEvent.EVENT_RECEIVED_KEY, Long.valueOf(System.currentTimeMillis()));
+
+        HashMap<String, Map<String, ?>> item = new HashMap<>();
+        item.put(eventName, details);
+
+        synchronized (this.mPending) {
             this.mPending.add(item);
 
             if (this.mWorking || this.mDatabase == null) {
@@ -426,10 +432,14 @@ public class AppEvent extends Generator{
                         Map<String, ?> savedEventDetails = savedItem.get(savedEventName);
 
                         try {
-                            long now = System.currentTimeMillis();
+                            Long now = (Long) savedEventDetails.remove(AppEvent.EVENT_RECEIVED_KEY);
+
+                            if (now == null) {
+                                now = Long.valueOf(System.currentTimeMillis());
+                            }
 
                             ContentValues values = new ContentValues();
-                            values.put(AppEvent.HISTORY_OBSERVED, now);
+                            values.put(AppEvent.HISTORY_OBSERVED, now.longValue());
                             values.put(AppEvent.HISTORY_EVENT_NAME, savedEventName);
 
                             Bundle detailsBundle = new Bundle();
