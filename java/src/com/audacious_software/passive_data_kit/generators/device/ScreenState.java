@@ -155,7 +155,9 @@ public class ScreenState extends Generator{
                             }
                         }
 
-                        me.mDatabase.insert(ScreenState.TABLE_HISTORY, null, values);
+                        if (me.mDatabase != null) {
+                            me.mDatabase.insert(ScreenState.TABLE_HISTORY, null, values);
+                        }
 
                         update.putString(ScreenState.HISTORY_STATE, values.getAsString(ScreenState.HISTORY_STATE));
 

@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -62,13 +63,14 @@ public class ForegroundApplication extends Generator{
     private static final String SAMPLE_INTERVAL = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.SAMPLE_INTERVAL";
     private static final long SAMPLE_INTERVAL_DEFAULT = 15000;
 
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     private static final String TABLE_HISTORY = "history";
     public static final String HISTORY_OBSERVED = "observed";
     private static final String HISTORY_APPLICATION = "application";
     private static final String HISTORY_DURATION = "duration";
     private static final String HISTORY_SCREEN_ACTIVE = "screen_active";
+    private static final String HISTORY_IS_HOME = "is_home";
 
     private static final String HISTORY_DISPLAY_STATE = "display_state";
     private static final String HISTORY_DISPLAY_STATE_OFF = "off";
@@ -136,6 +138,8 @@ public class ForegroundApplication extends Generator{
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_screen_active));
             case 3:
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_display_state));
+            case 4:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_is_home));
         }
 
         if (version != ForegroundApplication.DATABASE_VERSION) {
@@ -189,11 +193,28 @@ public class ForegroundApplication extends Generator{
                         }
                     }
 
+                    boolean isHome = false;
+
+                    Intent startMain = new Intent(Intent.ACTION_MAIN);
+                    startMain.addCategory(Intent.CATEGORY_HOME);
+                    startMain.addCategory(Intent.CATEGORY_DEFAULT);
+
+                    PackageManager manager = mContext.getPackageManager();
+                    List<ResolveInfo> startMatches = manager.queryIntentActivities(startMain, 0);
+
+                    for (ResolveInfo info : startMatches) {
+                        if (info.activityInfo.packageName != null && info.activityInfo.packageName.equals(process)) {
+                            isHome = true;
+                        }
+                    }
+
                     ContentValues values = new ContentValues();
                     values.put(ForegroundApplication.HISTORY_OBSERVED, when);
                     values.put(ForegroundApplication.HISTORY_APPLICATION, process);
                     values.put(ForegroundApplication.HISTORY_DURATION, duration);
                     values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
+
+                    values.put(ForegroundApplication.HISTORY_IS_HOME, isHome);
 
                     if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
                         int state = display.getState();
@@ -234,6 +255,7 @@ public class ForegroundApplication extends Generator{
                     update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
                     update.putLong(ForegroundApplication.HISTORY_DURATION, duration);
                     update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
+                    update.putBoolean(ForegroundApplication.HISTORY_IS_HOME, isHome);
 
                     if (values.containsKey(ForegroundApplication.HISTORY_DISPLAY_STATE)) {
                         update.putString(ForegroundApplication.HISTORY_DISPLAY_STATE, values.getAsString(ForegroundApplication.HISTORY_DISPLAY_STATE));
