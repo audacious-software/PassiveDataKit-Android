@@ -163,12 +163,14 @@ public class PassiveDataKit {
     }
 
     public void annotateForegroundIntent(Intent intent) {
-        if (this.mForegroundIconId != 0) {
-            intent.putExtra(PassiveDataKit.NOTIFICATION_ICON_ID, this.mForegroundIconId);
-        }
+        if (intent != null) {
+            if (this.mForegroundIconId != 0) {
+                intent.putExtra(PassiveDataKit.NOTIFICATION_ICON_ID, this.mForegroundIconId);
+            }
 
-        if (this.mForegroundColor != 0) {
-            intent.putExtra(PassiveDataKit.NOTIFICATION_COLOR, this.mForegroundColor);
+            if (this.mForegroundColor != 0) {
+                intent.putExtra(PassiveDataKit.NOTIFICATION_COLOR, this.mForegroundColor);
+            }
         }
     }
 

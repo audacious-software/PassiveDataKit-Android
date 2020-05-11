@@ -669,7 +669,7 @@ public class AppEvent extends Generator{
                 c.close();
 
                 if (count > AppEvent.MAX_EVENT_COUNT) {
-                    long limit = (AppEvent.MAX_EVENT_COUNT * 9) / 10;
+                    long limit = 1; // (AppEvent.MAX_EVENT_COUNT * 9) / 10;
 
                     c = me.mDatabase.query(AppEvent.TABLE_HISTORY, null, null, null, null, null, AppEvent.HISTORY_OBSERVED + " DESC", "" + limit);
 
