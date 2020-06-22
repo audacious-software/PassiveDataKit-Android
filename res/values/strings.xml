@@ -46,5 +46,7 @@
     <string name="action_transmit_now">Transmit Now</string>
     <string name="action_transmit_later">Later</string>
     <string name="toast_attempting_transmission_data">Attempting data transmission&#8230;</string>
+
+    <string name="foreground_channel_id">Passive Data Kit</string>
 </resources>
 

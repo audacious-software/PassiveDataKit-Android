@@ -55,7 +55,6 @@ import okhttp3.ResponseBody;
 public class PassiveDataKit {
     private static final String STORAGE_PATH = "passive-data-kit";
     private static final String GENERATORS_PATH = "generators";
-    public static final String NOTIFICATION_CHANNEL_ID = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_CHANNEL_ID";
     public static final String NOTIFICATION_ICON_ID = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_ICON_ID";
     public static final String NOTIFICATION_COLOR = "com.audacious_software.passive_data_kit.PassiveDataKit.NOTIFICATION_COLOR";
     private static final String FIREBASE_DEVICE_TOKEN = "com.audacious_software.passive_data_kit.PassiveDataKit.FIREBASE_DEVICE_TOKEN";
@@ -95,7 +94,6 @@ public class PassiveDataKit {
     private Context mContext = null;
     private boolean mStarted = false;
     private boolean mStartForegroundService = false;
-    private String mForegroundChannelId = null;
     private int mForegroundIconId = 0;
     private int mForegroundColor = 0;
     private PendingIntent mForegroundPendingIntent = null;
@@ -167,16 +165,14 @@ public class PassiveDataKit {
     }
 
     public void annotateForegroundIntent(Intent intent) {
-        if (this.mForegroundChannelId != null) {
-            intent.putExtra(PassiveDataKit.NOTIFICATION_CHANNEL_ID, this.mForegroundChannelId);
-        }
+        if (intent != null) {
+            if (this.mForegroundIconId != 0) {
+                intent.putExtra(PassiveDataKit.NOTIFICATION_ICON_ID, this.mForegroundIconId);
+            }
 
-        if (this.mForegroundIconId != 0) {
-            intent.putExtra(PassiveDataKit.NOTIFICATION_ICON_ID, this.mForegroundIconId);
-        }
-
-        if (this.mForegroundColor != 0) {
-            intent.putExtra(PassiveDataKit.NOTIFICATION_COLOR, this.mForegroundColor);
+            if (this.mForegroundColor != 0) {
+                intent.putExtra(PassiveDataKit.NOTIFICATION_COLOR, this.mForegroundColor);
+            }
         }
     }
 
@@ -203,11 +199,6 @@ public class PassiveDataKit {
 
     public void setAlwaysNotify(boolean always) {
         this.mAlwaysNotify = always;
-    }
-
-    @SuppressWarnings("unused")
-    public void setForegroundServiceChannelId(String channelId) {
-        this.mForegroundChannelId = channelId;
     }
 
     @SuppressWarnings("unused")

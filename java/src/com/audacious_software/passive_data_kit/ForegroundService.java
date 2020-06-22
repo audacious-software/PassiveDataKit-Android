@@ -1,10 +1,13 @@
 package com.audacious_software.passive_data_kit;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 
 import com.audacious_software.pdk.passivedatakit.R;
@@ -24,6 +27,18 @@ public class ForegroundService extends Service {
         super.onCreate();
 
         Notification note = ForegroundService.getForegroundNotification(this, intent);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager noteManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            if (noteManager.getNotificationChannel(this.getString(R.string.foreground_channel_id)) == null) {
+                NotificationChannel channel = new NotificationChannel(this.getString(R.string.foreground_channel_id), this.getString(R.string.app_name), NotificationManager.IMPORTANCE_LOW);
+                channel.setShowBadge(false);
+                channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+
+                noteManager.createNotificationChannel(channel);
+            }
+        }
 
         this.startForeground(ForegroundService.NOTIFICATION_ID, note);
 
@@ -45,9 +60,7 @@ public class ForegroundService extends Service {
 
         PassiveDataKit.getInstance(context).annotateForegroundIntent(intent);
 
-        String channelId = intent.getStringExtra(PassiveDataKit.NOTIFICATION_CHANNEL_ID);
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, context.getString(R.string.foreground_channel_id));
         builder.setContentTitle(context.getString(R.string.foreground_service_title));
         builder.setContentText(context.getString(R.string.foreground_service_message));
         builder.setAutoCancel(false);

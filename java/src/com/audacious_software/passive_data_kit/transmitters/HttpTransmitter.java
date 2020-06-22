@@ -631,7 +631,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                 String version = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0).versionName;
                 String appName = this.mContext.getString(this.mContext.getApplicationInfo().labelRes);
 
-
                 this.mUserAgent = appName + " " + version;
             }
 
