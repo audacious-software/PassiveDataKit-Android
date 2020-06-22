@@ -121,29 +121,31 @@ public class ForegroundApplication extends Generator{
     public ForegroundApplication(Context context) {
         super(context);
 
-        File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
+        synchronized (context.getApplicationContext()) {
+            File path = PassiveDataKit.getGeneratorsStorage(this.mContext);
 
-        path = new File(path, ForegroundApplication.DATABASE_PATH);
+            path = new File(path, ForegroundApplication.DATABASE_PATH);
 
-        this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
+            this.mDatabase = SQLiteDatabase.openOrCreateDatabase(path, null);
 
-        int version = this.getDatabaseVersion(this.mDatabase);
+            int version = this.getDatabaseVersion(this.mDatabase);
 
-        switch (version) {
-            case 0:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_create_history_table));
-            case 1:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_duration));
-            case 2:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_screen_active));
-            case 3:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_display_state));
-            case 4:
-                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_is_home));
-        }
+            switch (version) {
+                case 0:
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_create_history_table));
+                case 1:
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_duration));
+                case 2:
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_screen_active));
+                case 3:
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_display_state));
+                case 4:
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_is_home));
+            }
 
-        if (version != ForegroundApplication.DATABASE_VERSION) {
-            this.setDatabaseVersion(this.mDatabase, ForegroundApplication.DATABASE_VERSION);
+            if (version != ForegroundApplication.DATABASE_VERSION) {
+                this.setDatabaseVersion(this.mDatabase, ForegroundApplication.DATABASE_VERSION);
+            }
         }
     }
 
