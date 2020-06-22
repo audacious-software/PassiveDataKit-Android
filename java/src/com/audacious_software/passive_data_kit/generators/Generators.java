@@ -304,7 +304,7 @@ public class Generators {
         if (this.mWakeLocks.containsKey(tag)) {
             PowerManager.WakeLock lock = this.mWakeLocks.get(tag);
 
-            if (lock.isHeld()) {
+            if (lock != null && lock.isHeld()) {
                 lock.release();
             }
 

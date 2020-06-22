@@ -304,6 +304,8 @@ public class TextMessages extends Generator {
                         }
                     } catch (SecurityException ex) {
                         Logger.getInstance(me.mContext).logThrowable(ex);
+                    } catch (RuntimeException e) {
+                        // CursorWindowAllocationException
                     }
                 }
 

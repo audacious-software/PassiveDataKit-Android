@@ -234,27 +234,29 @@ public class Location extends Generator implements LocationListener, android.loc
                     if (me.mGoogleApiClient == null) {
                         me.mGoogleApiClient = LocationServices.getFusedLocationProviderClient(me.mContext);
 
-                        LocationRequest request = LocationRequest.create();
-                        request.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+                        if (me.mGoogleApiClient != null) {
+                            LocationRequest request = LocationRequest.create();
+                            request.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
-                        request.setFastestInterval(me.mUpdateInterval);
-                        request.setInterval(me.mUpdateInterval);
+                            request.setFastestInterval(me.mUpdateInterval);
+                            request.setInterval(me.mUpdateInterval);
 
-                        if (me.mLocationCallback == null) {
-                            me.mLocationCallback = new LocationCallback() {
-                                public void onLocationAvailability(LocationAvailability locationAvailability) {
+                            if (me.mLocationCallback == null) {
+                                me.mLocationCallback = new LocationCallback() {
+                                    public void onLocationAvailability(LocationAvailability locationAvailability) {
 
-                                }
-
-                                public void onLocationResult(LocationResult result) {
-                                    for (android.location.Location location : result.getLocations()) {
-                                        me.onLocationChanged(location);
                                     }
-                                }
-                            };
-                        }
 
-                        me.mGoogleApiClient.requestLocationUpdates(request, me.mLocationCallback, me.mContext.getMainLooper());
+                                    public void onLocationResult(LocationResult result) {
+                                        for (android.location.Location location : result.getLocations()) {
+                                            me.onLocationChanged(location);
+                                        }
+                                    }
+                                };
+                            }
+
+                            me.mGoogleApiClient.requestLocationUpdates(request, me.mLocationCallback, me.mContext.getMainLooper());
+                        }
                     }
                 } else {
                     // TODO

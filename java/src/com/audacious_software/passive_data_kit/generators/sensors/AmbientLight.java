@@ -797,7 +797,7 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
             @Override
             public void run() {
                 synchronized (me) {
-                    if (me.mSensor == null || me.mValueBuffers == null) {
+                    if (me.mSensor == null || me.mValueBuffers == null || me.mRawTimestampBuffers == null || me.mTimestampBuffers == null || me.mAccuracyBuffers == null) {
                         return;
                     }
 
@@ -902,6 +902,8 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
                         }
                     } catch (SQLiteDatabaseLockedException e) {
                         Log.e("PDK", "Ambient Light database is locked. Will try again later...");
+                    } catch (RuntimeException e) {
+                        // CursorWindowAllocationException
                     }
                 }
             }

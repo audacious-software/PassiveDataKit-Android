@@ -52,7 +52,6 @@ public class VoiceActivityGenerator extends Generator {
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.environment.VoiceActivityGenerator.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
-
     private static final String DATABASE_PATH = "pdk-voice-activity.sqlite";
     private static final int DATABASE_VERSION = 4;
 
@@ -132,47 +131,51 @@ public class VoiceActivityGenerator extends Generator {
                         AudioFormat.ENCODING_PCM_16BIT,
                         bufferSize);
 
-                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                if (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_STOPPED) {
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 
-                byte[] buffer = new byte[bufferSize];
-                boolean run = true;
-                int read;
-                long total = 0;
+                    byte[] buffer = new byte[bufferSize];
+                    boolean run = true;
+                    int read;
+                    long total = 0;
 
-                if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
-                    audioRecord.startRecording();
+                    if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
+                        audioRecord.startRecording();
 
-                    boolean completed = false;
+                        boolean completed = false;
 
-                    try {
-                        while (run) {
-                            read = audioRecord.read(buffer, 0, buffer.length);
+                        try {
+                            while (run) {
+                                read = audioRecord.read(buffer, 0, buffer.length);
 
-                            bytes.write(buffer, 0, read);
+                                bytes.write(buffer, 0, read);
 
-                            total += read;
+                                total += read;
 
-                            if (total > this.mSampleRate * 3) { // Record 3 seconds...
-                                run = false;
+                                if (total > this.mSampleRate * 3) { // Record 3 seconds...
+                                    run = false;
+                                }
+                            }
+
+                            completed = true;
+                        } catch (IndexOutOfBoundsException ex) {
+                            // Try again next time.
+                        } finally {
+                            if (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+                                audioRecord.stop();
+                            }
+
+                            if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
+                                audioRecord.release();
                             }
                         }
 
-                        completed = true;
-                    } catch (IndexOutOfBoundsException ex) {
-                        // Try again next time.
-                    } finally {
-                        if (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
-                            audioRecord.stop();
-                        }
-
-                        if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
-                            audioRecord.release();
+                        if (completed) {
+                            return bytes.toByteArray();
                         }
                     }
-
-                    if (completed) {
-                        return bytes.toByteArray();
-                    }
+                } else {
+                    Log.e("PDK", "Skipping audio record - mic already in use by other app.");
                 }
             }
         }

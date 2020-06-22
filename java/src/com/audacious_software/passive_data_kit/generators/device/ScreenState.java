@@ -163,7 +163,7 @@ public class ScreenState extends Generator{
                     }
                 }, "pdk-screen-state-record");
 
-                update.run();
+                update.start();
             }
         };
 

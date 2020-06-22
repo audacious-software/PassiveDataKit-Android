@@ -42,6 +42,8 @@ import java.util.concurrent.TimeUnit;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
+import javax.net.ssl.SSLException;
+
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -662,6 +664,8 @@ public class PassiveDataKit {
                                 e.apply();
                             }
                         }
+                    } catch (SSLException ex) {
+
                     } catch (JSONException ex) {
 
                     } catch (PackageManager.NameNotFoundException ex) {

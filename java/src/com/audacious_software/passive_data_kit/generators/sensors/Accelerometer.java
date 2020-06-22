@@ -930,6 +930,8 @@ public class Accelerometer extends SensorGenerator implements SensorEventListene
                         }
                     } catch (SQLiteDatabaseLockedException e) {
                         Log.e("PDK", "Accelerometer database is locked. Will try again later...");
+                    } catch (SQLiteException e) {
+                        Log.e("PDK", "Accelerometer database cannot be opened. Will try again later...");
                     }
                 }
             }
