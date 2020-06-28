@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,6 +26,7 @@ import com.audacious_software.passive_data_kit.activities.generators.RequestPerm
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.generators.communication.PhoneCalls;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -429,7 +431,11 @@ public class TimeOfDay extends Generator implements GoogleApiClient.ConnectionCa
         String where = TimeOfDay.HISTORY_OBSERVED + " < ?";
         String[] args = { "" + start };
 
-        this.mDatabase.delete(TimeOfDay.TABLE_HISTORY, where, args);
+        try {
+            this.mDatabase.delete(TimeOfDay.TABLE_HISTORY, where, args);
+        } catch (SQLiteCantOpenDatabaseException ex) {
+            // Try again later
+        }
     }
 
     @Override

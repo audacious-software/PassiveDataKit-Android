@@ -95,6 +95,7 @@ public class VoiceActivityGenerator extends Generator {
     private boolean mLogReadings = false;
 
     private PendingIntent mHeartbeatIntent = null;
+    private boolean mEnabled = true;
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -118,6 +119,10 @@ public class VoiceActivityGenerator extends Generator {
     @SuppressWarnings("unused")
     public static void start(final Context context) {
         VoiceActivityGenerator.getInstance(context).startGenerator();
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.mEnabled = enabled;
     }
 
     private byte[] fetchSample() {
@@ -294,6 +299,10 @@ public class VoiceActivityGenerator extends Generator {
                 Runnable r = new Runnable() {
                     @Override
                     public void run() {
+                        if (me.mEnabled == false) {
+                            return;
+                        }
+
                         me.mLastTimestamp = now;
 
                         PassiveDataKit.getInstance(context).start();

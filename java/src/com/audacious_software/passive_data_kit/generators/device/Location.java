@@ -11,6 +11,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -255,7 +256,9 @@ public class Location extends Generator implements LocationListener, android.loc
                                 };
                             }
 
-                            me.mGoogleApiClient.requestLocationUpdates(request, me.mLocationCallback, me.mContext.getMainLooper());
+                            if (me.mGoogleApiClient != null) {
+                                me.mGoogleApiClient.requestLocationUpdates(request, me.mLocationCallback, me.mContext.getMainLooper());
+                            }
                         }
                     }
                 } else {
@@ -1514,7 +1517,11 @@ public class Location extends Generator implements LocationListener, android.loc
         String where = Location.HISTORY_OBSERVED + " < ?";
         String[] args = { "" + start };
 
-        this.mDatabase.delete(Location.TABLE_HISTORY, where, args);
+        try {
+            this.mDatabase.delete(Location.TABLE_HISTORY, where, args);
+        } catch (SQLiteCantOpenDatabaseException ex) {
+            // Try again later
+        }
     }
 
     @Override

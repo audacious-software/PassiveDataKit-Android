@@ -36,6 +36,7 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.tls.HandshakeCertificates;
 
 public class DarkSkyWeather extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-dark-sky-weather";
@@ -256,7 +257,11 @@ public class DarkSkyWeather extends Generator {
                 String key = this.mContext.getString(R.string.dark_sky_api_key);
                 String fetchUrl = this.mContext.getString(R.string.generator_dark_sky_url, key, lastPlace.getLatitude(), lastPlace.getLongitude(), now / 1000);
 
-                OkHttpClient client = new OkHttpClient();
+                HandshakeCertificates certificates = PassiveDataKit.getInstance(this.mContext).fetchTrustedCertificates();
+
+                OkHttpClient client = new OkHttpClient.Builder()
+                        .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager())
+                        .build();
 
                 Request request = new Request.Builder()
                         .url(fetchUrl)

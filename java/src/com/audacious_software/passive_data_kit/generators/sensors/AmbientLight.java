@@ -754,6 +754,12 @@ public class AmbientLight extends SensorGenerator implements SensorEventListener
     public void onSensorChanged(SensorEvent sensorEvent) {
         float value = sensorEvent.values[0];
 
+        final AmbientLight me = this;
+
+        if (me.mSensor == null || me.mValueBuffers == null || me.mRawTimestampBuffers == null || me.mTimestampBuffers == null || me.mAccuracyBuffers == null) {
+            return;
+        }
+
         if (Math.abs(value - this.mLastValue) < this.mReportingThreshold) {
             return;
         }

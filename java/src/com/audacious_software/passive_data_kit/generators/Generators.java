@@ -320,7 +320,7 @@ public class Generators {
         Collections.addAll(availableGenerators, this.mContext.getResources().getStringArray(R.array.pdk_app_generators));
 
         try {
-            Log.e("PDK", "Using configuration: " + config.toString(2));
+            // Log.e("PDK", "Using configuration: " + config.toString(2));
 
             if (config.has("generators")) {
                 JSONArray generatorDefs = config.getJSONArray("generators");

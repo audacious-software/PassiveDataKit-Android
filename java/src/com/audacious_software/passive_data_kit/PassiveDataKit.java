@@ -9,9 +9,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.util.Base64;
 import android.util.Log;
 
 import com.audacious_software.passive_data_kit.activities.MaintenanceActivity;
@@ -21,6 +23,7 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.passive_data_kit.transmitters.HttpTransmitter;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
+import com.audacious_software.pdk.passivedatakit.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
@@ -31,8 +34,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -50,6 +58,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.tls.HandshakeCertificates;
 
 @SuppressWarnings("PointlessBooleanExpression")
 public class PassiveDataKit {
@@ -227,7 +236,6 @@ public class PassiveDataKit {
         e.apply();
 
         this.transmitTokens();
-
     }
 
     public void transmitTokens() {
@@ -273,6 +281,42 @@ public class PassiveDataKit {
                 }
             }
         }
+    }
+
+    private static X509Certificate convertToX509Cert(String certificateString) throws CertificateException {
+        X509Certificate certificate = null;
+        CertificateFactory cf = null;
+        try {
+            if (certificateString != null && !certificateString.trim().isEmpty()) {
+                certificateString = certificateString.replace("-----BEGIN CERTIFICATE-----\n", "")
+                        .replace("-----END CERTIFICATE-----", ""); // NEED FOR PEM FORMAT CERT STRING
+                byte[] certificateData = Base64.decode(certificateString, Base64.DEFAULT);
+                cf = CertificateFactory.getInstance("X509");
+                certificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(certificateData));
+            }
+        } catch (CertificateException e) {
+            throw new CertificateException(e);
+        }
+        return certificate;
+    }
+
+    public HandshakeCertificates fetchTrustedCertificates() {
+        HandshakeCertificates.Builder builder = new HandshakeCertificates.Builder();
+
+        Resources resources = this.mContext.getResources();
+
+        String[] certificates = resources.getStringArray(R.array.pdk_trusted_certificates);
+
+        for (String certificate : certificates) {
+            try {
+                builder.addTrustedCertificate(PassiveDataKit.convertToX509Cert(certificate));
+            } catch (CertificateException e) {
+                e.printStackTrace();
+                Log.e("PDK", "CERTIFICATE: " + certificate);
+            }
+        }
+
+        return builder.build();
     }
 
     private static class PassiveDataKitHolder {
@@ -609,9 +653,13 @@ public class PassiveDataKit {
                     e.apply();
 
                     try {
+                        HandshakeCertificates certificates = PassiveDataKit.getInstance(me.mContext).fetchTrustedCertificates();
+
                         OkHttpClient client = new OkHttpClient.Builder()
                                 .connectTimeout(3, TimeUnit.MINUTES)
+                                .writeTimeout(60, TimeUnit.SECONDS)
                                 .readTimeout(3, TimeUnit.MINUTES)
+                                .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager())
                                 .build();
 
                         MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);

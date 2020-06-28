@@ -82,6 +82,7 @@ import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.tls.HandshakeCertificates;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class Withings extends Generator {
@@ -485,7 +486,11 @@ public class Withings extends Generator {
                         e.putLong(Withings.LAST_REFRESH, now);
                         e.apply();
 
-                        final OkHttpClient client = new OkHttpClient();
+                        HandshakeCertificates certificates = PassiveDataKit.getInstance(me.mContext).fetchTrustedCertificates();
+
+                        OkHttpClient client = new OkHttpClient.Builder()
+                                .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager())
+                                .build();
 
                         FormBody.Builder bodyBuilder = new FormBody.Builder();
                         bodyBuilder.add("grant_type", "refresh_token");
@@ -644,7 +649,11 @@ public class Withings extends Generator {
 
                                         Uri uri = builder.build();
 
-                                        OkHttpClient client = new OkHttpClient();
+                                        HandshakeCertificates certificates = PassiveDataKit.getInstance(me.mContext).fetchTrustedCertificates();
+
+                                        OkHttpClient client = new OkHttpClient.Builder()
+                                                .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager())
+                                                .build();
 
                                         Request request = new Request.Builder()
                                                 .url(uri.toString())

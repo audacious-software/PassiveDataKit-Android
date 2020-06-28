@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Typeface;
 import android.os.Build;
@@ -29,6 +30,7 @@ import com.audacious_software.passive_data_kit.activities.generators.RequestPerm
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.generators.device.Location;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
@@ -582,7 +584,11 @@ public class PhoneCalls extends Generator {
         String where = PhoneCalls.HISTORY_OBSERVED + " < ?";
         String[] args = { "" + start };
 
-        this.mDatabase.delete(PhoneCalls.TABLE_HISTORY, where, args);
+        try {
+            this.mDatabase.delete(PhoneCalls.TABLE_HISTORY, where, args);
+        } catch (SQLiteCantOpenDatabaseException ex) {
+            // Try again later
+        }
     }
 
     @Override

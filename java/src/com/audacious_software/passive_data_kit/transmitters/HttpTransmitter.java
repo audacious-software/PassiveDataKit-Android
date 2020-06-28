@@ -16,6 +16,7 @@ import android.util.Log;
 
 import com.audacious_software.passive_data_kit.DeviceInformation;
 import com.audacious_software.passive_data_kit.Logger;
+import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.Toolbox;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -69,6 +70,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.tls.HandshakeCertificates;
 
 @SuppressWarnings({"PointlessBooleanExpression", "unused"})
 public class HttpTransmitter extends Transmitter implements Generators.GeneratorUpdatedListener {
@@ -509,9 +511,12 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             // Liberal HTTPS setup:
             // http://stackoverflow.com/questions/2012497/accepting-a-certificate-for-https-on-android
 
+            HandshakeCertificates certificates = PassiveDataKit.getInstance(this.mContext).fetchTrustedCertificates();
+
             OkHttpClient client = new OkHttpClient.Builder()
                     .connectTimeout(3, TimeUnit.MINUTES)
                     .readTimeout(3, TimeUnit.MINUTES)
+                    .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager())
                     .build();
 
             if (!this.mStrictSsl) {

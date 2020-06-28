@@ -78,6 +78,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
+import okhttp3.tls.HandshakeCertificates;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 public class Fitbit extends Generator {
@@ -438,6 +439,8 @@ public class Fitbit extends Generator {
                     e.putLong(Fitbit.LAST_REFRESH, now);
                     e.apply();
 
+                    HandshakeCertificates certificates = PassiveDataKit.getInstance(me.mContext).fetchTrustedCertificates();
+
                     final OkHttpClient client = new OkHttpClient.Builder()
                             .authenticator(new Authenticator() {
                                 @Override
@@ -446,6 +449,7 @@ public class Fitbit extends Generator {
                                     return response.request().newBuilder().header("Authorization", credential).build();
                                 }
                             })
+                            .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager())
                             .build();
 
                     FormBody.Builder bodyBuilder = new FormBody.Builder();
@@ -491,15 +495,19 @@ public class Fitbit extends Generator {
                         }
                     });
                 } else {
+                    HandshakeCertificates certificates = PassiveDataKit.getInstance(me.mContext).fetchTrustedCertificates();
+
                     OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new Interceptor() {
                         @Override
                         public Response intercept(Chain chain) throws IOException {
-                            Request newRequest = chain.request().newBuilder()
-                                    .addHeader("Authorization", "Bearer " + accessToken)
-                                    .build();
-                            return chain.proceed(newRequest);
-                        }
-                    }).build();
+                                    Request newRequest = chain.request().newBuilder()
+                                            .addHeader("Authorization", "Bearer " + accessToken)
+                                            .build();
+                                    return chain.proceed(newRequest);
+                                }
+                            })
+                            .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager())
+                            .build();
 
                     Request request = new Request.Builder()
                             .url(apiUrl)

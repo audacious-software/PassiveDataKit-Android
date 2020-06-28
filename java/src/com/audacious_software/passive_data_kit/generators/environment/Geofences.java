@@ -56,6 +56,7 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.tls.HandshakeCertificates;
 
 public class Geofences extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-geofences";
@@ -244,7 +245,11 @@ public class Geofences extends Generator {
                 final String fencesUrl = prefs.getString(Geofences.LAST_FENCES_URL, null);
 
                 if (fencesUrl != null) {
-                    OkHttpClient client = new OkHttpClient();
+                    HandshakeCertificates certificates = PassiveDataKit.getInstance(me.mContext).fetchTrustedCertificates();
+
+                    OkHttpClient client = new OkHttpClient.Builder()
+                            .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager())
+                            .build();
 
                     final Request request = new Request.Builder()
                             .url(fencesUrl)

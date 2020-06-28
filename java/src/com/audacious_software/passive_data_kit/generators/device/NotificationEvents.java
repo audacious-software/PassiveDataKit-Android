@@ -307,16 +307,18 @@ public class NotificationEvents extends Generator {
                 Bundle update = new Bundle();
                 update.putLong(NotificationEvents.HISTORY_OBSERVED, now);
 
-                String notePackage = sbn.getPackageName();
+                if (sbn != null) {
+                    String notePackage = sbn.getPackageName();
 
-                values.put(NotificationEvents.HISTORY_PACKAGE, notePackage);
-                update.putString(NotificationEvents.HISTORY_PACKAGE, notePackage);
+                    values.put(NotificationEvents.HISTORY_PACKAGE, notePackage);
+                    update.putString(NotificationEvents.HISTORY_PACKAGE, notePackage);
 
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    String channelId = sbn.getNotification().getChannelId();
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        String channelId = sbn.getNotification().getChannelId();
 
-                    values.put(NotificationEvents.HISTORY_CHANNEL, channelId);
-                    update.putString(NotificationEvents.HISTORY_CHANNEL, channelId);
+                        values.put(NotificationEvents.HISTORY_CHANNEL, channelId);
+                        update.putString(NotificationEvents.HISTORY_CHANNEL, channelId);
+                    }
                 }
 
                 values.put(NotificationEvents.HISTORY_ACTION, NotificationEvents.HISTORY_ACTION_REMOVED);
