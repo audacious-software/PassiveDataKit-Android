@@ -303,6 +303,8 @@ public class PassiveDataKit {
     public HandshakeCertificates fetchTrustedCertificates() {
         HandshakeCertificates.Builder builder = new HandshakeCertificates.Builder();
 
+        builder.addPlatformTrustedCertificates();
+
         Resources resources = this.mContext.getResources();
 
         String[] certificates = resources.getStringArray(R.array.pdk_trusted_certificates);
