@@ -561,7 +561,6 @@ public class GoogleFit extends Generator {
     public List<DataType> allDataTypes() {
         ArrayList<DataType> dataTypes = new ArrayList<>();
 
-        dataTypes.add(DataType.TYPE_ACTIVITY_SAMPLES);
         dataTypes.add(DataType.TYPE_ACTIVITY_SEGMENT);
         dataTypes.add(DataType.TYPE_BASAL_METABOLIC_RATE);
         dataTypes.add(DataType.TYPE_BODY_FAT_PERCENTAGE);

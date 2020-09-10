@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,15 +29,10 @@ import com.google.android.gms.awareness.SnapshotClient;
 import com.google.android.gms.awareness.fence.TimeFence;
 import com.google.android.gms.awareness.snapshot.DetectedActivityResponse;
 import com.google.android.gms.awareness.snapshot.HeadphoneStateResponse;
-import com.google.android.gms.awareness.snapshot.PlacesResponse;
 import com.google.android.gms.awareness.snapshot.TimeIntervalsResponse;
-import com.google.android.gms.awareness.snapshot.WeatherResponse;
 import com.google.android.gms.awareness.state.HeadphoneState;
 import com.google.android.gms.awareness.state.TimeIntervals;
-import com.google.android.gms.awareness.state.Weather;
 import com.google.android.gms.location.DetectedActivity;
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.PlaceLikelihood;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -64,12 +60,6 @@ public class GoogleAwareness extends Generator {
 
     private static final String INCLUDE_TIME_OF_DAY = "com.audacious_software.passive_data_kit.generators.services.GoogleAwareness.INCLUDE_TIME_OF_DAY";
     private static final boolean INCLUDE_TIME_OF_DAY_DEFAULT = true;
-
-    private static final String INCLUDE_WEATHER = "com.audacious_software.passive_data_kit.generators.services.GoogleAwareness.INCLUDE_WEATHER";
-    private static final boolean INCLUDE_WEATHER_DEFAULT = true;
-
-    private static final String INCLUDE_PLACES = "com.audacious_software.passive_data_kit.generators.services.GoogleAwareness.INCLUDE_PLACES";
-    private static final boolean INCLUDE_PLACES_DEFAULT = true;
 
     private static final String INCLUDE_ACTIVITY = "com.audacious_software.passive_data_kit.generators.services.GoogleAwareness.INCLUDE_ACTIVITY";
     private static final boolean INCLUDE_ACTIVITY_DEFAULT = true;
@@ -119,23 +109,6 @@ public class GoogleAwareness extends Generator {
 
     private static final String HISTORY_ACTIVITY_CONFIDENCE = "current_activity_confidence";
 
-    private static final String HISTORY_WEATHER_TEMPERATURE = "current_temperature";
-    private static final String HISTORY_WEATHER_PERCEIVED_TEMPERATURE = "current_perceived_temperature";
-    private static final String HISTORY_WEATHER_DEW_POINT = "current_dew_point";
-    private static final String HISTORY_WEATHER_HUMIDITY = "current_humidity";
-
-    private static final String HISTORY_WEATHER_CONDITIONS = "current_weather_conditions";
-    private static final String HISTORY_WEATHER_CONDITION_CLEAR = "clear";
-    private static final String HISTORY_WEATHER_CONDITION_CLOUDY = "cloudy";
-    private static final String HISTORY_WEATHER_CONDITION_FOGGY = "foggy";
-    private static final String HISTORY_WEATHER_CONDITION_HAZY = "hazy";
-    private static final String HISTORY_WEATHER_CONDITION_ICY = "icy";
-    private static final String HISTORY_WEATHER_CONDITION_RAINY = "rainy";
-    private static final String HISTORY_WEATHER_CONDITION_SNOWY = "snowy";
-    private static final String HISTORY_WEATHER_CONDITION_STORMY = "stormy";
-    private static final String HISTORY_WEATHER_CONDITION_WINDY = "windy";
-    private static final String HISTORY_WEATHER_CONDITION_UNKNOWN = "unknown";
-
     private static final String HISTORY_CURRENT_PLACE = "current_place";
     private static final String HISTORY_CURRENT_PLACE_UNKNOWN = "unknown";
     private static final String HISTORY_CURRENT_PLACE_ID = "current_place_id";
@@ -178,8 +151,6 @@ public class GoogleAwareness extends Generator {
 
     private boolean mIncludeHeadphone;
     private boolean mIncludeTimeOfDay;
-    private boolean mIncludeWeather;
-    private boolean mIncludePlaces;
     private boolean mIncludeActivity;
 
     private int mHeadphoneState = GoogleAwareness.HEADPHONE_STATE_UNKNOWN;
@@ -188,27 +159,8 @@ public class GoogleAwareness extends Generator {
     private int mHolidayState = GoogleAwareness.HOLIDAY_STATE_UNKNOWN;
     private int mTimeOfDay = GoogleAwareness.TIME_OF_DAY_UNKNOWN;
 
-    private float mDewPoint = Float.NaN;
-    private float mPerceivedTemperature = Float.NaN;
-    private float mTemperature = Float.NaN;
-    private int mHumidity = -1;
-
     private int mActivity = GoogleAwareness.ACTIVITY_UNKNOWN;
     private float mActivityConfidence = -1;
-
-    private boolean mWeatherIsClear = false;
-    private boolean mWeatherIsCloudy = false;
-    private boolean mWeatherIsFoggy = false;
-    private boolean mWeatherIsHazy = false;
-    private boolean mWeatherIsIcy = false;
-    private boolean mWeatherIsRainy = false;
-    private boolean mWeatherIsSnowy = false;
-    private boolean mWeatherIsStormy = false;
-    private boolean mWeatherIsWindy = false;
-    private boolean mWeatherIsUnknown = false;
-
-    private float mPlaceLikelihood = 0.0f;
-    private Place mPlace = null;
 
     private long mRefreshInterval = (60 * 1000);
 
@@ -235,8 +187,6 @@ public class GoogleAwareness extends Generator {
 
         this.mIncludeHeadphone = prefs.getBoolean(GoogleAwareness.INCLUDE_HEADPHONES, GoogleAwareness.INCLUDE_HEADPHONES_DEFAULT);
         this.mIncludeTimeOfDay = prefs.getBoolean(GoogleAwareness.INCLUDE_TIME_OF_DAY, GoogleAwareness.INCLUDE_TIME_OF_DAY_DEFAULT);
-        this.mIncludeWeather = prefs.getBoolean(GoogleAwareness.INCLUDE_WEATHER, GoogleAwareness.INCLUDE_WEATHER_DEFAULT);
-        this.mIncludePlaces = prefs.getBoolean(GoogleAwareness.INCLUDE_PLACES, GoogleAwareness.INCLUDE_WEATHER_DEFAULT);
         this.mIncludeActivity = prefs.getBoolean(GoogleAwareness.INCLUDE_ACTIVITY, GoogleAwareness.INCLUDE_ACTIVITY_DEFAULT);
     }
 
@@ -285,7 +235,7 @@ public class GoogleAwareness extends Generator {
         final Handler handler = new Handler(Looper.getMainLooper());
 
         if (GoogleAwareness.isEnabled(this.mContext)) {
-            if (this.mIncludeTimeOfDay || this.mIncludePlaces || this.mIncludeWeather) {
+            if (this.mIncludeTimeOfDay) {
                 int permissionCheck = ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACCESS_FINE_LOCATION);
 
                 if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
@@ -354,6 +304,8 @@ public class GoogleAwareness extends Generator {
             @SuppressLint("MissingPermission")
             @Override
             public void run() {
+                Log.e("PDK", "GOOGLE AWARENESS REFRESH");
+
                 SnapshotClient client = Awareness.getSnapshotClient(me.mContext);
 
                 me.resetPendingRequests();
@@ -364,8 +316,10 @@ public class GoogleAwareness extends Generator {
                     client.getHeadphoneState().addOnCompleteListener(new OnCompleteListener<HeadphoneStateResponse>() {
                         @Override
                         public void onComplete(@NonNull Task<HeadphoneStateResponse> task) {
+                            Log.e("PDK", "GOOGLE AWARENESS HEADPHONE: " + task.isSuccessful());
+
                             if (task.isSuccessful()) {
-                                HeadphoneState headphone =  task.getResult().getHeadphoneState();
+                                HeadphoneState headphone = task.getResult().getHeadphoneState();
 
                                 if (headphone.getState() == HeadphoneState.PLUGGED_IN) {
                                     me.mHeadphoneState = GoogleAwareness.HEADPHONE_STATE_PLUGGED_IN;
@@ -390,6 +344,8 @@ public class GoogleAwareness extends Generator {
                         client.getTimeIntervals().addOnCompleteListener(new OnCompleteListener<TimeIntervalsResponse>() {
                             @Override
                             public void onComplete(@NonNull Task<TimeIntervalsResponse> task) {
+                                Log.e("PDK", "GOOGLE AWARENESS TIME OF DAY: " + task.isSuccessful());
+
                                 if (task.isSuccessful()) {
                                     TimeIntervals intervals = task.getResult().getTimeIntervals();
 
@@ -435,6 +391,8 @@ public class GoogleAwareness extends Generator {
                         client.getDetectedActivity().addOnCompleteListener(new OnCompleteListener<DetectedActivityResponse>() {
                             @Override
                             public void onComplete(@NonNull Task<DetectedActivityResponse> task) {
+                                Log.e("PDK", "GOOGLE AWARENESS ACTIVITY: " + task.isSuccessful());
+
                                 if (task.isSuccessful()) {
                                     DetectedActivity activity = task.getResult().getActivityRecognitionResult().getMostProbableActivity();
 
@@ -477,136 +435,11 @@ public class GoogleAwareness extends Generator {
                     }
                 }
 
-                if (me.mIncludeWeather) {
-                    int permissionCheck = ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION);
-
-                    if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                        me.incrementPendingRequests();
-
-                        client.getWeather().addOnCompleteListener(new OnCompleteListener<WeatherResponse>() {
-                            @Override
-                            public void onComplete(@NonNull Task<WeatherResponse> task) {
-                                if (task.isSuccessful()) {
-                                    Weather weather = task.getResult().getWeather();
-
-                                    if (weather != null) {
-                                        me.mWeatherIsClear = false;
-                                        me.mWeatherIsCloudy = false;
-                                        me.mWeatherIsFoggy = false;
-                                        me.mWeatherIsHazy = false;
-                                        me.mWeatherIsIcy = false;
-                                        me.mWeatherIsRainy = false;
-                                        me.mWeatherIsSnowy = false;
-                                        me.mWeatherIsStormy = false;
-                                        me.mWeatherIsWindy = false;
-                                        me.mWeatherIsUnknown = false;
-
-                                        int[] conditions = weather.getConditions();
-
-                                        if (conditions == null) {
-                                            conditions = new int[0];
-                                        }
-
-                                        for (int condition : conditions) {
-                                            switch (condition) {
-                                                case Weather.CONDITION_CLEAR:
-                                                    me.mWeatherIsClear = true;
-                                                    break;
-                                                case Weather.CONDITION_CLOUDY:
-                                                    me.mWeatherIsCloudy = true;
-                                                    break;
-                                                case Weather.CONDITION_FOGGY:
-                                                    me.mWeatherIsFoggy = true;
-                                                    break;
-                                                case Weather.CONDITION_HAZY:
-                                                    me.mWeatherIsHazy = true;
-                                                    break;
-                                                case Weather.CONDITION_ICY:
-                                                    me.mWeatherIsIcy = true;
-                                                    break;
-                                                case Weather.CONDITION_RAINY:
-                                                    me.mWeatherIsRainy = true;
-                                                    break;
-                                                case Weather.CONDITION_SNOWY:
-                                                    me.mWeatherIsSnowy = true;
-                                                    break;
-                                                case Weather.CONDITION_STORMY:
-                                                    me.mWeatherIsStormy = true;
-                                                    break;
-                                                case Weather.CONDITION_WINDY:
-                                                    me.mWeatherIsWindy = true;
-                                                    break;
-                                                case Weather.CONDITION_UNKNOWN:
-                                                    me.mWeatherIsUnknown = true;
-                                                    break;
-                                            }
-                                        }
-
-                                        me.mDewPoint = weather.getDewPoint(Weather.CELSIUS);
-                                        me.mPerceivedTemperature = weather.getFeelsLikeTemperature(Weather.CELSIUS);
-                                        me.mTemperature = weather.getTemperature(Weather.CELSIUS);
-                                        me.mHumidity = weather.getHumidity();
-                                    }
-                                } else {
-                                    me.mWeatherIsUnknown = true;
-
-                                    me.mDewPoint = Float.NaN;
-                                    me.mPerceivedTemperature = Float.NaN;
-                                    me.mTemperature = Float.NaN;
-                                    me.mHumidity = -1;
-                                }
-
-                                me.decrementPendingRequests();
-                            }
-                        });
-                    }
-                }
-
-                if (me.mIncludePlaces) {
-                    int permissionCheck = ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION);
-
-                    if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                        me.incrementPendingRequests();
-
-                        client.getPlaces().addOnCompleteListener(new OnCompleteListener<PlacesResponse>() {
-                            @Override
-                            public void onComplete(@NonNull Task<PlacesResponse> task) {
-                                if (task.isSuccessful()) {
-                                    List<PlaceLikelihood> places = task.getResult().getPlaceLikelihoods();
-
-                                    if (places != null && places.size() > 0) {
-                                        Collections.sort(places, new Comparator<PlaceLikelihood>() {
-                                            @Override
-                                            public int compare(PlaceLikelihood one, PlaceLikelihood two) {
-                                                Float oneLikelihood = one.getLikelihood();
-                                                Float twoLikelihood = two.getLikelihood();
-
-                                                return twoLikelihood.compareTo(oneLikelihood);
-                                            }
-                                        });
-
-                                        PlaceLikelihood mostLikely = places.get(0);
-
-                                        me.mPlaceLikelihood = mostLikely.getLikelihood();
-                                        me.mPlace = mostLikely.getPlace();
-                                    } else {
-                                        me.mPlaceLikelihood = 0;
-                                        me.mPlace = null;
-                                    }
-                                } else {
-                                    me.mPlaceLikelihood = 0;
-                                    me.mPlace = null;
-                                }
-
-                                me.decrementPendingRequests();
-                            }
-                        });
-                    }
-                }
-
                 if (me.mSensingHandler != null) {
                     me.mSensingHandler.postDelayed(this, GoogleAwareness.SENSING_INTERVAL);
                 }
+
+                Log.e("PDK", "GOOGLE AWARENESS SLEEP: " + me.mRefreshInterval);
 
                 try {
                     Thread.sleep(me.mRefreshInterval);
@@ -767,132 +600,6 @@ public class GoogleAwareness extends Generator {
             toTransmit.putDouble(GoogleAwareness.HISTORY_ACTIVITY_CONFIDENCE, this.mActivityConfidence);
         }
 
-        if (this.mIncludeWeather) {
-            toInsert.put(GoogleAwareness.HISTORY_WEATHER_TEMPERATURE, this.mTemperature);
-            toTransmit.putDouble(GoogleAwareness.HISTORY_WEATHER_TEMPERATURE, this.mTemperature);
-
-            toInsert.put(GoogleAwareness.HISTORY_WEATHER_PERCEIVED_TEMPERATURE, this.mPerceivedTemperature);
-            toTransmit.putDouble(GoogleAwareness.HISTORY_WEATHER_PERCEIVED_TEMPERATURE, this.mPerceivedTemperature);
-
-            toInsert.put(GoogleAwareness.HISTORY_WEATHER_HUMIDITY, this.mHumidity);
-            toTransmit.putDouble(GoogleAwareness.HISTORY_WEATHER_HUMIDITY, this.mHumidity);
-
-            toInsert.put(GoogleAwareness.HISTORY_WEATHER_DEW_POINT, this.mDewPoint);
-            toTransmit.putDouble(GoogleAwareness.HISTORY_WEATHER_DEW_POINT, this.mDewPoint);
-
-            ArrayList<String> weatherConditions = new ArrayList<>();
-
-            if (this.mWeatherIsClear) {
-                weatherConditions.add(GoogleAwareness.HISTORY_WEATHER_CONDITION_CLEAR);
-            }
-
-            if (this.mWeatherIsCloudy) {
-                weatherConditions.add(GoogleAwareness.HISTORY_WEATHER_CONDITION_CLOUDY);
-            }
-
-            if (this.mWeatherIsFoggy) {
-                weatherConditions.add(GoogleAwareness.HISTORY_WEATHER_CONDITION_FOGGY);
-            }
-
-            if (this.mWeatherIsHazy) {
-                weatherConditions.add(GoogleAwareness.HISTORY_WEATHER_CONDITION_HAZY);
-            }
-
-            if (this.mWeatherIsIcy) {
-                weatherConditions.add(GoogleAwareness.HISTORY_WEATHER_CONDITION_ICY);
-            }
-
-            if (this.mWeatherIsRainy) {
-                weatherConditions.add(GoogleAwareness.HISTORY_WEATHER_CONDITION_RAINY);
-            }
-
-            if (this.mWeatherIsSnowy) {
-                weatherConditions.add(GoogleAwareness.HISTORY_WEATHER_CONDITION_SNOWY);
-            }
-
-            if (this.mWeatherIsStormy) {
-                weatherConditions.add(GoogleAwareness.HISTORY_WEATHER_CONDITION_STORMY);
-            }
-
-            if (this.mWeatherIsWindy) {
-                weatherConditions.add(GoogleAwareness.HISTORY_WEATHER_CONDITION_WINDY);
-            }
-
-            if (this.mWeatherIsUnknown) {
-                weatherConditions.add(GoogleAwareness.HISTORY_WEATHER_CONDITION_UNKNOWN);
-            }
-
-            toTransmit.putStringArrayList(GoogleAwareness.HISTORY_WEATHER_CONDITIONS, weatherConditions);
-
-            StringBuilder builder = new StringBuilder();
-
-            for (String condition : weatherConditions) {
-                if (builder.length() > 0) {
-                    builder.append(";");
-                }
-
-                builder.append(condition);
-            }
-
-            toInsert.put(GoogleAwareness.HISTORY_WEATHER_CONDITIONS, builder.toString());
-        }
-
-        if (this.mIncludePlaces) {
-            if (this.mPlace != null) {
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE, this.mPlace.getName().toString());
-                toTransmit.putString(GoogleAwareness.HISTORY_CURRENT_PLACE, this.mPlace.getName().toString());
-
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_ID, this.mPlace.getId());
-                toTransmit.putString(GoogleAwareness.HISTORY_CURRENT_PLACE_ID, this.mPlace.getId());
-
-                LatLng coords = this.mPlace.getLatLng();
-
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_LATITUDE, coords.latitude);
-                toTransmit.putDouble(GoogleAwareness.HISTORY_CURRENT_PLACE_LATITUDE, coords.latitude);
-
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_LONGITUDE, coords.longitude);
-                toTransmit.putDouble(GoogleAwareness.HISTORY_CURRENT_PLACE_LONGITUDE, coords.longitude);
-
-                ArrayList<String> placeTypes = GoogleAwareness.getPlaceTypes(this.mPlace);
-
-                StringBuilder builder = new StringBuilder();
-
-                for (String placeType : placeTypes) {
-                    if (builder.length() > 0) {
-                        builder.append(";");
-                    }
-
-                    builder.append(placeType);
-                }
-
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_TYPES, builder.toString());
-                toTransmit.putStringArrayList(GoogleAwareness.HISTORY_CURRENT_PLACE_TYPES, placeTypes);
-
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_CONFIDENCE, this.mPlaceLikelihood);
-                toTransmit.putDouble(GoogleAwareness.HISTORY_CURRENT_PLACE_CONFIDENCE, this.mPlaceLikelihood);
-
-
-            } else {
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE, GoogleAwareness.HISTORY_CURRENT_PLACE_UNKNOWN);
-                toTransmit.putString(GoogleAwareness.HISTORY_CURRENT_PLACE, GoogleAwareness.HISTORY_CURRENT_PLACE_UNKNOWN);
-
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_ID, GoogleAwareness.HISTORY_CURRENT_PLACE_ID_UNKNOWN);
-                toTransmit.putString(GoogleAwareness.HISTORY_CURRENT_PLACE_ID, GoogleAwareness.HISTORY_CURRENT_PLACE_ID_UNKNOWN);
-
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_LATITUDE, Double.NaN);
-                toTransmit.putDouble(GoogleAwareness.HISTORY_CURRENT_PLACE_LATITUDE, Double.NaN);
-
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_LONGITUDE, Double.NaN);
-                toTransmit.putDouble(GoogleAwareness.HISTORY_CURRENT_PLACE_LONGITUDE, Double.NaN);
-
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_TYPES, "");
-                toTransmit.putStringArrayList(GoogleAwareness.HISTORY_CURRENT_PLACE_TYPES, new ArrayList<>());
-
-                toInsert.put(GoogleAwareness.HISTORY_CURRENT_PLACE_CONFIDENCE, 0);
-                toTransmit.putDouble(GoogleAwareness.HISTORY_CURRENT_PLACE_CONFIDENCE, 0);
-            }
-        }
-
         this.mDatabase.insert(GoogleAwareness.TABLE_HISTORY, null, toInsert);
 
         Generators.getInstance(this.mContext).notifyGeneratorUpdated(GoogleAwareness.GENERATOR_IDENTIFIER, toTransmit);
@@ -959,24 +666,6 @@ public class GoogleAwareness extends Generator {
         e.apply();
 
         this.mIncludeHeadphone = include;
-    }
-
-    public void setIncludeWeather(boolean include) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-        SharedPreferences.Editor e = prefs.edit();
-        e.putBoolean(GoogleAwareness.INCLUDE_WEATHER, include);
-        e.apply();
-
-        this.mIncludeWeather = include;
-    }
-
-    public void setIncludePlaces(boolean include) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-        SharedPreferences.Editor e = prefs.edit();
-        e.putBoolean(GoogleAwareness.INCLUDE_PLACES, include);
-        e.apply();
-
-        this.mIncludePlaces = true;
     }
 
     public void setIncludeActivity(boolean include) {
@@ -1196,401 +885,6 @@ public class GoogleAwareness extends Generator {
         */
     }
 
-    private static ArrayList<String> getPlaceTypes(Place place) {
-        ArrayList<String> types = new ArrayList<>();
-
-        for (int placeType : place.getPlaceTypes()) {
-            switch (placeType) {
-                case Place.TYPE_ACCOUNTING:
-                    types.add("accounting");
-                    break;
-                case Place.TYPE_ADMINISTRATIVE_AREA_LEVEL_1:
-                    types.add("administrative_area_level_1");
-                    break;
-                case Place.TYPE_ADMINISTRATIVE_AREA_LEVEL_2:
-                    types.add("administrative_area_level_2");
-                    break;
-                case Place.TYPE_ADMINISTRATIVE_AREA_LEVEL_3:
-                    types.add("administrative_area_level_3");
-                    break;
-                case Place.TYPE_AIRPORT:
-                    types.add("airport");
-                    break;
-                case Place.TYPE_AMUSEMENT_PARK:
-                    types.add("amusement_park");
-                    break;
-                case Place.TYPE_AQUARIUM:
-                    types.add("aquarium");
-                    break;
-                case Place.TYPE_ART_GALLERY:
-                    types.add("art_gallery");
-                    break;
-                case Place.TYPE_ATM:
-                    types.add("atm");
-                    break;
-                case Place.TYPE_BAKERY:
-                    types.add("bakery");
-                    break;
-                case Place.TYPE_BANK:
-                    types.add("bank");
-                    break;
-                case Place.TYPE_BAR:
-                    types.add("bar");
-                    break;
-                case Place.TYPE_BEAUTY_SALON:
-                    types.add("beauty_salon");
-                    break;
-                case Place.TYPE_BICYCLE_STORE:
-                    types.add("bicycle_store");
-                    break;
-                case Place.TYPE_BOOK_STORE:
-                    types.add("book_store");
-                    break;
-                case Place.TYPE_BOWLING_ALLEY:
-                    types.add("bowling_alley");
-                    break;
-                case Place.TYPE_BUS_STATION:
-                    types.add("bus_station");
-                    break;
-                case Place.TYPE_CAFE:
-                    types.add("cafe");
-                    break;
-                case Place.TYPE_CAMPGROUND:
-                    types.add("campground");
-                    break;
-                case Place.TYPE_CAR_DEALER:
-                    types.add("car_dealer");
-                    break;
-                case Place.TYPE_CAR_RENTAL:
-                    types.add("car_rental");
-                    break;
-                case Place.TYPE_CAR_REPAIR:
-                    types.add("car_repair");
-                    break;
-                case Place.TYPE_CAR_WASH:
-                    types.add("car_wash");
-                    break;
-                case Place.TYPE_CASINO:
-                    types.add("casino");
-                    break;
-                case Place.TYPE_CEMETERY:
-                    types.add("cemetery");
-                    break;
-                case Place.TYPE_CHURCH:
-                    types.add("church");
-                    break;
-                case Place.TYPE_CITY_HALL:
-                    types.add("city_hall");
-                    break;
-                case Place.TYPE_CLOTHING_STORE:
-                    types.add("clothing_store");
-                    break;
-                case Place.TYPE_COLLOQUIAL_AREA:
-                    types.add("colloquial_area");
-                    break;
-                case Place.TYPE_CONVENIENCE_STORE:
-                    types.add("convenience_store");
-                    break;
-                case Place.TYPE_COUNTRY:
-                    types.add("country");
-                    break;
-                case Place.TYPE_COURTHOUSE:
-                    types.add("courthouse");
-                    break;
-                case Place.TYPE_DENTIST:
-                    types.add("dentist");
-                    break;
-                case Place.TYPE_DEPARTMENT_STORE:
-                    types.add("department_store");
-                    break;
-                case Place.TYPE_DOCTOR:
-                    types.add("doctor");
-                    break;
-                case Place.TYPE_ELECTRICIAN:
-                    types.add("electrician");
-                    break;
-                case Place.TYPE_ELECTRONICS_STORE:
-                    types.add("electronics_store");
-                    break;
-                case Place.TYPE_EMBASSY:
-                    types.add("embassy");
-                    break;
-                case Place.TYPE_ESTABLISHMENT:
-                    types.add("establishment");
-                    break;
-                case Place.TYPE_FINANCE:
-                    types.add("finance");
-                    break;
-                case Place.TYPE_FIRE_STATION:
-                    types.add("fire_station");
-                    break;
-                case Place.TYPE_FLOOR:
-                    types.add("floor");
-                    break;
-                case Place.TYPE_FLORIST:
-                    types.add("florist");
-                    break;
-                case Place.TYPE_FOOD:
-                    types.add("food");
-                    break;
-                case Place.TYPE_FUNERAL_HOME:
-                    types.add("funeral_home");
-                    break;
-                case Place.TYPE_FURNITURE_STORE:
-                    types.add("furniture_store");
-                    break;
-                case Place.TYPE_GAS_STATION:
-                    types.add("gas_station");
-                    break;
-                case Place.TYPE_GENERAL_CONTRACTOR:
-                    types.add("general_contractor");
-                    break;
-                case Place.TYPE_GEOCODE:
-                    types.add("geocode");
-                    break;
-                case Place.TYPE_GROCERY_OR_SUPERMARKET:
-                    types.add("grocery_or_supermarket");
-                    break;
-                case Place.TYPE_GYM:
-                    types.add("gym");
-                    break;
-                case Place.TYPE_HAIR_CARE:
-                    types.add("hair_care");
-                    break;
-                case Place.TYPE_HARDWARE_STORE:
-                    types.add("hardware_store");
-                    break;
-                case Place.TYPE_HEALTH:
-                    types.add("health");
-                    break;
-                case Place.TYPE_HINDU_TEMPLE:
-                    types.add("hindu_temple");
-                    break;
-                case Place.TYPE_HOME_GOODS_STORE:
-                    types.add("home_goods_store");
-                    break;
-                case Place.TYPE_HOSPITAL:
-                    types.add("hospital");
-                    break;
-                case Place.TYPE_INSURANCE_AGENCY:
-                    types.add("insurance_agency");
-                    break;
-                case Place.TYPE_INTERSECTION:
-                    types.add("intersection");
-                    break;
-                case Place.TYPE_JEWELRY_STORE:
-                    types.add("jewelry_store");
-                    break;
-                case Place.TYPE_LAUNDRY:
-                    types.add("laundry");
-                    break;
-                case Place.TYPE_LAWYER:
-                    types.add("lawyer");
-                    break;
-                case Place.TYPE_LIBRARY:
-                    types.add("library");
-                    break;
-                case Place.TYPE_LIQUOR_STORE:
-                    types.add("liquor_store");
-                    break;
-                case Place.TYPE_LOCALITY:
-                    types.add("locality");
-                    break;
-                case Place.TYPE_LOCAL_GOVERNMENT_OFFICE:
-                    types.add("local_government_office");
-                    break;
-                case Place.TYPE_LOCKSMITH:
-                    types.add("locksmith");
-                    break;
-                case Place.TYPE_LODGING:
-                    types.add("lodging");
-                    break;
-                case Place.TYPE_MEAL_DELIVERY:
-                    types.add("meal_delivery");
-                    break;
-                case Place.TYPE_MEAL_TAKEAWAY:
-                    types.add("meal_takeaway");
-                    break;
-                case Place.TYPE_MOSQUE:
-                    types.add("mosque");
-                    break;
-                case Place.TYPE_MOVIE_RENTAL:
-                    types.add("movie_rental");
-                    break;
-                case Place.TYPE_MOVIE_THEATER:
-                    types.add("movie_theater");
-                    break;
-                case Place.TYPE_MOVING_COMPANY:
-                    types.add("moving_company");
-                    break;
-                case Place.TYPE_MUSEUM:
-                    types.add("museum");
-                    break;
-                case Place.TYPE_NATURAL_FEATURE:
-                    types.add("natural_feature");
-                    break;
-                case Place.TYPE_NEIGHBORHOOD:
-                    types.add("neighborhood");
-                    break;
-                case Place.TYPE_NIGHT_CLUB:
-                    types.add("night_club");
-                    break;
-                case Place.TYPE_OTHER:
-                    types.add("other");
-                    break;
-                case Place.TYPE_PAINTER:
-                    types.add("painter");
-                    break;
-                case Place.TYPE_PARK:
-                    types.add("park");
-                    break;
-                case Place.TYPE_PARKING:
-                    types.add("parking");
-                    break;
-                case Place.TYPE_PET_STORE:
-                    types.add("pet_store");
-                    break;
-                case Place.TYPE_PHARMACY:
-                    types.add("pharmacy");
-                    break;
-                case Place.TYPE_PHYSIOTHERAPIST:
-                    types.add("physiotherapist");
-                    break;
-                case Place.TYPE_PLACE_OF_WORSHIP:
-                    types.add("place_of_worship");
-                    break;
-                case Place.TYPE_PLUMBER:
-                    types.add("plumber");
-                    break;
-                case Place.TYPE_POINT_OF_INTEREST:
-                    types.add("point_of_interest");
-                    break;
-                case Place.TYPE_POLICE:
-                    types.add("police");
-                    break;
-                case Place.TYPE_POLITICAL:
-                    types.add("political");
-                    break;
-                case Place.TYPE_POSTAL_CODE:
-                    types.add("postal_code");
-                    break;
-                case Place.TYPE_POSTAL_CODE_PREFIX:
-                    types.add("postal_code_prefix");
-                    break;
-                case Place.TYPE_POSTAL_TOWN:
-                    types.add("postal_town");
-                    break;
-                case Place.TYPE_POST_BOX:
-                    types.add("post_box");
-                    break;
-                case Place.TYPE_POST_OFFICE:
-                    types.add("post_office");
-                    break;
-                case Place.TYPE_PREMISE:
-                    types.add("premise");
-                    break;
-                case Place.TYPE_REAL_ESTATE_AGENCY:
-                    types.add("real_estate_agency");
-                    break;
-                case Place.TYPE_RESTAURANT:
-                    types.add("restaurant");
-                    break;
-                case Place.TYPE_ROOFING_CONTRACTOR:
-                    types.add("roofing_contractor");
-                    break;
-                case Place.TYPE_ROOM:
-                    types.add("room");
-                    break;
-                case Place.TYPE_ROUTE:
-                    types.add("route");
-                    break;
-                case Place.TYPE_RV_PARK:
-                    types.add("rv_park");
-                    break;
-                case Place.TYPE_SCHOOL:
-                    types.add("school");
-                    break;
-                case Place.TYPE_SHOE_STORE:
-                    types.add("shoe_store");
-                    break;
-                case Place.TYPE_SHOPPING_MALL:
-                    types.add("shopping_mall");
-                    break;
-                case Place.TYPE_SPA:
-                    types.add("spa");
-                    break;
-                case Place.TYPE_STADIUM:
-                    types.add("stadium");
-                    break;
-                case Place.TYPE_STORAGE:
-                    types.add("storage");
-                    break;
-                case Place.TYPE_STORE:
-                    types.add("store");
-                    break;
-                case Place.TYPE_STREET_ADDRESS:
-                    types.add("street_address");
-                    break;
-                case Place.TYPE_SUBLOCALITY:
-                    types.add("sublocality");
-                    break;
-                case Place.TYPE_SUBLOCALITY_LEVEL_1:
-                    types.add("sublocality_level_1");
-                    break;
-                case Place.TYPE_SUBLOCALITY_LEVEL_2:
-                    types.add("sublocality_level_2");
-                    break;
-                case Place.TYPE_SUBLOCALITY_LEVEL_3:
-                    types.add("sublocality_level_3");
-                    break;
-                case Place.TYPE_SUBLOCALITY_LEVEL_4:
-                    types.add("sublocality_level_4");
-                    break;
-                case Place.TYPE_SUBLOCALITY_LEVEL_5:
-                    types.add("sublocality_level_5");
-                    break;
-                case Place.TYPE_SUBPREMISE:
-                    types.add("subpremise");
-                    break;
-                case Place.TYPE_SUBWAY_STATION:
-                    types.add("subway_station");
-                    break;
-                case Place.TYPE_SYNAGOGUE:
-                    types.add("synagogue");
-                    break;
-                case Place.TYPE_SYNTHETIC_GEOCODE:
-                    types.add("synthetic_geocode");
-                    break;
-                case Place.TYPE_TAXI_STAND:
-                    types.add("taxi_stand");
-                    break;
-                case Place.TYPE_TRAIN_STATION:
-                    types.add("train_station");
-                    break;
-                case Place.TYPE_TRANSIT_STATION:
-                    types.add("transit_station");
-                    break;
-                case Place.TYPE_TRAVEL_AGENCY:
-                    types.add("travel_agency");
-                    break;
-                case Place.TYPE_UNIVERSITY:
-                    types.add("university");
-                    break;
-                case Place.TYPE_VETERINARY_CARE:
-                    types.add("veterinary_care");
-                    break;
-                case Place.TYPE_ZOO:
-                    types.add("zoo");
-                    break;
-                default:
-                    types.add("unknown-" + placeType);
-                    break;
-            }
-        }
-
-        return types;
-    }
-
     @Override
     public String getIdentifier() {
         return GoogleAwareness.GENERATOR_IDENTIFIER;
@@ -1602,18 +896,6 @@ public class GoogleAwareness extends Generator {
                 this.setIncludeHeadphones(config.getBoolean("include-headphones"));
 
                 config.remove("include-headphones");
-            }
-
-            if (config.has("include-places")) {
-                this.setIncludePlaces(config.getBoolean("include-places"));
-
-                config.remove("include-places");
-            }
-
-            if (config.has("include-weather")) {
-                this.setIncludeWeather(config.getBoolean("include-weather"));
-
-                config.remove("include-weather");
             }
 
             if (config.has("include-time-of-day")) {
