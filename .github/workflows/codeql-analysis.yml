@@ -6,11 +6,11 @@ on:
   pull_request:
     branches: [master]
   schedule:
-    - cron: '0 11 * * 1'
+    - cron: '0 0 * * 0'
 
 jobs:
   analyze:
-    name: Analyze
+    name: Analyze, build, and lint
     runs-on: ubuntu-latest
 
     strategy:
@@ -32,31 +32,22 @@ jobs:
       with:
         languages: ${{ matrix.language }}
 
-    - name: Setup Environment Variables
-      run: echo "ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk" >> $GITHUB_ENV
-
-    - name: Echo ANDROID_HOME
-      run: echo ${ANDROID_HOME}
-
-    - name: Setup NDK Cache
+    - name: Setup NDK cache
       id: ndk-cache
       uses: actions/cache@v2
       with:
         path: /usr/local/lib/android/sdk/ndk
         key: ${{ runner.os }}-build-${{ hashFiles('**/build.gradle') }}
 
-    - name: Download and Install NDK
+    - name: Download and install NDK
       if: steps.ndk-cache.outputs.cache-hit != 'true'
       run: ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;21.0.6113669" | grep -v = || true
 
-    - name: List ANDROID_HOME
-      run: ls -l ${ANDROID_HOME}
-
-    - name: List ANDROID_HOME/ndk
-      run: ls -l ${ANDROID_HOME}/ndk
-
-    - name: Build Project
+    - name: Build project
       run: gradle assembleDebug
 
-    - name: Perform CodeQL Analysis
+    - name: Lint project
+      run: gradle lint
+
+    - name: Perform CodeQL analysis
       uses: github/codeql-action/analyze@v1
