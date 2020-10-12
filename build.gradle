@@ -15,7 +15,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.2'
+        classpath 'com.android.tools.build:gradle:4.1.0'
     }
 }
 
@@ -37,8 +37,8 @@ repositories {
 android {
     defaultConfig {
         minSdkVersion 18
-        targetSdkVersion 29
-        compileSdkVersion 29
+        targetSdkVersion 30
+        compileSdkVersion 30
 
         versionCode 1
         versionName "1.0"
@@ -58,8 +58,6 @@ android {
             }
         }
     }
-    
-    ndkVersion "21.0.6113669"
 
     externalNativeBuild {
         cmake {
