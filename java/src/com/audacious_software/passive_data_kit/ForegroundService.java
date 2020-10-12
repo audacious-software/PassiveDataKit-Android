@@ -13,6 +13,7 @@ import android.os.IBinder;
 import com.audacious_software.pdk.passivedatakit.R;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 public class ForegroundService extends Service {
     public static final String ACTION_START_SERVICE = "com.audacious_software.passive_data_kit.ForegroundService.ACTION_START_SERVICE";
@@ -28,8 +29,9 @@ public class ForegroundService extends Service {
 
         Notification note = ForegroundService.getForegroundNotification(this, intent);
 
+        NotificationManagerCompat noteManager = NotificationManagerCompat.from(this);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager noteManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
 
             if (noteManager.getNotificationChannel(this.getString(R.string.foreground_channel_id)) == null) {
                 NotificationChannel channel = new NotificationChannel(this.getString(R.string.foreground_channel_id), this.getString(R.string.app_name), NotificationManager.IMPORTANCE_LOW);

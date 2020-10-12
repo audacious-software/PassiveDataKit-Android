@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
 import javax.net.ssl.SSLException;
@@ -162,7 +163,7 @@ public class PassiveDataKit {
 
                     Notification note = ForegroundService.getForegroundNotification(me.mContext, intent);
 
-                    NotificationManager notes = (NotificationManager) me.mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+                    NotificationManagerCompat notes = NotificationManagerCompat.from(me.mContext);
 
                     notes.notify(ForegroundService.getNotificationId(), note);
                 }
@@ -274,6 +275,8 @@ public class PassiveDataKit {
                             }
                         });
             } catch (IllegalStateException ex) {
+                ex.printStackTrace();
+
                 if (isRetry == false) {
                     FirebaseApp.initializeApp(this.mContext);
 
@@ -314,7 +317,6 @@ public class PassiveDataKit {
                 builder.addTrustedCertificate(PassiveDataKit.convertToX509Cert(certificate));
             } catch (CertificateException e) {
                 e.printStackTrace();
-                Log.e("PDK", "CERTIFICATE: " + certificate);
             }
         }
 

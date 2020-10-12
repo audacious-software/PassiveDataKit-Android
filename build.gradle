@@ -13,7 +13,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.1'
+        classpath 'com.android.tools.build:gradle:4.0.2'
     }
 }
 
@@ -96,7 +96,7 @@ android {
         // testCompile 'junit:junit:4.12'
         implementation 'androidx.appcompat:appcompat:1.2.0'
         implementation 'androidx.recyclerview:recyclerview:1.1.0'
-        implementation 'androidx.media:media:1.1.0'
+        implementation 'androidx.media:media:1.2.0'
         implementation 'androidx.legacy:legacy-support-v4:1.0.0'
         implementation 'androidx.cardview:cardview:1.0.0'
         implementation 'androidx.browser:browser:1.2.0'
@@ -108,8 +108,8 @@ android {
         api 'com.google.android.gms:play-services-fitness:19.0.0'
         api 'com.google.android.gms:play-services-maps:17.0.0'
         api 'com.google.android.gms:play-services-awareness:18.0.1'
-        api 'com.google.firebase:firebase-core:17.5.0'
-        implementation 'com.google.firebase:firebase-messaging:20.2.4'
+        api 'com.google.firebase:firebase-core:17.5.1'
+        implementation 'com.google.firebase:firebase-messaging:20.3.0'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         api 'com.squareup.okhttp3:okhttp:3.12.3' // Retaining older version for Android 4 support
         api 'com.squareup.okhttp3:okhttp-tls:3.12.3'
