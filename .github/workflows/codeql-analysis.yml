@@ -1,0 +1,62 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '0 11 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['cpp', 'java']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
+
+    - run: git checkout HEAD^2
+      if: ${{ github.event_name == 'pull_request' }}
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        languages: ${{ matrix.language }}
+
+    - name: Setup Environment Variables
+      run: echo "ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk" >> $GITHUB_ENV
+
+    - name: Echo ANDROID_HOME
+      run: echo ${ANDROID_HOME}
+
+    - name: Setup NDK Cache
+      id: ndk-cache
+      uses: actions/cache@v2
+      with:
+        path: /usr/local/lib/android/sdk/ndk
+        key: ${{ runner.os }}-build-${{ hashFiles('**/build.gradle') }}
+
+    - name: Download and Install NDK
+      if: steps.ndk-cache.outputs.cache-hit != 'true'
+      run: ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;21.0.6113669" | grep -v = || true
+
+    - name: List ANDROID_HOME
+      run: ls -l ${ANDROID_HOME}
+
+    - name: List ANDROID_HOME/ndk
+      run: ls -l ${ANDROID_HOME}/ndk
+
+    - name: Build Project
+      run: gradle assembleDebug
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
