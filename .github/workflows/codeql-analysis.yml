@@ -56,7 +56,7 @@ jobs:
     #    uses a compiled language
 
     - run: |
-        sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;21.0.6113669"
+        sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;21.0.6113669" | grep -v = || true
 
     - run: |
         gradle assembleDebug
