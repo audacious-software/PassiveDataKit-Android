@@ -5,6 +5,9 @@ buildscript {
         mavenCentral()
         google()
         jcenter()
+        maven {
+         url  "https://dl.bintray.com/rvalerio/maven"
+     }
         flatDir {
             dirs 'libs'
         }
