@@ -35,6 +35,9 @@ jobs:
     - name: Setup Environment Variables
       run: echo "ANDROID_NDK_HOME=/usr/local/android/sdk/ndk" >> $GITHUB_ENV
 
+    - name: Echo ANDROID_HOME
+      run: echo ${ANDROID_HOME}
+
     - name: Setup NDK Cache
       id: ndk-cache
       uses: actions/cache@v2
