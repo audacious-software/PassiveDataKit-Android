@@ -37,7 +37,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ${ANDROID_HOME}/ndk
-        key: ndk-cache-21.0.6113669
+        key: 21.0.6113669
 
     - name: Download and Install NDK
       if: steps.ndk-cache.outputs.cache-hit != 'true'
