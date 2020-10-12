@@ -59,8 +59,7 @@ jobs:
       id: ndk-cache
       uses: actions/cache@v2
       with:
-        path: |
-          /usr/local/lib/android/sdk/ndk
+        path: ${ANDROID_HOME}/sdk/ndk
         key: ndk-cache-21.0.6113669
 
     - run: |
