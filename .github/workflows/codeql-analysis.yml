@@ -32,11 +32,14 @@ jobs:
       with:
         languages: ${{ matrix.language }}
 
+    - name: Setup Environment Variables
+      run: echo "ANDROID_NDK_HOME=/usr/local/android/sdk/ndk" >> $GITHUB_ENV
+
     - name: Setup NDK Cache
       id: ndk-cache
       uses: actions/cache@v2
       with:
-        path: ${ANDROID_HOME}/ndk
+        path: ${ANDROID_NDK_HOME}
         key: 21.0.6113669
 
     - name: Download and Install NDK
