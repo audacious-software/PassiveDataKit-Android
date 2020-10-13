@@ -48,5 +48,9 @@
     <string name="toast_attempting_transmission_data">Attempting data transmission&#8230;</string>
 
     <string name="foreground_channel_id">Passive Data Kit</string>
+
+    <string name="transmission_failed_server_code">Server returned error code: %1$d.</string>
+    <string name="transmission_failed_exception">Transmission exception: %1$s: %2$s</string>
+    <string name="transmission_failed_unknown_host">Unable to locate %1$s. Please check your network connection.</string>
 </resources>
 

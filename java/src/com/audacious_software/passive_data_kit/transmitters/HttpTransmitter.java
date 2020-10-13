@@ -3,6 +3,7 @@ package com.audacious_software.passive_data_kit.transmitters;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.BadParcelableException;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.Toolbox;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.pdk.passivedatakit.R;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -40,7 +42,9 @@ import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.security.KeyManagementException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -507,6 +511,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             return HttpTransmitter.RESULT_SUCCESS;
         }
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
         try {
             // Liberal HTTPS setup:
             // http://stackoverflow.com/questions/2012497/accepting-a-certificate-for-https-on-android
@@ -664,11 +670,31 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                         f.delete();
                     }
 
+                    SharedPreferences.Editor e = prefs.edit();
+                    e.remove(Transmitter.FAILURE_REASON);
+                    e.remove(Transmitter.FAILURE_TIMESTAMP);
+                    e.apply();
+
                     return HttpTransmitter.RESULT_SUCCESS;
                 }
+            } else {
+                SharedPreferences.Editor e = prefs.edit();
+                e.putString(Transmitter.FAILURE_REASON, this.mContext.getString(R.string.transmission_failed_server_code, code));
+                e.putLong(Transmitter.FAILURE_TIMESTAMP, System.currentTimeMillis());
+                e.apply();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (UnknownHostException ex) {
+            SharedPreferences.Editor e = prefs.edit();
+            e.putString(Transmitter.FAILURE_REASON, this.mContext.getString(R.string.transmission_failed_unknown_host, this.mUploadUri.getHost()));
+            e.putLong(Transmitter.FAILURE_TIMESTAMP, System.currentTimeMillis());
+            e.apply();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+
+            SharedPreferences.Editor e = prefs.edit();
+            e.putString(Transmitter.FAILURE_REASON, this.mContext.getString(R.string.transmission_failed_exception, ex.getClass().toString(), ex.getLocalizedMessage()));
+            e.putLong(Transmitter.FAILURE_TIMESTAMP, System.currentTimeMillis());
+            e.apply();
         }
 
         return HttpTransmitter.RESULT_ERROR;
@@ -1113,4 +1139,56 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         return prefs.getLong(HttpTransmitter.LAST_SUCCESSFUL_TRANSMISSION, 0);
     }
 
+    @Override
+    public void testTransmission(Handler handler, Runnable success, Runnable failure) {
+        final HttpTransmitter me = this;
+
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String testPayload = me.generateTestPayload();
+
+                    int result = me.transmitHttpPayload(testPayload);
+
+                    if (result == HttpTransmitter.RESULT_SUCCESS) {
+                        handler.post(success);
+                    } else {
+                        handler.post(failure);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+
+                    handler.post(failure);
+                }
+            }
+        };
+
+        this.mHandler.post(r);
+    }
+
+    private String generateTestPayload() throws JSONException {
+        JSONObject testReading = new JSONObject();
+
+        JSONObject metadata = new JSONObject();
+
+        long timestamp = System.currentTimeMillis();
+
+        metadata.put(Generator.IDENTIFIER, "pdk-connection-test");
+        metadata.put(Generator.TIMESTAMP, timestamp / 1000);
+        metadata.put(Generator.GENERATOR, Generators.getInstance(this.mContext).getGeneratorFullName("pdk-connection-test"));
+        metadata.put(Generator.SOURCE, this.mUserId);
+
+        TimeZone timeZone = TimeZone.getDefault();
+
+        metadata.put(Generator.TIMEZONE, timeZone.getID());
+        metadata.put(Generator.TIMEZONE_OFFSET, timeZone.getOffset(timestamp) / 1000);
+
+        testReading.put("passive-data-metadata", metadata);
+
+        JSONArray payload = new JSONArray();
+        payload.put(testReading);
+
+        return payload.toString(2);
+    }
 }
