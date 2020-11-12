@@ -45,9 +45,13 @@ jobs:
 
     - name: Build project
       run: gradle assembleDebug
+      env:
+        ORG_GRADLE_PROJECT_mapbox_key: ${{ secrets.MAPBOXDOWNLOADKEY }}
 
     - name: Lint project
       run: gradle lint
+      env:
+        ORG_GRADLE_PROJECT_mapbox_key: ${{ secrets.MAPBOXDOWNLOADKEY }}
 
     - name: Perform CodeQL analysis
       uses: github/codeql-action/analyze@v1
