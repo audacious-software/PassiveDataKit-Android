@@ -45,6 +45,8 @@ repositories {
 }
 
 android {
+    buildToolsVersion "30.0.2"
+
     defaultConfig {
         minSdkVersion 18
         targetSdkVersion 30
@@ -99,11 +101,6 @@ android {
         abortOnError false
     }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
     dependencies {
         api fileTree(dir: 'libs', include: ['*.jar'])
         // testCompile 'junit:junit:4.12'
@@ -117,7 +114,7 @@ android {
 
         api 'com.google.guava:guava:28.2-android'
         implementation 'com.google.guava:guava:28.2-android'
-        api 'com.google.android.gms:play-services-auth:18.1.0'
+        api 'com.google.android.gms:play-services-auth:19.0.0'
         api 'com.google.android.gms:play-services-fitness:20.0.0'
         api 'com.google.android.gms:play-services-maps:17.0.0'
         api 'com.google.android.gms:play-services-awareness:18.0.1'
