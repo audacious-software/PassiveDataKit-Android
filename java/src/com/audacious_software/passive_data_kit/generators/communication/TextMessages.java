@@ -96,6 +96,8 @@ public class TextMessages extends Generator {
     private long mSampleInterval = 60000;
     private ArrayList<BodyAnnotator> mBodyAnnotators = new ArrayList<>();
 
+    private boolean mRunning = false;
+
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
         return TextMessages.GENERATOR_IDENTIFIER;
@@ -139,6 +141,12 @@ public class TextMessages extends Generator {
         final Runnable checkLogs = new Runnable() {
             @Override
             public void run() {
+                if (me.mRunning) {
+                    return;
+                }
+
+                me.mRunning = true;
+
                 boolean approved = false;
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -303,11 +311,15 @@ public class TextMessages extends Generator {
                             me.mDatabase.insert(TextMessages.TABLE_HISTORY, null, values);
                         }
                     } catch (SecurityException ex) {
+                        ex.printStackTrace();
                         Logger.getInstance(me.mContext).logThrowable(ex);
-                    } catch (RuntimeException e) {
+                    } catch (RuntimeException ex) {
+                        ex.printStackTrace();
                         // CursorWindowAllocationException
                     }
                 }
+
+                me.mRunning = false;
 
                 if (me.mHandler != null) {
                     me.mHandler.postDelayed(this, me.mSampleInterval);
@@ -346,7 +358,7 @@ public class TextMessages extends Generator {
         Thread t = new Thread(r);
         t.start();
 
-        Thread init =  new Thread(new Runnable() {
+        Thread init = new Thread(new Runnable() {
             @Override
             public void run() {
                 while (me.mHandler == null) {

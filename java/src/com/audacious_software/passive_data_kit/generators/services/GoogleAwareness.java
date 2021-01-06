@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,14 +32,11 @@ import com.google.android.gms.awareness.snapshot.TimeIntervalsResponse;
 import com.google.android.gms.awareness.state.HeadphoneState;
 import com.google.android.gms.awareness.state.TimeIntervals;
 import com.google.android.gms.location.DetectedActivity;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -108,15 +104,6 @@ public class GoogleAwareness extends Generator {
     private static final String HISTORY_ACTIVITY_UNKNOWN = "unknown";
 
     private static final String HISTORY_ACTIVITY_CONFIDENCE = "current_activity_confidence";
-
-    private static final String HISTORY_CURRENT_PLACE = "current_place";
-    private static final String HISTORY_CURRENT_PLACE_UNKNOWN = "unknown";
-    private static final String HISTORY_CURRENT_PLACE_ID = "current_place_id";
-    private static final String HISTORY_CURRENT_PLACE_ID_UNKNOWN = "unknown";
-    private static final String HISTORY_CURRENT_PLACE_LATITUDE = "current_place_latitude";
-    private static final String HISTORY_CURRENT_PLACE_LONGITUDE = "current_place_longitude";
-    private static final String HISTORY_CURRENT_PLACE_TYPES = "current_place_types";
-    private static final String HISTORY_CURRENT_PLACE_CONFIDENCE = "current_place_confidence";
 
     private static final int HEADPHONE_STATE_PLUGGED_IN = 1;
     private static final int HEADPHONE_STATE_UNPLUGGED = 0;
@@ -304,8 +291,6 @@ public class GoogleAwareness extends Generator {
             @SuppressLint("MissingPermission")
             @Override
             public void run() {
-                Log.e("PDK", "GOOGLE AWARENESS REFRESH");
-
                 SnapshotClient client = Awareness.getSnapshotClient(me.mContext);
 
                 me.resetPendingRequests();
@@ -316,8 +301,6 @@ public class GoogleAwareness extends Generator {
                     client.getHeadphoneState().addOnCompleteListener(new OnCompleteListener<HeadphoneStateResponse>() {
                         @Override
                         public void onComplete(@NonNull Task<HeadphoneStateResponse> task) {
-                            Log.e("PDK", "GOOGLE AWARENESS HEADPHONE: " + task.isSuccessful());
-
                             if (task.isSuccessful()) {
                                 HeadphoneState headphone = task.getResult().getHeadphoneState();
 
@@ -344,8 +327,6 @@ public class GoogleAwareness extends Generator {
                         client.getTimeIntervals().addOnCompleteListener(new OnCompleteListener<TimeIntervalsResponse>() {
                             @Override
                             public void onComplete(@NonNull Task<TimeIntervalsResponse> task) {
-                                Log.e("PDK", "GOOGLE AWARENESS TIME OF DAY: " + task.isSuccessful());
-
                                 if (task.isSuccessful()) {
                                     TimeIntervals intervals = task.getResult().getTimeIntervals();
 
@@ -377,6 +358,8 @@ public class GoogleAwareness extends Generator {
                                     me.mHolidayState = GoogleAwareness.HOLIDAY_STATE_UNKNOWN;
                                     me.mTimeOfDay = GoogleAwareness.TIME_OF_DAY_UNKNOWN;
                                 }
+
+                                me.decrementPendingRequests();
                             }
                         });
                     }
@@ -391,8 +374,6 @@ public class GoogleAwareness extends Generator {
                         client.getDetectedActivity().addOnCompleteListener(new OnCompleteListener<DetectedActivityResponse>() {
                             @Override
                             public void onComplete(@NonNull Task<DetectedActivityResponse> task) {
-                                Log.e("PDK", "GOOGLE AWARENESS ACTIVITY: " + task.isSuccessful());
-
                                 if (task.isSuccessful()) {
                                     DetectedActivity activity = task.getResult().getActivityRecognitionResult().getMostProbableActivity();
 
@@ -438,8 +419,6 @@ public class GoogleAwareness extends Generator {
                 if (me.mSensingHandler != null) {
                     me.mSensingHandler.postDelayed(this, GoogleAwareness.SENSING_INTERVAL);
                 }
-
-                Log.e("PDK", "GOOGLE AWARENESS SLEEP: " + me.mRefreshInterval);
 
                 try {
                     Thread.sleep(me.mRefreshInterval);

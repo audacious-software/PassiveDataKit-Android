@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -79,7 +80,9 @@ public class DarkSkyWeather extends Generator {
 
     private static DarkSkyWeather sInstance = null;
 
-    private long mFetchInterval = 60 * 1000;
+    private long mFetchInterval = 15 * 60 * 1000;
+
+    private Handler mHandler = null;
 
     @Override
     public String getIdentifier() {
@@ -123,10 +126,47 @@ public class DarkSkyWeather extends Generator {
     }
 
     private void startGenerator() {
+        final DarkSkyWeather me = this;
+
+        if (this.mHandler != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                this.mHandler.getLooper().quitSafely();
+            } else {
+                this.mHandler.getLooper().quit();
+            }
+
+            this.mHandler = null;
+        }
+
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                Looper.prepare();
+
+                me.mHandler = new Handler();
+
+                Looper.loop();
+            }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
+
+        this.fetchLatestWeather();
     }
 
     private void stopGenerator() {
+        if (this.mHandler != null) {
+            this.mHandler.removeCallbacksAndMessages(null);
 
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                this.mHandler.getLooper().quitSafely();
+            } else {
+                this.mHandler.getLooper().quit();
+            }
+
+            this.mHandler = null;
+        }
     }
 
     public static boolean isEnabled(Context context) {
@@ -406,6 +446,15 @@ public class DarkSkyWeather extends Generator {
                     }
                 });
             }
+        }
+
+        if (me.mHandler != null) {
+            me.mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    me.fetchLatestWeather();
+                }
+            }, this.mFetchInterval);
         }
     }
 }
