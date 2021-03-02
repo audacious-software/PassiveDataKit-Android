@@ -318,6 +318,10 @@
     <string name="generator_dark_sky_url">https://api.darksky.net/forecast/%1$s/%2$f,%3$f,%4$d?units=si&amp;exclude=minutely,hourly,daily</string>
     <string name="dark_sky_api_key" translatable="false">CHANGEME</string>
 
+    <!-- Open Weather Weather -->
+    <string name="generator_open_weather_url">https://api.openweathermap.org/data/2.5/onecall?lat=%1$f&amp;lon=%2$f&amp;appid=%3$s&amp;units=metric&amp;exclude=minutely,hourly,daily</string>
+    <string name="open_weather_api_key" translatable="false">CHANGEME</string>
+
     <!-- Step Counter -->
     <string name="generator_sensors_step_count">Step Count</string>
 

@@ -134,8 +134,6 @@ public class GoogleAwareness extends Generator {
 
     private static GoogleAwareness sInstance = null;
 
-    private Handler mSensingHandler = null;
-
     private boolean mIncludeHeadphone;
     private boolean mIncludeTimeOfDay;
     private boolean mIncludeActivity;
@@ -150,8 +148,6 @@ public class GoogleAwareness extends Generator {
     private float mActivityConfidence = -1;
 
     private long mRefreshInterval = (60 * 1000);
-
-    private long mLastTimestamp = 0;
 
     private SQLiteDatabase mDatabase = null;
 
@@ -414,10 +410,6 @@ public class GoogleAwareness extends Generator {
                             }
                         });
                     }
-                }
-
-                if (me.mSensingHandler != null) {
-                    me.mSensingHandler.postDelayed(this, GoogleAwareness.SENSING_INTERVAL);
                 }
 
                 try {
@@ -887,6 +879,14 @@ public class GoogleAwareness extends Generator {
                 this.setIncludeActivity(config.getBoolean("include-activity"));
 
                 config.remove("include-activity");
+            }
+
+            if (config.has("include-places")) {
+                config.remove("include-places");
+            }
+
+            if (config.has("include-weather")) {
+                config.remove("include-weather");
             }
         } catch (JSONException e) {
             e.printStackTrace();

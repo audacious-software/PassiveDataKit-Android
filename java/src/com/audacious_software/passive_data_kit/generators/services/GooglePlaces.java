@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.view.View;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 import androidx.core.content.ContextCompat;
 
@@ -51,7 +53,8 @@ public class GooglePlaces extends Generator {
 
     private static final String API_KEY = "com.audacious_software.passive_data_kit.generators.services.GooglePlaces.API_KEY";
 
-    private static final long SENSING_INTERVAL = 60 * 1000;
+    private static final String AUTOMATICALLY_UPDATES = "com.audacious_software.passive_data_kit.generators.services.GooglePlaces.AUTOMATICALLY_UPDATES";
+    private static final boolean AUTOMATICALLY_UPDATES_DEFAULT = false;
 
     private static final String DATABASE_PATH = "pdk-google-places.sqlite";
     private static final int DATABASE_VERSION = 1;
@@ -70,15 +73,10 @@ public class GooglePlaces extends Generator {
 
     private static GooglePlaces sInstance = null;
 
-    private Handler mSensingHandler = null;
-
     private long mRefreshInterval = (60 * 1000);
-
-    private long mLastTimestamp = 0;
+    private Handler mRefreshHandler = null;
 
     private SQLiteDatabase mDatabase = null;
-
-    private int mPendingRequests = 0;
 
     private double mPlaceLikelihood = 0.0f;
     private Place mPlace = null;
@@ -129,6 +127,21 @@ public class GooglePlaces extends Generator {
         this.refresh();
     }
 
+    public static void stop(Context context) {
+        GooglePlaces.getInstance(context).stopGenerator();
+    }
+
+    private void stopGenerator() {
+        if (this.mRefreshHandler != null) {
+            this.mRefreshHandler.removeCallbacksAndMessages(null);
+            this.mRefreshHandler.getLooper().quitSafely();
+            this.mRefreshHandler = null;
+
+            this.mDatabase.close();
+            this.mDatabase = null;
+        }
+    }
+
     @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
         return GooglePlaces.getInstance(context).runDiagostics();
@@ -149,7 +162,6 @@ public class GooglePlaces extends Generator {
                     @Override
                     public void run() {
                         handler.post(new Runnable() {
-
                             @Override
                             public void run() {
                                 Intent intent = new Intent(me.mContext, RequestPermissionActivity.class);
@@ -182,70 +194,74 @@ public class GooglePlaces extends Generator {
     public void refresh() {
         final GooglePlaces me = this;
 
-        Runnable r = new Runnable() {
-            @SuppressLint("MissingPermission")
-            @Override
-            public void run() {
-                if (Places.isInitialized() == false) {
-                    SharedPreferences prefs = Generators.getInstance(me.mContext).getSharedPreferences(me.mContext);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-                    Places.initialize(me.mContext, prefs.getString(GooglePlaces.API_KEY, null));
-                }
+        if (prefs.getBoolean(GooglePlaces.AUTOMATICALLY_UPDATES, GooglePlaces.AUTOMATICALLY_UPDATES_DEFAULT)) {
+            if (this.mRefreshHandler == null) {
+                HandlerThread handlerThread = new HandlerThread("pdk-google-places-refresh");
+                handlerThread.start();
 
-                PlacesClient placesClient = Places.createClient(me.mContext);
+                Looper looper = handlerThread.getLooper();
+                this.mRefreshHandler = new Handler(looper);
+            }
 
-                List<Place.Field> placeFields = Collections.singletonList(Place.Field.NAME);
+            Runnable r = new Runnable() {
+                @SuppressLint("MissingPermission")
+                @Override
+                public void run() {
+                    if (Places.isInitialized() == false) {
+                        SharedPreferences prefs = Generators.getInstance(me.mContext).getSharedPreferences(me.mContext);
 
-                FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(placeFields);
+                        Places.initialize(me.mContext, prefs.getString(GooglePlaces.API_KEY, null));
+                    }
 
-                if (ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    Task<FindCurrentPlaceResponse> placeResponse = placesClient.findCurrentPlace(request);
-                    placeResponse.addOnCompleteListener(task -> {
-                        if (task.isSuccessful()){
-                            FindCurrentPlaceResponse response = task.getResult();
+                    PlacesClient placesClient = Places.createClient(me.mContext);
 
-                            ArrayList<PlaceLikelihood> places = new ArrayList<>(response.getPlaceLikelihoods());
+                    List<Place.Field> placeFields = Collections.singletonList(Place.Field.NAME);
 
-                            if (places != null && places.size() > 0) {
-                                Collections.sort(places, new Comparator<PlaceLikelihood>() {
-                                    @Override
-                                    public int compare(PlaceLikelihood one, PlaceLikelihood two) {
-                                        Double oneLikelihood = one.getLikelihood();
-                                        Double twoLikelihood = two.getLikelihood();
+                    FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(placeFields);
 
-                                        return twoLikelihood.compareTo(oneLikelihood);
+                    if (ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        Task<FindCurrentPlaceResponse> placeResponse = placesClient.findCurrentPlace(request);
+
+                        placeResponse.addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                FindCurrentPlaceResponse response = task.getResult();
+
+                                ArrayList<PlaceLikelihood> places = new ArrayList<>(response.getPlaceLikelihoods());
+
+                                if (places != null && places.size() > 0) {
+                                    Collections.sort(places, new Comparator<PlaceLikelihood>() {
+                                        @Override
+                                        public int compare(PlaceLikelihood one, PlaceLikelihood two) {
+                                            Double oneLikelihood = one.getLikelihood();
+                                            Double twoLikelihood = two.getLikelihood();
+
+                                            return twoLikelihood.compareTo(oneLikelihood);
+                                        }
+                                    });
+
+                                    PlaceLikelihood mostLikely = places.get(0);
+
+                                    me.mPlace = mostLikely.getPlace();
+                                    me.mPlaceLikelihood = mostLikely.getLikelihood();
+
+                                    if (me.mPlace != null) {
+                                        me.recordPlaces();
                                     }
-                                });
-
-                                PlaceLikelihood mostLikely = places.get(0);
-
-                                me.mPlaceLikelihood = mostLikely.getLikelihood();
-                                me.mPlace = mostLikely.getPlace();
-
-                                if (me.mPlace != null) {
-                                    me.recordPlaces();
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
+
+                    me.mRefreshHandler.postDelayed(this, me.mRefreshInterval);
+
+                    me.refresh();
                 }
+            };
 
-                if (me.mSensingHandler != null) {
-                    me.mSensingHandler.postDelayed(this, GooglePlaces.SENSING_INTERVAL);
-                }
-
-                try {
-                    Thread.sleep(me.mRefreshInterval);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                me.refresh();
-            }
-        };
-
-        Thread t = new Thread(r);
-        t.start();
+            this.mRefreshHandler.post(r);
+        }
     }
 
     private void recordPlaces() {
@@ -344,6 +360,15 @@ public class GooglePlaces extends Generator {
         SharedPreferences.Editor e = prefs.edit();
 
         e.putBoolean(GooglePlaces.ENABLED, enabled);
+
+        e.apply();
+    }
+
+    public void setUpdatesAutomatically(boolean isAutomatic) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.putBoolean(GooglePlaces.AUTOMATICALLY_UPDATES, isAutomatic);
 
         e.apply();
     }

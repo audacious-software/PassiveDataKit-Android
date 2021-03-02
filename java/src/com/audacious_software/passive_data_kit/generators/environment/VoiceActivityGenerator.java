@@ -114,6 +114,10 @@ public class VoiceActivityGenerator extends Generator {
     @SuppressWarnings("WeakerAccess")
     public VoiceActivityGenerator(Context context) {
         super(context);
+
+        Log.e("PDK", "INIT VOICE DETECTION");
+
+        (new Throwable()).printStackTrace();
     }
 
     @SuppressWarnings("unused")

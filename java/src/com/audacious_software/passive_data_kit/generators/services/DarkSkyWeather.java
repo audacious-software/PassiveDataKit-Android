@@ -43,10 +43,10 @@ public class DarkSkyWeather extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-dark-sky-weather";
     private static final String DATABASE_PATH = "pdk-dark-sky-weather.sql";
 
-    private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.environment.TimeOfDay.ENABLED";
+    private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.services.DarkSkyWeather.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
-    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.environment.TimeOfDay.DATA_RETENTION_PERIOD";
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.services.DarkSkyWeather.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private SQLiteDatabase mDatabase = null;

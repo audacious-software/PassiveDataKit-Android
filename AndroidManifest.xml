@@ -60,6 +60,7 @@
             </intent-filter>
         </service>
         <service android:name="com.audacious_software.passive_data_kit.generators.environment.services.GeofencesService" />
+        <service android:name="com.audacious_software.passive_data_kit.generators.services.GoogleActivityRecognition$Service" />
         <service android:name="com.audacious_software.passive_data_kit.messaging.FirebasePushNotificationService"
             tools:ignore="ExportedService">
             <intent-filter>

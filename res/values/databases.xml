@@ -3,6 +3,11 @@
 
     <!-- Location Generator -->
     <string name="pdk_generator_location_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, altitude REAL, bearing REAL, speed REAL, provider TEXT, location_timestamp INTEGER, accuracy REAL);</string>
+    <string name="pdk_generator_location_history_table_add_mock_locations_enabled">ALTER TABLE history ADD mock_locations_enabled INTEGER;</string>
+    <string name="pdk_generator_location_history_table_add_mock_location_apps_count">ALTER TABLE history ADD mock_location_apps_count INTEGER;</string>
+    <string name="pdk_generator_location_history_table_add_mock_location_apps">ALTER TABLE history ADD mock_location_apps TEXT;</string>
+    <string name="pdk_generator_location_history_table_add_mock_location_provider">ALTER TABLE history ADD mock_location_provider INTEGER;</string>
+
 
     <!-- Screen State Generator -->
     <string name="pdk_generator_screen_state_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, state TEXT);</string>
@@ -98,4 +103,7 @@
 
    <!-- Bluetooth Devices -->
     <string name="pdk_generator_bluetooth_devices_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, address TEXT, device_class TEXT, pair_status TEXT, name TEXT, device_type TEXT)</string>
+
+    <!-- Dark Sky Weather Generator -->
+    <string name="pdk_generator_open_weather_create_history_table">CREATE TABLE open_weather_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, temperature REAL, apparent_temperature REAL, humidity REAL, dew_point REAL, wind_speed REAL, wind_gust_speed REAL, wind_bearing REAL, cloud_cover REAL, uv_index REAL, air_pressure REAL, visibility REAL, full_reading TEXT);</string>
 </resources>

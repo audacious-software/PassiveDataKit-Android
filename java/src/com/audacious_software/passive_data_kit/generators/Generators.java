@@ -329,6 +329,8 @@ public class Generators {
                     JSONObject generatorDef = new JSONObject(generatorDefs.getJSONObject(i).toString());
                     String generatorId = generatorDef.getString("identifier");
 
+                    boolean generatorFound = false;
+
                     for (String className : availableGenerators) {
                         try {
                             @SuppressWarnings (value="unchecked")
@@ -342,6 +344,8 @@ public class Generators {
                                 generatorDef.remove("identifier");
 
                                 generator.updateConfig(generatorDef);
+
+                                generatorFound = true;
                             }
                         } catch (ClassNotFoundException e) {
                             e.printStackTrace();
@@ -354,7 +358,9 @@ public class Generators {
                         }
                     }
 
-                    if (generatorDef.length() > 0) {
+                    if (generatorFound == false) {
+                        Log.e("PDK", "Generator " + generatorId + " not currently available.");
+                    } else if (generatorDef.length() > 0) {
                         Log.e("PDK", "Incomplete configuration for " + generatorId + ": " + generatorDef.toString(2));
                     } else {
                         Log.e("PDK", "Configured " + generatorId + ".");
