@@ -1,5 +1,7 @@
 package com.audacious_software.passive_data_kit.generators.environment;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
@@ -9,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -17,6 +20,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import androidx.core.content.ContextCompat;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
@@ -156,6 +161,7 @@ public class BluetoothDevices extends Generator {
         return null;
     }
 
+    @SuppressLint("MissingPermission")
     private void startGenerator() {
         final BluetoothDevices me = this;
 
@@ -179,218 +185,220 @@ public class BluetoothDevices extends Generator {
         this.mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED) {
+                    String action = intent.getAction();
 
-                if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                    BluetoothClass deviceClass = intent.getParcelableExtra(BluetoothDevice.EXTRA_CLASS);
+                    if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                        BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                        BluetoothClass deviceClass = intent.getParcelableExtra(BluetoothDevice.EXTRA_CLASS);
 
-                    ContentValues values = new ContentValues();
-                    values.put(BluetoothDevices.HISTORY_OBSERVED, System.currentTimeMillis());
+                        ContentValues values = new ContentValues();
+                        values.put(BluetoothDevices.HISTORY_OBSERVED, System.currentTimeMillis());
 
-                    String name = device.getName();
+                        String name = device.getName();
 
-                    if (name == null) {
-                        name = "";
+                        if (name == null) {
+                            name = "";
+                        }
+
+                        values.put(BluetoothDevices.HISTORY_NAME, name);
+                        values.put(BluetoothDevices.HISTORY_ADDRESS, device.getAddress());
+
+                        switch (device.getBondState()) {
+                            case BluetoothDevice.BOND_BONDED:
+                                values.put(BluetoothDevices.HISTORY_PAIR_STATUS, BluetoothDevices.PAIR_STATUS_PAIRED);
+                                break;
+                            case BluetoothDevice.BOND_BONDING:
+                                values.put(BluetoothDevices.HISTORY_PAIR_STATUS, BluetoothDevices.PAIR_STATUS_PAIRING);
+                                break;
+                            case BluetoothDevice.BOND_NONE:
+                                values.put(BluetoothDevices.HISTORY_PAIR_STATUS, BluetoothDevices.PAIR_STATUS_NOT_PAIRED);
+                                break;
+                        }
+
+                        switch (device.getType()) {
+                            case BluetoothDevice.DEVICE_TYPE_CLASSIC:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_TYPE, BluetoothDevices.DEVICE_TYPE_CLASSIC);
+                                break;
+                            case BluetoothDevice.DEVICE_TYPE_LE:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_TYPE, BluetoothDevices.DEVICE_TYPE_LE);
+                                break;
+                            case BluetoothDevice.DEVICE_TYPE_DUAL:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_TYPE, BluetoothDevices.DEVICE_TYPE_DUAL);
+                                break;
+                            case BluetoothDevice.DEVICE_TYPE_UNKNOWN:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_TYPE, BluetoothDevices.DEVICE_TYPE_UNKNOWN);
+                                break;
+                        }
+
+                        switch (deviceClass.getDeviceClass()) {
+                            case BluetoothClass.Device.AUDIO_VIDEO_CAMCORDER:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_CAMCORDER);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_CAR_AUDIO);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_HANDSFREE);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_HEADPHONES);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_HIFI_AUDIO:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_HIFI_AUDIO);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_LOUDSPEAKER:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_LOUDSPEAKER);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_MICROPHONE:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_MICROPHONE);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_PORTABLE_AUDIO:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_PORTABLE_AUDIO);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_SET_TOP_BOX:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_SET_TOP_BOX);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_UNCATEGORIZED:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_UNCATEGORIZED);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_VCR:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VCR);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_CAMERA:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VIDEO_CAMERA);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_CONFERENCING:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VIDEO_CONFERENCING);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_DISPLAY_AND_LOUDSPEAKER:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VIDEO_DISPLAY_AND_LOUDSPEAKER);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_GAMING_TOY:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VIDEO_GAMING_TOY);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_MONITOR:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VIDEO_MONITOR);
+                                break;
+                            case BluetoothClass.Device.AUDIO_VIDEO_WEARABLE_HEADSET:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_WEARABLE_HEADSET);
+                                break;
+                            case BluetoothClass.Device.COMPUTER_DESKTOP:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_DESKTOP);
+                                break;
+                            case BluetoothClass.Device.COMPUTER_HANDHELD_PC_PDA:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_HANDHELD_PC_PDA);
+                                break;
+                            case BluetoothClass.Device.COMPUTER_LAPTOP:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_LAPTOP);
+                                break;
+                            case BluetoothClass.Device.COMPUTER_PALM_SIZE_PC_PDA:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_PALM_SIZE_PC_PDA);
+                                break;
+                            case BluetoothClass.Device.COMPUTER_SERVER:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_SERVER);
+                                break;
+                            case BluetoothClass.Device.COMPUTER_UNCATEGORIZED:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_UNCATEGORIZED);
+                                break;
+                            case BluetoothClass.Device.COMPUTER_WEARABLE:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_WEARABLE);
+                                break;
+                            case BluetoothClass.Device.HEALTH_BLOOD_PRESSURE:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_BLOOD_PRESSURE);
+                                break;
+                            case BluetoothClass.Device.HEALTH_DATA_DISPLAY:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_DATA_DISPLAY);
+                                break;
+                            case BluetoothClass.Device.HEALTH_GLUCOSE:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_GLUCOSE);
+                                break;
+                            case BluetoothClass.Device.HEALTH_PULSE_OXIMETER:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_PULSE_OXIMETER);
+                                break;
+                            case BluetoothClass.Device.HEALTH_PULSE_RATE:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_PULSE_RATE);
+                                break;
+                            case BluetoothClass.Device.HEALTH_THERMOMETER:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_THERMOMETER);
+                                break;
+                            case BluetoothClass.Device.HEALTH_UNCATEGORIZED:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_UNCATEGORIZED);
+                                break;
+                            case BluetoothClass.Device.HEALTH_WEIGHING:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_WEIGHING);
+                                break;
+                            case BluetoothClass.Device.PHONE_CELLULAR:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_CELLULAR);
+                                break;
+                            case BluetoothClass.Device.PHONE_CORDLESS:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_CORDLESS);
+                                break;
+                            case BluetoothClass.Device.PHONE_ISDN:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_ISDN);
+                                break;
+                            case BluetoothClass.Device.PHONE_MODEM_OR_GATEWAY:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_MODEM_OR_GATEWAY);
+                                break;
+                            case BluetoothClass.Device.PHONE_SMART:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_SMART);
+                                break;
+                            case BluetoothClass.Device.PHONE_UNCATEGORIZED:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_UNCATEGORIZED);
+                                break;
+                            case BluetoothClass.Device.TOY_CONTROLLER:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_CONTROLLER);
+                                break;
+                            case BluetoothClass.Device.TOY_DOLL_ACTION_FIGURE:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_DOLL_ACTION_FIGURE);
+                                break;
+                            case BluetoothClass.Device.TOY_GAME:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_GAME);
+                                break;
+                            case BluetoothClass.Device.TOY_ROBOT:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_ROBOT);
+                                break;
+                            case BluetoothClass.Device.TOY_UNCATEGORIZED:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_UNCATEGORIZED);
+                                break;
+                            case BluetoothClass.Device.TOY_VEHICLE:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_VEHICLE);
+                                break;
+                            case BluetoothClass.Device.WEARABLE_GLASSES:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_GLASSES);
+                                break;
+                            case BluetoothClass.Device.WEARABLE_HELMET:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_HELMET);
+                                break;
+                            case BluetoothClass.Device.WEARABLE_JACKET:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_JACKET);
+                                break;
+                            case BluetoothClass.Device.WEARABLE_PAGER:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_PAGER);
+                                break;
+                            case BluetoothClass.Device.WEARABLE_UNCATEGORIZED:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_UNCATEGORIZED);
+                                break;
+                            case BluetoothClass.Device.WEARABLE_WRIST_WATCH:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_WRIST_WATCH);
+                                break;
+                            default:
+                                values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_UNKNOWN);
+                                break;
+                        }
+
+                        Bundle bundle = new Bundle();
+
+                        bundle.putString(BluetoothDevices.HISTORY_NAME, values.getAsString(BluetoothDevices.HISTORY_NAME));
+                        bundle.putString(BluetoothDevices.HISTORY_ADDRESS, values.getAsString(BluetoothDevices.HISTORY_ADDRESS));
+                        bundle.putString(BluetoothDevices.HISTORY_PAIR_STATUS, values.getAsString(BluetoothDevices.HISTORY_PAIR_STATUS));
+                        bundle.putString(BluetoothDevices.HISTORY_DEVICE_TYPE, values.getAsString(BluetoothDevices.HISTORY_DEVICE_TYPE));
+                        bundle.putString(BluetoothDevices.HISTORY_DEVICE_CLASS, values.getAsString(BluetoothDevices.HISTORY_DEVICE_CLASS));
+
+                        Generators.getInstance(me.mContext).notifyGeneratorUpdated(BluetoothDevices.GENERATOR_IDENTIFIER, bundle);
+
+                        me.mDatabase.insert(BluetoothDevices.TABLE_HISTORY, null, values);
                     }
-
-                    values.put(BluetoothDevices.HISTORY_NAME, name);
-                    values.put(BluetoothDevices.HISTORY_ADDRESS, device.getAddress());
-
-                    switch (device.getBondState()) {
-                        case BluetoothDevice.BOND_BONDED:
-                            values.put(BluetoothDevices.HISTORY_PAIR_STATUS, BluetoothDevices.PAIR_STATUS_PAIRED);
-                            break;
-                        case BluetoothDevice.BOND_BONDING:
-                            values.put(BluetoothDevices.HISTORY_PAIR_STATUS, BluetoothDevices.PAIR_STATUS_PAIRING);
-                            break;
-                        case BluetoothDevice.BOND_NONE:
-                            values.put(BluetoothDevices.HISTORY_PAIR_STATUS, BluetoothDevices.PAIR_STATUS_NOT_PAIRED);
-                            break;
-                    }
-
-                    switch (device.getType()) {
-                        case BluetoothDevice.DEVICE_TYPE_CLASSIC:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_TYPE, BluetoothDevices.DEVICE_TYPE_CLASSIC);
-                            break;
-                        case BluetoothDevice.DEVICE_TYPE_LE:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_TYPE, BluetoothDevices.DEVICE_TYPE_LE);
-                            break;
-                        case BluetoothDevice.DEVICE_TYPE_DUAL:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_TYPE, BluetoothDevices.DEVICE_TYPE_DUAL);
-                            break;
-                        case BluetoothDevice.DEVICE_TYPE_UNKNOWN:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_TYPE, BluetoothDevices.DEVICE_TYPE_UNKNOWN);
-                            break;
-                    }
-
-                    switch (deviceClass.getDeviceClass()) {
-                        case BluetoothClass.Device.AUDIO_VIDEO_CAMCORDER:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_CAMCORDER);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_CAR_AUDIO);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_HANDSFREE);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_HEADPHONES);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_HIFI_AUDIO:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_HIFI_AUDIO);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_LOUDSPEAKER:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_LOUDSPEAKER);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_MICROPHONE:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_MICROPHONE);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_PORTABLE_AUDIO:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_PORTABLE_AUDIO);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_SET_TOP_BOX:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_SET_TOP_BOX);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_UNCATEGORIZED:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_UNCATEGORIZED);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_VCR:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VCR);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_CAMERA:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VIDEO_CAMERA);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_CONFERENCING:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VIDEO_CONFERENCING);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_DISPLAY_AND_LOUDSPEAKER:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VIDEO_DISPLAY_AND_LOUDSPEAKER);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_GAMING_TOY:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VIDEO_GAMING_TOY);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_MONITOR:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_VIDEO_MONITOR);
-                            break;
-                        case BluetoothClass.Device.AUDIO_VIDEO_WEARABLE_HEADSET:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_AUDIO_VIDEO_WEARABLE_HEADSET);
-                            break;
-                        case BluetoothClass.Device.COMPUTER_DESKTOP:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_DESKTOP);
-                            break;
-                        case BluetoothClass.Device.COMPUTER_HANDHELD_PC_PDA:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_HANDHELD_PC_PDA);
-                            break;
-                        case BluetoothClass.Device.COMPUTER_LAPTOP:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_LAPTOP);
-                            break;
-                        case BluetoothClass.Device.COMPUTER_PALM_SIZE_PC_PDA:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_PALM_SIZE_PC_PDA);
-                            break;
-                        case BluetoothClass.Device.COMPUTER_SERVER:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_SERVER);
-                            break;
-                        case BluetoothClass.Device.COMPUTER_UNCATEGORIZED:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_UNCATEGORIZED);
-                            break;
-                        case BluetoothClass.Device.COMPUTER_WEARABLE:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_COMPUTER_WEARABLE);
-                            break;
-                        case BluetoothClass.Device.HEALTH_BLOOD_PRESSURE:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_BLOOD_PRESSURE);
-                            break;
-                        case BluetoothClass.Device.HEALTH_DATA_DISPLAY:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_DATA_DISPLAY);
-                            break;
-                        case BluetoothClass.Device.HEALTH_GLUCOSE:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_GLUCOSE);
-                            break;
-                        case BluetoothClass.Device.HEALTH_PULSE_OXIMETER:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_PULSE_OXIMETER);
-                            break;
-                        case BluetoothClass.Device.HEALTH_PULSE_RATE:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_PULSE_RATE);
-                            break;
-                        case BluetoothClass.Device.HEALTH_THERMOMETER:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_THERMOMETER);
-                            break;
-                        case BluetoothClass.Device.HEALTH_UNCATEGORIZED:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_UNCATEGORIZED);
-                            break;
-                        case BluetoothClass.Device.HEALTH_WEIGHING:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_HEALTH_WEIGHING);
-                            break;
-                        case BluetoothClass.Device.PHONE_CELLULAR:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_CELLULAR);
-                            break;
-                        case BluetoothClass.Device.PHONE_CORDLESS:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_CORDLESS);
-                            break;
-                        case BluetoothClass.Device.PHONE_ISDN:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_ISDN);
-                            break;
-                        case BluetoothClass.Device.PHONE_MODEM_OR_GATEWAY:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_MODEM_OR_GATEWAY);
-                            break;
-                        case BluetoothClass.Device.PHONE_SMART:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_SMART);
-                            break;
-                        case BluetoothClass.Device.PHONE_UNCATEGORIZED:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_PHONE_UNCATEGORIZED);
-                            break;
-                        case BluetoothClass.Device.TOY_CONTROLLER:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_CONTROLLER);
-                            break;
-                        case BluetoothClass.Device.TOY_DOLL_ACTION_FIGURE:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_DOLL_ACTION_FIGURE);
-                            break;
-                        case BluetoothClass.Device.TOY_GAME:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_GAME);
-                            break;
-                        case BluetoothClass.Device.TOY_ROBOT:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_ROBOT);
-                            break;
-                        case BluetoothClass.Device.TOY_UNCATEGORIZED:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_UNCATEGORIZED);
-                            break;
-                        case BluetoothClass.Device.TOY_VEHICLE:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_TOY_VEHICLE);
-                            break;
-                        case BluetoothClass.Device.WEARABLE_GLASSES:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_GLASSES);
-                            break;
-                        case BluetoothClass.Device.WEARABLE_HELMET:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_HELMET);
-                            break;
-                        case BluetoothClass.Device.WEARABLE_JACKET:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_JACKET);
-                            break;
-                        case BluetoothClass.Device.WEARABLE_PAGER:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_PAGER);
-                            break;
-                        case BluetoothClass.Device.WEARABLE_UNCATEGORIZED:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_UNCATEGORIZED);
-                            break;
-                        case BluetoothClass.Device.WEARABLE_WRIST_WATCH:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_WEARABLE_WRIST_WATCH);
-                            break;
-                        default:
-                            values.put(BluetoothDevices.HISTORY_DEVICE_CLASS, BluetoothDevices.CLASS_UNKNOWN);
-                            break;
-                    }
-
-                    Bundle bundle = new Bundle();
-
-                    bundle.putString(BluetoothDevices.HISTORY_NAME, values.getAsString(BluetoothDevices.HISTORY_NAME));
-                    bundle.putString(BluetoothDevices.HISTORY_ADDRESS, values.getAsString(BluetoothDevices.HISTORY_ADDRESS));
-                    bundle.putString(BluetoothDevices.HISTORY_PAIR_STATUS, values.getAsString(BluetoothDevices.HISTORY_PAIR_STATUS));
-                    bundle.putString(BluetoothDevices.HISTORY_DEVICE_TYPE, values.getAsString(BluetoothDevices.HISTORY_DEVICE_TYPE));
-                    bundle.putString(BluetoothDevices.HISTORY_DEVICE_CLASS, values.getAsString(BluetoothDevices.HISTORY_DEVICE_CLASS));
-
-                    Generators.getInstance(me.mContext).notifyGeneratorUpdated(BluetoothDevices.GENERATOR_IDENTIFIER, bundle);
-
-                    me.mDatabase.insert(BluetoothDevices.TABLE_HISTORY, null, values);
                 }
             }
         };
@@ -420,14 +428,18 @@ public class BluetoothDevices extends Generator {
                             me.mReceiver.onReceive(me.mContext, intent);
                         }
 
-                        bluetoothAdapter.startDiscovery();
+                        if (ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.BLUETOOTH_ADMIN) == PackageManager.PERMISSION_GRANTED) {
+                            bluetoothAdapter.startDiscovery();
 
-                        me.mHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                bluetoothAdapter.cancelDiscovery();
-                            }
-                        }, me.mScanDuration);
+                            me.mHandler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.BLUETOOTH_ADMIN) == PackageManager.PERMISSION_GRANTED) {
+                                        bluetoothAdapter.cancelDiscovery();
+                                    }
+                                }
+                            }, me.mScanDuration);
+                        }
                     }
 
                     me.mHandler.postDelayed(this, me.mUpdateInterval);
@@ -460,11 +472,15 @@ public class BluetoothDevices extends Generator {
         Generators.getInstance(this.mContext).registerCustomViewClass(BluetoothDevices.GENERATOR_IDENTIFIER, BluetoothDevices.class);
     }
 
+    @SuppressLint("MissingPermission")
     private void stopGenerator() {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        if (bluetoothAdapter.isDiscovering()) {
-            bluetoothAdapter.cancelDiscovery();
+        if (ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.BLUETOOTH_ADMIN) == PackageManager.PERMISSION_GRANTED) {
+            if (bluetoothAdapter.isDiscovering()) {
+                bluetoothAdapter.cancelDiscovery();
+            }
         }
 
         if (this.mHandler != null) {
