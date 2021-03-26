@@ -26,5 +26,5 @@ public abstract class Transmitter {
 
     public abstract long lastSuccessfulTransmission();
 
-    public abstract void testTransmission(Handler handler, Runnable success, Runnable failure);
+    public abstract void testTransmission(Handler handler, boolean includeLocation, Runnable success, Runnable failure);
 }

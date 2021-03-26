@@ -1,8 +1,11 @@
 package com.audacious_software.passive_data_kit.transmitters;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.BadParcelableException;
@@ -21,6 +24,7 @@ import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.Toolbox;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
+import com.audacious_software.passive_data_kit.generators.device.Location;
 import com.audacious_software.pdk.passivedatakit.R;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -52,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -1140,14 +1145,14 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     }
 
     @Override
-    public void testTransmission(Handler handler, Runnable success, Runnable failure) {
+    public void testTransmission(Handler handler, boolean includeLocation, Runnable success, Runnable failure) {
         final HttpTransmitter me = this;
 
         Runnable r = new Runnable() {
             @Override
             public void run() {
                 try {
-                    String testPayload = me.generateTestPayload();
+                    String testPayload = me.generateTestPayload(includeLocation);
 
                     int result = me.transmitHttpPayload(testPayload);
 
@@ -1167,7 +1172,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         this.mHandler.post(r);
     }
 
-    private String generateTestPayload() throws JSONException {
+    private String generateTestPayload(boolean includeLocation) throws JSONException {
         JSONObject testReading = new JSONObject();
 
         JSONObject metadata = new JSONObject();
@@ -1183,6 +1188,45 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
         metadata.put(Generator.TIMEZONE, timeZone.getID());
         metadata.put(Generator.TIMEZONE_OFFSET, timeZone.getOffset(timestamp) / 1000);
+
+        if (includeLocation) {
+            android.location.Location location = Location.getInstance(this.mContext).getLastKnownLocation();
+
+            testReading.put(Location.LATITUDE, location.getLatitude());
+            testReading.put(Location.LONGITUDE, location.getLongitude());
+
+            JSONArray mockLocationApps = new JSONArray();
+            HashSet<String> seenApps = new HashSet<>();
+
+            PackageManager pm = this.mContext.getPackageManager();
+            List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+
+            for (ApplicationInfo applicationInfo : packages) {
+                try {
+                    PackageInfo packageInfo = pm.getPackageInfo(applicationInfo.packageName, PackageManager.GET_PERMISSIONS);
+
+                    String[] requestedPermissions = packageInfo.requestedPermissions;
+
+                    if (requestedPermissions != null) {
+                        for (int i = 0; i < requestedPermissions.length; i++) {
+                            if (requestedPermissions[i].equals("android.permission.ACCESS_MOCK_LOCATION")) {
+                                if (seenApps.contains(applicationInfo.packageName) == false) {
+                                    mockLocationApps.put(applicationInfo.packageName);
+
+                                    seenApps.add(applicationInfo.packageName);
+                                }
+                            }
+                        }
+                    }
+                } catch (PackageManager.NameNotFoundException e) {
+                    Log.e("PDK" , "MOCK LOCATION STACK TRACE", e);
+                }
+            }
+
+            testReading.put(Location.HISTORY_MOCK_LOCATION_APPS_COUNT, mockLocationApps.length());
+            testReading.put(Location.HISTORY_MOCK_LOCATION_APPS, mockLocationApps);
+            testReading.put(Location.HISTORY_MOCK_LOCATION_PROVIDER, location.isFromMockProvider());
+        }
 
         testReading.put("passive-data-metadata", metadata);
 

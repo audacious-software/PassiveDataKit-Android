@@ -179,9 +179,9 @@ public class Location extends Generator implements LocationListener, android.loc
     private static final String HISTORY_LOCATION_TIMESTAMP = "location_timestamp";
     private static final String HISTORY_ACCURACY = "accuracy";
     private static final String HISTORY_MOCK_LOCATIONS_ENABLED = "mock_locations_enabled";
-    private static final String HISTORY_MOCK_LOCATION_APPS_COUNT = "mock_location_apps_count";
-    private static final String HISTORY_MOCK_LOCATION_APPS = "mock_location_apps";
-    private static final String HISTORY_MOCK_LOCATION_PROVIDER = "mock_location_provider";
+    public static final String HISTORY_MOCK_LOCATION_APPS_COUNT = "mock_location_apps_count";
+    public static final String HISTORY_MOCK_LOCATION_APPS = "mock_location_apps";
+    public static final String HISTORY_MOCK_LOCATION_PROVIDER = "mock_location_provider";
 
     private long mLatestTimestamp = -1;
 
