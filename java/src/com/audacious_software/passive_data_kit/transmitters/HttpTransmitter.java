@@ -1192,8 +1192,11 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         if (includeLocation) {
             android.location.Location location = Location.getInstance(this.mContext).getLastKnownLocation();
 
-            testReading.put(Location.LATITUDE, location.getLatitude());
-            testReading.put(Location.LONGITUDE, location.getLongitude());
+            if (location != null) {
+                testReading.put(Location.LATITUDE, location.getLatitude());
+                testReading.put(Location.LONGITUDE, location.getLongitude());
+                testReading.put(Location.HISTORY_MOCK_LOCATION_PROVIDER, location.isFromMockProvider());
+            }
 
             JSONArray mockLocationApps = new JSONArray();
             HashSet<String> seenApps = new HashSet<>();
@@ -1225,7 +1228,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
             testReading.put(Location.HISTORY_MOCK_LOCATION_APPS_COUNT, mockLocationApps.length());
             testReading.put(Location.HISTORY_MOCK_LOCATION_APPS, mockLocationApps);
-            testReading.put(Location.HISTORY_MOCK_LOCATION_PROVIDER, location.isFromMockProvider());
         }
 
         testReading.put("passive-data-metadata", metadata);
