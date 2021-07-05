@@ -27,8 +27,8 @@ import com.audacious_software.pdk.passivedatakit.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
+import com.google.firebase.installations.FirebaseInstallations;
+import com.google.firebase.installations.InstallationTokenResult;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -259,10 +259,10 @@ public class PassiveDataKit {
             }
         } else {
             try {
-                FirebaseInstanceId.getInstance().getInstanceId()
-                        .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                FirebaseInstallations.getInstance().getToken(true)
+                        .addOnCompleteListener(new OnCompleteListener<InstallationTokenResult>() {
                             @Override
-                            public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                            public void onComplete(@NonNull Task<InstallationTokenResult> task) {
                                 if (!task.isSuccessful()) {
                                     Log.w("PDK", "getInstanceId failed", task.getException());
                                     return;
@@ -272,6 +272,7 @@ public class PassiveDataKit {
                                 String token = task.getResult().getToken();
 
                                 me.updateFirebaseDeviceToken(token);
+
                             }
                         });
             } catch (IllegalStateException ex) {
