@@ -9,7 +9,8 @@ jobs:
           password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
     environment:
       JVM_OPTS: -Xmx3200m
-      GRADLE_HOME: gradle-6.6.1
+      GRADLE_VERSION: 7.1.1
+      GRADLE_HOME: gradle-$GRADLE_VERSION
     steps:
       - checkout
       - restore_cache:
@@ -17,8 +18,8 @@ jobs:
       - run:
           name: Install Gradle
           command: |
-            wget https://services.gradle.org/distributions/gradle-6.6.1-bin.zip
-            unzip gradle-6.6.1-bin.zip
+            wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
+            unzip gradle-$GRADLE_VERSION-bin.zip
       - run:
           name: Download Dependencies
           command: $GRADLE_HOME/bin/gradle androidDependencies
