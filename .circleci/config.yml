@@ -10,7 +10,6 @@ jobs:
     environment:
       JVM_OPTS: -Xmx3200m
       GRADLE_HOME: gradle-6.6.1
-      PATH: gradle-6.6.1/bin:$PATH
     steps:
       - checkout
       - restore_cache:
@@ -22,14 +21,14 @@ jobs:
             unzip gradle-6.6.1-bin.zip
       - run:
           name: Download Dependencies
-          command: gradle androidDependencies
+          command: $GRADLE_HOME/bin/gradle androidDependencies
       - save_cache:
           paths:
             - ~/.gradle
           key: jars-{{ checksum "build.gradle" }}
       - run:
           name: Build
-          command: gradle asembleDebug
+          command: gradle $GRADLE_HOME/bin/asembleDebug
       - run:
           name: Run Tests
           command: gradle lint test
