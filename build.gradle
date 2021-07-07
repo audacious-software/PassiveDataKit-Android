@@ -89,6 +89,12 @@ android {
         androidTest.setRoot('tests')
     }
 
+    configurations {
+        all {
+            exclude group: 'org.json', module: 'json'
+        }
+    }
+
     lintOptions {
         abortOnError false
     }
