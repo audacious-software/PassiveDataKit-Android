@@ -121,71 +121,74 @@ public class GoogleActivityRecognition extends Generator {
         if (GoogleActivityRecognition.isEnabled(this.mContext)) {
             int permissionCheck = ContextCompat.checkSelfPermission(this.mContext, Manifest.permission.ACTIVITY_RECOGNITION);
 
-            this.mPendingIntent = PendingIntent.getService(this.mContext, 0, new Intent(this.mContext, GoogleActivityRecognition.Service.class), 0);
+            if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
 
-            this.mClient = ActivityRecognition.getClient(this.mContext);
+                this.mPendingIntent = PendingIntent.getService(this.mContext, 0, new Intent(this.mContext, GoogleActivityRecognition.Service.class), 0);
 
-            List transitions = new ArrayList<>();
+                this.mClient = ActivityRecognition.getClient(this.mContext);
 
-            int[] activities = {
-                    DetectedActivity.IN_VEHICLE,
-                    DetectedActivity.ON_BICYCLE,
-                    DetectedActivity.ON_FOOT,
-                    DetectedActivity.RUNNING,
-                    DetectedActivity.STILL,
-                    // DetectedActivity.TILTING,
-                    DetectedActivity.WALKING
-                    // DetectedActivity.UNKNOWN
-            };
+                List transitions = new ArrayList<>();
 
-            for (int activity : activities) {
-                transitions.add(new ActivityTransition.Builder()
-                        .setActivityType(activity)
-                        .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
-                        .build());
+                int[] activities = {
+                        DetectedActivity.IN_VEHICLE,
+                        DetectedActivity.ON_BICYCLE,
+                        DetectedActivity.ON_FOOT,
+                        DetectedActivity.RUNNING,
+                        DetectedActivity.STILL,
+                        // DetectedActivity.TILTING,
+                        DetectedActivity.WALKING
+                        // DetectedActivity.UNKNOWN
+                };
+
+                for (int activity : activities) {
+                    transitions.add(new ActivityTransition.Builder()
+                            .setActivityType(activity)
+                            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                            .build());
+                }
+
+                ActivityTransitionRequest activityRequest = new ActivityTransitionRequest(transitions);
+
+                this.mClient = ActivityRecognition.getClient(this.mContext);
+
+                Task activityTask = this.mClient.requestActivityTransitionUpdates(activityRequest, this.mPendingIntent);
+
+                activityTask.addOnSuccessListener(
+                        new OnSuccessListener() {
+                            @Override
+                            public void onSuccess(Object o) {
+
+                            }
+                        });
+
+                activityTask.addOnFailureListener(
+                        new OnFailureListener() {
+                            @Override
+                            public void onFailure(Exception e) {
+                                Log.e("PDK", "Unable to connect to Google Activity Recognition service.");
+                                e.printStackTrace();
+                            }
+                        });
+
+                Task sleepTask = this.mClient.requestSleepSegmentUpdates(this.mPendingIntent, SleepSegmentRequest.getDefaultSleepSegmentRequest());
+
+                sleepTask.addOnSuccessListener(
+                        new OnSuccessListener() {
+                            @Override
+                            public void onSuccess(Object o) {
+
+                            }
+                        });
+
+                sleepTask.addOnFailureListener(
+                        new OnFailureListener() {
+                            @Override
+                            public void onFailure(Exception e) {
+                                Log.e("PDK", "Unable to connect to Google Activity Recognition sleep service.");
+                                e.printStackTrace();
+                            }
+                        });
             }
-
-            ActivityTransitionRequest activityRequest = new ActivityTransitionRequest(transitions);
-
-            this.mClient = ActivityRecognition.getClient(this.mContext);
-
-            Task activityTask = this.mClient.requestActivityTransitionUpdates(activityRequest, this.mPendingIntent);
-
-            activityTask.addOnSuccessListener(
-                    new OnSuccessListener() {
-                        @Override
-                        public void onSuccess(Object o) {
-
-                        }
-                    });
-
-            activityTask.addOnFailureListener(
-                    new OnFailureListener() {
-                        @Override
-                        public void onFailure(Exception e) {
-                            Log.e("PDK", "Unable to connect to Google Activity Recognition service.");
-                            e.printStackTrace();
-                        }
-                    });
-
-            Task sleepTask = this.mClient.requestSleepSegmentUpdates(this.mPendingIntent, SleepSegmentRequest.getDefaultSleepSegmentRequest());
-
-            sleepTask.addOnSuccessListener(
-                    new OnSuccessListener() {
-                        @Override
-                        public void onSuccess(Object o) {
-
-                        }
-                    });
-
-            sleepTask.addOnFailureListener(
-                    new OnFailureListener() {
-                        @Override
-                        public void onFailure(Exception e) {
-                            Log.e("PDK", "Unable to connect to Google Activity Recognition sleep service.");
-                            e.printStackTrace();
-                        }
-                    });
         }
     }
 
