@@ -27,12 +27,7 @@ import com.audacious_software.pdk.passivedatakit.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
-<<<<<<< HEAD
 import com.google.firebase.messaging.FirebaseMessaging;
-=======
-import com.google.firebase.installations.FirebaseInstallations;
-import com.google.firebase.installations.InstallationTokenResult;
->>>>>>> a61f795ad406af806175471ebd65fe7072c1aa6e
 
 import org.json.JSONArray;
 import org.json.JSONException;
