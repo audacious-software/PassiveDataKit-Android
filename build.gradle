@@ -27,6 +27,9 @@ repositories {
             password = project.properties['mapbox_key']
         }
     }
+    flatDir {
+        dirs 'libs' //this way we can find the .aar file in libs folder
+    }
 }
 
 android {
@@ -135,10 +138,7 @@ android {
         api 'com.googlecode.libphonenumber:libphonenumber:8.11.3'
         implementation 'com.google.android.material:material:1.4.0'
         implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.6.0'  // Retaining older version due to crashes in 8.6.x and earlier
-        implementation fileTree('libs')
-        // api(name: 'fgchecker-release', ext: 'aar')
-        // api(name: 'amazon-maps-api-v2', ext: 'aar')
-
-        // implementation "org.webrtc:google-webrtc:1.0.30039"
+        api(name: 'fgchecker-release', ext: 'aar')
+        api(name: 'amazon-maps-api-v2', ext: 'aar')
     }
 }
