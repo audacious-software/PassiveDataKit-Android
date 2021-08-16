@@ -1305,7 +1305,7 @@ public class MicrosoftBand extends Generator
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_microsoft_band, parent, false);
     }
 
-    @SuppressWarnings({"unused", "ConstantConditions"})
+    @SuppressWarnings({"unused"})
     public static void bindViewHolder(DataPointViewHolder holder, Bundle dataPoint)
     {
         Context context = holder.itemView.getContext();

@@ -19,4 +19,4 @@
 -keep class com.audacious_software.passive_data_kit.** { *; }
 -keepattributes LineNumberTable,SourceFile
 
--dontwarn javax.xml.bind.**;
+-dontwarn javax.xml.bind.**

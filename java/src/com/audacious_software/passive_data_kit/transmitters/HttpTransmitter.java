@@ -864,7 +864,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         return this.mTransmitted;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onGeneratorUpdated(final String identifier, final long timestamp, Bundle data) {
         if (this.mHandler == null) {
