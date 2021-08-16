@@ -4,10 +4,6 @@ buildscript {
     repositories {
         mavenCentral()
         google()
-        flatDir {
-            dirs 'libs'
-        }
-        google()
     }
 
     dependencies {
@@ -31,9 +27,6 @@ repositories {
             password = project.properties['mapbox_key']
         }
     }
-    flatDir {
-        dirs 'libs'
-    }
 }
 
 android {
@@ -41,7 +34,7 @@ android {
 
     defaultConfig {
         minSdkVersion 18
-        targetSdkVersion 30
+        targetSdkVersion 31
         compileSdkVersion 30
 
         versionCode 1
@@ -80,7 +73,6 @@ android {
         main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['java/src']
-            // aidl.srcDirs = ['src']
             renderscript.srcDirs = ['src']
             res.srcDirs = ['res']
             assets.srcDirs = ['assets']
@@ -143,8 +135,9 @@ android {
         api 'com.googlecode.libphonenumber:libphonenumber:8.11.3'
         implementation 'com.google.android.material:material:1.4.0'
         implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.6.0'  // Retaining older version due to crashes in 8.6.x and earlier
-        api(name: 'fgchecker-release', ext: 'aar')
-        api(name: 'amazon-maps-api-v2', ext: 'aar')
+        implementation fileTree('libs')
+        // api(name: 'fgchecker-release', ext: 'aar')
+        // api(name: 'amazon-maps-api-v2', ext: 'aar')
 
         // implementation "org.webrtc:google-webrtc:1.0.30039"
     }

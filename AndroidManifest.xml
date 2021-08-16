@@ -54,7 +54,8 @@
         </service>
         <service android:name="com.audacious_software.passive_data_kit.generators.device.NotificationEvents$ListenerService"
             android:label="@string/generator_notification_events"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
@@ -62,7 +63,7 @@
         <service android:name="com.audacious_software.passive_data_kit.generators.environment.services.GeofencesService" />
         <service android:name="com.audacious_software.passive_data_kit.generators.services.GoogleActivityRecognition$Service" />
         <service android:name="com.audacious_software.passive_data_kit.messaging.FirebasePushNotificationService"
-            tools:ignore="ExportedService">
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
