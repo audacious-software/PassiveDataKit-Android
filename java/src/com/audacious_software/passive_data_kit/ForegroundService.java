@@ -84,7 +84,7 @@ public class ForegroundService extends Service {
             PassiveDataKit.getInstance(context).annotateForegroundIntent(launchIntent);
 
             if (launchIntent != null) {
-                pendingIntent = PendingIntent.getActivity(context, 0, launchIntent, 0);
+                pendingIntent = PendingIntent.getActivity(context, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE);
             }
         }
 

@@ -123,7 +123,7 @@ public class GoogleActivityRecognition extends Generator {
 
             if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
 
-                this.mPendingIntent = PendingIntent.getService(this.mContext, 0, new Intent(this.mContext, GoogleActivityRecognition.Service.class), 0);
+                this.mPendingIntent = PendingIntent.getService(this.mContext, 0, new Intent(this.mContext, GoogleActivityRecognition.Service.class), PendingIntent.FLAG_IMMUTABLE);
 
                 this.mClient = ActivityRecognition.getClient(this.mContext);
 

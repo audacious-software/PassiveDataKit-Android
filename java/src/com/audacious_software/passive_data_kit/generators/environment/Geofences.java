@@ -135,7 +135,7 @@ public class Geofences extends Generator {
 
             Intent intent = new Intent(context, GeofencesService.class);
 
-            Geofences.sInstance.mGeofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            Geofences.sInstance.mGeofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
         }
 
         return Geofences.sInstance;

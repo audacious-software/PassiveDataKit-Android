@@ -342,7 +342,7 @@ public class SystemStatus extends Generator {
                 t.start();
 
                 AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-                PendingIntent pi = PendingIntent.getBroadcast(context, 0, new Intent(SystemStatus.ACTION_HEARTBEAT), PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent pi = PendingIntent.getBroadcast(context, 0, new Intent(SystemStatus.ACTION_HEARTBEAT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, now + me.mRefreshInterval, pi);

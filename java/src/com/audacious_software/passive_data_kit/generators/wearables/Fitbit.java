@@ -1069,7 +1069,7 @@ public class Fitbit extends Generator {
         Intent handlerIntent = new Intent(activity, Fitbit.OAuthResultHandlerActivity.class);
         handlerIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(activity, 0, handlerIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(activity, 0, handlerIntent, PendingIntent.FLAG_IMMUTABLE);
 
         service.performAuthorizationRequest(request, pendingIntent);
     }
