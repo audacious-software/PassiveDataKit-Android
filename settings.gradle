@@ -1,0 +1,8 @@
+include ':app'
+
+include ':amazon-maps-api-v2'
+project(':amazon-maps-api-v2').projectDir = new File(settingsDir, './Passive-Data-Kit/aars/amazon-maps-api-v2')
+
+include ':fgchecker-release'
+project(':fgchecker-release').projectDir = new File(settingsDir, './Passive-Data-Kit/aars/fgchecker-release')
+
