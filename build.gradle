@@ -7,7 +7,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.4'
+        classpath 'com.android.tools.build:gradle:7.2.0'
     }
 }
 
@@ -27,13 +27,10 @@ repositories {
             password = project.properties['mapbox_key']
         }
     }
-    flatDir {
-        dirs 'libs' //this way we can find the .aar file in libs folder
-    }
 }
 
 android {
-    buildToolsVersion "30.0.3"
+    buildToolsVersion "32.0.0"
 
     defaultConfig {
         minSdkVersion 19
@@ -59,12 +56,11 @@ android {
         }
     }
 
-    ndkVersion '23.1.7779620'
+    ndkVersion '24.0.8215888'
 
     externalNativeBuild {
        cmake {
            path "CMakeLists.txt"
-           version "3.10.2"
        }
     }
 
@@ -95,7 +91,7 @@ android {
     }
 
     dependencies {
-        api fileTree(dir: 'libs', include: ['*.jar'])
+        api fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
         // testCompile 'junit:junit:4.12'
         implementation 'androidx.appcompat:appcompat:1.4.1'
         implementation 'androidx.recyclerview:recyclerview:1.2.1'
@@ -105,26 +101,26 @@ android {
         implementation 'androidx.browser:browser:1.4.0'
         implementation 'androidx.work:work-runtime:2.7.1'
         implementation 'com.google.guava:guava:28.2-android'
-        implementation 'com.google.firebase:firebase-messaging:23.0.3'
+        implementation 'com.google.firebase:firebase-messaging:23.0.4'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         implementation 'com.fasterxml.jackson.core:jackson-core:2.11.1'
         implementation 'com.fasterxml.jackson.datatype:jackson-datatype-json-org:2.9.9'
         implementation 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
         implementation 'com.github.mfornos:humanize-slim:1.2.2'
         implementation 'com.google.guava:guava:28.2-android'
-        implementation 'com.google.android.material:material:1.5.0'
+        implementation 'com.google.android.material:material:1.6.0'
         implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.6.0'  // Retaining older version due to crashes in 8.6.x and earlier
         implementation 'com.google.maps.android:android-maps-utils:0.5'
 
         api 'com.android.volley:volley:1.2.1'
         api 'com.google.guava:guava:28.2-android'
-        api 'com.google.android.gms:play-services-auth:20.1.0'
+        api 'com.google.android.gms:play-services-auth:20.2.0'
         api 'com.google.android.gms:play-services-fitness:21.0.1'
         api 'com.google.android.gms:play-services-location:19.0.1'
         api 'com.google.android.gms:play-services-maps:18.0.2'
         api 'com.google.android.gms:play-services-awareness:19.0.1'
         api 'com.google.android.libraries.places:places:2.6.0'
-        api 'com.google.firebase:firebase-messaging:23.0.3'
+        api 'com.google.firebase:firebase-messaging:23.0.4'
         api 'net.openid:appauth:0.7.0'
         api 'com.squareup.okhttp3:okhttp:3.12.3' // Retaining older version for Android 4 support
         api 'com.squareup.okhttp3:okhttp-tls:3.12.3'
@@ -136,7 +132,7 @@ android {
         api 'com.google.code.findbugs:jsr305:3.0.2'
         api 'com.googlecode.libphonenumber:libphonenumber:8.11.3'
 
-        api(name: 'fgchecker-release', ext: 'aar')
-        api(name: 'amazon-maps-api-v2', ext: 'aar')
+		api project(':amazon-maps-api-v2')
+		api project(':fgchecker-release')
     }
 }
