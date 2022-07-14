@@ -61,6 +61,9 @@ public class TextMessages extends Generator {
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.communication.TextMessages.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (4 * 365L * 24L * 60L * 60L * 1000L);
 
+    private static final String OMIT_SENSITIVE_FIELDS = "com.audacious_software.passive_data_kit.generators.communication.TextMessages.OMIT_SENSITIVE_FIELDS";
+    private static final boolean OMIT_SENSITIVE_FIELDS_DEFAULT = false;
+
     public static final Uri SMS_INBOX_URI = Uri.parse("content://sms/inbox");
     public static final Uri SMS_SENT_URI = Uri.parse("content://sms/sent");
 
@@ -158,6 +161,10 @@ public class TextMessages extends Generator {
                 }
 
                 if (approved) {
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+
+                    boolean omitSensitiveFields = prefs.getBoolean(TextMessages.OMIT_SENSITIVE_FIELDS, TextMessages.OMIT_SENSITIVE_FIELDS_DEFAULT);
+
                     try {
                         long lastObserved = 0;
 
@@ -166,8 +173,6 @@ public class TextMessages extends Generator {
                         if (lastCursor.moveToNext()) {
                             lastObserved = lastCursor.getLong(lastCursor.getColumnIndex(TextMessages.HISTORY_OBSERVED));
                         }
-
-                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
                         long retentionPeriod = prefs.getLong(TextMessages.DATA_RETENTION_PERIOD, TextMessages.DATA_RETENTION_PERIOD_DEFAULT);
 
@@ -305,6 +310,12 @@ public class TextMessages extends Generator {
                             bundle.putString(TextMessages.SMS_NUMBER, values.getAsString(TextMessages.HISTORY_NUMBER));
                             bundle.putString(TextMessages.SMS_DIRECTION, values.getAsString(TextMessages.HISTORY_DIRECTION));
                             bundle.putString(TextMessages.SMS_BODY, values.getAsString(TextMessages.HISTORY_BODY));
+
+                            if (omitSensitiveFields) {
+                                bundle.remove(TextMessages.SMS_NUMBER_NAME);
+                                bundle.remove(TextMessages.SMS_NUMBER);
+                                bundle.remove(TextMessages.SMS_BODY);
+                            }
 
                             Generators.getInstance(me.mContext).notifyGeneratorUpdated(TextMessages.GENERATOR_IDENTIFIER, values.getAsLong(TextMessages.HISTORY_OBSERVED), bundle);
 
@@ -623,6 +634,13 @@ public class TextMessages extends Generator {
 
     public void addBodyAnnotator(TextMessages.BodyAnnotator annotator) {
         this.mBodyAnnotators.add(annotator);
+    }
+
+    public void setOmitSensitiveFields(boolean doOmit) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(TextMessages.OMIT_SENSITIVE_FIELDS, doOmit);
+        e.apply();
     }
 
     public static abstract class BodyAnnotator {

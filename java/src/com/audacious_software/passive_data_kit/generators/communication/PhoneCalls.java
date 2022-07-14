@@ -61,6 +61,9 @@ public class PhoneCalls extends Generator {
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.communication.PhoneCalls.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
+    private static final String OMIT_SENSITIVE_FIELDS = "com.audacious_software.passive_data_kit.generators.communication.PhoneCalls.OMIT_SENSITIVE_FIELDS";
+    private static final boolean OMIT_SENSITIVE_FIELDS_DEFAULT = false;
+
     private static final String CALL_DATE_KEY = "call_timestamp";
     private static final String CALL_DURATION_KEY = "duration";
     private static final String CALL_IS_NEW_KEY = "is_new";
@@ -161,6 +164,10 @@ public class PhoneCalls extends Generator {
             @Override
             public void run() {
                 boolean approved = false;
+
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+
+                boolean omitSensitiveFields = prefs.getBoolean(PhoneCalls.OMIT_SENSITIVE_FIELDS, PhoneCalls.OMIT_SENSITIVE_FIELDS_DEFAULT);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (ContextCompat.checkSelfPermission(me.mContext, Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED){
@@ -303,9 +310,17 @@ public class PhoneCalls extends Generator {
                                         PhoneCalls.CALL_VIA_NUMBER_KEY,
                                 };
 
-                                for (String field : sensitiveFields) {
-                                    if (bundle.containsKey(field)) {
-                                        bundle.putString(field, new String(Hex.encodeHex(DigestUtils.sha256(bundle.getString(field)))));
+                                if (omitSensitiveFields) {
+                                    for (String field : sensitiveFields) {
+                                        bundle.remove(field);
+                                    }
+
+                                    bundle.remove(PhoneCalls.CALL_GEOCODED_LOCATION_KEY);
+                                } else {
+                                    for (String field : sensitiveFields) {
+                                        if (bundle.containsKey(field)) {
+                                            bundle.putString(field, new String(Hex.encodeHex(DigestUtils.sha256(bundle.getString(field)))));
+                                        }
                                     }
                                 }
 
@@ -651,5 +666,12 @@ public class PhoneCalls extends Generator {
         }
 
         return new MatrixCursor(cols);
+    }
+
+    public void setOmitSensitiveFields(boolean doOmit) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(PhoneCalls.OMIT_SENSITIVE_FIELDS, doOmit);
+        e.apply();
     }
 }
