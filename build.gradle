@@ -7,7 +7,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.3.0'
+        classpath 'com.android.tools.build:gradle:7.3.1'
     }
 }
 
@@ -101,29 +101,29 @@ android {
         implementation 'androidx.browser:browser:1.4.0'
         implementation 'androidx.work:work-runtime:2.7.1'
         implementation 'com.google.guava:guava:28.2-android'
-        implementation 'com.google.firebase:firebase-messaging:23.0.8'
+        implementation 'com.google.firebase:firebase-messaging:23.1.1'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         implementation 'com.fasterxml.jackson.core:jackson-core:2.11.1'
         implementation 'com.fasterxml.jackson.datatype:jackson-datatype-json-org:2.9.9'
         implementation 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
         implementation 'com.github.mfornos:humanize-slim:1.2.2'
         implementation 'com.google.guava:guava:28.2-android'
-        implementation 'com.google.android.material:material:1.6.1'
-        implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.7.0'  // Retaining older version due to crashes in 8.6.x and earlier
+        implementation 'com.google.android.material:material:1.7.0'
+        implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.7.0'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
 
         api 'com.android.volley:volley:1.2.1'
         api 'com.google.guava:guava:28.2-android'
-        api 'com.google.android.gms:play-services-auth:20.3.0'
+        api 'com.google.android.gms:play-services-auth:20.4.0'
         api 'com.google.android.gms:play-services-fitness:21.1.0'
-        api 'com.google.android.gms:play-services-location:20.0.0'
+        api 'com.google.android.gms:play-services-location:20.0.0' // Keep at 20, later is incompatible with MapBox
         api 'com.google.android.gms:play-services-maps:18.1.0'
         api 'com.google.android.gms:play-services-awareness:19.0.1'
-        api 'com.google.android.libraries.places:places:2.6.0'
-        api 'com.google.firebase:firebase-messaging:23.0.8'
+        api 'com.google.android.libraries.places:places:2.7.0'
+        api 'com.google.firebase:firebase-messaging:23.1.1'
         api 'net.openid:appauth:0.7.0'
-        api 'com.squareup.okhttp3:okhttp:3.12.3' // Retaining older version for Android 4 support
-        api 'com.squareup.okhttp3:okhttp-tls:3.12.3'
+        api 'com.squareup.okhttp3:okhttp:4.9.2'
+        api 'com.squareup.okhttp3:okhttp-tls:4.9.0'
         api 'commons-io:commons-io:2.6'
         api 'commons-codec:commons-codec:1.13'
         api 'org.apache.commons:commons-lang3:3.9'
