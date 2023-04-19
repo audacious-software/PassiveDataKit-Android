@@ -35,7 +35,7 @@ android {
     namespace "com.audacious_software.pdk.passivedatakit"
 
     defaultConfig {
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 33
         compileSdkVersion 33
 
