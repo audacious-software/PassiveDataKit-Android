@@ -135,6 +135,6 @@ android {
         api 'com.googlecode.libphonenumber:libphonenumber:8.11.3'
 
 		api project(':amazon-maps-api-v2')
-		api project(':fgchecker-release')
+		// api project(':fgchecker-release')
     }
 }

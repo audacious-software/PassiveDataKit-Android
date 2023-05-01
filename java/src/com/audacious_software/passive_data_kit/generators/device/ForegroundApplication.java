@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -118,49 +119,10 @@ public class ForegroundApplication extends Generator{
     private long mLastTimestamp = 0;
     private long mEarliestTimestamp = 0;
 
-    private HashMap<String, Long> mUsageDurations = new HashMap<>();
-    private HashMap<String, Integer> mUsageDaysCache = new HashMap<>();
-    private HashMap<String, String> mCategoryCache = new HashMap<>();
-    private HashMap<String, String> mIdentifierCache = new HashMap<>();
-
-    // private HashMap<String, String> mSubstitutions = new HashMap<>();
-    // private HashMap<String, Boolean> mSubstituionReplacements = new HashMap<>();
-
-    /*
-    public String getSubstituteName(String packageName, String originalName) {
-        String where = ForegroundApplication.SUBSTITUTES_PACKAGE + " = ?";
-        String[] args = { packageName };
-
-        String substituteName = originalName;
-
-        Cursor c = this.mDatabase.query(ForegroundApplication.TABLE_SUBSTITUTES, null, where, args, null, null,  null, null);
-
-        if (c.moveToNext()) {
-            substituteName = c.getString(c.getColumnIndex(ForegroundApplication.SUBSTITUTES_SUBSTITUTE));
-        }
-
-        c.close();
-
-        return substituteName;
-    }
-
-    public void clearSubstituteName(String packageName) {
-        String where = ForegroundApplication.SUBSTITUTES_PACKAGE + " = ?";
-        String[] args = { packageName };
-
-        this.mDatabase.delete(ForegroundApplication.TABLE_SUBSTITUTES, where, args);
-    }
-
-    public void setSubstituteName(String packageName, String substituteName) {
-        this.clearSubstituteName(packageName);
-
-        ContentValues values = new ContentValues();
-        values.put(ForegroundApplication.SUBSTITUTES_PACKAGE, packageName);
-        values.put(ForegroundApplication.SUBSTITUTES_SUBSTITUTE, substituteName);
-
-        this.mDatabase.insert(ForegroundApplication.TABLE_SUBSTITUTES, null, values);
-    }
-     */
+    private final HashMap<String, Long> mUsageDurations = new HashMap<>();
+    private final HashMap<String, Integer> mUsageDaysCache = new HashMap<>();
+    private final HashMap<String, String> mCategoryCache = new HashMap<>();
+    private final HashMap<String, String> mIdentifierCache = new HashMap<>();
 
     public static class ForegroundApplicationUsage {
         public long start;
@@ -429,6 +391,8 @@ public class ForegroundApplication extends Generator{
                 }
 
                 final long now = System.currentTimeMillis();
+
+                Log.e("PDK", "logAppAppearance: " + process + " -- " + now + " -- " + sampleInterval);
 
                 me.logAppAppearance(process, now, sampleInterval);
             }
