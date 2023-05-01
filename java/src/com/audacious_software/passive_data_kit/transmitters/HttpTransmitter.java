@@ -1,6 +1,5 @@
 package com.audacious_software.passive_data_kit.transmitters;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -48,7 +47,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
-import java.security.KeyManagementException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;

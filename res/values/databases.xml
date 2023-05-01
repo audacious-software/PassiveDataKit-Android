@@ -38,6 +38,8 @@
     <string name="pdk_generator_foreground_applications_history_table_add_screen_active" translatable="false">ALTER TABLE history ADD screen_active INTEGER;</string>
     <string name="pdk_generator_foreground_applications_history_table_add_display_state" translatable="false">ALTER TABLE history ADD display_state TEXT;</string>
     <string name="pdk_generator_foreground_applications_history_table_add_is_home" translatable="false">ALTER TABLE history ADD is_home INTEGER;</string>
+    <string name="pdk_generator_foreground_applications_history_table_add_category" translatable="false">ALTER TABLE history ADD category TEXT;</string>
+    <string name="pdk_generator_foreground_applications_create_substitutes_table" translatable="false">CREATE TABLE substitutes(package TEXT PRIMARY KEY, substitute TEXT);</string>
 
     <!-- Ambient Light Sensor Generator -->
     <string name="pdk_generator_ambient_light_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, light_level REAL, raw_timestamp BIGINT, accuracy INTEGER);</string>
