@@ -5,7 +5,7 @@ import android.view.MenuItem;
 import android.widget.FrameLayout;
 
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorsAdapter;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;

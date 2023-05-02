@@ -1,6 +1,7 @@
 package com.audacious_software.passive_data_kit.generators.diagnostics;
 
 import android.Manifest;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
@@ -14,6 +15,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.LocationManager;
@@ -23,20 +25,25 @@ import android.os.PowerManager;
 import android.os.StatFs;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
+import com.audacious_software.passive_data_kit.accessibility.AccessibilityEventsService;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.communication.TextMessages;
+import com.audacious_software.passive_data_kit.generators.services.AccessibilityEvents;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -389,7 +396,22 @@ public class SystemStatus extends Generator {
 
     @SuppressWarnings({"unused"})
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
-        return new ArrayList<>();
+        ArrayList<DiagnosticAction> actions = new ArrayList<>();
+
+        AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+        if (alarms.canScheduleExactAlarms() == false) {
+            actions.add(new DiagnosticAction(context.getString(R.string.diagnostic_alarm_permission_required_title), context.getString(R.string.diagnostic_alarm_permission_required), new Runnable() {
+                @Override
+                public void run() {
+                    Intent fetchPermission = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+
+                    context.startActivity(fetchPermission);
+                }
+            }));
+        }
+
+        return actions;
     }
 
     @SuppressWarnings("WeakerAccess")

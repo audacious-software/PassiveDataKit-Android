@@ -26,12 +26,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
+import com.audacious_software.passive_data_kit.activities.AppUsageSelectionActivity;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 import com.rvalerio.fgchecker.AppChecker;
 
 import org.json.JSONException;
@@ -592,6 +593,13 @@ public class ForegroundApplication extends Generator{
 
             dateLabel.setText(R.string.label_never_pdk);
         }
+
+        cardContent.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                context.startActivity(new Intent(context, AppUsageSelectionActivity.class));
+            }
+        });
    }
 
     @Override
@@ -659,6 +667,7 @@ public class ForegroundApplication extends Generator{
         try {
             if (config.has("sample-interval")) {
                 this.setSampleInterval(config.getLong("sample-interval"));
+                config.remove("sample-interval");
             }
         } catch (JSONException ex) {
             ex.printStackTrace();

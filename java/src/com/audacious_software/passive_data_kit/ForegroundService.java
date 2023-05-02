@@ -10,7 +10,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
