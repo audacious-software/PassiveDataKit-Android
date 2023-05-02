@@ -392,8 +392,6 @@ public class ForegroundApplication extends Generator{
 
                 final long now = System.currentTimeMillis();
 
-                Log.e("PDK", "logAppAppearance: " + process + " -- " + now + " -- " + sampleInterval);
-
                 me.logAppAppearance(process, now, sampleInterval);
             }
         });
