@@ -27,7 +27,6 @@ import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.passive_data_kit.generators.diagnostics.SystemStatus;
 import com.audacious_software.passive_data_kit.R;
 
 import org.json.JSONException;

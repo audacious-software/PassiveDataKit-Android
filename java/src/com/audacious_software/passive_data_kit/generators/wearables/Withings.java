@@ -2129,7 +2129,8 @@ public class Withings extends Generator {
 
                 this.finish();
             } else {
-                ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.Theme_AppCompat_Light_Dialog);
+                ContextThemeWrapper wrapper = new ContextThemeWrapper(this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog);
+//                ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.Theme_AppCompat_Light_Dialog);
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(wrapper);
                 builder.setTitle(R.string.title_dialog_withings_auth_unsuccessful);

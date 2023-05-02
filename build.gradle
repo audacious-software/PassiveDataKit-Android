@@ -7,7 +7,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.2'
+        classpath 'com.android.tools.build:gradle:7.3.1'
     }
 }
 
@@ -30,12 +30,12 @@ repositories {
 }
 
 android {
-    buildToolsVersion "32.0.0"
+    namespace "com.audacious_software.passive_data_kit"
 
     defaultConfig {
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 33
-        compileSdkVersion 32
+        compileSdkVersion 33
 
         versionCode 1
         versionName "1.0"
@@ -101,7 +101,7 @@ android {
         implementation 'androidx.legacy:legacy-support-v4:1.0.0'
         implementation 'androidx.cardview:cardview:1.0.0'
         implementation 'androidx.browser:browser:1.5.0'
-        implementation 'androidx.work:work-runtime:2.8.0'
+        implementation 'androidx.work:work-runtime:2.8.1'
         implementation 'com.google.guava:guava:28.2-android'
         implementation 'com.google.firebase:firebase-messaging:23.1.2'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
@@ -112,21 +112,22 @@ android {
         implementation 'com.github.mfornos:humanize-slim:1.2.2'
         implementation 'com.google.guava:guava:28.2-android'
         implementation 'com.google.android.material:material:1.8.0'
-        implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.6.0'  // Retaining older version due to crashes in 8.6.x and earlier
+        implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.7.0'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
+        implementation 'org.conscrypt:conscrypt-android:2.5.2'
 
         api 'com.android.volley:volley:1.2.1'
         api 'com.google.guava:guava:28.2-android'
-        api 'com.google.android.gms:play-services-auth:20.4.1'
+        api 'com.google.android.gms:play-services-auth:20.5.0'
         api 'com.google.android.gms:play-services-fitness:21.1.0'
-        api 'com.google.android.gms:play-services-location:21.0.1'
+        api 'com.google.android.gms:play-services-location:20.0.0' // Keep at 20, later is incompatible with MapBox
         api 'com.google.android.gms:play-services-maps:18.1.0'
         api 'com.google.android.gms:play-services-awareness:19.0.1'
-        api 'com.google.android.libraries.places:places:3.0.0'
+        api 'com.google.android.libraries.places:places:3.1.0'
         api 'com.google.firebase:firebase-messaging:23.1.2'
         api 'net.openid:appauth:0.7.0'
-        api 'com.squareup.okhttp3:okhttp:3.12.3' // Retaining older version for Android 4 support
-        api 'com.squareup.okhttp3:okhttp-tls:3.12.3'
+        api 'com.squareup.okhttp3:okhttp:4.9.2'
+        api 'com.squareup.okhttp3:okhttp-tls:4.9.0'
         api 'commons-io:commons-io:2.6'
         api 'commons-codec:commons-codec:1.13'
         api 'org.apache.commons:commons-lang3:3.9'
@@ -136,7 +137,6 @@ android {
         api 'com.googlecode.libphonenumber:libphonenumber:8.11.3'
 
 		api project(':amazon-maps-api-v2')
-		api project(':fgchecker-release')
     }
     buildFeatures {
         viewBinding true

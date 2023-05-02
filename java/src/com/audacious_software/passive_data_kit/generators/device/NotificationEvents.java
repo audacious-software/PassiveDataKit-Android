@@ -1,5 +1,6 @@
 package com.audacious_software.passive_data_kit.generators.device;
 
+import android.Manifest;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.content.ContentValues;
@@ -8,7 +9,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -17,6 +20,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
+import com.audacious_software.passive_data_kit.activities.generators.RequestPermissionActivity;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
@@ -99,6 +103,14 @@ public class NotificationEvents extends Generator {
     @SuppressWarnings("unused")
     public static void start(final Context context) {
         NotificationEvents.getInstance(context).startGenerator();
+    }
+
+    public static void fetchPemissions(Context context) {
+        Intent intent = new Intent(context, RequestPermissionActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(RequestPermissionActivity.PERMISSION, Manifest.permission.POST_NOTIFICATIONS);
+
+        context.startActivity(intent);
     }
 
     private void startGenerator() {
@@ -424,5 +436,15 @@ public class NotificationEvents extends Generator {
                 Generators.getInstance(this).notifyGeneratorUpdated(NotificationEvents.GENERATOR_IDENTIFIER, update);
             }
         }
+    }
+
+    public static boolean areNotificationsEnabled(Context context) {
+        NotificationManager notes = (NotificationManager) context.getApplicationContext().getSystemService(Context. NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return notes.areNotificationsEnabled();
+        }
+
+        return true;
     }
 }

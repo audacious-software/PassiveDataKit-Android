@@ -2,7 +2,3 @@ include ':app'
 
 include ':amazon-maps-api-v2'
 project(':amazon-maps-api-v2').projectDir = new File(settingsDir, './aars/amazon-maps-api-v2')
-
-include ':fgchecker-release'
-project(':fgchecker-release').projectDir = new File(settingsDir, './aars/fgchecker-release')
-
