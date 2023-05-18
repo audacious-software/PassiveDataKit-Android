@@ -195,7 +195,7 @@ public class ForegroundApplication extends Generator{
     private void logAppAppearance(String process, long when, long duration) {
         String category = this.fetchCategory(process);
 
-        if (this.isAppEnabled(process) == false || this.isCategoryEnabled(category) == false) {
+        if (this.isAppEnabled(process) == false) {
             process = this.obscureIdentifier(process);
             category = this.obscureIdentifier(category);
         }
@@ -874,10 +874,10 @@ public class ForegroundApplication extends Generator{
             return false;
         }
 
-        if (disabledApps.contains("*")) {
-            Set<String> enabledApps = prefs.getStringSet(ForegroundApplication.ENABLED_APPS, new HashSet<>());
+        Set<String> enabledApps = prefs.getStringSet(ForegroundApplication.ENABLED_APPS, new HashSet<>());
 
-            return enabledApps.contains(process);
+        if (enabledApps.contains(process)) {
+            return true;
         }
 
         String category = this.mCategoryCache.get(process);
@@ -898,13 +898,9 @@ public class ForegroundApplication extends Generator{
             return false;
         }
 
-        if (disabledCategories.contains("*")) {
-            Set<String> enabledCategories = prefs.getStringSet(ForegroundApplication.ENABLED_CATEGORIES, new HashSet<>());
+        Set<String> enabledCategories = prefs.getStringSet(ForegroundApplication.ENABLED_CATEGORIES, new HashSet<>());
 
-            return enabledCategories.contains(category);
-        }
-
-        return true;
+        return enabledCategories.contains(category);
     }
 
     public void disableCategory(String category) {
