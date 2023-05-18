@@ -31,7 +31,7 @@ import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.device.Location;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;

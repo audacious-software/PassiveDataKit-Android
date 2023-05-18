@@ -52,5 +52,32 @@
     <string name="transmission_failed_server_code">Server returned error code: %1$d.</string>
     <string name="transmission_failed_exception">Transmission exception: %1$s: %2$s</string>
     <string name="transmission_failed_unknown_host">Unable to locate %1$s. Please check your network connection.</string>
+
+    <string name="accessibility_service_label">Passive Data Kit</string>
+    <string name="accessibility_service_description">Passive Data Kit uses the Accessibility API to retrieve information about other apps.</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="title_activity_app_usage_selection">AppUsageSelectionActivity</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="action_sort_apps">Sort Apps</string>
 </resources>
 

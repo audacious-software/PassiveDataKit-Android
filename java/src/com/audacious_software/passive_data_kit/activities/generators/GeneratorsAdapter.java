@@ -14,7 +14,7 @@ import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.activities.DataDisclosureDetailActivity;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

@@ -19,7 +19,7 @@ import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.json.JSONArray;

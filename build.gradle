@@ -30,9 +30,7 @@ repositories {
 }
 
 android {
-    buildToolsVersion "32.0.0"
-
-    namespace "com.audacious_software.pdk.passivedatakit"
+    namespace "com.audacious_software.passive_data_kit"
 
     defaultConfig {
         minSdkVersion 21
@@ -68,6 +66,8 @@ android {
 
     packagingOptions {
         exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/ASL-2.0.txt'
+        exclude 'META-INF/LGPL-3.0.txt'
     }
 
     sourceSets {
@@ -107,6 +107,7 @@ android {
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         implementation 'com.fasterxml.jackson.core:jackson-core:2.11.1'
         implementation 'com.fasterxml.jackson.datatype:jackson-datatype-json-org:2.9.9'
+        implementation 'com.github.java-json-tools:json-patch:1.13'
         implementation 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
         implementation 'com.github.mfornos:humanize-slim:1.2.2'
         implementation 'com.google.guava:guava:28.2-android'
@@ -136,6 +137,17 @@ android {
         api 'com.googlecode.libphonenumber:libphonenumber:8.11.3'
 
 		api project(':amazon-maps-api-v2')
-		// api project(':fgchecker-release')
     }
+    buildFeatures {
+        viewBinding true
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.preference:preference:1.2.0'
+    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.navigation:navigation-fragment:2.5.3'
+    implementation 'androidx.navigation:navigation-ui:2.5.3'
 }

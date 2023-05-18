@@ -23,7 +23,7 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.passive_data_kit.transmitters.HttpTransmitter;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
@@ -422,10 +422,17 @@ public class PassiveDataKit {
                             }
                         }
 
+                        if (transmitterDef.has("max-bundle-size")) {
+                            int maxBundleSize = transmitterDef.getInt("max-bundle-size");
+
+                            options.put(HttpTransmitter.MAX_BUNDLE_SIZE, "" + maxBundleSize);
+                        }
+
                         if (transmitterDef.has("device-key") && transmitterDef.has("server-key")) {
                             options.put(HttpTransmitter.PRIVATE_KEY, transmitterDef.getString("device-key"));
                             options.put(HttpTransmitter.PUBLIC_KEY, transmitterDef.getString("server-key"));
                         }
+
 
                         try {
                             String version = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0).versionName;

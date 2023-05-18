@@ -64,7 +64,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="64dp"
                             android:src="@drawable/ic_night_morning"/>
-                        <TextView android:id="@+id/label_first_night"
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center"
@@ -81,7 +81,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="64dp"
                             android:src="@drawable/ic_morning"/>
-                        <TextView android:id="@+id/label_first_night"
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center"
@@ -98,7 +98,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="64dp"
                             android:src="@drawable/ic_afternoon"/>
-                        <TextView android:id="@+id/label_first_night"
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center"
@@ -115,7 +115,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="64dp"
                             android:src="@drawable/ic_evening"/>
-                        <TextView android:id="@+id/label_first_night"
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center"
@@ -131,7 +131,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="64dp"
                             android:src="@drawable/ic_night_night"/>
-                        <TextView android:id="@+id/label_first_night"
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center"

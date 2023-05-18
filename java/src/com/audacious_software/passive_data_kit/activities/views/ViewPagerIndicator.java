@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 
 import java.util.ArrayList;
 
