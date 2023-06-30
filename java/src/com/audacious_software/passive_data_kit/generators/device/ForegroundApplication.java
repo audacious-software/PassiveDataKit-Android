@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -192,6 +193,8 @@ public class ForegroundApplication extends Generator{
 
     private void logAppAppearance(String process, long when, long duration) {
         String category = this.fetchCategory(process);
+
+        Log.e("PDK", "APP ENABLED: " + process + ": " + this.isAppEnabled(process));
 
         if (this.isAppEnabled(process) == false) {
             process = this.obscureIdentifier(process);
@@ -760,6 +763,8 @@ public class ForegroundApplication extends Generator{
                 }
 
                 config.remove("included-categories");
+            } else {
+                this.clearEnabledCategories();
             }
 
             if (config.has("excluded-categories")) {
@@ -772,6 +777,8 @@ public class ForegroundApplication extends Generator{
                 }
 
                 config.remove("excluded-categories");
+            } else {
+                this.clearDisabledCategories();
             }
 
             if (config.has("included-apps")) {
@@ -801,6 +808,7 @@ public class ForegroundApplication extends Generator{
             ex.printStackTrace();
         }
     }
+
 
     private void setAppEnabled(String packageName, boolean enabled) {
         SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
@@ -862,6 +870,22 @@ public class ForegroundApplication extends Generator{
         e.commit();
     }
 
+    private void clearEnabledCategories() {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.remove(ForegroundApplication.ENABLED_CATEGORIES);
+        e.commit();
+    }
+
+    private void clearDisabledCategories() {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.remove(ForegroundApplication.DISABLED_CATEGORIES);
+        e.commit();
+    }
+
     public void disableApp(String packageName) {
         this.setAppEnabled(packageName, false);
     }
@@ -891,13 +915,19 @@ public class ForegroundApplication extends Generator{
             category = this.fetchCategory(process);
         }
 
+        Log.e("PDK", "APP " + process + " CATEGORY ENABLED " + category + " -- " + this.isCategoryEnabled(category));
+
         return this.isCategoryEnabled(category);
     }
 
     public boolean isCategoryEnabled(String category) {
+        Log.e("PDK", "isCategoryEnabled: " + category);
+
         SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
 
         Set<String> disabledCategories = prefs.getStringSet(ForegroundApplication.DISABLED_CATEGORIES, new HashSet<>());
+
+        Log.e("PDK", "DISABLED CATEGORIES: " + disabledCategories.size());
 
         if (disabledCategories.contains(category)) {
             return false;
@@ -905,7 +935,9 @@ public class ForegroundApplication extends Generator{
 
         Set<String> enabledCategories = prefs.getStringSet(ForegroundApplication.ENABLED_CATEGORIES, new HashSet<>());
 
-        return enabledCategories.contains(category);
+        Log.e("PDK", "ENABLED CATEGORIES: " + enabledCategories.size());
+
+        return enabledCategories.contains(category) || enabledCategories.size() == 0;
     }
 
     public void disableCategory(String category) {
