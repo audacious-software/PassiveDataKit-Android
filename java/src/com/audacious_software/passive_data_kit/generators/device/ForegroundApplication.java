@@ -95,6 +95,8 @@ public class ForegroundApplication extends Generator{
     private static final String DISABLED_CATEGORIES = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.DISABLED_CATEGORIES";
     private static final String ENABLED_CATEGORIES = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.ENABLED_CATEGORIES";
 
+    private static final String LAST_CONFIGURATION = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.LAST_CONFIGURATION";
+
     private static final String OBSCURE_SEED = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.OBSCURE_SEED";
 
     private static final String CATEGORY_UNKNOWN = "unknown";
@@ -193,8 +195,6 @@ public class ForegroundApplication extends Generator{
 
     private void logAppAppearance(String process, long when, long duration) {
         String category = this.fetchCategory(process);
-
-        Log.e("PDK", "APP ENABLED: " + process + ": " + this.isAppEnabled(process));
 
         if (this.isAppEnabled(process) == false) {
             process = this.obscureIdentifier(process);
@@ -744,6 +744,9 @@ public class ForegroundApplication extends Generator{
         SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
         e.putBoolean(ForegroundApplication.ENABLED, true);
+
+        e.putString(ForegroundApplication.LAST_CONFIGURATION, config.toString());
+
         e.apply();
 
         try {
@@ -840,6 +843,27 @@ public class ForegroundApplication extends Generator{
         e.commit();
     }
 
+    public void resetConfiguration() {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        try {
+            JSONObject lastConfig = new JSONObject(prefs.getString(ForegroundApplication.LAST_CONFIGURATION, "{}"));
+
+            e.remove(ForegroundApplication.DISABLED_APPS);
+            e.remove(ForegroundApplication.ENABLED_APPS);
+            e.remove(ForegroundApplication.DISABLED_CATEGORIES);
+            e.remove(ForegroundApplication.ENABLED_CATEGORIES);
+            e.remove(ForegroundApplication.SAMPLE_INTERVAL);
+
+            e.apply();
+
+            this.updateConfig(lastConfig);
+        } catch (JSONException ex) {
+            ex.printStackTrace();
+        }
+    }
+
     private void setCategoryEnabled(String category, boolean enabled) {
         SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
@@ -915,27 +939,19 @@ public class ForegroundApplication extends Generator{
             category = this.fetchCategory(process);
         }
 
-        Log.e("PDK", "APP " + process + " CATEGORY ENABLED " + category + " -- " + this.isCategoryEnabled(category));
-
         return this.isCategoryEnabled(category);
     }
 
     public boolean isCategoryEnabled(String category) {
-        Log.e("PDK", "isCategoryEnabled: " + category);
-
         SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
 
         Set<String> disabledCategories = prefs.getStringSet(ForegroundApplication.DISABLED_CATEGORIES, new HashSet<>());
-
-        Log.e("PDK", "DISABLED CATEGORIES: " + disabledCategories.size());
 
         if (disabledCategories.contains(category)) {
             return false;
         }
 
         Set<String> enabledCategories = prefs.getStringSet(ForegroundApplication.ENABLED_CATEGORIES, new HashSet<>());
-
-        Log.e("PDK", "ENABLED CATEGORIES: " + enabledCategories.size());
 
         return enabledCategories.contains(category) || enabledCategories.size() == 0;
     }
