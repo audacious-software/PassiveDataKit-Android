@@ -34,8 +34,8 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 33
-        compileSdkVersion 33
+        targetSdkVersion 34
+        compileSdkVersion 34
 
         versionCode 1
         versionName "1.0"
@@ -96,14 +96,14 @@ android {
         api fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
         // testCompile 'junit:junit:4.12'
         implementation 'androidx.appcompat:appcompat:1.6.1'
-        implementation 'androidx.recyclerview:recyclerview:1.3.0'
+        implementation 'androidx.recyclerview:recyclerview:1.3.1'
         implementation 'androidx.media:media:1.6.0'
         implementation 'androidx.legacy:legacy-support-v4:1.0.0'
         implementation 'androidx.cardview:cardview:1.0.0'
-        implementation 'androidx.browser:browser:1.5.0'
+        implementation 'androidx.browser:browser:1.6.0'
         implementation 'androidx.work:work-runtime:2.8.1'
         implementation 'com.google.guava:guava:28.2-android'
-        implementation 'com.google.firebase:firebase-messaging:23.1.2'
+        implementation 'com.google.firebase:firebase-messaging:23.2.1'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         implementation 'com.fasterxml.jackson.core:jackson-core:2.11.1'
         implementation 'com.fasterxml.jackson.datatype:jackson-datatype-json-org:2.9.9'
@@ -111,20 +111,20 @@ android {
         implementation 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
         implementation 'com.github.mfornos:humanize-slim:1.2.2'
         implementation 'com.google.guava:guava:28.2-android'
-        implementation 'com.google.android.material:material:1.8.0'
+        implementation 'com.google.android.material:material:1.9.0'
         implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.7.0'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
         implementation 'org.conscrypt:conscrypt-android:2.5.2'
 
         api 'com.android.volley:volley:1.2.1'
         api 'com.google.guava:guava:28.2-android'
-        api 'com.google.android.gms:play-services-auth:20.5.0'
+        api 'com.google.android.gms:play-services-auth:20.7.0'
         api 'com.google.android.gms:play-services-fitness:21.1.0'
         api 'com.google.android.gms:play-services-location:20.0.0' // Keep at 20, later is incompatible with MapBox
         api 'com.google.android.gms:play-services-maps:18.1.0'
         api 'com.google.android.gms:play-services-awareness:19.0.1'
-        api 'com.google.android.libraries.places:places:3.1.0'
-        api 'com.google.firebase:firebase-messaging:23.1.2'
+        api 'com.google.android.libraries.places:places:3.2.0'
+        api 'com.google.firebase:firebase-messaging:23.2.1'
         api 'net.openid:appauth:0.7.0'
         api 'com.squareup.okhttp3:okhttp:4.9.2'
         api 'com.squareup.okhttp3:okhttp-tls:4.9.0'
@@ -145,9 +145,9 @@ android {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.preference:preference:1.2.0'
-    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.navigation:navigation-fragment:2.5.3'
-    implementation 'androidx.navigation:navigation-ui:2.5.3'
+    implementation 'androidx.navigation:navigation-fragment:2.7.1'
+    implementation 'androidx.navigation:navigation-ui:2.7.1'
 }
