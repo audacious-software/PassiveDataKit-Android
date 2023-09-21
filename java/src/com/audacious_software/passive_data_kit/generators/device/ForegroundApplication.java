@@ -659,6 +659,8 @@ public class ForegroundApplication extends Generator{
         try {
             if (config.has("sample-interval")) {
                 this.setSampleInterval(config.getLong("sample-interval"));
+
+                config.remove("sample-interval");
             }
         } catch (JSONException ex) {
             ex.printStackTrace();
