@@ -1,5 +1,7 @@
 package com.audacious_software.passive_data_kit.generators.device;
 
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -9,9 +11,13 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteFullException;
+import android.net.Uri;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +29,7 @@ import com.audacious_software.passive_data_kit.activities.generators.GeneratorVi
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -138,6 +144,19 @@ public class Battery extends Generator {
     @SuppressWarnings("unused")
     public static void start(final Context context) {
         Battery.getInstance(context).startGenerator();
+    }
+
+    public static void configurePowerOptimization(Activity activity) {
+        Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setData(Uri.parse("package:" + activity.getPackageName()));
+
+        try {
+            activity.startActivity(intent);
+        } catch (ActivityNotFoundException ex) {
+            intent.setData(null);
+            activity.startActivity(intent);
+        }
     }
 
     private void startGenerator() {
@@ -622,5 +641,15 @@ public class Battery extends Generator {
         }
 
         return -1;
+    }
+
+    public static boolean isIgnoringPowerOptimizations(Context context) {
+        PowerManager power = (PowerManager) context.getApplicationContext().getSystemService(Context.POWER_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return power.isIgnoringBatteryOptimizations(context.getApplicationContext().getPackageName());
+        }
+
+        return true;
     }
 }

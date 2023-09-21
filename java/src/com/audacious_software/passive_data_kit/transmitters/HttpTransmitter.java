@@ -3,6 +3,8 @@ package com.audacious_software.passive_data_kit.transmitters;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.BadParcelableException;
@@ -21,7 +23,8 @@ import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.Toolbox;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.generators.device.Location;
+import com.audacious_software.passive_data_kit.R;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -44,7 +47,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
-import java.security.KeyManagementException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -52,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -88,6 +91,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     public static final String CHARGING_ONLY = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.CHARGING_ONLY";
     public static final String USE_EXTERNAL_STORAGE = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.USE_EXTERNAL_STORAGE";
     public static final String COMPRESS_PAYLOADS = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.COMPRESS_PAYLOADS";
+    public static final String MAX_BUNDLE_SIZE = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.MAX_BUNDLE_SIZE";;
 
     private static final String STORAGE_FOLDER_NAME = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.STORAGE_FOLDER_NAME";
     public static final String USER_AGENT_NAME = "com.audacious_software.passive_data_kit.transmitters.HttpTransmitter.USER_AGENT_NAME";
@@ -101,7 +105,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     private static final String JSON_EXTENSION = ".json";
     private static final String TEMP_EXTENSION = ".in-progress";
     private static final String TOO_LARGE_FILE_EXTENSION = ".too-large";
-
 
     private static final int RESULT_SUCCESS = 0;
     private static final int RESULT_ERROR = 1;
@@ -135,6 +138,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
     private int mCurrentReadingCount = 0;
     private int mMaxReadingCount = 256;
+    private int mCurrentBytesWritten = 0;
 
     public HttpTransmitter() {
         super();
@@ -190,6 +194,10 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
         if (options.containsKey(HttpTransmitter.PRIVATE_KEY)) {
             this.mPrivateKey = Toolbox.decodeBase64(options.get(HttpTransmitter.PRIVATE_KEY));
+        }
+
+        if (options.containsKey(HttpTransmitter.MAX_BUNDLE_SIZE)) {
+            this.mMaxReadingCount = Integer.parseInt(options.get(HttpTransmitter.MAX_BUNDLE_SIZE));
         }
 
         if (this.mHashAlgorithm != null) {
@@ -419,7 +427,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
                         Collections.shuffle(fileList);
 
-                        while (fileList.size() > 0) {
+                        int pendingCount = fileList.size();
+
+                        if (pendingCount > 0) {
                             String filename = fileList.remove(0);
 
                             File payloadFile = new File(pendingFolder, filename);
@@ -434,7 +444,6 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                                     char[] buffer = new char[1024];
 
                                     int read = 0;
-
 
                                     while ((read = reader.read(buffer, 0, buffer.length)) != -1) {
                                         for (int i = 0; i < read; i++) {
@@ -485,6 +494,10 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
                                     Logger.getInstance(me.mContext).log("too_large_file", details);
                                 }
+                            }
+
+                            if (fileList.size() > 0) {
+                                me.mHandler.post(this);
                             }
                         }
                     } catch (OutOfMemoryError e) {
@@ -859,33 +872,39 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         return this.mTransmitted;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onGeneratorUpdated(final String identifier, final long timestamp, Bundle data) {
         if (this.mHandler == null) {
             return;
         }
 
-        if (this.mCurrentReadingCount > this.mMaxReadingCount) {
-            try {
-                this.closeOpenSession();
-
-                this.mCurrentReadingCount = 0;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
         final HttpTransmitter me = this;
-
-        final Parcel p = Parcel.obtain();
-        p.writeBundle(data);
-        p.setDataPosition(0);
 
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                Bundle clonedData = p.readBundle(getClass().getClassLoader());
+                final Parcel parcel = Parcel.obtain();
+                parcel.writeBundle(data);
+                parcel.setDataPosition(0);
+
+                final boolean largeBundle = (me.mCurrentBytesWritten + parcel.dataSize()) > (1024 * 256);
+
+                if (largeBundle) {
+                    Log.e("PDK", "Large data point encountered: " + parcel.dataSize() + " bytes. Saving to dedicated bundle.");
+                }
+
+                if (largeBundle || me.mCurrentReadingCount >= me.mMaxReadingCount) {
+                    try {
+                        me.closeOpenSession();
+
+                        me.mCurrentReadingCount = 0;
+                        me.mCurrentBytesWritten = 0;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                Bundle clonedData = parcel.readBundle(getClass().getClassLoader());
 
                 if (clonedData.keySet().size() > 0) {  // Only transmit non-empty bundles...
                     long generatorTimestamp = timestamp / 1000; // Convert to seconds...
@@ -929,11 +948,17 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                             HttpTransmitter.writeBundle(me.mContext, me.mJsonGenerator, clonedData);
 
                             me.mCurrentReadingCount += 1;
+
+                            me.mCurrentBytesWritten += parcel.dataSize();
+
+                            if (largeBundle) {
+                                me.mCurrentReadingCount = me.mMaxReadingCount;
+                            }
                         }
                     }
                 }
 
-                p.recycle();
+                parcel.recycle();
 
                 System.gc();
             }
@@ -1140,14 +1165,14 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     }
 
     @Override
-    public void testTransmission(Handler handler, Runnable success, Runnable failure) {
+    public void testTransmission(Handler handler, boolean includeLocation, Runnable success, Runnable failure) {
         final HttpTransmitter me = this;
 
         Runnable r = new Runnable() {
             @Override
             public void run() {
                 try {
-                    String testPayload = me.generateTestPayload();
+                    String testPayload = me.generateTestPayload(includeLocation);
 
                     int result = me.transmitHttpPayload(testPayload);
 
@@ -1167,7 +1192,7 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         this.mHandler.post(r);
     }
 
-    private String generateTestPayload() throws JSONException {
+    private String generateTestPayload(boolean includeLocation) throws JSONException {
         JSONObject testReading = new JSONObject();
 
         JSONObject metadata = new JSONObject();
@@ -1183,6 +1208,47 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
 
         metadata.put(Generator.TIMEZONE, timeZone.getID());
         metadata.put(Generator.TIMEZONE_OFFSET, timeZone.getOffset(timestamp) / 1000);
+
+        if (includeLocation) {
+            android.location.Location location = Location.getInstance(this.mContext).getLastKnownLocation();
+
+            if (location != null) {
+                testReading.put(Location.LATITUDE, location.getLatitude());
+                testReading.put(Location.LONGITUDE, location.getLongitude());
+                testReading.put(Location.HISTORY_MOCK_LOCATION_PROVIDER, location.isFromMockProvider());
+            }
+
+            JSONArray mockLocationApps = new JSONArray();
+            HashSet<String> seenApps = new HashSet<>();
+
+            PackageManager pm = this.mContext.getPackageManager();
+            List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+
+            for (ApplicationInfo applicationInfo : packages) {
+                try {
+                    PackageInfo packageInfo = pm.getPackageInfo(applicationInfo.packageName, PackageManager.GET_PERMISSIONS);
+
+                    String[] requestedPermissions = packageInfo.requestedPermissions;
+
+                    if (requestedPermissions != null) {
+                        for (int i = 0; i < requestedPermissions.length; i++) {
+                            if (requestedPermissions[i].equals("android.permission.ACCESS_MOCK_LOCATION")) {
+                                if (seenApps.contains(applicationInfo.packageName) == false) {
+                                    mockLocationApps.put(applicationInfo.packageName);
+
+                                    seenApps.add(applicationInfo.packageName);
+                                }
+                            }
+                        }
+                    }
+                } catch (PackageManager.NameNotFoundException e) {
+                    Log.e("PDK" , "MOCK LOCATION STACK TRACE", e);
+                }
+            }
+
+            testReading.put(Location.HISTORY_MOCK_LOCATION_APPS_COUNT, mockLocationApps.length());
+            testReading.put(Location.HISTORY_MOCK_LOCATION_APPS, mockLocationApps);
+        }
 
         testReading.put("passive-data-metadata", metadata);
 

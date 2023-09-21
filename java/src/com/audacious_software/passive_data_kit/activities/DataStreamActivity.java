@@ -10,7 +10,7 @@ import android.view.MenuItem;
 
 import com.audacious_software.passive_data_kit.activities.generators.DataPointsAdapter;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;

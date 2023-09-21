@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
@@ -16,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,14 +28,18 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
+import com.audacious_software.passive_data_kit.activities.AppUsageSelectionActivity;
+import com.audacious_software.passive_data_kit.Toolbox;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 import com.rvalerio.fgchecker.AppChecker;
 
+import org.apache.commons.lang3.RandomStringUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -47,10 +53,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import humanize.Humanize;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
+@SuppressLint("Range")
 public class ForegroundApplication extends Generator{
     private static final String GENERATOR_IDENTIFIER = "pdk-foreground-application";
 
@@ -63,11 +71,12 @@ public class ForegroundApplication extends Generator{
     private static final String SAMPLE_INTERVAL = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.SAMPLE_INTERVAL";
     private static final long SAMPLE_INTERVAL_DEFAULT = 15000;
 
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 7;
 
     private static final String TABLE_HISTORY = "history";
     public static final String HISTORY_OBSERVED = "observed";
     private static final String HISTORY_APPLICATION = "application";
+    private static final String HISTORY_CATEGORY = "category";
     private static final String HISTORY_DURATION = "duration";
     private static final String HISTORY_SCREEN_ACTIVE = "screen_active";
     private static final String HISTORY_IS_HOME = "is_home";
@@ -81,6 +90,26 @@ public class ForegroundApplication extends Generator{
     private static final String HISTORY_DISPLAY_STATE_VR = "virtual-reality";
     private static final String HISTORY_DISPLAY_STATE_UNKNOWN = "unknown";
 
+    private static final String DISABLED_APPS = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.DISABLED_APPS";
+    private static final String ENABLED_APPS = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.ENABLED_APPS";
+    private static final String DISABLED_CATEGORIES = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.DISABLED_CATEGORIES";
+    private static final String ENABLED_CATEGORIES = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.ENABLED_CATEGORIES";
+
+    private static final String LAST_CONFIGURATION = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.LAST_CONFIGURATION";
+
+    private static final String OBSCURE_SEED = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.OBSCURE_SEED";
+
+    private static final String CATEGORY_UNKNOWN = "unknown";
+    private static final String CATEGORY_ACCESSIBILITY = "accessibility";
+    private static final String CATEGORY_AUDIO = "audio";
+    private static final String CATEGORY_GAME = "game";
+    private static final String CATEGORY_IMAGE = "image";
+    private static final String CATEGORY_MAPS = "maps";
+    private static final String CATEGORY_NEWS = "news";
+    private static final String CATEGORY_PRODUCTIVITY = "productivity";
+    private static final String CATEGORY_SOCIAL = "social";
+    private static final String CATEGORY_VIDEO = "video";
+
     private static ForegroundApplication sInstance = null;
 
     private static final String DATABASE_PATH = "pdk-foreground-application.sqlite";
@@ -91,11 +120,10 @@ public class ForegroundApplication extends Generator{
     private long mLastTimestamp = 0;
     private long mEarliestTimestamp = 0;
 
-    private HashMap<String, Long> mUsageDurations = new HashMap<>();
-    private HashMap<String, Integer> mUsageDaysCache = new HashMap<>();
-
-    private HashMap<String, String> mSubstitutions = new HashMap<>();
-    private HashMap<String, Boolean> mSubstituionReplacements = new HashMap<>();
+    private final HashMap<String, Long> mUsageDurations = new HashMap<>();
+    private final HashMap<String, Integer> mUsageDaysCache = new HashMap<>();
+    private final HashMap<String, String> mCategoryCache = new HashMap<>();
+    private final HashMap<String, String> mIdentifierCache = new HashMap<>();
 
     public static class ForegroundApplicationUsage {
         public long start;
@@ -141,6 +169,10 @@ public class ForegroundApplication extends Generator{
                     this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_display_state));
                 case 4:
                     this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_is_home));
+                case 5:
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_create_substitutes_table));
+                case 6:
+                    this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_foreground_applications_history_table_add_category));
             }
 
             if (version != ForegroundApplication.DATABASE_VERSION) {
@@ -162,26 +194,20 @@ public class ForegroundApplication extends Generator{
     }
 
     private void logAppAppearance(String process, long when, long duration) {
-        String replacement = this.mSubstitutions.get(process);
+        String category = this.fetchCategory(process);
 
-        if (replacement != null) {
-            this.logAppAppearance(replacement, when, duration);
-
-            boolean replaceOriginal = false;
-
-            if (this.mSubstituionReplacements.containsKey(process)) {
-                replaceOriginal = this.mSubstituionReplacements.get(process);
-            }
-
-            if (replaceOriginal) {
-                return;
-            }
+        if (this.isAppEnabled(process) == false) {
+            process = this.obscureIdentifier(process);
+            category = this.obscureIdentifier(category);
         }
 
         final ForegroundApplication me = this;
 
         WindowManager window = (WindowManager) this.mContext.getSystemService(Context.WINDOW_SERVICE);
         final Display display = window.getDefaultDisplay();
+
+        String finalProcess = process;
+        String finalCategory = category;
 
         Runnable r = new Runnable() {
             @Override
@@ -205,14 +231,15 @@ public class ForegroundApplication extends Generator{
                     List<ResolveInfo> startMatches = manager.queryIntentActivities(startMain, 0);
 
                     for (ResolveInfo info : startMatches) {
-                        if (info.activityInfo.packageName != null && info.activityInfo.packageName.equals(process)) {
+                        if (info.activityInfo.packageName != null && info.activityInfo.packageName.equals(finalProcess)) {
                             isHome = true;
                         }
                     }
 
                     ContentValues values = new ContentValues();
                     values.put(ForegroundApplication.HISTORY_OBSERVED, when);
-                    values.put(ForegroundApplication.HISTORY_APPLICATION, process);
+                    values.put(ForegroundApplication.HISTORY_APPLICATION, finalProcess);
+                    values.put(ForegroundApplication.HISTORY_CATEGORY, finalCategory);
                     values.put(ForegroundApplication.HISTORY_DURATION, duration);
                     values.put(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
 
@@ -254,7 +281,8 @@ public class ForegroundApplication extends Generator{
 
                     Bundle update = new Bundle();
                     update.putLong(ForegroundApplication.HISTORY_OBSERVED, when);
-                    update.putString(ForegroundApplication.HISTORY_APPLICATION, process);
+                    update.putString(ForegroundApplication.HISTORY_APPLICATION, finalProcess);
+                    update.putString(ForegroundApplication.HISTORY_CATEGORY, finalCategory);
                     update.putLong(ForegroundApplication.HISTORY_DURATION, duration);
                     update.putBoolean(ForegroundApplication.HISTORY_SCREEN_ACTIVE, screenActive);
                     update.putBoolean(ForegroundApplication.HISTORY_IS_HOME, isHome);
@@ -268,7 +296,7 @@ public class ForegroundApplication extends Generator{
                     ArrayList<String> toDelete = new ArrayList<>();
 
                     for (String key : me.mUsageDurations.keySet()) {
-                        if (key.startsWith(process)) {
+                        if (key.startsWith(finalProcess)) {
                             toDelete.add(key);
                         }
                     }
@@ -286,6 +314,61 @@ public class ForegroundApplication extends Generator{
         } catch (OutOfMemoryError e) {
             // Try again later...
         }
+    }
+
+    private String fetchCategory(String process) {
+        String category = ForegroundApplication.CATEGORY_UNKNOWN;
+
+        if (this.mCategoryCache.containsKey(process)) {
+            category = this.mCategoryCache.get(process);
+        } else {
+            PackageManager packages = this.mContext.getPackageManager();
+
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ApplicationInfo appInfo = packages.getApplicationInfo(process, PackageManager.GET_META_DATA);
+
+                    switch (appInfo.category) {
+                        case ApplicationInfo.CATEGORY_ACCESSIBILITY:
+                            category = ForegroundApplication.CATEGORY_ACCESSIBILITY;
+                            break;
+                        case ApplicationInfo.CATEGORY_AUDIO:
+                            category = ForegroundApplication.CATEGORY_AUDIO;
+                            break;
+                        case ApplicationInfo.CATEGORY_GAME:
+                            category = ForegroundApplication.CATEGORY_GAME;
+                            break;
+                        case ApplicationInfo.CATEGORY_IMAGE:
+                            category = ForegroundApplication.CATEGORY_IMAGE;
+                            break;
+                        case ApplicationInfo.CATEGORY_MAPS:
+                            category = ForegroundApplication.CATEGORY_MAPS;
+                            break;
+                        case ApplicationInfo.CATEGORY_NEWS:
+                            category = ForegroundApplication.CATEGORY_NEWS;
+                            break;
+                        case ApplicationInfo.CATEGORY_PRODUCTIVITY:
+                            category = ForegroundApplication.CATEGORY_PRODUCTIVITY;
+                            break;
+                        case ApplicationInfo.CATEGORY_SOCIAL:
+                            category = ForegroundApplication.CATEGORY_SOCIAL;
+                            break;
+                        case ApplicationInfo.CATEGORY_VIDEO:
+                            category = ForegroundApplication.CATEGORY_VIDEO;
+                            break;
+                        default:
+                            category = ForegroundApplication.CATEGORY_UNKNOWN;
+                            break;
+                    }
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                category = ForegroundApplication.CATEGORY_UNKNOWN;
+            }
+
+            this.mCategoryCache.put(process, category);
+        }
+
+        return category;
     }
 
     private void startGenerator() {
@@ -592,6 +675,13 @@ public class ForegroundApplication extends Generator{
 
             dateLabel.setText(R.string.label_never_pdk);
         }
+
+        cardContent.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                context.startActivity(new Intent(context, AppUsageSelectionActivity.class));
+            }
+        });
    }
 
     @Override
@@ -654,6 +744,9 @@ public class ForegroundApplication extends Generator{
         SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
         SharedPreferences.Editor e = prefs.edit();
         e.putBoolean(ForegroundApplication.ENABLED, true);
+
+        e.putString(ForegroundApplication.LAST_CONFIGURATION, config.toString());
+
         e.apply();
 
         try {
@@ -662,9 +755,237 @@ public class ForegroundApplication extends Generator{
 
                 config.remove("sample-interval");
             }
+
+            if (config.has("included-categories")) {
+                JSONArray categories = config.getJSONArray("included-categories");
+
+                for (int i = 0; i < categories.length(); i++) {
+                    String category = categories.getString(i);
+
+                    this.enableCategory(category);
+                }
+
+                config.remove("included-categories");
+            } else {
+                this.clearEnabledCategories();
+            }
+
+            if (config.has("excluded-categories")) {
+                JSONArray categories = config.getJSONArray("excluded-categories");
+
+                for (int i = 0; i < categories.length(); i++) {
+                    String category = categories.getString(i);
+
+                    this.disableCategory(category);
+                }
+
+                config.remove("excluded-categories");
+            } else {
+                this.clearDisabledCategories();
+            }
+
+            if (config.has("included-apps")) {
+                JSONArray apps = config.getJSONArray("included-apps");
+
+                for (int i = 0; i < apps.length(); i++) {
+                    String app = apps.getString(i);
+
+                    this.enableApp(app);
+                }
+
+                config.remove("included-apps");
+            }
+
+            if (config.has("excluded-apps")) {
+                JSONArray apps = config.getJSONArray("excluded-apps");
+
+                for (int i = 0; i < apps.length(); i++) {
+                    String app = apps.getString(i);
+
+                    this.disableApp(app);
+                }
+
+                config.remove("excluded-apps");
+            }
         } catch (JSONException ex) {
             ex.printStackTrace();
         }
+    }
+
+
+    private void setAppEnabled(String packageName, boolean enabled) {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        HashSet<String> disabledApps = new HashSet<>();
+        disabledApps.addAll(prefs.getStringSet(ForegroundApplication.DISABLED_APPS, new HashSet<>()));
+
+        HashSet<String> enabledApps = new HashSet<>();
+        enabledApps.addAll(prefs.getStringSet(ForegroundApplication.ENABLED_APPS, new HashSet<>()));
+
+        if (enabled) {
+            if (disabledApps.contains(packageName)) {
+                disabledApps.remove(packageName);
+            }
+
+            enabledApps.add(packageName);
+        } else {
+            if (enabledApps.contains(packageName)) {
+                enabledApps.remove(packageName);
+            }
+
+            disabledApps.add(packageName);
+        }
+
+        e.putStringSet(ForegroundApplication.DISABLED_APPS, disabledApps);
+        e.putStringSet(ForegroundApplication.ENABLED_APPS, enabledApps);
+
+        e.commit();
+    }
+
+    public void resetConfiguration() {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        try {
+            JSONObject lastConfig = new JSONObject(prefs.getString(ForegroundApplication.LAST_CONFIGURATION, "{}"));
+
+            e.remove(ForegroundApplication.DISABLED_APPS);
+            e.remove(ForegroundApplication.ENABLED_APPS);
+            e.remove(ForegroundApplication.DISABLED_CATEGORIES);
+            e.remove(ForegroundApplication.ENABLED_CATEGORIES);
+            e.remove(ForegroundApplication.SAMPLE_INTERVAL);
+
+            e.apply();
+
+            this.updateConfig(lastConfig);
+        } catch (JSONException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void setCategoryEnabled(String category, boolean enabled) {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        HashSet<String> disabledCategories = new HashSet<>();
+        disabledCategories.addAll(prefs.getStringSet(ForegroundApplication.DISABLED_CATEGORIES, new HashSet<>()));
+
+        HashSet<String> enabledCategories = new HashSet<>();
+        enabledCategories.addAll(prefs.getStringSet(ForegroundApplication.ENABLED_CATEGORIES, new HashSet<>()));
+
+        if (enabled) {
+            if (disabledCategories.contains(category)) {
+                disabledCategories.remove(category);
+            }
+
+            enabledCategories.add(category);
+        } else {
+            if (enabledCategories.contains(category)) {
+                enabledCategories.remove(category);
+            }
+
+            disabledCategories.add(category);
+        }
+
+        e.putStringSet(ForegroundApplication.DISABLED_CATEGORIES, disabledCategories);
+        e.putStringSet(ForegroundApplication.ENABLED_CATEGORIES, enabledCategories);
+
+        e.commit();
+    }
+
+    private void clearEnabledCategories() {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.remove(ForegroundApplication.ENABLED_CATEGORIES);
+        e.commit();
+    }
+
+    private void clearDisabledCategories() {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+
+        e.remove(ForegroundApplication.DISABLED_CATEGORIES);
+        e.commit();
+    }
+
+    public void disableApp(String packageName) {
+        this.setAppEnabled(packageName, false);
+    }
+
+    public void enableApp(String packageName) {
+        this.setAppEnabled(packageName, true);
+    }
+
+    public boolean isAppEnabled(String process) {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+
+        Set<String> disabledApps = prefs.getStringSet(ForegroundApplication.DISABLED_APPS, new HashSet<>());
+
+        if (disabledApps.contains(process)) {
+            return false;
+        }
+
+        Set<String> enabledApps = prefs.getStringSet(ForegroundApplication.ENABLED_APPS, new HashSet<>());
+
+        if (enabledApps.contains(process)) {
+            return true;
+        }
+
+        String category = this.mCategoryCache.get(process);
+
+        if (category == null) {
+            category = this.fetchCategory(process);
+        }
+
+        return this.isCategoryEnabled(category);
+    }
+
+    public boolean isCategoryEnabled(String category) {
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+
+        Set<String> disabledCategories = prefs.getStringSet(ForegroundApplication.DISABLED_CATEGORIES, new HashSet<>());
+
+        if (disabledCategories.contains(category)) {
+            return false;
+        }
+
+        Set<String> enabledCategories = prefs.getStringSet(ForegroundApplication.ENABLED_CATEGORIES, new HashSet<>());
+
+        return enabledCategories.contains(category) || enabledCategories.size() == 0;
+    }
+
+    public void disableCategory(String category) {
+        this.setCategoryEnabled(category, false);
+    }
+
+    public void enableCategory(String category) {
+        this.setCategoryEnabled(category, true);
+    }
+
+    public String obscureIdentifier(String identifier) {
+        if (this.mIdentifierCache.containsKey(identifier)) {
+            return this.mIdentifierCache.get(identifier);
+        }
+
+        SharedPreferences prefs = Generators.getInstance(this.mContext).getSharedPreferences(this.mContext);
+
+        String obscureSeed = prefs.getString(ForegroundApplication.OBSCURE_SEED, null);
+
+        if (obscureSeed == null) {
+            obscureSeed = RandomStringUtils.randomAlphanumeric(64);
+
+            SharedPreferences.Editor e = prefs.edit();
+            e.putString(ForegroundApplication.OBSCURE_SEED, obscureSeed);
+            e.apply();
+        }
+
+        String obscured = Toolbox.hash(identifier + obscureSeed);
+
+        this.mIdentifierCache.put(identifier, obscured);
+
+        return obscured;
     }
 
     public List<ForegroundApplicationUsage> fetchUsagesBetween(long start, long end, boolean screenActive) {
@@ -858,15 +1179,5 @@ public class ForegroundApplication extends Generator{
         }
 
         return -1;
-    }
-
-    public void clearSubstitutions() {
-        this.mSubstitutions.clear();
-        this.mSubstituionReplacements.clear();
-    }
-
-    public void addSubstitution(String original, String replacement, boolean replaceOriginal) {
-        this.mSubstitutions.put(original, replacement);
-        this.mSubstituionReplacements.put(original, replaceOriginal);
     }
 }

@@ -20,7 +20,7 @@ import com.audacious_software.passive_data_kit.activities.generators.MicrosoftBa
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 import com.microsoft.band.BandClient;
 import com.microsoft.band.BandClientManager;
 import com.microsoft.band.BandException;
@@ -1305,7 +1305,7 @@ public class MicrosoftBand extends Generator
         return LayoutInflater.from(parent.getContext()).inflate(R.layout.card_generator_microsoft_band, parent, false);
     }
 
-    @SuppressWarnings({"unused", "ConstantConditions"})
+    @SuppressWarnings({"unused"})
     public static void bindViewHolder(DataPointViewHolder holder, Bundle dataPoint)
     {
         Context context = holder.itemView.getContext();

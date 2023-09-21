@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -21,7 +22,7 @@ import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.device.Location;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,10 +43,10 @@ public class DarkSkyWeather extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-dark-sky-weather";
     private static final String DATABASE_PATH = "pdk-dark-sky-weather.sql";
 
-    private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.environment.TimeOfDay.ENABLED";
+    private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.services.DarkSkyWeather.ENABLED";
     private static final boolean ENABLED_DEFAULT = true;
 
-    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.environment.TimeOfDay.DATA_RETENTION_PERIOD";
+    private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.services.DarkSkyWeather.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (60L * 24L * 60L * 60L * 1000L);
 
     private SQLiteDatabase mDatabase = null;
@@ -79,7 +80,9 @@ public class DarkSkyWeather extends Generator {
 
     private static DarkSkyWeather sInstance = null;
 
-    private long mFetchInterval = 60 * 1000;
+    private long mFetchInterval = 15 * 60 * 1000;
+
+    private Handler mHandler = null;
 
     @Override
     public String getIdentifier() {
@@ -123,10 +126,47 @@ public class DarkSkyWeather extends Generator {
     }
 
     private void startGenerator() {
+        final DarkSkyWeather me = this;
+
+        if (this.mHandler != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                this.mHandler.getLooper().quitSafely();
+            } else {
+                this.mHandler.getLooper().quit();
+            }
+
+            this.mHandler = null;
+        }
+
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                Looper.prepare();
+
+                me.mHandler = new Handler();
+
+                Looper.loop();
+            }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
+
+        this.fetchLatestWeather();
     }
 
     private void stopGenerator() {
+        if (this.mHandler != null) {
+            this.mHandler.removeCallbacksAndMessages(null);
 
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                this.mHandler.getLooper().quitSafely();
+            } else {
+                this.mHandler.getLooper().quit();
+            }
+
+            this.mHandler = null;
+        }
     }
 
     public static boolean isEnabled(Context context) {
@@ -406,6 +446,15 @@ public class DarkSkyWeather extends Generator {
                     }
                 });
             }
+        }
+
+        if (me.mHandler != null) {
+            me.mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    me.fetchLatestWeather();
+                }
+            }, this.mFetchInterval);
         }
     }
 }

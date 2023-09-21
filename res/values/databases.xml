@@ -1,98 +1,111 @@
 <resources>
-    <string name="pdk_generator_create_version_table">CREATE TABLE metadata(key TEXT, value TEXT, last_updated INTEGER);</string>
+    <string name="pdk_generator_create_version_table" translatable="false">CREATE TABLE metadata(key TEXT, value TEXT, last_updated INTEGER);</string>
 
     <!-- Location Generator -->
-    <string name="pdk_generator_location_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, altitude REAL, bearing REAL, speed REAL, provider TEXT, location_timestamp INTEGER, accuracy REAL);</string>
+    <string name="pdk_generator_location_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, altitude REAL, bearing REAL, speed REAL, provider TEXT, location_timestamp INTEGER, accuracy REAL);</string>
+    <string name="pdk_generator_location_history_table_add_mock_locations_enabled" translatable="false">ALTER TABLE history ADD mock_locations_enabled INTEGER;</string>
+    <string name="pdk_generator_location_history_table_add_mock_location_apps_count" translatable="false">ALTER TABLE history ADD mock_location_apps_count INTEGER;</string>
+    <string name="pdk_generator_location_history_table_add_mock_location_apps" translatable="false">ALTER TABLE history ADD mock_location_apps TEXT;</string>
+    <string name="pdk_generator_location_history_table_add_mock_location_provider" translatable="false">ALTER TABLE history ADD mock_location_provider INTEGER;</string>
+
 
     <!-- Screen State Generator -->
-    <string name="pdk_generator_screen_state_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, state TEXT);</string>
+    <string name="pdk_generator_screen_state_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, state TEXT);</string>
 
     <!-- Phone Calls Generator -->
-    <string name="pdk_generator_phone_calls_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, duration INTEGER, call_type TEXT, number TEXT, post_dial_digits TEXT, via_number TEXT, is_new INTEGER, pulled_externally INTEGER, country_iso TEXT, data_usage INTEGER, geocoded_location TEXT, is_video INTEGER, presentation TEXT, is_read INTEGER);</string>
+    <string name="pdk_generator_phone_calls_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, duration INTEGER, call_type TEXT, number TEXT, post_dial_digits TEXT, via_number TEXT, is_new INTEGER, pulled_externally INTEGER, country_iso TEXT, data_usage INTEGER, geocoded_location TEXT, is_video INTEGER, presentation TEXT, is_read INTEGER);</string>
 
     <!-- Phone Calls Generator -->
-    <string name="pdk_generator_text_messages_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, direction TEXT, length INTEGER, body TEXT, number_name TEXT, number TEXT);</string>
+    <string name="pdk_generator_text_messages_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, direction TEXT, length INTEGER, body TEXT, number_name TEXT, number TEXT);</string>
 
     <!-- App Events Generator -->
-    <string name="pdk_generator_app_events_create_history_table">CREATE TABLE IF NOT EXISTS history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, event_name TEXT, event_details TEXT);</string>
+    <string name="pdk_generator_app_events_create_history_table" translatable="false">CREATE TABLE IF NOT EXISTS history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, event_name TEXT, event_details TEXT);</string>
 
     <!-- Withings Device Generator -->
-    <string name="pdk_generator_withings_create_activity_measure_history_table">CREATE TABLE IF NOT EXISTS activity_measure_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, date_start INTEGER, timezone TEXT, steps REAL, distance REAL, active_calories REAL, total_calories REAL, elevation REAL, soft_activity_duration REAL, moderate_activity_duration REAL, intense_activity_duration REAL);</string>
-    <string name="pdk_generator_withings_create_body_measure_history_table">CREATE TABLE IF NOT EXISTS body_measure_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, measure_date INTEGER, measure_status TEXT, measure_category TEXT, measure_type TEXT, measure_value REAL);</string>
-    <string name="pdk_generator_withings_create_intraday_activity_history_table">CREATE TABLE IF NOT EXISTS intraday_activity_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, activity_start REAL, activity_duration REAL, calories REAL, distance REAL, elevation_climbed REAL, steps REAL, swim_strokes REAL, pool_laps REAL);</string>
-    <string name="pdk_generator_withings_create_sleep_measure_history_table">CREATE TABLE IF NOT EXISTS sleep_measure_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, start_date REAL, end_date REAL, state TEXT, measurement_device TEXT);</string>
-    <string name="pdk_generator_withings_create_sleep_summary_history_table">CREATE TABLE IF NOT EXISTS sleep_summary_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, start_date REAL, end_date REAL, timezone TEXT, measurement_device TEXT, wake_duration REAL, light_sleep_duration REAL, deep_sleep_duration REAL, rem_sleep_duration REAL, wake_count INTEGER, to_sleep_duration REAL, to_wake_duration REAL);</string>
-    <string name="pdk_generator_withings_create_workout_history_table">CREATE TABLE IF NOT EXISTS workout_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, start_date REAL, end_date REAL, measurement_device TEXT, workout_category TEXT, caolories REAL, effective_duration REAL, raw_data TEXT);</string>
+    <string name="pdk_generator_withings_create_activity_measure_history_table" translatable="false">CREATE TABLE IF NOT EXISTS activity_measure_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, date_start INTEGER, timezone TEXT, steps REAL, distance REAL, active_calories REAL, total_calories REAL, elevation REAL, soft_activity_duration REAL, moderate_activity_duration REAL, intense_activity_duration REAL);</string>
+    <string name="pdk_generator_withings_create_body_measure_history_table" translatable="false">CREATE TABLE IF NOT EXISTS body_measure_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, measure_date INTEGER, measure_status TEXT, measure_category TEXT, measure_type TEXT, measure_value REAL);</string>
+    <string name="pdk_generator_withings_create_intraday_activity_history_table" translatable="false">CREATE TABLE IF NOT EXISTS intraday_activity_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, activity_start REAL, activity_duration REAL, calories REAL, distance REAL, elevation_climbed REAL, steps REAL, swim_strokes REAL, pool_laps REAL);</string>
+    <string name="pdk_generator_withings_create_sleep_measure_history_table" translatable="false">CREATE TABLE IF NOT EXISTS sleep_measure_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, start_date REAL, end_date REAL, state TEXT, measurement_device TEXT);</string>
+    <string name="pdk_generator_withings_create_sleep_summary_history_table" translatable="false">CREATE TABLE IF NOT EXISTS sleep_summary_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, start_date REAL, end_date REAL, timezone TEXT, measurement_device TEXT, wake_duration REAL, light_sleep_duration REAL, deep_sleep_duration REAL, rem_sleep_duration REAL, wake_count INTEGER, to_sleep_duration REAL, to_wake_duration REAL);</string>
+    <string name="pdk_generator_withings_create_workout_history_table" translatable="false">CREATE TABLE IF NOT EXISTS workout_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, start_date REAL, end_date REAL, measurement_device TEXT, workout_category TEXT, caolories REAL, effective_duration REAL, raw_data TEXT);</string>
 
     <!-- Battery Generator -->
-    <string name="pdk_generator_device_battery_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, health TEXT, level INTERGER, plugged TEXT, present INTEGER, scale INTEGER, temperature INTEGER, voltage INTEGER, technology TEXT, status TEXT);</string>
+    <string name="pdk_generator_device_battery_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, health TEXT, level INTERGER, plugged TEXT, present INTEGER, scale INTEGER, temperature INTEGER, voltage INTEGER, technology TEXT, status TEXT);</string>
 
     <!-- Foreground Applications Generator -->
-    <string name="pdk_generator_foreground_applications_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, application TEXT);</string>
-    <string name="pdk_generator_foreground_applications_history_table_add_duration">ALTER TABLE history ADD duration REAL;</string>
-    <string name="pdk_generator_foreground_applications_history_table_add_screen_active">ALTER TABLE history ADD screen_active INTEGER;</string>
-    <string name="pdk_generator_foreground_applications_history_table_add_display_state">ALTER TABLE history ADD display_state TEXT;</string>
-    <string name="pdk_generator_foreground_applications_history_table_add_is_home">ALTER TABLE history ADD is_home INTEGER;</string>
+    <string name="pdk_generator_foreground_applications_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, application TEXT);</string>
+    <string name="pdk_generator_foreground_applications_history_table_add_duration" translatable="false">ALTER TABLE history ADD duration REAL;</string>
+    <string name="pdk_generator_foreground_applications_history_table_add_screen_active" translatable="false">ALTER TABLE history ADD screen_active INTEGER;</string>
+    <string name="pdk_generator_foreground_applications_history_table_add_display_state" translatable="false">ALTER TABLE history ADD display_state TEXT;</string>
+    <string name="pdk_generator_foreground_applications_history_table_add_is_home" translatable="false">ALTER TABLE history ADD is_home INTEGER;</string>
+    <string name="pdk_generator_foreground_applications_history_table_add_category" translatable="false">ALTER TABLE history ADD category TEXT;</string>
+    <string name="pdk_generator_foreground_applications_create_substitutes_table" translatable="false">CREATE TABLE substitutes(package TEXT PRIMARY KEY, substitute TEXT);</string>
 
     <!-- Ambient Light Sensor Generator -->
-    <string name="pdk_generator_ambient_light_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, light_level REAL, raw_timestamp BIGINT, accuracy INTEGER);</string>
+    <string name="pdk_generator_ambient_light_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, light_level REAL, raw_timestamp BIGINT, accuracy INTEGER);</string>
 
     <!-- Accelerometer Sensor Generator -->
-    <string name="pdk_generator_accelerometer_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, x REAL, y REAL, z REAL, raw_timestamp BIGINT, accuracy INTEGER);</string>
+    <string name="pdk_generator_accelerometer_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, x REAL, y REAL, z REAL, raw_timestamp BIGINT, accuracy INTEGER);</string>
 
     <!-- System Status Generator -->
-    <string name="pdk_generator_diagnostics_system_status_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, runtime INTEGER, storage_app INTEGER, storage_other INTEGER, storage_available INTEGER, storage_total INTEGER, storage_path TEXT);</string>
-    <string name="pdk_generator_diagnostics_system_status_history_table_add_system_runtime">ALTER TABLE history ADD system_runtime INTEGER;</string>
-    <string name="pdk_generator_diagnostics_system_status_history_table_add_gps_enabled">ALTER TABLE history ADD gps_enabled INTEGER;</string>
-    <string name="pdk_generator_diagnostics_system_status_history_table_add_network_enabled">ALTER TABLE history ADD network_enabled INTEGER;</string>
-    <string name="pdk_generator_diagnostics_system_status_history_table_add_pending_transmissions">ALTER TABLE history ADD pending_transmissions INTEGER;</string>
+    <string name="pdk_generator_diagnostics_system_status_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, runtime INTEGER, storage_app INTEGER, storage_other INTEGER, storage_available INTEGER, storage_total INTEGER, storage_path TEXT);</string>
+    <string name="pdk_generator_diagnostics_system_status_history_table_add_system_runtime" translatable="false">ALTER TABLE history ADD system_runtime INTEGER;</string>
+    <string name="pdk_generator_diagnostics_system_status_history_table_add_gps_enabled" translatable="false">ALTER TABLE history ADD gps_enabled INTEGER;</string>
+    <string name="pdk_generator_diagnostics_system_status_history_table_add_network_enabled" translatable="false">ALTER TABLE history ADD network_enabled INTEGER;</string>
+    <string name="pdk_generator_diagnostics_system_status_history_table_add_pending_transmissions" translatable="false">ALTER TABLE history ADD pending_transmissions INTEGER;</string>
 
     <!-- Time of Day Status Generator -->
-    <string name="pdk_generator_time_of_day_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, sunrise INTEGER, sunset INTEGER);</string>
+    <string name="pdk_generator_time_of_day_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, sunrise INTEGER, sunset INTEGER);</string>
 
     <!-- Google Fit -->
-    <string name="pdk_generator_google_fit_step_count_history_table">CREATE TABLE step_count_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, date_start INTEGER, date_end INTEGER, steps REAL);</string>
-    <string name="pdk_generator_google_fit_step_cadence_history_table">CREATE TABLE step_cadence_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, timestamp INTEGER, steps_per_minute REAL);</string>
-    <string name="pdk_generator_google_fit_speed_history_table">CREATE TABLE speed_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, timestamp INTEGER, speed REAL);</string>
-    <string name="pdk_generator_google_fit_calories_expended_history_table">CREATE TABLE calories_expended_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, observed INTEGER, transmitted INTEGER, date_start INTEGER, date_end INTEGER, kcal REAL);</string>
-    <string name="pdk_generator_google_fit_distance_history_table">CREATE TABLE distance_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, date_start INTEGER, date_end INTEGER, distance REAL);</string>
+    <string name="pdk_generator_google_fit_step_count_history_table" translatable="false">CREATE TABLE step_count_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, date_start INTEGER, date_end INTEGER, steps REAL);</string>
+    <string name="pdk_generator_google_fit_step_cadence_history_table" translatable="false">CREATE TABLE step_cadence_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, timestamp INTEGER, steps_per_minute REAL);</string>
+    <string name="pdk_generator_google_fit_speed_history_table" translatable="false">CREATE TABLE speed_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, timestamp INTEGER, speed REAL);</string>
+    <string name="pdk_generator_google_fit_calories_expended_history_table" translatable="false">CREATE TABLE calories_expended_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, observed INTEGER, transmitted INTEGER, date_start INTEGER, date_end INTEGER, kcal REAL);</string>
+    <string name="pdk_generator_google_fit_distance_history_table" translatable="false">CREATE TABLE distance_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, date_start INTEGER, date_end INTEGER, distance REAL);</string>
 
     <!-- Fitbit Generator -->
-    <string name="pdk_generator_fitbit_create_activity_history_table">CREATE TABLE activity_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, date_start INTEGER, steps REAL, distance REAL, floors REAL, elevation REAL, calories_activity REAL, calories_bmr REAL, calories_marginal REAL, minutes_very_active REAL, minutes_fairly_active REAL, minutes_lightly_active REAL, minutes_sedentary REAL);</string>
-    <string name="pdk_generator_fitbit_create_sleep_history_table">CREATE TABLE sleep_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, start INTEGER, duration REAL, is_main_sleep INTEGER, minutes_asleep REAL, minutes_awake REAL, minutes_after_wake REAL, minutes_to_sleep REAL, minutes_in_bed REAL, sleep_type TEXT, deep_periods REAL, deep_minutes REAL, light_periods REAL, light_minutes REAL, rem_periods REAL, rem_minutes REAL, wake_periods REAL, wake_minutes REAL, asleep_minutes REAL, asleep_periods REAL, restless_minutes REAL, restless_periods REAL, awake_minutes REAL, awake_periods REAL);</string>
-    <string name="pdk_generator_fitbit_create_weight_history_table">CREATE TABLE weight_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, weight REAL, bmi REAL, log_id INTEGER, source TEXT);</string>
-    <string name="pdk_generator_fitbit_create_heart_rate_history_table">CREATE TABLE heart_rate_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, out_min REAL, out_max REAL, out_minutes REAL, out_calories REAL, fat_burn_min REAL, fat_burn_max REAL, fat_burn_minutes REAL, fat_burn_calories REAL, cardio_min REAL, cardio_max REAL, cardio_minutes REAL, cardio_calories REAL, peak_min REAL, peak_max REAL, peak_minutes REAL, peak_calories REAL, resting_rate REAL);</string>
+    <string name="pdk_generator_fitbit_create_activity_history_table" translatable="false">CREATE TABLE activity_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, date_start INTEGER, steps REAL, distance REAL, floors REAL, elevation REAL, calories_activity REAL, calories_bmr REAL, calories_marginal REAL, minutes_very_active REAL, minutes_fairly_active REAL, minutes_lightly_active REAL, minutes_sedentary REAL);</string>
+    <string name="pdk_generator_fitbit_create_sleep_history_table" translatable="false">CREATE TABLE sleep_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, start INTEGER, duration REAL, is_main_sleep INTEGER, minutes_asleep REAL, minutes_awake REAL, minutes_after_wake REAL, minutes_to_sleep REAL, minutes_in_bed REAL, sleep_type TEXT, deep_periods REAL, deep_minutes REAL, light_periods REAL, light_minutes REAL, rem_periods REAL, rem_minutes REAL, wake_periods REAL, wake_minutes REAL, asleep_minutes REAL, asleep_periods REAL, restless_minutes REAL, restless_periods REAL, awake_minutes REAL, awake_periods REAL);</string>
+    <string name="pdk_generator_fitbit_create_weight_history_table" translatable="false">CREATE TABLE weight_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, weight REAL, bmi REAL, log_id INTEGER, source TEXT);</string>
+    <string name="pdk_generator_fitbit_create_heart_rate_history_table" translatable="false">CREATE TABLE heart_rate_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, out_min REAL, out_max REAL, out_minutes REAL, out_calories REAL, fat_burn_min REAL, fat_burn_max REAL, fat_burn_minutes REAL, fat_burn_calories REAL, cardio_min REAL, cardio_max REAL, cardio_minutes REAL, cardio_calories REAL, peak_min REAL, peak_max REAL, peak_minutes REAL, peak_calories REAL, resting_rate REAL);</string>
 
     <!-- Geofences Generator -->
-    <string name="pdk_generator_geofences_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, transition TEXT, metadata_json TEXT);</string>
-    <string name="pdk_generator_geofences_history_table_add_identifier">ALTER TABLE history ADD identifier TEXT;</string>
+    <string name="pdk_generator_geofences_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, transition TEXT, metadata_json TEXT);</string>
+    <string name="pdk_generator_geofences_history_table_add_identifier" translatable="false">ALTER TABLE history ADD identifier TEXT;</string>
 
     <!-- Google Awareness Generator -->
-    <string name="pdk_generator_google_awareness_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER,  current_activity TEXT, current_activity_confidence REAL, headphone_state TEXT, current_place TEXT, current_place_id TEXT, current_place_latitude REAL, current_place_longitude REAL, current_place_types TEXT, current_place_confidence REAL, weekday TEXT, holiday TEXT, time_of_day TEXT,  current_temperature REAL, current_perceived_temperature REAL, current_dew_point REAL, current_humidity REAL, current_weather_conditions REAL);</string>
+    <string name="pdk_generator_google_awareness_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER,  current_activity TEXT, current_activity_confidence REAL, headphone_state TEXT, current_place TEXT, current_place_id TEXT, current_place_latitude REAL, current_place_longitude REAL, current_place_types TEXT, current_place_confidence REAL, weekday TEXT, holiday TEXT, time_of_day TEXT,  current_temperature REAL, current_perceived_temperature REAL, current_dew_point REAL, current_humidity REAL, current_weather_conditions REAL);</string>
+
+    <!-- Google Places Generator -->
+    <string name="pdk_generator_google_places_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, current_place_latitude REAL, current_place_longitude REAL, current_place_types TEXT, current_place_confidence REAL);</string>
 
     <!-- Users Generator -->
-    <string name="pdk_generator_users_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, mode TEXT);</string>
-    <string name="pdk_generator_users_history_table_add_identifier">ALTER TABLE history ADD identifier INTEGER;</string>
+    <string name="pdk_generator_users_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, mode TEXT);</string>
+    <string name="pdk_generator_users_history_table_add_identifier" translatable="false">ALTER TABLE history ADD identifier INTEGER;</string>
 
     <!-- Dark Sky Weather Generator -->
-    <string name="pdk_generator_dark_sky_weather_create_history_table">CREATE TABLE dark_sky_weather_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, summary TEXT, temperature REAL, apparent_temperature REAL, ozone REAL, humidity REAL, dew_point REAL, wind_speed REAL, wind_gust_speed REAL, wind_bearing REAL, cloud_cover REAL, uv_index REAL, air_pressure REAL, visibility REAL, precipitation_intensity REAL, precipitation_probability REAL, full_reading TEXT);</string>
+    <string name="pdk_generator_dark_sky_weather_create_history_table" translatable="false">CREATE TABLE dark_sky_weather_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, summary TEXT, temperature REAL, apparent_temperature REAL, ozone REAL, humidity REAL, dew_point REAL, wind_speed REAL, wind_gust_speed REAL, wind_bearing REAL, cloud_cover REAL, uv_index REAL, air_pressure REAL, visibility REAL, precipitation_intensity REAL, precipitation_probability REAL, full_reading TEXT);</string>
 
     <!-- Step Counts -->
-    <string name="pdk_generator_step_count_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, step_count REAL, elapsed_runtime INTEGER);</string>
+    <string name="pdk_generator_step_count_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, step_count REAL, elapsed_runtime INTEGER);</string>
 
     <!-- Notification Events -->
-    <string name="pdk_generator_notification_events_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, package TEXT, channel TEXT, action TEXT, reason TEXT);</string>
+    <string name="pdk_generator_notification_events_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, package TEXT, channel TEXT, action TEXT, reason TEXT);</string>
 
     <!-- Voice Activity Detection -->
-    <string name="pdk_generator_diagnostics_voice_activity_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, voices_present INTEGER);</string>
-    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_level">ALTER TABLE history ADD level REAL;</string>
-    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_sampling_rate">ALTER TABLE history ADD sampling_rate INTEGER;</string>
-    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_smooth_window">ALTER TABLE history ADD smooth_window INTEGER;</string>
-    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_smoothing_mode">ALTER TABLE history ADD smooth_mode TEXT;</string>
-    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_evaluation_interval">ALTER TABLE history ADD evaluation_interval INTEGER;</string>
-    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_evaluation_count">ALTER TABLE history ADD evaluation_count INTEGER;</string>
-    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_power">ALTER TABLE history ADD power REAL;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, voices_present INTEGER);</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_level" translatable="false">ALTER TABLE history ADD level REAL;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_sampling_rate" translatable="false">ALTER TABLE history ADD sampling_rate INTEGER;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_smooth_window" translatable="false">ALTER TABLE history ADD smooth_window INTEGER;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_smoothing_mode" translatable="false">ALTER TABLE history ADD smooth_mode TEXT;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_evaluation_interval" translatable="false">ALTER TABLE history ADD evaluation_interval INTEGER;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_evaluation_count" translatable="false">ALTER TABLE history ADD evaluation_count INTEGER;</string>
+    <string name="pdk_generator_diagnostics_voice_activity_history_table_add_power" translatable="false">ALTER TABLE history ADD power REAL;</string>
 
    <!-- Bluetooth Devices -->
-    <string name="pdk_generator_bluetooth_devices_create_history_table">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, address TEXT, device_class TEXT, pair_status TEXT, name TEXT, device_type TEXT)</string>
+    <string name="pdk_generator_bluetooth_devices_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, address TEXT, device_class TEXT, pair_status TEXT, name TEXT, device_type TEXT)</string>
+
+    <!-- Dark Sky Weather Generator -->
+    <string name="pdk_generator_open_weather_create_history_table" translatable="false">CREATE TABLE open_weather_history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, latitude REAL, longitude REAL, timezone TEXT, temperature REAL, apparent_temperature REAL, humidity REAL, dew_point REAL, wind_speed REAL, wind_gust_speed REAL, wind_bearing REAL, cloud_cover REAL, uv_index REAL, air_pressure REAL, visibility REAL, full_reading TEXT);</string>
 </resources>

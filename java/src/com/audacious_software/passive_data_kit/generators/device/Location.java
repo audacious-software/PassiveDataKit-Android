@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
@@ -19,10 +21,12 @@ import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -57,7 +61,7 @@ import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationAvailability;
 import com.google.android.gms.location.LocationCallback;
@@ -96,6 +100,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -158,7 +163,7 @@ public class Location extends Generator implements LocationListener, android.loc
     private float mMinimumDistance = 400;
 
     private SQLiteDatabase mDatabase = null;
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE_HISTORY = "history";
     @SuppressWarnings("WeakerAccess")
@@ -173,6 +178,11 @@ public class Location extends Generator implements LocationListener, android.loc
     private static final String HISTORY_PROVIDER = "provider";
     private static final String HISTORY_LOCATION_TIMESTAMP = "location_timestamp";
     private static final String HISTORY_ACCURACY = "accuracy";
+    private static final String HISTORY_MOCK_LOCATIONS_ENABLED = "mock_locations_enabled";
+    public static final String HISTORY_MOCK_LOCATION_APPS_COUNT = "mock_location_apps_count";
+    public static final String HISTORY_MOCK_LOCATION_APPS = "mock_location_apps";
+    public static final String HISTORY_MOCK_LOCATION_PROVIDER = "mock_location_provider";
+
     private long mLatestTimestamp = -1;
 
     @SuppressWarnings("unused")
@@ -202,6 +212,11 @@ public class Location extends Generator implements LocationListener, android.loc
         switch (version) {
             case 0:
                 this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_location_create_history_table));
+            case 1:
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_location_history_table_add_mock_locations_enabled));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_location_history_table_add_mock_location_apps_count));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_location_history_table_add_mock_location_apps));
+                this.mDatabase.execSQL(this.mContext.getString(R.string.pdk_generator_location_history_table_add_mock_location_provider));
         }
 
         if (version != Location.DATABASE_VERSION) {
@@ -485,6 +500,49 @@ public class Location extends Generator implements LocationListener, android.loc
             values.put(Location.HISTORY_ACCURACY, location.getAccuracy());
             updated.putDouble(Location.HISTORY_ACCURACY, location.getAccuracy());
         }
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            boolean mockLocationsEnabled = Settings.Secure.getString(this.mContext.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION).equals("0");
+
+            values.put(Location.HISTORY_MOCK_LOCATIONS_ENABLED, mockLocationsEnabled);
+            updated.putBoolean(Location.HISTORY_MOCK_LOCATIONS_ENABLED, mockLocationsEnabled);
+        }
+
+        ArrayList<String> mockLocationApps = new ArrayList<String>();
+        JSONArray mockLocationAppsJson = new JSONArray();
+
+        PackageManager pm = this.mContext.getPackageManager();
+        List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+
+        for (ApplicationInfo applicationInfo : packages) {
+            try {
+                PackageInfo packageInfo = pm.getPackageInfo(applicationInfo.packageName, PackageManager.GET_PERMISSIONS);
+
+                String[] requestedPermissions = packageInfo.requestedPermissions;
+
+                if (requestedPermissions != null) {
+                    for (int i = 0; i < requestedPermissions.length; i++) {
+                        if (requestedPermissions[i].equals("android.permission.ACCESS_MOCK_LOCATION")) {
+                            if (mockLocationApps.contains(applicationInfo.packageName) == false) {
+                                mockLocationApps.add(applicationInfo.packageName);
+                                mockLocationAppsJson.put(applicationInfo.packageName);
+                            }
+                        }
+                    }
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                Log.e("PDK" , "MOCK LOCATION STACK TRACE", e);
+            }
+        }
+
+        values.put(Location.HISTORY_MOCK_LOCATION_APPS_COUNT, mockLocationApps.size());
+        updated.putInt(Location.HISTORY_MOCK_LOCATION_APPS_COUNT, mockLocationApps.size());
+
+        values.put(Location.HISTORY_MOCK_LOCATION_APPS, mockLocationAppsJson.toString());
+        updated.putStringArrayList(Location.HISTORY_MOCK_LOCATION_APPS, mockLocationApps);
+
+        values.put(Location.HISTORY_MOCK_LOCATION_PROVIDER, location.isFromMockProvider());
+        updated.putBoolean(Location.HISTORY_MOCK_LOCATION_PROVIDER, location.isFromMockProvider());
 
         final Location me = this;
 

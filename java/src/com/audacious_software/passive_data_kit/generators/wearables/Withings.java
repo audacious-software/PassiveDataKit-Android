@@ -33,7 +33,7 @@ import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.YAxis;
@@ -1418,7 +1418,7 @@ public class Withings extends Generator {
         Intent handlerIntent = new Intent(activity, Withings.OAuthResultHandlerActivity.class);
         handlerIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(activity, 0, handlerIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(activity, 0, handlerIntent, PendingIntent.FLAG_IMMUTABLE);
 
         service.performAuthorizationRequest(request, pendingIntent);
     }
@@ -2129,7 +2129,8 @@ public class Withings extends Generator {
 
                 this.finish();
             } else {
-                ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.Theme_AppCompat_Light_Dialog);
+                ContextThemeWrapper wrapper = new ContextThemeWrapper(this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog);
+//                ContextThemeWrapper wrapper = new ContextThemeWrapper(this, R.style.Theme_AppCompat_Light_Dialog);
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(wrapper);
                 builder.setTitle(R.string.title_dialog_withings_auth_unsuccessful);

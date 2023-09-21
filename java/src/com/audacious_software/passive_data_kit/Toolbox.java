@@ -49,6 +49,20 @@ public class Toolbox {
         return payload;
     }
 
+    public static String hash(String payload) {
+        NaCl.sodium();
+
+        byte[] message = payload.getBytes(Charset.forName("UTF-8"));
+
+        long hashLength = Sodium.crypto_hash_sha512_bytes();
+
+        byte[] hashText = new byte[(int) hashLength];
+
+        Sodium.crypto_hash_sha512(hashText, message, message.length);
+
+        return Toolbox.encodeBase64(hashText);
+    }
+
     public static byte[] randomNonce() {
         NaCl.sodium();
 

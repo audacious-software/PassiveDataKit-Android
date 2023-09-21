@@ -30,7 +30,7 @@ import com.audacious_software.passive_data_kit.activities.generators.RequestPerm
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
@@ -60,6 +60,9 @@ public class TextMessages extends Generator {
 
     private static final String DATA_RETENTION_PERIOD = "com.audacious_software.passive_data_kit.generators.communication.TextMessages.DATA_RETENTION_PERIOD";
     private static final long DATA_RETENTION_PERIOD_DEFAULT = (4 * 365L * 24L * 60L * 60L * 1000L);
+
+    private static final String OMIT_SENSITIVE_FIELDS = "com.audacious_software.passive_data_kit.generators.communication.TextMessages.OMIT_SENSITIVE_FIELDS";
+    private static final boolean OMIT_SENSITIVE_FIELDS_DEFAULT = false;
 
     public static final Uri SMS_INBOX_URI = Uri.parse("content://sms/inbox");
     public static final Uri SMS_SENT_URI = Uri.parse("content://sms/sent");
@@ -95,6 +98,8 @@ public class TextMessages extends Generator {
     private SQLiteDatabase mDatabase = null;
     private long mSampleInterval = 60000;
     private ArrayList<BodyAnnotator> mBodyAnnotators = new ArrayList<>();
+
+    private boolean mRunning = false;
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -139,6 +144,12 @@ public class TextMessages extends Generator {
         final Runnable checkLogs = new Runnable() {
             @Override
             public void run() {
+                if (me.mRunning) {
+                    return;
+                }
+
+                me.mRunning = true;
+
                 boolean approved = false;
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -150,6 +161,10 @@ public class TextMessages extends Generator {
                 }
 
                 if (approved) {
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
+
+                    boolean omitSensitiveFields = prefs.getBoolean(TextMessages.OMIT_SENSITIVE_FIELDS, TextMessages.OMIT_SENSITIVE_FIELDS_DEFAULT);
+
                     try {
                         long lastObserved = 0;
 
@@ -158,8 +173,6 @@ public class TextMessages extends Generator {
                         if (lastCursor.moveToNext()) {
                             lastObserved = lastCursor.getLong(lastCursor.getColumnIndex(TextMessages.HISTORY_OBSERVED));
                         }
-
-                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me.mContext);
 
                         long retentionPeriod = prefs.getLong(TextMessages.DATA_RETENTION_PERIOD, TextMessages.DATA_RETENTION_PERIOD_DEFAULT);
 
@@ -298,16 +311,26 @@ public class TextMessages extends Generator {
                             bundle.putString(TextMessages.SMS_DIRECTION, values.getAsString(TextMessages.HISTORY_DIRECTION));
                             bundle.putString(TextMessages.SMS_BODY, values.getAsString(TextMessages.HISTORY_BODY));
 
+                            if (omitSensitiveFields) {
+                                bundle.remove(TextMessages.SMS_NUMBER_NAME);
+                                bundle.remove(TextMessages.SMS_NUMBER);
+                                bundle.remove(TextMessages.SMS_BODY);
+                            }
+
                             Generators.getInstance(me.mContext).notifyGeneratorUpdated(TextMessages.GENERATOR_IDENTIFIER, values.getAsLong(TextMessages.HISTORY_OBSERVED), bundle);
 
                             me.mDatabase.insert(TextMessages.TABLE_HISTORY, null, values);
                         }
                     } catch (SecurityException ex) {
+                        ex.printStackTrace();
                         Logger.getInstance(me.mContext).logThrowable(ex);
-                    } catch (RuntimeException e) {
+                    } catch (RuntimeException ex) {
+                        ex.printStackTrace();
                         // CursorWindowAllocationException
                     }
                 }
+
+                me.mRunning = false;
 
                 if (me.mHandler != null) {
                     me.mHandler.postDelayed(this, me.mSampleInterval);
@@ -346,7 +369,7 @@ public class TextMessages extends Generator {
         Thread t = new Thread(r);
         t.start();
 
-        Thread init =  new Thread(new Runnable() {
+        Thread init = new Thread(new Runnable() {
             @Override
             public void run() {
                 while (me.mHandler == null) {
@@ -611,6 +634,13 @@ public class TextMessages extends Generator {
 
     public void addBodyAnnotator(TextMessages.BodyAnnotator annotator) {
         this.mBodyAnnotators.add(annotator);
+    }
+
+    public void setOmitSensitiveFields(boolean doOmit) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putBoolean(TextMessages.OMIT_SENSITIVE_FIELDS, doOmit);
+        e.apply();
     }
 
     public static abstract class BodyAnnotator {

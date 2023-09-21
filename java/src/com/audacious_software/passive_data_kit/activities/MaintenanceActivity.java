@@ -15,7 +15,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.audacious_software.passive_data_kit.Logger;
 import com.audacious_software.passive_data_kit.PassiveDataKit;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 
 import java.util.HashMap;
 

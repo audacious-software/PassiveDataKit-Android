@@ -27,7 +27,7 @@ import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.device.ScreenState;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -114,6 +114,10 @@ public class VoiceActivityGenerator extends Generator {
     @SuppressWarnings("WeakerAccess")
     public VoiceActivityGenerator(Context context) {
         super(context);
+
+        Log.e("PDK", "INIT VOICE DETECTION");
+
+        (new Throwable()).printStackTrace();
     }
 
     @SuppressWarnings("unused")
@@ -239,7 +243,7 @@ public class VoiceActivityGenerator extends Generator {
     private void stopGenerator() {
         if (this.mHeartbeatIntent != null) {
             AlarmManager alarms = (AlarmManager) this.mContext.getSystemService(Context.ALARM_SERVICE);
-            PendingIntent pi = PendingIntent.getBroadcast(this.mContext, 0, new Intent(VoiceActivityGenerator.ACTION_HEARTBEAT), PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pi = PendingIntent.getBroadcast(this.mContext, 0, new Intent(VoiceActivityGenerator.ACTION_HEARTBEAT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
             alarms.cancel(this.mHeartbeatIntent);
 
@@ -379,7 +383,7 @@ public class VoiceActivityGenerator extends Generator {
                 t.start();
 
                 AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-                me.mHeartbeatIntent = PendingIntent.getBroadcast(context, 0, new Intent(VoiceActivityGenerator.ACTION_HEARTBEAT), PendingIntent.FLAG_UPDATE_CURRENT);
+                me.mHeartbeatIntent = PendingIntent.getBroadcast(context, 0, new Intent(VoiceActivityGenerator.ACTION_HEARTBEAT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, now + me.mRefreshInterval, me.mHeartbeatIntent);

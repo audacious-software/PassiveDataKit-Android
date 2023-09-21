@@ -15,7 +15,7 @@ import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;

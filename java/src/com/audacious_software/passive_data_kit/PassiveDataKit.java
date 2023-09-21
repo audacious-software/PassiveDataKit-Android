@@ -23,12 +23,11 @@ import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.diagnostics.AppEvent;
 import com.audacious_software.passive_data_kit.transmitters.HttpTransmitter;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
-import com.audacious_software.pdk.passivedatakit.R;
+import com.audacious_software.passive_data_kit.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,7 +36,6 @@ import org.json.JSONObject;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -259,21 +257,20 @@ public class PassiveDataKit {
             }
         } else {
             try {
-                FirebaseInstanceId.getInstance().getInstanceId()
-                        .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                            @Override
-                            public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                                if (!task.isSuccessful()) {
-                                    Log.w("PDK", "getInstanceId failed", task.getException());
-                                    return;
-                                }
+                FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
+                    @Override
+                    public void onComplete(@NonNull Task<String> task) {
+                        if (!task.isSuccessful()) {
+                            Log.w("PDK", "getInstanceId failed", task.getException());
+                            return;
+                        }
 
-                                // Get new Instance ID token
-                                String token = task.getResult().getToken();
+                        // Get new Instance ID token
+                        String token = task.getResult();
 
-                                me.updateFirebaseDeviceToken(token);
-                            }
-                        });
+                        me.updateFirebaseDeviceToken(token);
+                    }
+                });
             } catch (IllegalStateException ex) {
                 ex.printStackTrace();
 
@@ -425,10 +422,17 @@ public class PassiveDataKit {
                             }
                         }
 
+                        if (transmitterDef.has("max-bundle-size")) {
+                            int maxBundleSize = transmitterDef.getInt("max-bundle-size");
+
+                            options.put(HttpTransmitter.MAX_BUNDLE_SIZE, "" + maxBundleSize);
+                        }
+
                         if (transmitterDef.has("device-key") && transmitterDef.has("server-key")) {
                             options.put(HttpTransmitter.PRIVATE_KEY, transmitterDef.getString("device-key"));
                             options.put(HttpTransmitter.PUBLIC_KEY, transmitterDef.getString("server-key"));
                         }
+
 
                         try {
                             String version = this.mContext.getPackageManager().getPackageInfo(this.mContext.getPackageName(), 0).versionName;
