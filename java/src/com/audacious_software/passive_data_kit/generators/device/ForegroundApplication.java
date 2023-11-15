@@ -125,6 +125,9 @@ public class ForegroundApplication extends Generator{
     private final HashMap<String, String> mCategoryCache = new HashMap<>();
     private final HashMap<String, String> mIdentifierCache = new HashMap<>();
 
+    private HashMap<String, String> mSubstitutions = new HashMap<>();
+    private HashMap<String, Boolean> mSubstituionReplacements = new HashMap<>();
+
     public static class ForegroundApplicationUsage {
         public long start;
         public long duration;
@@ -194,6 +197,22 @@ public class ForegroundApplication extends Generator{
     }
 
     private void logAppAppearance(String process, long when, long duration) {
+        String replacement = this.mSubstitutions.get(process);
+
+        if (replacement != null) {
+            this.logAppAppearance(replacement, when, duration);
+
+            boolean replaceOriginal = false;
+
+            if (this.mSubstituionReplacements.containsKey(process)) {
+                replaceOriginal = this.mSubstituionReplacements.get(process);
+            }
+
+            if (replaceOriginal) {
+                return;
+            }
+        }
+
         String category = this.fetchCategory(process);
 
         if (this.isAppEnabled(process) == false) {
@@ -1180,4 +1199,13 @@ public class ForegroundApplication extends Generator{
 
         return -1;
     }
-}
+
+    public void clearSubstitutions() {
+        this.mSubstitutions.clear();
+        this.mSubstituionReplacements.clear();
+    }
+
+    public void addSubstitution(String original, String replacement, boolean replaceOriginal) {
+        this.mSubstitutions.put(original, replacement);
+        this.mSubstituionReplacements.put(original, replaceOriginal);
+    }}

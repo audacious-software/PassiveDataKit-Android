@@ -3,6 +3,7 @@ package com.audacious_software.passive_data_kit.generators.device;
 import android.Manifest;
 import android.app.IntentService;
 import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
@@ -103,14 +105,6 @@ public class NotificationEvents extends Generator {
     @SuppressWarnings("unused")
     public static void start(final Context context) {
         NotificationEvents.getInstance(context).startGenerator();
-    }
-
-    public static void fetchPemissions(Context context) {
-        Intent intent = new Intent(context, RequestPermissionActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(RequestPermissionActivity.PERMISSION, Manifest.permission.POST_NOTIFICATIONS);
-
-        context.startActivity(intent);
     }
 
     private void startGenerator() {
@@ -238,6 +232,8 @@ public class NotificationEvents extends Generator {
 
     public static class ListenerService extends NotificationListenerService {
         public void onNotificationPosted (StatusBarNotification sbn) {
+            Log.e("PDK", "onNotificationPosted: " + sbn);
+
             if (NotificationEvents.getInstance(this).isEnabled(this)) {
                 final NotificationEvents me = NotificationEvents.getInstance(this);
 
@@ -273,6 +269,8 @@ public class NotificationEvents extends Generator {
         }
 
         public void onNotificationRemoved (StatusBarNotification sbn) {
+            Log.e("PDK", "onNotificationRemoved: " + sbn);
+
             if (NotificationEvents.getInstance(this).isEnabled(this)) {
                 final NotificationEvents me = NotificationEvents.getInstance(this);
 
@@ -308,6 +306,8 @@ public class NotificationEvents extends Generator {
         }
 
         public void onNotificationRemoved (StatusBarNotification sbn, NotificationListenerService.RankingMap rankingMap, int reason) {
+            Log.e("PDK", "onNotificationRemoved[2]: " + sbn);
+
             if (NotificationEvents.getInstance(this).isEnabled(this)) {
                 final NotificationEvents me = NotificationEvents.getInstance(this);
 
@@ -439,12 +439,40 @@ public class NotificationEvents extends Generator {
     }
 
     public static boolean areNotificationsEnabled(Context context) {
-        NotificationManager notes = (NotificationManager) context.getApplicationContext().getSystemService(Context. NOTIFICATION_SERVICE);
+        NotificationManager notes = (NotificationManager) context.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            return notes.isNotificationListenerAccessGranted(new ComponentName(context, NotificationEvents.ListenerService.class));
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             return notes.areNotificationsEnabled();
         }
 
         return true;
+    }
+
+    public static boolean areNotificationsVisible(Context context) {
+        NotificationManager notes = (NotificationManager) context.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            return notes.isNotificationListenerAccessGranted(new ComponentName(context, NotificationEvents.ListenerService.class));
+        }
+
+        return true;
+    }
+
+    public static void enableVisibility(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            Intent intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+
+            context.startActivity(intent);
+        }
+    }
+
+    public static void fetchPemissions(Context context) {
+        Intent intent = new Intent(context, RequestPermissionActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(RequestPermissionActivity.PERMISSION, Manifest.permission.POST_NOTIFICATIONS);
+
+        context.startActivity(intent);
     }
 }
