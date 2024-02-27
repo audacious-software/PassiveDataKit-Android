@@ -701,7 +701,7 @@ public class ForegroundApplication extends Generator{
                 context.startActivity(new Intent(context, AppUsageSelectionActivity.class));
             }
         });
-   }
+    }
 
     @Override
     public List<Bundle> fetchPayloads() {
@@ -952,6 +952,10 @@ public class ForegroundApplication extends Generator{
             return true;
         }
 
+        if (disabledApps.contains("*")) {
+            return false;
+        }
+
         String category = this.mCategoryCache.get(process);
 
         if (category == null) {
@@ -1039,6 +1043,8 @@ public class ForegroundApplication extends Generator{
 
         return usages;
     }
+
+
 
     public int fetchUsageDaysBetween(long start, long end, boolean screenActive) {
         if (this.mDatabase == null) {

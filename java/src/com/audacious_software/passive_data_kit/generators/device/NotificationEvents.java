@@ -8,6 +8,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
@@ -20,6 +21,7 @@ import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.activities.generators.RequestPermissionActivity;
@@ -439,10 +441,26 @@ public class NotificationEvents extends Generator {
     }
 
     public static boolean areNotificationsEnabled(Context context) {
+        Log.e("PDK", "areNotificationsEnabled(Context context)");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED);
+        }
+
+        return true;
+    }
+
+    public static boolean areNotificationListenersEnabled(Context context) {
+        Log.e("PDK", "areNotificationsEnabled(Context context)");
+
         NotificationManager notes = (NotificationManager) context.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            return notes.isNotificationListenerAccessGranted(new ComponentName(context, NotificationEvents.ListenerService.class));
+            boolean isEnabled = notes.isNotificationListenerAccessGranted(new ComponentName(context, NotificationEvents.ListenerService.class));
+
+            Log.e("PDK", "notes.isNotificationListenerAccessGranted(new ComponentName(context, NotificationEvents.ListenerService.class)) -=> " + isEnabled);
+
+            return isEnabled;
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             return notes.areNotificationsEnabled();
         }
@@ -469,10 +487,13 @@ public class NotificationEvents extends Generator {
     }
 
     public static void fetchPemissions(Context context) {
-        Intent intent = new Intent(context, RequestPermissionActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(RequestPermissionActivity.PERMISSION, Manifest.permission.POST_NOTIFICATIONS);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Intent intent = new Intent(context, RequestPermissionActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        context.startActivity(intent);
+            intent.putExtra(RequestPermissionActivity.PERMISSION, Manifest.permission.POST_NOTIFICATIONS);
+
+            context.startActivity(intent);
+        }
     }
 }

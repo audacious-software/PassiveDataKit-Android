@@ -243,7 +243,7 @@ public class VoiceActivityGenerator extends Generator {
     private void stopGenerator() {
         if (this.mHeartbeatIntent != null) {
             AlarmManager alarms = (AlarmManager) this.mContext.getSystemService(Context.ALARM_SERVICE);
-            PendingIntent pi = PendingIntent.getBroadcast(this.mContext, 0, new Intent(VoiceActivityGenerator.ACTION_HEARTBEAT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+            PendingIntent pi = PendingIntent.getBroadcast(this.mContext, 0, new Intent(VoiceActivityGenerator.ACTION_HEARTBEAT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
 
             alarms.cancel(this.mHeartbeatIntent);
 
@@ -383,7 +383,7 @@ public class VoiceActivityGenerator extends Generator {
                 t.start();
 
                 AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-                me.mHeartbeatIntent = PendingIntent.getBroadcast(context, 0, new Intent(VoiceActivityGenerator.ACTION_HEARTBEAT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+                me.mHeartbeatIntent = PendingIntent.getBroadcast(context, 0, new Intent(VoiceActivityGenerator.ACTION_HEARTBEAT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, now + me.mRefreshInterval, me.mHeartbeatIntent);

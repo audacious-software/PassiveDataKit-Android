@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
 
@@ -42,7 +43,11 @@ public class ForegroundService extends Service {
             }
         }
 
-        this.startForeground(ForegroundService.NOTIFICATION_ID, note);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            this.startForeground(ForegroundService.NOTIFICATION_ID, note, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+        } else {
+            this.startForeground(ForegroundService.NOTIFICATION_ID, note);
+        }
 
         return Service.START_STICKY;
     }
