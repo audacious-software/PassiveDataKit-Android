@@ -23,7 +23,6 @@ import com.audacious_software.passive_data_kit.PassiveDataKit;
 import com.audacious_software.passive_data_kit.Toolbox;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.passive_data_kit.generators.device.Location;
 import com.audacious_software.passive_data_kit.R;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -1209,6 +1208,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
         metadata.put(Generator.TIMEZONE, timeZone.getID());
         metadata.put(Generator.TIMEZONE_OFFSET, timeZone.getOffset(timestamp) / 1000);
 
+        /*
+
         if (includeLocation) {
             android.location.Location location = Location.getInstance(this.mContext).getLastKnownLocation();
 
@@ -1249,6 +1250,8 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
             testReading.put(Location.HISTORY_MOCK_LOCATION_APPS_COUNT, mockLocationApps.length());
             testReading.put(Location.HISTORY_MOCK_LOCATION_APPS, mockLocationApps);
         }
+
+        */
 
         testReading.put("passive-data-metadata", metadata);
 

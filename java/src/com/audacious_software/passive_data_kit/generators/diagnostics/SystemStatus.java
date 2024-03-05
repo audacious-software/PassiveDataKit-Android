@@ -1,7 +1,6 @@
 package com.audacious_software.passive_data_kit.generators.diagnostics;
 
 import android.Manifest;
-import android.accessibilityservice.AccessibilityServiceInfo;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
@@ -15,7 +14,6 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ServiceInfo;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.LocationManager;
@@ -26,22 +24,17 @@ import android.os.StatFs;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.accessibility.AccessibilityManager;
 import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
-import com.audacious_software.passive_data_kit.accessibility.AccessibilityEventsService;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
-import com.audacious_software.passive_data_kit.generators.communication.TextMessages;
-import com.audacious_software.passive_data_kit.generators.services.AccessibilityEvents;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
 import com.audacious_software.passive_data_kit.R;
 import com.github.mikephil.charting.charts.LineChart;
@@ -56,7 +49,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.text.DateFormat;
-import java.util.AbstractSequentialList;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
