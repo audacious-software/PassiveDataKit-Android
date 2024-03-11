@@ -34,14 +34,12 @@ import android.view.accessibility.AccessibilityManager;
 import android.widget.TextView;
 
 import com.audacious_software.passive_data_kit.PassiveDataKit;
-import com.audacious_software.passive_data_kit.accessibility.AccessibilityEventsService;
 import com.audacious_software.passive_data_kit.activities.generators.DataPointViewHolder;
 import com.audacious_software.passive_data_kit.activities.generators.GeneratorViewHolder;
 import com.audacious_software.passive_data_kit.diagnostics.DiagnosticAction;
 import com.audacious_software.passive_data_kit.generators.Generator;
 import com.audacious_software.passive_data_kit.generators.Generators;
 import com.audacious_software.passive_data_kit.generators.communication.TextMessages;
-import com.audacious_software.passive_data_kit.generators.services.AccessibilityEvents;
 import com.audacious_software.passive_data_kit.transmitters.Transmitter;
 import com.audacious_software.passive_data_kit.R;
 import com.github.mikephil.charting.charts.LineChart;

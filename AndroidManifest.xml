@@ -80,7 +80,6 @@
         <activity
             android:name="com.audacious_software.passive_data_kit.generators.wearables.Fitbit$OAuthResultHandlerActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity android:name="com.audacious_software.passive_data_kit.accessibility.SettingsActivity" />
 
         <service
             android:name="com.audacious_software.passive_data_kit.ForegroundService"
@@ -110,19 +109,6 @@
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
-        </service>
-        <service
-            android:name="com.audacious_software.passive_data_kit.accessibility.AccessibilityEventsService"
-            android:exported="true"
-            android:label="@string/accessibility_service_label"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
         </service>
     </application>
 

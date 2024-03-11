@@ -304,8 +304,5 @@
     <!-- Voice Detection -->
     <string name="generator_voice_detection">Voice Detection</string>
 
-    <string name="diagnostic_accessibility_permission_required_title">Accessibility Services Permission Required</string>
-    <string name="diagnostic_accessibility_permission_required">This app requires access to the system Accessibility Services to function properly.</string>
-
 </resources>
 
