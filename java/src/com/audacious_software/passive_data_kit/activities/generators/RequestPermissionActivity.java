@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.audacious_software.passive_data_kit.Logger;
-import com.audacious_software.passive_data_kit.generators.device.Location;
 import com.audacious_software.passive_data_kit.generators.services.GoogleFit;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.fitness.FitnessOptions;
@@ -64,10 +63,12 @@ public class RequestPermissionActivity extends Activity
         Bundle extras = this.getIntent().getExtras();
         String permission = extras.getString(RequestPermissionActivity.PERMISSION);
 
+        /*
         if (Manifest.permission.ACCESS_FINE_LOCATION.equals(permission) || Manifest.permission.ACCESS_COARSE_LOCATION.equals(permission)) {
             Location.getInstance(this).stopGenerator();
             Location.getInstance(this).startGenerator();
         }
+        */
 
         this.finish();
     }

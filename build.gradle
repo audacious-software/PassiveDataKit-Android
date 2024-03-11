@@ -17,16 +17,6 @@ repositories {
     maven {
         url "https://jitpack.io"
     }
-    maven {
-        url 'https://api.mapbox.com/downloads/v2/releases/maven'
-        authentication {
-            basic(BasicAuthentication)
-        }
-        credentials {
-            username = 'mapbox'
-            password = project.properties['mapbox_key']
-        }
-    }
 }
 
 android {
@@ -102,6 +92,10 @@ android {
         implementation 'androidx.cardview:cardview:1.0.0'
         implementation 'androidx.browser:browser:1.7.0'
         implementation 'androidx.work:work-runtime:2.9.0'
+        implementation 'androidx.preference:preference:1.2.1'
+        implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+        implementation 'androidx.navigation:navigation-fragment:2.7.7'
+        implementation 'androidx.navigation:navigation-ui:2.7.7'
         implementation 'com.google.guava:guava:28.2-android'
         implementation 'com.google.firebase:firebase-messaging:23.4.1'
         implementation 'com.google.maps.android:android-maps-utils:0.5'
@@ -112,32 +106,24 @@ android {
         implementation 'com.github.mfornos:humanize-slim:1.2.2'
         implementation 'com.google.guava:guava:28.2-android'
         implementation 'com.google.android.material:material:1.11.0'
-        implementation 'com.google.maps.android:android-maps-utils:0.5'
         implementation 'org.conscrypt:conscrypt-android:2.5.2'
-
-        api 'com.mapbox.maps:android:11.1.0'
 
         api 'com.android.volley:volley:1.2.1'
         api 'com.google.guava:guava:28.2-android'
         api 'com.google.android.gms:play-services-auth:21.0.0'
         api 'com.google.android.gms:play-services-fitness:21.1.0'
-        api 'com.google.android.gms:play-services-location:21.1.0'
-        api 'com.google.android.gms:play-services-maps:18.2.0'
         api 'com.google.android.gms:play-services-awareness:19.0.1'
-        api 'com.google.android.libraries.places:places:3.3.0'
         api 'com.google.firebase:firebase-messaging:23.4.1'
         api 'net.openid:appauth:0.7.0'
         api 'com.squareup.okhttp3:okhttp:4.10.0'
         api 'com.squareup.okhttp3:okhttp-tls:4.9.0'
-        api 'commons-io:commons-io:2.6'
+        api 'commons-io:commons-io:2.13.0'
         api 'commons-codec:commons-codec:1.15'
         api 'org.apache.commons:commons-lang3:3.11'
         api 'com.github.philjay:mpandroidchart:v3.1.0'
         api 'com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2'
         api 'com.google.code.findbugs:jsr305:3.0.2'
         api 'com.googlecode.libphonenumber:libphonenumber:8.11.3'
-
-		api project(':amazon-maps-api-v2')
     }
     buildFeatures {
         viewBinding true
@@ -145,10 +131,4 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.preference:preference:1.2.1'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.navigation:navigation-fragment:2.7.7'
-    implementation 'androidx.navigation:navigation-ui:2.7.7'
 }

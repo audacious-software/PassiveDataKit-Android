@@ -1,7 +1,6 @@
 <!--suppress CheckTagEmptyBody -->
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string-array name="pdk_available_generators" tools:ignore="InconsistentArrays">
-        <item>com.audacious_software.passive_data_kit.generators.device.Location</item>
         <item>com.audacious_software.passive_data_kit.generators.device.ScreenState</item>
         <item>com.audacious_software.passive_data_kit.generators.communication.PhoneCalls</item>
         <item>com.audacious_software.passive_data_kit.generators.communication.TextMessages</item>
@@ -60,36 +59,6 @@
         <item quantity="one">1 lux</item>
         <item quantity="other">%d lux</item>
     </plurals>
-
-    <!-- Location Resources -->
-    <string name="generator_location">Device Location</string>
-    <string name="label_data_collection_location_accuracy">Location Accuracy</string>
-    <string name="label_data_collection_location_accuracy_more">Tap here to update the accuracy of your data.</string>
-
-    <string name="label_data_collection_location_accuracy_best">Best Accuracy</string>
-    <string name="label_data_collection_location_accuracy_best_more">Best Available Data From Location Hardware</string>
-
-    <string name="label_data_collection_location_accuracy_randomized">Locally Randomized</string>
-    <string name="label_data_collection_location_accuracy_randomized_more">Location Combined With Random Noise</string>
-
-    <string name="label_data_collection_location_accuracy_user">User Provided</string>
-    <string name="label_data_collection_location_accuracy_user_more">Static Location Provided By User</string>
-
-    <string name="label_data_collection_location_accuracy_disabled">Disabled</string>
-    <string name="label_data_collection_location_accuracy_disabled_more">App Does Not Use Location Data</string>
-
-    <string name="title_location_accuracy_best">Best Accuracy</string>
-    <string name="message_location_accuracy_best">This app will use the location hardware on this device to obtain the most accurate location readings.</string>
-
-    <string name="title_location_accuracy_disabled">Location Disabled</string>
-    <string name="message_location_accuracy_disabled">This app will not use your location, but use an placeholder instead.</string>
-
-    <string name="title_location_accuracy_randomized">Locally Randomized</string>
-    <string name="message_location_accuracy_randomized">Please enter the random distance (kilometers) to use to obfuscate your exact location:</string>
-
-    <string name="title_location_accuracy_user">User Provided</string>
-    <string name="message_location_accuracy_user">Please enter a postal code or city and province to use as your location:</string>
-    <string name="toast_location_lookup_failed">Unable to find your location. Please enter your location another way and try again.</string>
 
     <!-- Screen State Resources -->
     <string name="generator_screen_state">Screen State</string>
@@ -325,14 +294,6 @@
     <!-- Google Awareness -->
     <string name="generator_google_awareness">Google Awareness</string>
     <string name="message_generator_google_awareness_empty">Awaiting first data&#8230;</string>
-
-    <!-- Dark Sky Weather -->
-    <string name="generator_dark_sky_url">https://api.darksky.net/forecast/%1$s/%2$f,%3$f,%4$d?units=si&amp;exclude=minutely,hourly,daily</string>
-    <string name="dark_sky_api_key" translatable="false">CHANGEME</string>
-
-    <!-- Open Weather Weather -->
-    <string name="generator_open_weather_url">https://api.openweathermap.org/data/2.5/onecall?lat=%1$f&amp;lon=%2$f&amp;appid=%3$s&amp;units=metric&amp;exclude=minutely,hourly,daily</string>
-    <string name="open_weather_api_key" translatable="false">CHANGEME</string>
 
     <!-- Step Counter -->
     <string name="generator_sensors_step_count">Step Count</string>
