@@ -69,9 +69,6 @@
     <!-- Google Awareness Generator -->
     <string name="pdk_generator_google_awareness_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER,  current_activity TEXT, current_activity_confidence REAL, headphone_state TEXT, current_place TEXT, current_place_id TEXT, current_place_latitude REAL, current_place_longitude REAL, current_place_types TEXT, current_place_confidence REAL, weekday TEXT, holiday TEXT, time_of_day TEXT,  current_temperature REAL, current_perceived_temperature REAL, current_dew_point REAL, current_humidity REAL, current_weather_conditions REAL);</string>
 
-    <!-- Google Places Generator -->
-    <string name="pdk_generator_google_places_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, current_place_latitude REAL, current_place_longitude REAL, current_place_types TEXT, current_place_confidence REAL);</string>
-
     <!-- Users Generator -->
     <string name="pdk_generator_users_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, mode TEXT);</string>
     <string name="pdk_generator_users_history_table_add_identifier" translatable="false">ALTER TABLE history ADD identifier INTEGER;</string>

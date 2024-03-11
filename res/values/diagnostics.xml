@@ -14,9 +14,6 @@
     <string name="diagnostic_sms_log_permission_required_title">Text Messaging Permission Required</string>
     <string name="diagnostic_sms_log_permission_required">Please all the app permission to access your text messages to gather and report your messaging activity statistics.</string>
 
-    <string name="diagnostic_missing_location_permission_title">Location Permission Required</string>
-    <string name="diagnostic_missing_location_permission">Please grant the app permission to access location services on this device.</string>
-
     <string name="diagnostic_withings_auth_required_title" tools:ignore="Typos">Access to Withings Account Required</string>
     <string name="diagnostic_withings_auth_required">Permission is required to fetch data from the Withings cloud. Please grant this application the requested permissions.</string>
 
@@ -31,4 +28,7 @@
 
     <string name="diagnostic_battery_optimization_exempt_title">Battery Optimization Enabled</string>
     <string name="diagnostic_battery_optimization_exempt">This app uses device features that do not function consistently while the app is subject to battery optimizations. Please grant a battery optimization exemption to ensure full and consistent functioning.</string>
+
+    <string name="diagnostic_missing_location_permission_title">Location Permission Required</string>
+    <string name="diagnostic_missing_location_permission">Please grant the app permission to access location services on this device.</string>
 </resources>
