@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder> {
@@ -39,6 +40,8 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
 
             return new DataPointViewHolder(view);
         } catch (Exception e) {
+            e.printStackTrace();
+
             try {
                 generatorClass = Generator.class;
 
@@ -56,6 +59,21 @@ public class DataPointsAdapter extends RecyclerView.Adapter<DataPointViewHolder>
         }
 
         return null;
+    }
+
+
+    @Override
+    public void onViewAttachedToWindow(@NonNull DataPointViewHolder holder) {
+        super.onViewAttachedToWindow(holder);
+
+        holder.runOnAttach();
+    }
+
+    @Override
+    public void onViewDetachedFromWindow(@NonNull DataPointViewHolder holder) {
+        super.onViewDetachedFromWindow(holder);
+
+        holder.runOnDetach();
     }
 
     @SuppressWarnings("UnusedReturnValue")

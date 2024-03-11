@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="ContentDescription"
     android:orientation="vertical"
@@ -10,7 +10,7 @@
         android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        card_view:cardCornerRadius="4dp"
+        app:cardCornerRadius="4dp"
         android:layout_margin="8dp"
         tools:ignore="UnusedIds">
         <LinearLayout
@@ -46,11 +46,13 @@
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="200dp">
-                <com.mapbox.mapboxsdk.maps.MapView
+                <com.mapbox.maps.MapView
                     android:id="@+id/mapbox_map"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="#757575"/>
+                    app:mapbox_locationComponentEnabled="false"
+                    app:mapbox_locationComponentPuckBearing="heading"
+                    />
                 <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/pdk_mapbox_map_type_hybrid"
                     android:layout_width="wrap_content"

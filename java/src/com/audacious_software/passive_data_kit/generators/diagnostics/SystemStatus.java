@@ -364,7 +364,8 @@ public class SystemStatus extends Generator {
         this.mReceiver.onReceive(this.mContext, null);
 
         IntentFilter filter = new IntentFilter(SystemStatus.ACTION_HEARTBEAT);
-        this.mContext.registerReceiver(this.mReceiver, filter);
+
+        ContextCompat.registerReceiver(this.mContext, this.mReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
 
         this.flushCachedData();
     }

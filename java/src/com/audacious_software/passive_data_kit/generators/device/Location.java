@@ -44,12 +44,9 @@ import android.widget.Toast;
 
 import com.amazon.geo.mapsv2.AmazonMap;
 
-import com.mapbox.android.core.permissions.PermissionsManager;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
 import com.mapbox.geojson.Point;
-import com.mapbox.mapboxsdk.location.LocationComponent;
-import com.mapbox.mapboxsdk.location.modes.CameraMode;
 
 import com.audacious_software.passive_data_kit.DeviceInformation;
 import com.audacious_software.passive_data_kit.PassiveDataKit;
@@ -78,12 +75,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.ui.IconGenerator;
-import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.Style;
-import com.mapbox.mapboxsdk.style.expressions.Expression;
-import com.mapbox.mapboxsdk.style.layers.HeatmapLayer;
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+import com.mapbox.geojson.Polygon;
+import com.mapbox.maps.CameraOptions;
+import com.mapbox.maps.EdgeInsets;
+import com.mapbox.maps.Style;
+import com.mapbox.maps.extension.style.expressions.generated.Expression;
+import com.mapbox.maps.extension.style.layers.LayerUtils;
+import com.mapbox.maps.extension.style.layers.generated.HeatmapLayer;
+import com.mapbox.maps.extension.style.sources.SourceUtils;
+import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -106,6 +106,7 @@ import org.json.JSONObject;
 
 import humanize.Humanize;
 
+@SuppressLint("Range")
 public class Location extends Generator implements LocationListener, android.location.LocationListener {
     private static final String GENERATOR_IDENTIFIER = "pdk-location";
     private static final String DATABASE_PATH = "pdk-location.sqlite";
@@ -365,10 +366,10 @@ public class Location extends Generator implements LocationListener, android.loc
 
     @SuppressWarnings("unused")
     public static ArrayList<DiagnosticAction> diagnostics(Context context) {
-        return Location.getInstance(context).runDiagostics();
+        return Location.getInstance(context).runDiagnostics();
     }
 
-    private ArrayList<DiagnosticAction> runDiagostics() {
+    private ArrayList<DiagnosticAction> runDiagnostics() {
         ArrayList<DiagnosticAction> actions = new ArrayList<>();
 
         final Location me = this;
@@ -599,6 +600,8 @@ public class Location extends Generator implements LocationListener, android.loc
 
     @SuppressWarnings({"UnusedAssignment", "unused"})
     public static void bindViewHolder(DataPointViewHolder holder) {
+        Log.e("PDK", "bindViewHolder");
+
         final Context context = holder.itemView.getContext();
 
         Location me = Location.getInstance(context);
@@ -642,9 +645,7 @@ public class Location extends Generator implements LocationListener, android.loc
         ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
         if (Location.useMapboxMaps(holder.itemView.getContext())) {
-            final com.mapbox.mapboxsdk.maps.MapView mapView = holder.itemView.findViewById(R.id.mapbox_map);
-
-            mapView.onCreate(null);
+            final com.mapbox.maps.MapView mapView = holder.itemView.findViewById(R.id.mapbox_map);
 
             final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
@@ -653,6 +654,52 @@ public class Location extends Generator implements LocationListener, android.loc
             SwitchCompat hybridSwitch = holder.itemView.findViewById(R.id.pdk_mapbox_map_type_hybrid);
             hybridSwitch.setChecked(useHybrid);
 
+            holder.setOnAttachListener(new Runnable() {
+                @Override
+                public void run() {
+                    mapView.onStart();
+
+                    if (hybridSwitch.isChecked()) {
+                        mapView.getMapboxMap().loadStyle(Style.SATELLITE_STREETS, new Style.OnStyleLoaded() {
+                            @Override
+                            public void onStyleLoaded(@NonNull Style style) {
+                                me.addHeatmapLayer(style, locations);
+                            }
+                        });
+                    } else {
+                        mapView.getMapboxMap().loadStyle(Style.MAPBOX_STREETS, new Style.OnStyleLoaded() {
+                            @Override
+                            public void onStyleLoaded(@NonNull Style style) {
+                                me.addHeatmapLayer(style, locations);
+                            }
+                        });
+                    }
+
+                    ArrayList<Point> points = new ArrayList<>();
+
+                    for (LatLng latLng : locations) {
+                        points.add(Point.fromLngLat(latLng.longitude, latLng.latitude));
+                    }
+
+                    List<List<Point>> allPoints = new ArrayList<>();
+                    allPoints.add(points);
+
+                    Polygon coverArea = Polygon.fromLngLats(allPoints);
+
+                    CameraOptions camera = mapView.getMapboxMap().cameraForCoordinates(points, new EdgeInsets(4, 4, 4, 4), null, null);
+
+
+                    mapView.getMapboxMap().setCamera(camera);
+                }
+            });
+
+            holder.setOnDetachListener(new Runnable() {
+                @Override
+                public void run() {
+                    mapView.onStop();
+                }
+            });
+
             hybridSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, final boolean checked) {
@@ -660,37 +707,23 @@ public class Location extends Generator implements LocationListener, android.loc
                     e.putBoolean(Location.SETTING_DISPLAY_HYBRID_MAP, checked);
                     e.apply();
 
-                    mapView.getMapAsync(new com.mapbox.mapboxsdk.maps.OnMapReadyCallback() {
-                        @Override
-                        public void onMapReady(@NonNull MapboxMap mapboxMap) {
-                            Style.OnStyleLoaded loaded = new Style.OnStyleLoaded() {
-                                @Override
-                                public void onStyleLoaded(@NonNull Style style) {
-                                    LocationComponent locationComponent = mapboxMap.getLocationComponent();
-
-                                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                                        if (PermissionsManager.areLocationPermissionsGranted(context)) {
-                                            locationComponent.activateLocationComponent(context, style);
-                                            locationComponent.setLocationComponentEnabled(true);
-
-                                            if (c.getCount() <= 1) {
-                                                locationComponent.setCameraMode(CameraMode.TRACKING);
-                                            }
-                                        }
-                                    }
-
-                                    me.addHeatmapLayer(mapboxMap, style, locations);
-                                }
-                            };
-
-                            if (checked) {
-                                mapboxMap.setStyle(Style.SATELLITE_STREETS, loaded);
-                            } else {
-                                mapboxMap.setStyle(Style.MAPBOX_STREETS, loaded);
+                    if (checked) {
+                        mapView.getMapboxMap().loadStyle(Style.SATELLITE_STREETS, new Style.OnStyleLoaded() {
+                            @Override
+                            public void onStyleLoaded(@NonNull Style style) {
+                                me.addHeatmapLayer(style, locations);
                             }
+                        });
+                    } else {
+                        mapView.getMapboxMap().loadStyle(Style.MAPBOX_STREETS);
 
-                        }
-                    });
+                        mapView.getMapboxMap().loadStyle(Style.MAPBOX_STREETS, new Style.OnStyleLoaded() {
+                            @Override
+                            public void onStyleLoaded(@NonNull Style style) {
+                                me.addHeatmapLayer(style, locations);
+                            }
+                        });
+                    }
                 }
             });
 
@@ -720,57 +753,6 @@ public class Location extends Generator implements LocationListener, android.loc
 
             final Bitmap bitmap = iconGen.makeIcon();
 
-            mapView.getMapAsync(new com.mapbox.mapboxsdk.maps.OnMapReadyCallback() {
-                @Override
-                public void onMapReady(@NonNull MapboxMap mapboxMap) {
-                    Style.OnStyleLoaded loaded = new Style.OnStyleLoaded() {
-                        @Override
-                        public void onStyleLoaded(@NonNull Style style) {
-                            LocationComponent locationComponent = mapboxMap.getLocationComponent();
-
-                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                                if (PermissionsManager.areLocationPermissionsGranted(context)) {
-                                    locationComponent.activateLocationComponent(context, style);
-                                    locationComponent.setLocationComponentEnabled(true);
-
-                                    if (c.getCount() <= 1) {
-                                        locationComponent.setCameraMode(CameraMode.TRACKING);
-
-                                        com.mapbox.mapboxsdk.camera.CameraPosition.Builder cameraBuilder = new com.mapbox.mapboxsdk.camera.CameraPosition.Builder();
-
-                                        cameraBuilder.zoom(12);
-
-                                        mapboxMap.setCameraPosition(cameraBuilder.build());
-                                    }
-                                }
-                            }
-
-                            com.mapbox.mapboxsdk.geometry.LatLngBounds.Builder builder = new com.mapbox.mapboxsdk.geometry.LatLngBounds.Builder();
-
-                            for (LatLng latlng : locations) {
-                                builder.include(new com.mapbox.mapboxsdk.geometry.LatLng(latlng.latitude, latlng.longitude));
-                            }
-
-                            me.addHeatmapLayer(mapboxMap, style, locations);
-
-                            if (locations.size() > 0) {
-                                mapboxMap.moveCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(builder.build(), (int) (16 * metrics.density)));
-                            }
-                        }
-                    };
-
-                    if (useHybrid) {
-                        mapboxMap.setStyle(Style.SATELLITE_STREETS, loaded);
-                    } else {
-                        mapboxMap.setStyle(Style.MAPBOX_STREETS, loaded);
-                    }
-
-                    mapboxMap.getUiSettings().setAllGesturesEnabled(false);
-                    mapboxMap.getUiSettings().setZoomGesturesEnabled(true);
-
-                    mapView.onResume();
-                }
-            });
         } else if (Location.useKindleLocationServices()) {
             // TODO
             throw new RuntimeException("Throw rocks at developer to implement Kindle support.");
@@ -877,8 +859,10 @@ public class Location extends Generator implements LocationListener, android.loc
         }
     }
 
-    private void addHeatmapLayer(MapboxMap mapboxMap, Style style, List<LatLng> locations) {
+    private void addHeatmapLayer(Style style, List<LatLng> locations) {
         ArrayList<Feature> features = new ArrayList<>();
+
+        GeoJsonSource.Builder builder = new GeoJsonSource.Builder(Location.MAPBOX_LOCATION_SOURCE_ID);
 
         for (LatLng latlng : locations) {
             Point location = Point.fromLngLat(latlng.longitude, latlng.latitude);
@@ -888,20 +872,49 @@ public class Location extends Generator implements LocationListener, android.loc
             features.add(feature);
         }
 
-        style.addSource(new GeoJsonSource(Location.MAPBOX_LOCATION_SOURCE_ID, FeatureCollection.fromFeatures(features)));
+        builder.featureCollection(FeatureCollection.fromFeatures(features));
+
+        SourceUtils.addSource(style, builder.build());
 
         HeatmapLayer layer = new HeatmapLayer(MAPBOX_HEATMAP_LAYER_ID, MAPBOX_LOCATION_SOURCE_ID);
-        layer.setSourceLayer(MAPBOX_HEATMAP_LAYER_SOURCE);
-        layer.setProperties(
-                PropertyFactory.heatmapWeight(
-                        Expression.literal(0.25)
-                ),
-                PropertyFactory.heatmapRadius(
-                        Expression.literal(10)
+        layer.sourceLayer(MAPBOX_LOCATION_SOURCE_ID);
+
+        layer.heatmapColor(Expression.interpolate(
+            Expression.linear(), Expression.heatmapDensity(),
+                Expression.literal(0.0), Expression.rgba(255, 255, 255, 0),
+                Expression.literal(0.1), Expression.rgba(33, 102, 172, 1),
+                Expression.literal(0.75), Expression.rgb(103, 169, 207),
+                Expression.literal(0.875), Expression.rgb(209, 229, 240),
+                Expression.literal(0.9375), Expression.rgb(253, 219, 199),
+                Expression.literal(0.96875), Expression.rgb(239, 138, 98),
+                Expression.literal(1), Expression.rgb(178, 24, 43)
+            )
+        );
+
+        layer.heatmapWeight(Expression.interpolate(
+                        Expression.linear(), Expression.zoom(),
+                        Expression.literal(0), Expression.literal(0),
+                        Expression.literal(22), Expression.literal(1.0)
                 )
         );
 
-        style.addLayer(layer);
+        layer.heatmapIntensity(Expression.interpolate(
+            Expression.linear(), Expression.zoom(),
+                Expression.literal(0), Expression.literal(0),
+                Expression.literal(22), Expression.literal(1)
+            )
+        );
+
+        layer.heatmapRadius(Expression.interpolate(
+                Expression.linear(), Expression.zoom(),
+                Expression.literal(0), Expression.literal(2),
+                Expression.literal(22), Expression.literal(10)
+            )
+        );
+
+        layer.heatmapOpacity(1.0);
+
+        LayerUtils.addLayer(style, layer);
     }
 
     @Override
@@ -1136,8 +1149,6 @@ public class Location extends Generator implements LocationListener, android.loc
         final Context context = holder.itemView.getContext();
 
         if (Location.useMapboxMaps(holder.itemView.getContext())) {
-            /*
-
             final MapView mapView = new MapView(context);
 
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -1226,9 +1237,6 @@ public class Location extends Generator implements LocationListener, android.loc
             });
 
             return mapView;
-
-             */
-
         } else if (Location.useKindleLocationServices()) {
             final com.amazon.geo.mapsv2.MapView mapView = new com.amazon.geo.mapsv2.MapView(context);
 
@@ -1411,8 +1419,6 @@ public class Location extends Generator implements LocationListener, android.loc
             // TODO
             throw new RuntimeException("Throw rocks at developer to implement generic location support.");
         }
-
-        return  null;
     }
 
     @SuppressWarnings("unused")
@@ -1524,8 +1530,6 @@ public class Location extends Generator implements LocationListener, android.loc
     }
 
     public Cursor queryHistory(String[] cols, String where, String[] args, String orderBy) {
-        Log.e("PDK", "DATABASE: " + this.mDatabase);
-
         return this.mDatabase.query(Location.TABLE_HISTORY, cols, where, args, null, null, orderBy);
     }
 
@@ -1610,13 +1614,13 @@ public class Location extends Generator implements LocationListener, android.loc
     }
 
     public boolean hasPermissions() {
-        ArrayList<DiagnosticAction> actions = this.runDiagostics();
+        ArrayList<DiagnosticAction> actions = this.runDiagnostics();
 
         return (actions.size() == 0);
     }
 
     public void requestPermissions() {
-        ArrayList<DiagnosticAction> actions = this.runDiagostics();
+        ArrayList<DiagnosticAction> actions = this.runDiagnostics();
 
         if (actions.size() > 0) {
             actions.get(0).run();

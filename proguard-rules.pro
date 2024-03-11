@@ -20,3 +20,8 @@
 -keepattributes LineNumberTable,SourceFile
 
 -dontwarn javax.xml.bind.**
+
+-dontwarn com.tobrun.datacompat.annotation.Default
+-dontwarn io.grpc.internal.DnsNameResolverProvider
+-dontwarn io.grpc.internal.PickFirstLoadBalancerProvider
+
