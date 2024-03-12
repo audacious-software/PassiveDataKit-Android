@@ -7,7 +7,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.2'
+        classpath 'com.android.tools.build:gradle:8.3.0'
     }
 }
 
@@ -124,9 +124,6 @@ android {
         api 'com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2'
         api 'com.google.code.findbugs:jsr305:3.0.2'
         api 'com.googlecode.libphonenumber:libphonenumber:8.11.3'
-    }
-    buildFeatures {
-        viewBinding true
     }
 }
 
