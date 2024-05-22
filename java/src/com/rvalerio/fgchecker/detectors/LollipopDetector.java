@@ -13,6 +13,7 @@ import android.os.Build;
 import com.rvalerio.fgchecker.Utils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class LollipopDetector implements Detector {
@@ -48,7 +49,7 @@ public class LollipopDetector implements Detector {
             return new String[]{ null };
         }
 
-        ArrayList<String> foreground = new ArrayList<>();
+        HashSet<String> foreground = new HashSet<>();
 
         UsageStatsManager mUsageStatsManager = (UsageStatsManager) context.getSystemService(Service.USAGE_STATS_SERVICE);
         long time = System.currentTimeMillis();
@@ -62,13 +63,17 @@ public class LollipopDetector implements Detector {
             String packageName = event.getPackageName();
 
             if (event.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                if (foreground.contains(packageName) == false) {
-                    foreground.add(packageName);
-                }
+                foreground.add(packageName);
             } else if (event.getEventType() == UsageEvents.Event.MOVE_TO_BACKGROUND) {
-                while (foreground.contains(packageName)) {
-                    foreground.remove(packageName);
-                }
+                foreground.remove(packageName);
+            }
+
+            if (event.getEventType() == UsageEvents.Event.ACTIVITY_RESUMED) {
+                foreground.add(packageName);
+            }
+
+            if (event.getEventType() == UsageEvents.Event.ACTIVITY_PAUSED) {
+                foreground.remove(packageName);
             }
         }
 
