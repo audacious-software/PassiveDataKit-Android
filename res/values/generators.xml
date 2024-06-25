@@ -304,5 +304,8 @@
     <!-- Voice Detection -->
     <string name="generator_voice_detection">Voice Detection</string>
 
+    <!-- Usage Stats -->
+    <string name="generator_usage_stats_application">Device Usage Events</string>
+
 </resources>
 

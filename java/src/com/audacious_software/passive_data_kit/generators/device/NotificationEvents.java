@@ -234,8 +234,6 @@ public class NotificationEvents extends Generator {
 
     public static class ListenerService extends NotificationListenerService {
         public void onNotificationPosted (StatusBarNotification sbn) {
-            Log.e("PDK", "onNotificationPosted: " + sbn);
-
             if (NotificationEvents.getInstance(this).isEnabled(this)) {
                 final NotificationEvents me = NotificationEvents.getInstance(this);
 
@@ -271,8 +269,6 @@ public class NotificationEvents extends Generator {
         }
 
         public void onNotificationRemoved (StatusBarNotification sbn) {
-            Log.e("PDK", "onNotificationRemoved: " + sbn);
-
             if (NotificationEvents.getInstance(this).isEnabled(this)) {
                 final NotificationEvents me = NotificationEvents.getInstance(this);
 
@@ -308,8 +304,6 @@ public class NotificationEvents extends Generator {
         }
 
         public void onNotificationRemoved (StatusBarNotification sbn, NotificationListenerService.RankingMap rankingMap, int reason) {
-            Log.e("PDK", "onNotificationRemoved[2]: " + sbn);
-
             if (NotificationEvents.getInstance(this).isEnabled(this)) {
                 final NotificationEvents me = NotificationEvents.getInstance(this);
 

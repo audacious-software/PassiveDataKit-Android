@@ -94,4 +94,10 @@
 
    <!-- Bluetooth Devices -->
     <string name="pdk_generator_bluetooth_devices_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, address TEXT, device_class TEXT, pair_status TEXT, name TEXT, device_type TEXT)</string>
+
+    <!-- Usage Stats -->
+    <string name="pdk_generator_usage_stats_create_history_table" translatable="false">CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT, fetched INTEGER, transmitted INTEGER, observed INTEGER, event_type TEXT, package TEXT, extras TEXT)</string>
+
+
+
 </resources>

@@ -58,7 +58,7 @@ import humanize.Humanize;
 
 @SuppressWarnings({"PointlessBooleanExpression", "SimplifiableIfStatement"})
 @SuppressLint("Range")
-public class ForegroundApplication extends Generator{
+public class ForegroundApplication extends Generator {
     private static final String GENERATOR_IDENTIFIER = "pdk-foreground-application";
 
     private static final String ENABLED = "com.audacious_software.passive_data_kit.generators.device.ForegroundApplication.ENABLED";
