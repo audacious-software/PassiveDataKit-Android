@@ -32,6 +32,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -76,6 +78,7 @@ public class UsageStatsGenerator extends Generator {
     private static final String EVENT_STANDBY_BUCKET_CHANGED = "standby-bucket-changed";
     private static final String EVENT_USER_INTERACTION = "user-interaction";
     private static final String EVENT_NONE = "none";
+    private static final String HISTORY_EVENT_EXTRAS = "extras";
 
     private static UsageStatsGenerator sInstance;
     private final SQLiteDatabase mDatabase;
@@ -138,104 +141,10 @@ public class UsageStatsGenerator extends Generator {
 
         this.mService = new ScheduledThreadPoolExecutor(1);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-        final long sampleInterval = prefs.getLong(UsageStatsGenerator.SAMPLE_INTERVAL, UsageStatsGenerator.SAMPLE_INTERVAL_DEFAULT);
-
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                UsageStatsManager mUsageStatsManager = (UsageStatsManager) me.mContext.getSystemService(Service.USAGE_STATS_SERVICE);
-                long now = System.currentTimeMillis();
-
-                long start = me.getLatestTimestamp();
-
-                if ((now - start) > (24 * 60 * 60 * 1000)) {
-                    start = now - (24 * 60 * 60 * 1000);
-                }
-
-                UsageEvents usageEvents = mUsageStatsManager.queryEvents(start + 1, now);
-                UsageEvents.Event event = new UsageEvents.Event();
-
-                while (usageEvents.hasNextEvent()) {
-                    usageEvents.getNextEvent(event);
-
-                    String packageName = event.getPackageName();
-
-                    String eventType = "unknown";
-
-                    switch (event.getEventType()) {
-                        case UsageEvents.Event.ACTIVITY_RESUMED:
-                            eventType = UsageStatsGenerator.EVENT_ACTIVITY_RESUMED;
-                            break;
-                        case UsageEvents.Event.ACTIVITY_PAUSED:
-                            eventType = UsageStatsGenerator.EVENT_ACTIVITY_PAUSED;
-                            break;
-                        case UsageEvents.Event.ACTIVITY_STOPPED:
-                            eventType = UsageStatsGenerator.EVENT_ACTIVITY_STOPPED;
-                            break;
-                        case UsageEvents.Event.CONFIGURATION_CHANGE:
-                            eventType = UsageStatsGenerator.EVENT_CONFIGURATION_CHANGE;
-                            break;
-                        case UsageEvents.Event.DEVICE_STARTUP:
-                            eventType = UsageStatsGenerator.EVENT_DEVICE_STARTUP;
-                            break;
-                        case UsageEvents.Event.DEVICE_SHUTDOWN:
-                            eventType = UsageStatsGenerator.EVENT_DEVICE_SHUTDOWN;
-                            break;
-                        case UsageEvents.Event.FOREGROUND_SERVICE_START:
-                            eventType = UsageStatsGenerator.EVENT_FOREGROUND_SERVICE_START;
-                            break;
-                        case UsageEvents.Event.FOREGROUND_SERVICE_STOP:
-                            eventType = UsageStatsGenerator.EVENT_FOREGROUND_SERVICE_STOP;
-                            break;
-                        case UsageEvents.Event.KEYGUARD_HIDDEN:
-                            eventType = UsageStatsGenerator.EVENT_KEYGUARD_HIDDEN;
-                            break;
-                        case UsageEvents.Event.KEYGUARD_SHOWN:
-                            eventType = UsageStatsGenerator.EVENT_KEYGUARD_SHOWN;
-                            break;
-                        case UsageEvents.Event.SCREEN_INTERACTIVE:
-                            eventType = UsageStatsGenerator.EVENT_SCREEN_INTERACTIVE;
-                            break;
-                        case UsageEvents.Event.SCREEN_NON_INTERACTIVE:
-                            eventType = UsageStatsGenerator.EVENT_SCREEN_NON_INTERACTIVE;
-                            break;
-                        case UsageEvents.Event.SHORTCUT_INVOCATION:
-                            eventType = UsageStatsGenerator.EVENT_SHORTCUT_INVOCATION;
-                            break;
-                        case UsageEvents.Event.STANDBY_BUCKET_CHANGED:
-                            eventType = UsageStatsGenerator.EVENT_STANDBY_BUCKET_CHANGED;
-                            break;
-                        case UsageEvents.Event.USER_INTERACTION:
-                            eventType = UsageStatsGenerator.EVENT_USER_INTERACTION;
-                            break;
-                        case UsageEvents.Event.NONE:
-                            eventType = UsageStatsGenerator.EVENT_NONE;
-                            break;
-                    }
-
-                    if (me.filterEvent(packageName, eventType) == false) {
-                        if (me.isAppEnabled(packageName) == false) {
-                            packageName = me.obscureIdentifier(packageName);
-                        }
-
-                        ContentValues values = new ContentValues();
-                        values.put(UsageStatsGenerator.HISTORY_OBSERVED, event.getTimeStamp());
-                        values.put(UsageStatsGenerator.HISTORY_EVENT_TYPE, eventType);
-                        values.put(UsageStatsGenerator.HISTORY_PACKAGE, packageName);
-
-                        me.mDatabase.insert(UsageStatsGenerator.TABLE_HISTORY, null, values);
-
-                        Bundle update = new Bundle();
-                        update.putLong(UsageStatsGenerator.HISTORY_OBSERVED, event.getTimeStamp());
-                        update.putString(UsageStatsGenerator.HISTORY_PACKAGE, packageName);
-                        update.putString(UsageStatsGenerator.HISTORY_EVENT_TYPE, eventType);
-
-                        Generators.getInstance(me.mContext).notifyGeneratorUpdated(UsageStatsGenerator.GENERATOR_IDENTIFIER, update);
-                    }
-                }
-
-                me.mService.schedule(this, sampleInterval, TimeUnit.MILLISECONDS);
+                me.fetchFullHistory(false, 0);
             }
         };
 
@@ -547,5 +456,157 @@ public class UsageStatsGenerator extends Generator {
         SharedPreferences.Editor e = prefs.edit();
         e.putLong(UsageStatsGenerator.SAMPLE_INTERVAL, interval);
         e.apply();
+    }
+
+    public void fetchFullHistory(boolean createDailySummaries, long start) {
+        final UsageStatsGenerator me = this;
+
+        UsageStatsManager mUsageStatsManager = (UsageStatsManager) me.mContext.getSystemService(Service.USAGE_STATS_SERVICE);
+        long now = System.currentTimeMillis();
+
+        long end = now;
+
+        if (createDailySummaries) {
+            if (start == 0) {
+                UsageEvents usageEvents = mUsageStatsManager.queryEvents(0, now);
+                UsageEvents.Event event = new UsageEvents.Event();
+
+                if (usageEvents.hasNextEvent()) {
+                    usageEvents.getNextEvent(event);
+
+                    start = event.getTimeStamp();
+                }
+            }
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(start);
+
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
+
+            start = calendar.getTimeInMillis();
+
+            calendar.add(Calendar.DATE, 1);
+
+            end = calendar.getTimeInMillis() - 1;
+        } else {
+            if (start == 0) {
+                start = me.getLatestTimestamp();
+            }
+
+            if ((end - start) > (24 * 60 * 60 * 1000)) {
+                start = end - (24 * 60 * 60 * 1000);
+            }
+        }
+
+        UsageEvents usageEvents = mUsageStatsManager.queryEvents(start + 1, end);
+        UsageEvents.Event event = new UsageEvents.Event();
+
+        while (usageEvents.hasNextEvent()) {
+            usageEvents.getNextEvent(event);
+
+            String packageName = event.getPackageName();
+
+            String eventType = "unknown:" + event.getEventType();
+
+            switch (event.getEventType()) {
+                case UsageEvents.Event.ACTIVITY_RESUMED:
+                    eventType = UsageStatsGenerator.EVENT_ACTIVITY_RESUMED;
+                    break;
+                case UsageEvents.Event.ACTIVITY_PAUSED:
+                    eventType = UsageStatsGenerator.EVENT_ACTIVITY_PAUSED;
+                    break;
+                case UsageEvents.Event.ACTIVITY_STOPPED:
+                    eventType = UsageStatsGenerator.EVENT_ACTIVITY_STOPPED;
+                    break;
+                case UsageEvents.Event.CONFIGURATION_CHANGE:
+                    eventType = UsageStatsGenerator.EVENT_CONFIGURATION_CHANGE;
+                    break;
+                case UsageEvents.Event.DEVICE_STARTUP:
+                    eventType = UsageStatsGenerator.EVENT_DEVICE_STARTUP;
+                    break;
+                case UsageEvents.Event.DEVICE_SHUTDOWN:
+                    eventType = UsageStatsGenerator.EVENT_DEVICE_SHUTDOWN;
+                    break;
+                case UsageEvents.Event.FOREGROUND_SERVICE_START:
+                    eventType = UsageStatsGenerator.EVENT_FOREGROUND_SERVICE_START;
+                    break;
+                case UsageEvents.Event.FOREGROUND_SERVICE_STOP:
+                    eventType = UsageStatsGenerator.EVENT_FOREGROUND_SERVICE_STOP;
+                    break;
+                case UsageEvents.Event.KEYGUARD_HIDDEN:
+                    eventType = UsageStatsGenerator.EVENT_KEYGUARD_HIDDEN;
+                    break;
+                case UsageEvents.Event.KEYGUARD_SHOWN:
+                    eventType = UsageStatsGenerator.EVENT_KEYGUARD_SHOWN;
+                    break;
+                case UsageEvents.Event.SCREEN_INTERACTIVE:
+                    eventType = UsageStatsGenerator.EVENT_SCREEN_INTERACTIVE;
+                    break;
+                case UsageEvents.Event.SCREEN_NON_INTERACTIVE:
+                    eventType = UsageStatsGenerator.EVENT_SCREEN_NON_INTERACTIVE;
+                    break;
+                case UsageEvents.Event.SHORTCUT_INVOCATION:
+                    eventType = UsageStatsGenerator.EVENT_SHORTCUT_INVOCATION;
+                    break;
+                case UsageEvents.Event.STANDBY_BUCKET_CHANGED:
+                    eventType = UsageStatsGenerator.EVENT_STANDBY_BUCKET_CHANGED;
+                    break;
+                case UsageEvents.Event.USER_INTERACTION:
+                    eventType = UsageStatsGenerator.EVENT_USER_INTERACTION;
+                    break;
+                case UsageEvents.Event.NONE:
+                    eventType = UsageStatsGenerator.EVENT_NONE;
+                    break;
+            }
+
+            if (me.filterEvent(packageName, eventType) == false) {
+                if (me.isAppEnabled(packageName) == false) {
+                    packageName = me.obscureIdentifier(packageName);
+                }
+
+                ContentValues values = new ContentValues();
+                values.put(UsageStatsGenerator.HISTORY_OBSERVED, event.getTimeStamp());
+                values.put(UsageStatsGenerator.HISTORY_EVENT_TYPE, eventType);
+                values.put(UsageStatsGenerator.HISTORY_PACKAGE, packageName);
+
+                me.mDatabase.insert(UsageStatsGenerator.TABLE_HISTORY, null, values);
+
+                Bundle update = new Bundle();
+                update.putLong(UsageStatsGenerator.HISTORY_OBSERVED, event.getTimeStamp());
+                update.putString(UsageStatsGenerator.HISTORY_PACKAGE, packageName);
+                update.putString(UsageStatsGenerator.HISTORY_EVENT_TYPE, eventType);
+
+                // Enable once able to test on Android 35 / Vanilla Ice Cream
+                // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                //     update.putParcelable(UsageStatsGenerator.HISTORY_EVENT_EXTRAS, event.getExtras());
+                // }
+
+                Generators.getInstance(me.mContext).notifyGeneratorUpdated(UsageStatsGenerator.GENERATOR_IDENTIFIER, event.getTimeStamp(), update);
+            }
+        }
+
+        if (createDailySummaries) {
+            if (end < now) {
+                me.fetchFullHistory(true, (end + 1));
+            }
+         } else {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+
+            final long sampleInterval = prefs.getLong(UsageStatsGenerator.SAMPLE_INTERVAL, UsageStatsGenerator.SAMPLE_INTERVAL_DEFAULT);
+
+            if (me.mService == null) {
+                me.mService = new ScheduledThreadPoolExecutor(1);
+            }
+
+            me.mService.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    me.fetchFullHistory(false, 0);
+                }
+            }, sampleInterval, TimeUnit.MILLISECONDS);
+        }
     }
 }
