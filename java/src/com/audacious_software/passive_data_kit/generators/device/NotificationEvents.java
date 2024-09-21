@@ -84,6 +84,7 @@ public class NotificationEvents extends Generator {
     private SQLiteDatabase mDatabase = null;
 
     private long mLatestTimestamp = -1;
+    private String mLastNotificationString = "";
 
     @SuppressWarnings("unused")
     public static String generatorIdentifier() {
@@ -260,11 +261,17 @@ public class NotificationEvents extends Generator {
                 values.put(NotificationEvents.HISTORY_ACTION, NotificationEvents.HISTORY_ACTION_POSTED);
                 update.putString(NotificationEvents.HISTORY_ACTION, NotificationEvents.HISTORY_ACTION_POSTED);
 
-                if (me.mDatabase != null) {
-                    me.mDatabase.insert(NotificationEvents.TABLE_HISTORY, null, values);
-                }
+                String notificationString = values.get(NotificationEvents.HISTORY_PACKAGE) + "_" + values.get(NotificationEvents.HISTORY_ACTION) + "_" + values.get(NotificationEvents.HISTORY_REASON);
 
-                Generators.getInstance(this).notifyGeneratorUpdated(NotificationEvents.GENERATOR_IDENTIFIER, update);
+                if (me.mLastNotificationString.equals(notificationString) == false) {
+                    if (me.mDatabase != null) {
+                        me.mDatabase.insert(NotificationEvents.TABLE_HISTORY, null, values);
+                    }
+
+                    Generators.getInstance(this).notifyGeneratorUpdated(NotificationEvents.GENERATOR_IDENTIFIER, update);
+
+                    me.mLastNotificationString = notificationString;
+                }
             }
         }
 
@@ -295,11 +302,17 @@ public class NotificationEvents extends Generator {
                 values.put(NotificationEvents.HISTORY_ACTION, NotificationEvents.HISTORY_ACTION_REMOVED);
                 update.putString(NotificationEvents.HISTORY_ACTION, NotificationEvents.HISTORY_ACTION_REMOVED);
 
-                if (me.mDatabase != null) {
-                    me.mDatabase.insert(NotificationEvents.TABLE_HISTORY, null, values);
-                }
+                String notificationString = values.get(NotificationEvents.HISTORY_PACKAGE) + "_" + values.get(NotificationEvents.HISTORY_ACTION) + "_" + values.get(NotificationEvents.HISTORY_REASON);
 
-                Generators.getInstance(this).notifyGeneratorUpdated(NotificationEvents.GENERATOR_IDENTIFIER, update);
+                if (me.mLastNotificationString.equals(notificationString) == false) {
+                    if (me.mDatabase != null) {
+                        me.mDatabase.insert(NotificationEvents.TABLE_HISTORY, null, values);
+                    }
+
+                    Generators.getInstance(this).notifyGeneratorUpdated(NotificationEvents.GENERATOR_IDENTIFIER, update);
+
+                    me.mLastNotificationString = notificationString;
+                }
             }
         }
 
@@ -425,34 +438,35 @@ public class NotificationEvents extends Generator {
                         break;
                 }
 
-                if (me.mDatabase != null) {
-                    me.mDatabase.insert(NotificationEvents.TABLE_HISTORY, null, values);
-                }
+                String notificationString = values.get(NotificationEvents.HISTORY_PACKAGE) + "_" + values.get(NotificationEvents.HISTORY_ACTION) + "_" + values.get(NotificationEvents.HISTORY_REASON);
 
-                Generators.getInstance(this).notifyGeneratorUpdated(NotificationEvents.GENERATOR_IDENTIFIER, update);
+                if (me.mLastNotificationString.equals(notificationString) == false) {
+                    if (me.mDatabase != null) {
+                        me.mDatabase.insert(NotificationEvents.TABLE_HISTORY, null, values);
+                    }
+
+                    Generators.getInstance(this).notifyGeneratorUpdated(NotificationEvents.GENERATOR_IDENTIFIER, update);
+
+                    me.mLastNotificationString = notificationString;
+                }
             }
         }
     }
 
     public static boolean areNotificationsEnabled(Context context) {
-        Log.e("PDK", "areNotificationsEnabled(Context context)");
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED);
+            return (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED);
         }
 
         return true;
     }
 
     public static boolean areNotificationListenersEnabled(Context context) {
-        Log.e("PDK", "areNotificationsEnabled(Context context)");
-
         NotificationManager notes = (NotificationManager) context.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             boolean isEnabled = notes.isNotificationListenerAccessGranted(new ComponentName(context, NotificationEvents.ListenerService.class));
-
-            Log.e("PDK", "notes.isNotificationListenerAccessGranted(new ComponentName(context, NotificationEvents.ListenerService.class)) -=> " + isEnabled);
 
             return isEnabled;
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
