@@ -354,7 +354,11 @@ public class SystemStatus extends Generator {
                         ContextCompat.checkSelfPermission(context, Manifest.permission.SCHEDULE_EXACT_ALARM) == PackageManager.PERMISSION_GRANTED)) {
                     alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, now + me.mRefreshInterval, pi);
                 } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                    alarms.setExact(AlarmManager.RTC_WAKEUP, now + me.mRefreshInterval, pi);
+                    if (alarms.canScheduleExactAlarms()) {
+                        alarms.setExact(AlarmManager.RTC_WAKEUP, now + me.mRefreshInterval, pi);
+                    } else {
+                        alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, now + me.mRefreshInterval, pi);
+                    }
                 } else {
                     alarms.set(AlarmManager.RTC_WAKEUP, now + me.mRefreshInterval, pi);
                 }

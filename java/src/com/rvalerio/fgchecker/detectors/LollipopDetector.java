@@ -75,6 +75,10 @@ public class LollipopDetector implements Detector {
             if (event.getEventType() == UsageEvents.Event.ACTIVITY_PAUSED) {
                 foreground.remove(packageName);
             }
+
+            if (event.getEventType() == UsageEvents.Event.ACTIVITY_STOPPED) {
+                foreground.remove(packageName);
+            }
         }
 
         PackageManager manager = context.getPackageManager();
