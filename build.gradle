@@ -125,6 +125,3 @@ android {
         api 'com.googlecode.libphonenumber:libphonenumber:8.11.3'
     }
 }
-
-dependencies {
-}
