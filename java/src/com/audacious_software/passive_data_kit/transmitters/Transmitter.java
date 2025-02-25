@@ -24,6 +24,8 @@ public abstract class Transmitter {
 
     public abstract long pendingTransmissions();
 
+    public abstract long pendingTransmissionSize();
+
     public abstract long lastSuccessfulTransmission();
 
     public abstract void testTransmission(Handler handler, boolean includeLocation, Runnable success, Runnable failure);

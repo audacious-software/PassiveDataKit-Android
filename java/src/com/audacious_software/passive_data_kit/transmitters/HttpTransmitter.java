@@ -690,6 +690,9 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
                     return HttpTransmitter.RESULT_SUCCESS;
                 }
             } else {
+                Log.e("PassiveDataKit", this.mContext.getString(R.string.transmission_failed_server_code, code));
+                Log.e("PassiveDataKit", bodyString);
+
                 SharedPreferences.Editor e = prefs.edit();
                 e.putString(Transmitter.FAILURE_REASON, this.mContext.getString(R.string.transmission_failed_server_code, code));
                 e.putLong(Transmitter.FAILURE_TIMESTAMP, System.currentTimeMillis());
@@ -821,6 +824,11 @@ public class HttpTransmitter extends Transmitter implements Generators.Generator
     @Override
     public long pendingSize() {
         return HttpTransmitter.getFileSize(this.getPendingFolder());
+    }
+
+    @Override
+    public long pendingTransmissionSize() {
+        return this.pendingSize();
     }
 
     @Override

@@ -350,6 +350,18 @@ public class PassiveDataKit {
         return pending;
     }
 
+    public long pendingTransmissionSize() {
+        long pending = 0;
+
+        List<Transmitter> transmitters = Generators.getInstance(this.mContext).activeTransmitters();
+
+        for (Transmitter transmitter : transmitters) {
+            pending += transmitter.pendingTransmissionSize();
+        }
+
+        return pending;
+    }
+
     public void updateGenerators(JSONObject config) {
         Generators.getInstance(this.mContext).updateGenerators(config);
     }
